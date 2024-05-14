@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ee9c4099-cb86-4e72-8635-a71e0b1aceec</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Decline_Curve.py</StartupFile>
+    <StartupFile>Main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,8 +21,23 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Decline_Curve.py" />
+    <Compile Include="ProjectDialog.py" />
+    <Compile Include="DatabaseManager.py" />
+    <Compile Include="DataProperties.py" />
+    <Compile Include="Main.py" />
+    <Compile Include="ImportExcel.py" />
+    <Compile Include="LoadProductions.py" />
+    <Compile Include="DeclineCurveAnalysis.py" />
+    <Compile Include="GetGraphData.py" />
+    <Compile Include="DefaultProperties.py" />
+    <Compile Include="ModelProperties.py" />
+    <Compile Include="module1.py" />
+    <Compile Include="ui_main.py" />
+    <Compile Include="plotting.py" />
     <Compile Include="SeisWareConnect.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Icons\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

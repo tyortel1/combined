@@ -19,8 +19,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
 from matplotlib.widgets import Cursor
 import numpy as np
 from tkinter import messagebox
+import plotly.express as px
 import sys
-sys.path.append('C:/Users/jerem/AppData/Local/Programs/Python/Python311/Lib/site-packages')
+sys.path.append('C:\Program Files')
 import SeisWare
 
 
@@ -412,8 +413,7 @@ class ImageGUI:
 
     def on_filter_select(self, event):
         # Initialize a structure to store all the data, sorted as per your requirements.
-        data_by_uwi = {}
-
+     
         selected_filter = self.filter_selection.get()
         print(f"Selected filter: {selected_filter}")
 
@@ -423,78 +423,98 @@ class ImageGUI:
         filtered_well_filter = [f for f in well_filter if f.Name() == selected_filter]
         print(filtered_well_filter)
 
-        # Retrieve well information
-        well_keys = SeisWare.IDSet()
-        failed_well_keys = SeisWare.IDSet()
-        well_list = SeisWare.WellList()
-        self.login_instance.WellManager().GetKeysByFilter(filtered_well_filter[0], well_keys)
-        self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
+        ## Retrieve well information
+        #well_keys = SeisWare.IDSet()
+        #failed_well_keys = SeisWare.IDSet()
+        #well_list = SeisWare.WellList()
+        #self.login_instance.WellManager().GetKeysByFilter(filtered_well_filter[0], well_keys)
+        #self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
     
-        # Map UWIs to Well IDs
-        uwi_to_well_id = {well.UWI(): well.ID() for well in well_list}
-        print(uwi_to_well_id)
+        ## Map UWIs to Well IDs
+        #uwi_to_well_id = {well.UWI(): well.ID() for well in well_list}
+        #print(uwi_to_well_id)
 
-        # Retrieve production information
         production_keys = SeisWare.IDSet()
         failed_production_keys = SeisWare.IDSet()
         productions = SeisWare.ProductionList()
         self.login_instance.ProductionManager().GetKeysByFilter(filtered_well_filter[0], production_keys)
         self.login_instance.ProductionManager().GetByKeys(production_keys, productions, failed_production_keys)
-       
+        print(productions)
+
+
+        all_production_volume_data = []
+
+        # Initialize a set to collect unique Well IDs from all productions
+        all_well_ids = set()
 
         for production in productions:
+
+
             try:
-                # Populate the ProductionWells inside the passed-in Production
+                
                 self.login_instance.ProductionManager().PopulateWells(production)
-        
-                # Retrieve the ProductionWells
                 production_wells = SeisWare.ProductionWellList()
                 production.Wells(production_wells)
-        
-                # Now you can iterate over the production wells
-                for production_well in production_wells:
-                    # Retrieve information about the associated well
-                    well_id = production_well.WellID()
-                    well_uwi = production_well.UWI()  
-                    #well_name = production_well.WellName()
-                    # Do whatever you need with the well information
-                    print(f"Well ID: {well_id}, Well UWI: {well_uwi}")
-            
-            except Exception as e:
-                print(f"Failed to populate wells for production: {e}")
-
-
-
+                            # Populate Volumes for the Production
                 self.login_instance.ProductionManager().PopulateVolumes(production)
                 volume_list = SeisWare.ProductionVolumeList()
                 production.Volumes(volume_list)
 
-                for volume in volume_list:
-                    volume_date = volume.VolumeDate()
-                    formatted_date = f"{volume_date.year}-{str(volume_date.month).zfill(2)}-{str(volume_date.day).zfill(2)}"
+                production_volume_data = []
+                print(production_wells)
+        
+                            # Collect data for each well in the production
+                for well in production_wells:
+                    well_key = well.WellID()
+                    print("Well Key:", well_key)
+                    all_well_ids.add(well_key)  
+                
+                    well_keys = SeisWare.IDSet([well_key]) 
+                    failed_well_keys = SeisWare.IDSet()
+                    well_list = SeisWare.WellList()
+                    self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
+                    # Map UWIs to Well IDs
+                    uwi = {well.UWI() for well in well_list}
+                    print(uwi)
+                 
+                    for volume in volume_list:
+                        volume_date = volume.VolumeDate()
+                        formatted_date = f"{volume_date.year}-{str(volume_date.month).zfill(2)}-{str(volume_date.day).zfill(2)}"
+                    
 
-                    data_by_uwi[uwi].append({
-                        "production_name": production.Name(),
-                        "date": formatted_date,
-                        "oil_volume": volume.OilVolume(),
-                        "gas_volume": volume.GasVolume()
-                    })
+                        production_volume_data.append({
+                            "prod name": production.Name(),
+                            "uwi": uwi,
+                            "date": formatted_date,
+                            "oil_volume": volume.OilVolume(),
+                            "gas_volume": volume.GasVolume()
+                        })
+                       
+                all_production_volume_data.extend(production_volume_data)
 
             except Exception as e:
-                print(f"Failed to populate volumes for production: {e}")
+                print(f"Failed to process production wells: {e}")
+        df = pd.DataFrame(all_production_volume_data)
 
-        # Sort data for each UWI by production name, then date
-        for uwi in data_by_uwi:
-            data_by_uwi[uwi].sort(key=lambda x: (x["production_name"], x["date"]))
+        # Define the order of columns in the DataFrame
+        columns_order = ["prod name", "uwi", "date", "oil_volume", "gas_volume"]
 
-        # Print the sorted volumes
-        for uwi, volumes in data_by_uwi.items():
-            for volume in volumes:
-                print(f"UWI: {uwi}, Production: {volume['production_name']}, Date: {volume['date']}, Oil: {volume['oil_volume']}, Gas: {volume['gas_volume']}")
+        # Reorder columns in the DataFrame
+        df = df[columns_order]
 
-        return data_by_uwi
+        # Write the DataFrame to an Excel file
+        excel_file = "production_volume_data.xlsx"
+        df.to_excel(excel_file, index=False)
 
-   
+        print("Production volume data has been written to", excel_file)
+        #print("success")
+
+
+
+
+
+
+
     def load_uwi_list(self):
         # Assuming uwi_list contains your data
         uwi_list = self.well_list
