@@ -33,8 +33,8 @@ class DefaultProperties(QDialog):
 
 
         self.iterate_di_dropdown = QComboBox()
-        self.iterate_di_dropdown.addItem("False")
         self.iterate_di_dropdown.addItem("True")
+        self.iterate_di_dropdown.addItem("False")
         # Add more items as needed
 
         iterate_di_label = QLabel("Iterate:")  # Label for the dropdown
@@ -95,16 +95,16 @@ class DefaultProperties(QDialog):
 
 
                 # QHBoxLayout for Gas B Factor
-        b_factor_gas_layout = QHBoxLayout()
-        b_factor_gas_label = QLabel("B Factor  Gas:")
-        b_factor_gas_layout.addWidget(b_factor_gas_label)
-        b_factor_gas_layout.addStretch(1)
+        gas_b_factor_layout = QHBoxLayout()
+        gas_b_factor_label = QLabel("B Factor  Gas:")
+        gas_b_factor_layout.addWidget(gas_b_factor_label)
+        gas_b_factor_layout.addStretch(1)
         self.gas_b_factor_input = QLineEdit()
         self.gas_b_factor_input.setText(".6")
         validator = QDoubleValidator()
         self.gas_b_factor_input.setValidator(validator)
-        b_factor_gas_layout.addWidget(self.gas_b_factor_input)
-        options_layout.addLayout(b_factor_gas_layout)
+        gas_b_factor_layout.addWidget(self.gas_b_factor_input)
+        options_layout.addLayout(gas_b_factor_layout)
 
                 # QHBoxLayout for Gas Min Decline
         min_dec_gas_layout = QHBoxLayout()
@@ -482,12 +482,12 @@ class DefaultProperties(QDialog):
 
 
     def calculate_total_reserves(self):
-        # Initialize dictionaries to store the total reserves for each UWI
+        # Initialize dictionaries to store the total reserves for each uwi
         uwi_oil_reserves = {}
         uwi_gas_reserves = {}
         
-        # Group the DataFrame by UWI and sum the oil and gas volumes for each group
-        for uwi, uwi_group in self.df_combined_all.groupby('UWI'):
+        # Group the DataFrame by uwi and sum the oil and gas volumes for each group
+        for uwi, uwi_group in self.df_combined_all.groupby('uwi'):
             total_oil_reserves = uwi_group['oil_volume'].sum()
             total_gas_reserves = uwi_group['gas_volume'].sum()
             uwi_oil_reserves[uwi] = total_oil_reserves

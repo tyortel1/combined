@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QApplication, QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, 
     QComboBox, QListWidget, QGridLayout, QMessageBox, QScrollBar, 
 )
+import numpy as np
 from PyQt5.QtCore import Qt, QSignalBlocker
 import pandas as pd
 import sys
@@ -43,7 +44,10 @@ class SeisWareConnectDialog(QDialog):
         self.Grid_intersec_top = []
         self.Grid_intersec_bottom = []
         self.selected_item = None
+        self.well_data_df = pd.DataFrame()
         self.uwis_and_offsets = []
+        self.uwi_to_well_dict = {}
+        self.uwi_list = []
         self.filter_selection = None
         self.project_selection = None
   
@@ -68,7 +72,7 @@ class SeisWareConnectDialog(QDialog):
         self.filter_dropdown.setEnabled(False)
         self.filter_dropdown.currentIndexChanged.connect(self.on_filter_select)
 
-        # Listboxes for UWIs
+        # Listboxes for uwis
         self.uwi_listbox = QListWidget(self)
         self.uwi_listbox.setGeometry(20, 100, 280, 500)  # x, y, width, height
 
@@ -195,9 +199,9 @@ class SeisWareConnectDialog(QDialog):
         #    QMessageBox.critical(self,"Error", "Failed to get all the wells from the project: " + str(err))
 
 
-        ## Retrieve UWIs from the well_list
-        ## Retrieve UWIs from the well_list and sort them
-        #uwi_list = [well.UWI() for well in self.well_list]
+        ## Retrieve uwis from the well_list
+        ## Retrieve uwis from the well_list and sort them
+        #uwi_list = [well.uwi() for well in self.well_list]
         #self.sorted_uwi_list = sorted(uwi_list, reverse=False)
 
         #        # Get the grids from the project
@@ -225,13 +229,31 @@ class SeisWareConnectDialog(QDialog):
         # Retrieve well information
         well_keys = SeisWare.IDSet()
         failed_well_keys = SeisWare.IDSet()
-        well_list = SeisWare.WellList()
-        self.login_instance.WellManager().GetKeysByFilter(self.filtered_well_filter[0], well_keys)
-        self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
+        self.well_list = SeisWare.WellList()
+        try:
+            self.login_instance.WellManager().GetKeysByFilter(self.filtered_well_filter[0], well_keys)
+            self.login_instance.WellManager().GetByKeys(well_keys, self.well_list, failed_well_keys)
+        except RuntimeError as err:
+            QMessageBox.critical(self, "Failed to get all the wells from the project", str(err))
+
     
-        # Map UWIs to Well IDs
-        uwi_to_well_id = {well.UWI(): well.ID() for well in well_list}
+        # Map uwis to Well IDs
+        try:
+            uwi_to_well_id = {well.UWI(): well.ID() for well in self.well_list}  # Assuming Uwi is the correct attribute name
+        except AttributeError as e:
+            print("Error:", e)
+            return
         print(uwi_to_well_id)
+
+
+        self.uwi_to_well_dict = {}
+
+# Populate the dictionary with well objects and UWIs
+        for well in self.well_list:
+            uwi = well.UWI()
+            self.uwi_to_well_dict[uwi] = well
+        for uwi, well in self.uwi_to_well_dict.items():
+            print(f"UWI: {uwi}, Well: {well}")
 
         self.uwi_listbox.clear()
         for uwi in uwi_to_well_id.keys():
@@ -311,10 +333,100 @@ class SeisWareConnectDialog(QDialog):
                 print(f"Failed to process production wells: {e}")
       
         self.production_data = all_production_volume_data
+        self.directional_surveys()
         self.accept()
         print('swdone')
-        return self.production_data
 
+
+        
+        return self.production_data, self.directional_survey_values, self.well_data_df
+
+
+
+    def directional_surveys(self):
+        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]  # Get selected UWIs from the listbox
+        print(selected_uwis)
+
+        if not selected_uwis:
+            QMessageBox.information(self, "Info", "No wells selected for export.")
+            return
+
+        survey_data = []
+        total_lat_data = []
+
+        for uwi in selected_uwis:
+            well = self.uwi_to_well_dict.get(uwi)
+            print(well)
+            if well:
+                depth_unit = SeisWare.Unit.Meter
+                surfaceX = well.TopHole().x.Value(depth_unit)
+                surfaceY = well.TopHole().y.Value(depth_unit)
+                surfaceDatum = well.DatumElevation().Value(depth_unit)
+
+                dirsrvylist = SeisWare.DirectionalSurveyList()
+                self.login_instance.DirectionalSurveyManager().GetAllForWell(well.ID(), dirsrvylist)
+
+                # Select the directional survey if it exists
+                dirsrvy = [i for i in dirsrvylist if i.OffsetNorthType() > 0]
+
+                if dirsrvy:
+                    self.login_instance.DirectionalSurveyManager().PopulateValues(dirsrvy[0])
+                    srvypoints = SeisWare.DirectionalSurveyPointList()
+                    dirsrvy[0].Values(srvypoints)
+
+                    previous_md = None
+                    previous_tvd = None
+                    start_lat = None
+
+                    for i in srvypoints:
+                        well_uwi = well.UWI()
+                        x_offset = surfaceX + i.xOffset.Value(depth_unit)
+                        y_offset = surfaceY + i.yOffset.Value(depth_unit)
+                        tvd = surfaceDatum - i.tvd.Value(depth_unit)
+                        md = i.md.Value(depth_unit)
+
+                        if previous_md is not None and previous_tvd is not None:
+                            delta_md = md - previous_md
+                            delta_tvd = tvd - previous_tvd
+                            
+                          
+                            if delta_md != 0:
+                                ratio = delta_tvd/delta_md
+                                print(ratio)
+                                inclination = np.degrees(np.arccos(ratio))
+                            else:
+                                inclination = 0.0
+                        else:
+                            inclination = 0.0
+
+                        survey_data.append([well_uwi, x_offset, y_offset, md, tvd, inclination])
+                        previous_md = md
+                        previous_tvd = tvd
+
+                        if start_lat is None and inclination < 95:
+                            start_lat = md
+
+                    end_lat = md
+                    if start_lat is not None:
+                        total_lat = end_lat - start_lat
+                        total_lat_data.append((well_uwi, total_lat, surfaceX, surfaceY))
+                    else:
+                        total_lat_data.append((well_uwi, None, surfaceX, surfaceY))
+                    print(total_lat_data)
+                    self.well_data_df = pd.DataFrame(total_lat_data, columns=['uwi', 'lateral', 'surface_x', 'surface_y'])
+                else:
+                    QMessageBox.warning(self, "Warning", f"No directional survey found for well {uwi}.")
+
+        # Convert the survey data to a DataFrame
+        self.directional_survey_values = pd.DataFrame(survey_data, columns=['uwi', 'x_offset', 'y_offset', 'md_depth', 'tvd_depth', 'inclination'])
+        print(self.directional_survey_values)
+
+        # Print the total lateral data with surface coordinates
+        for uwi, total_lat, surfaceX, surfaceY in total_lat_data:
+            print(f"UWI: {uwi}, Total Lateral: {total_lat}, Surface X: {surfaceX}, Surface Y: {surfaceY}")
+
+
+        
 
     # Event handlers and methods to replicate the functionality of your original class
     def move_selected_right(self):

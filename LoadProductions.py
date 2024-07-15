@@ -15,25 +15,25 @@ class LoadProductions:
 
     def prepare_data(self, production_data, db_path):
         self.db_path = db_path
-        # Initialize an empty list to store combined data and UWIs
+        # Initialize an empty list to store combined data and uwis
         combined_data = []
         self.model_data = []
         self.uwi_list = []
 
         # Iterate over each entry in production data
         for entry in production_data:
-            # Extract UWI (Well ID)
+            # Extract uwi (Well ID)
             uwi = entry['uwi']
             oil_volume = entry.get('oil_volume', 0)
             gas_volume = entry.get('gas_volume', 0)
             
-            ## Add UWI to uwi_list if not already present
+            ## Add uwi to uwi_list if not already present
             #if uwi not in self.uwi_list:
             #    self.uwi_list.append(uwi)
 
             # Append the data to combined_data list
             combined_data.append({
-                'UWI': uwi,
+                'uwi': uwi,
                 'date': pd.to_datetime(entry['date']).date(), 
                 'oil_volume': oil_volume,
                 'gas_volume': gas_volume
@@ -41,12 +41,12 @@ class LoadProductions:
 
         # Convert combined_data list to a DataFrame
         self.combined_df = pd.DataFrame(combined_data)
-        self.combined_df = self.combined_df.sort_values(by=['UWI', 'date'])
-        self.uwi_list = self.combined_df['UWI'].unique().tolist()
+        self.combined_df = self.combined_df.sort_values(by=['uwi', 'date'])
+        self.uwi_list = self.combined_df['uwi'].unique().tolist()
 
-        # Iterate over combined_df for each UWI and calculate cumulative days, oil, and gas volumes
-# Use groupby to handle data by UWI in a vectorized manner
-        grouped = self.combined_df.groupby('UWI')
+        # Iterate over combined_df for each uwi and calculate cumulative days, oil, and gas volumes
+# Use groupby to handle data by uwi in a vectorized manner
+        grouped = self.combined_df.groupby('uwi')
         self.combined_df['cumulative_days'] = grouped['date'].transform(lambda x: (x - x.iloc[0]).dt.days / 365)
         try:
             production_data['oil_volume'] = pd.to_numeric(production_data['oil_volume'], errors='coerce')
@@ -93,17 +93,16 @@ class LoadProductions:
                 # Create or connect to the 'uwis' table
                 db_manager.create_uwi_table()
 
-                # Insert UWIs into the 'uwis' table
+                # Insert uwis into the 'uwis' table
                 for uwi in self.uwi_list:
                     db_manager.insert_uwi(uwi)
                 # Commit changes and disconnect from the database
-                db_manager.connection.commit()
-                db_manager.disconnect()
+
                 print("Data Loaded Succesfully")
             except Exception as e:
-                print("Error saving UWIs to the database:", e)
+                print("Error saving uwis to the database:", e)
         else:
-            print("Database path or UWI list is not specified.")
+            print("Database path or uwi list is not specified.")
     
         return self.combined_df, self.uwi_list
         #####print(self.uwi_list)  # Print uwi_list for verification
@@ -129,7 +128,7 @@ class LoadProductions:
     #            # Create or connect to the 'uwis' table
     #            db_manager.create_uwi_table()
 
-    #            # Insert UWIs into the 'uwis' table
+    #            # Insert uwis into the 'uwis' table
     #            for uwi in self.uwi_list:
     #                db_manager.insert_uwi(uwi)
 
@@ -143,7 +142,7 @@ class LoadProductions:
     #            db_manager.disconnect()
     #            print("Data Loaded Succesfully")
     #        except Exception as e:
-    #            print("Error saving UWIs to the database:", e)
+    #            print("Error saving uwis to the database:", e)
     #    else:
-    #        print("Database path or UWI list is not specified.")
+    #        print("Database path or uwi list is not specified.")
 

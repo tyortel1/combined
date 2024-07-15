@@ -305,7 +305,7 @@ class ImageGUI:
         self.project_dropdown.place(relx=0.15, rely=0.005, relwidth=0.2)
 
     def clear_widgets(self):
-        # Clear the UWI listbox and selected UWI listbox
+        # Clear the uwi listbox and selected uwi listbox
         if hasattr(self, 'uwi_listbox') and self.uwi_listbox:
             self.uwi_listbox.delete(0, 'end')
 
@@ -330,7 +330,7 @@ class ImageGUI:
         except AttributeError:
             pass
 
-        # Clear the well UWI selection if it exists
+        # Clear the well uwi selection if it exists
         try:
             self.planned_uwi.set("")
         except AttributeError:
@@ -396,9 +396,9 @@ class ImageGUI:
             messagebox.showerror("Error", "Failed to get all the wells from the project: " + str(err))
 
 
-        # Retrieve UWIs from the well_list
-       # Retrieve UWIs from the well_list and sort them
-        uwi_list = [well.UWI() for well in self.well_list]
+        # Retrieve uwis from the well_list
+       # Retrieve uwis from the well_list and sort them
+        uwi_list = [well.uwi() for well in self.well_list]
         self.sorted_uwi_list = sorted(uwi_list, reverse=False)
 
                 # Get the grids from the project
@@ -430,8 +430,8 @@ class ImageGUI:
         #self.login_instance.WellManager().GetKeysByFilter(filtered_well_filter[0], well_keys)
         #self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
     
-        ## Map UWIs to Well IDs
-        #uwi_to_well_id = {well.UWI(): well.ID() for well in well_list}
+        ## Map uwis to Well IDs
+        #uwi_to_well_id = {well.uwi(): well.ID() for well in well_list}
         #print(uwi_to_well_id)
 
         production_keys = SeisWare.IDSet()
@@ -473,8 +473,8 @@ class ImageGUI:
                     failed_well_keys = SeisWare.IDSet()
                     well_list = SeisWare.WellList()
                     self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
-                    # Map UWIs to Well IDs
-                    uwi = {well.UWI() for well in well_list}
+                    # Map uwis to Well IDs
+                    uwi = {well.uwi() for well in well_list}
                     print(uwi)
                  
                     for volume in volume_list:
@@ -525,10 +525,10 @@ class ImageGUI:
     def on_uwi_select(self, event):
         selected_indices = self.uwi_listbox.curselection()
         selected_uwis = [self.uwi_listbox.get(idx) for idx in selected_indices]
-        # Add the selected UWIs to the selected listbox
+        # Add the selected uwis to the selected listbox
         for uwi in selected_uwis:
             self.selected_uwi_listbox.insert(tk.END, uwi)
-        # Remove the selected UWIs from the original listbox
+        # Remove the selected uwis from the original listbox
         for idx in reversed(selected_indices):
             self.uwi_listbox.delete(idx)
 
@@ -536,10 +536,10 @@ class ImageGUI:
     def on_selected_uwi_select(self, event):
         selected_indices = self.selected_uwi_listbox.curselection()
         self.selected_uwis = [self.selected_uwi_listbox.get(idx) for idx in selected_indices]
-        # Add the selected UWIs back to the original listbox
+        # Add the selected uwis back to the original listbox
         for uwi in self.selected_uwis:
             self.uwi_listbox.insert(tk.END, uwi)
-        # Remove the selected UWIs from the selected listbox
+        # Remove the selected uwis from the selected listbox
         for idx in reversed(selected_indices):
             self.selected_uwi_listbox.delete(idx)
 

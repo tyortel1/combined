@@ -24,7 +24,7 @@ class Plotting(QObject):
             elif data_type == "Cash Flow":
                 self.cash_flow(uwi_prod_rates_all, current_uwi, distribution_type, uwi_model_data)
 
-
+     
     def generate_decline_curve(self, uwi_prod_rates_all, current_uwi, distribution_type):
 
         if distribution_type == "Normal":
@@ -60,13 +60,14 @@ class Plotting(QObject):
             trace_gas_rate = go.Scatter(x=uwi_prod_rates_all['date'], y=uwi_prod_rates_all['q_gas'], mode='lines', name='Gas Production Rate')
             traces.append(trace_gas_rate)
 
-        layout = go.Layout(title=f'Production Volumes Over Time - UWI: {current_uwi}', xaxis=dict(title='Date'), yaxis=dict(title='Volume', type=yaxis_type))
+        layout = go.Layout(title=f'Production Volumes Over Time - uwi: {current_uwi}', xaxis=dict(title='Date'), yaxis=dict(title='Volume', type=yaxis_type))
         fig = go.Figure(data=traces, layout=layout)
         # Generate HTML content
         html_content = py_offline.plot(fig, include_plotlyjs='cdn', output_type='div')
         
     # Update the UI element directly
         self.html_content = html_content
+        return html_content
 
 
 
@@ -186,7 +187,7 @@ class Plotting(QObject):
 
         # Set up the layout
         layout = go.Layout(
-            title=f'Annual Cash Flow - UWI: {current_uwi}',
+            title=f'Annual Cash Flow - uwi: {current_uwi}',
             xaxis=dict(title='Year', type='category'),  # Use category to treat years as discrete intervals
             yaxis=dict(title='Cash Flow ($)', zeroline=True),
             barmode='overlay'  # Set barmode to relative

@@ -21,6 +21,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ComboBoxDelegate.py" />
+    <Compile Include="DateDelegate.py" />
+    <Compile Include="PlotTotals.py" />
+    <Compile Include="ScenarioNameDialog.py" />
+    <Compile Include="numeric_table_widget_item.py" />
+    <Compile Include="LaunchCombinedCashflow.py" />
+    <Compile Include="AddWell.py" />
     <Compile Include="ProjectDialog.py" />
     <Compile Include="DatabaseManager.py" />
     <Compile Include="DataProperties.py" />
@@ -31,8 +38,8 @@
     <Compile Include="GetGraphData.py" />
     <Compile Include="DefaultProperties.py" />
     <Compile Include="ModelProperties.py" />
-    <Compile Include="module1.py" />
-    <Compile Include="ui_main.py" />
+    <Compile Include="SaveDeclineCurveDialog.py" />
+    <Compile Include="UiMain.py" />
     <Compile Include="plotting.py" />
     <Compile Include="SeisWareConnect.py" />
   </ItemGroup>

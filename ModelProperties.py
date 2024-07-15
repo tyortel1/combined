@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 from PyQt5.QtCore import QDateTime
-from ui_main import UI_main
+from UiMain import UI_main
 
 
 
@@ -23,7 +23,7 @@ class  ModelProperties:
         self.default_properties = default_properties
  
 
-        for uwi, group in self.combined_df.groupby('UWI'):
+        for uwi, group in self.combined_df.groupby('uwi'):
             group = group.sort_values(by='date').reset_index(drop=True)
             max_oil_volume, max_gas_volume = 0, 0
             one_year_oil_volume, one_year_gas_volume = 0, 0
@@ -44,7 +44,15 @@ class  ModelProperties:
                     one_year_oil_row_index = max_oil_index + 11
                 else:
                     one_year_oil_row_index = group.index[-1]   # Use the index of the last row
-                one_year_oil_volume = group.loc[one_year_oil_row_index, 'oil_volume']
+
+
+                if one_year_oil_row_index in group.index:
+                    one_year_oil_volume = group.loc[one_year_oil_row_index, 'oil_volume']
+                else:
+                    one_year_oil_volume = 0
+
+
+
 
                 if max_oil_volume != 0:
                     di_oil = (max_oil_volume - one_year_oil_volume) / max_oil_volume * 100
@@ -69,7 +77,12 @@ class  ModelProperties:
                     one_year_gas_row_index = max_gas_index + 11
                 else:
                     one_year_gas_row_index = last_index_value  # Use the index of the last row
-                one_year_gas_volume = group.loc[one_year_gas_row_index, 'gas_volume']
+
+                if one_year_gas_row_index in group.index:
+                    one_year_gas_volume = group.loc[one_year_gas_row_index, 'gas_volume']
+                else:
+                    one_year_gas_volume = 0
+
                 if max_gas_volume != 0:
                     di_gas = (max_gas_volume - one_year_gas_volume) / max_gas_volume * 100
                     if di_gas == 100:
@@ -85,8 +98,8 @@ class  ModelProperties:
 
             # Set b factor to 1.05 for both oil and gas
            # Set default values for b factors and min dec
-            b_factor_oil = self.default_properties.get("oil_b_factor")
-            b_factor_gas = self.default_properties.get("gas_b_factor")
+            oil_b_factor = self.default_properties.get("oil_b_factor")
+            gas_b_factor = self.default_properties.get("gas_b_factor")
             min_dec_oil = self.default_properties.get("min_dec_oil")
             min_dec_gas = self.default_properties.get("min_dec_gas")
             iterate_di_text = self.default_properties.get("iterate_di")
@@ -106,13 +119,13 @@ class  ModelProperties:
             one_year_gas_volume = round(one_year_gas_volume, 2)
             di_oil = round(di_oil, 2)
             di_gas = round(di_gas, 2)
-            b_factor_oil = round(b_factor_oil, 2)
-            b_factor_gas = round(b_factor_gas, 2)
+            oil_b_factor = round(oil_b_factor, 2)
+            gas_b_factor = round(gas_b_factor, 2)
             min_dec_oil = round(min_dec_oil, 2)
             min_dec_gas = round(min_dec_gas, 2)
-            # Store the data for the current UWI
+            # Store the data for the current uwi
             uwi_data = {
-                        'UWI': uwi,
+                        'uwi': uwi,
                         'max_oil_production': max_oil_volume,
                         'max_gas_production': max_gas_volume,
                         'max_oil_production_date': max_oil_production_date,
@@ -121,8 +134,8 @@ class  ModelProperties:
                         'one_year_gas_production': one_year_gas_volume,
                         'di_oil': di_oil,
                         'di_gas': di_gas,
-                        'b_factor_oil': b_factor_oil,
-                        'b_factor_gas': b_factor_gas,
+                        'oil_b_factor': oil_b_factor,
+                        'gas_b_factor': gas_b_factor,
                         'min_dec_oil' : min_dec_oil,
                         'min_dec_gas' : min_dec_gas,
                         'model_oil': 'exponential',

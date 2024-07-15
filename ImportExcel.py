@@ -90,7 +90,7 @@ class ImportExcelDialog(QDialog):
         columns = df.columns.tolist()
 
         # Create a dropdown for each required field
-        requiredFields = ["UWI", "Date", "Gas Volume", "Oil Volume"]
+        requiredFields = ["uwi", "Date", "Gas Volume", "Oil Volume"]
         for field in requiredFields:
             label = QLabel(f"{field}:")
             comboBox = QComboBox()
@@ -106,14 +106,14 @@ class ImportExcelDialog(QDialog):
             return
 
         # Fetch column selections from the dropdowns
-        selectedUWIColumn = self.columnSelectors["UWI"].currentText()
+        selecteduwiColumn = self.columnSelectors["uwi"].currentText()
         selectedDateColumn = self.columnSelectors["Date"].currentText()
         selectedGasVolumeColumn = self.columnSelectors["Gas Volume"].currentText()
         selectedOilVolumeColumn = self.columnSelectors["Oil Volume"].currentText()
 
         ## Validate the column selections
-        #if 'Select Column' in [selectedUWIColumn, selectedDateColumn]:
-        #    QMessageBox.warning(self, "Selection Required", "Please select a column for UWI and Date fields.")
+        #if 'Select Column' in [selecteduwiColumn, selectedDateColumn]:
+        #    QMessageBox.warning(self, "Selection Required", "Please select a column for uwi and Date fields.")
         #    return
         #if 'Select Column' in [selectedGasVolumeColumn, selectedOilVolumeColumn]:
         #    QMessageBox.warning(self, "Selection Required", "Please select at least one volume column (Gas or Oil).")
@@ -123,7 +123,7 @@ class ImportExcelDialog(QDialog):
         try:
             self.production_data = []
             for _, row in self.df.iterrows():
-                uwi = row[selectedUWIColumn]
+                uwi = row[selecteduwiColumn]
                 try:
                     # Convert and format the date column once
                     formatted_date = pd.to_datetime(row[selectedDateColumn]).strftime('%Y-%m-%d')
@@ -146,7 +146,7 @@ class ImportExcelDialog(QDialog):
                     'oil_volume': oil_volume
                 })
         except IndexError as e:
-            QMessageBox.critical(self, "Error", "An error occurred: No entries found for selected UWI. Please check your selections and try again.")
+            QMessageBox.critical(self, "Error", "An error occurred: No entries found for selected uwi. Please check your selections and try again.")
             return
         except Exception as e:
             QMessageBox.critical(self, "Error Processing File", f"An unexpected error occurred: {str(e)}")
