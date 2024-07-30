@@ -19,3 +19,7 @@ env/
 *.tar.gz
 *.iso
 *.jar
+
+# Ignore build directories created by PyInstaller
+dist/
+build/
