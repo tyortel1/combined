@@ -1,0 +1,21 @@
+# Ignore Python compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environment directories
+venv/
+env/
+
+# Ignore binary files
+*.dll
+*.exe
+*.so
+*.dylib
+
+# Ignore large data files
+*.zip
+*.tar.gz
+*.iso
+*.jar
