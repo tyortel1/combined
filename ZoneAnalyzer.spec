@@ -73,3 +73,14 @@ exe = EXE(
     entitlements_file=None,
     icon=[icon_path],
 )
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='ZoneAnalyzer'
+)

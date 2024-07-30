@@ -210,25 +210,7 @@ class Map(QMainWindow):
 
         self.setupUi()
         self.set_interactive_elements_enabled(False) 
-        threading.Thread(target=self.start_tray_icon).start()
-
-    def start_tray_icon(self):
-        def create_image():
-            return Image.open("icons/ZoneAnalyzer.png")  # Path to your icon file
-
-        def on_quit(icon, item):
-            icon.stop()
-            QApplication.quit()
-
-        def setup(icon):
-            icon.visible = True
-
-        icon = Icon("ZoneAnalyzer")
-        icon.icon = create_image()
-        icon.menu = Menu(
-            MenuItem("Quit", on_quit)
-        )
-        icon.run(setup)
+ 
 
     def setupUi(self):
         self.setObjectName("MainWindow")
