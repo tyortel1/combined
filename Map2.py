@@ -211,7 +211,17 @@ class Map(QMainWindow):
         self.setupUi()
         self.set_interactive_elements_enabled(False) 
  
+    def closeEvent(self, event):
+        # Perform any cleanup here
+        self.cleanup()
+        event.accept()
 
+    def cleanup(self):
+        # Ensure all connections and resources are properly closed
+        if self.connection:
+            self.connection.Disconnect()
+            self.connection = None
+        QCoreApplication.quit()
     def setupUi(self):
         self.setObjectName("MainWindow")
         self.resize(1200, 900)
