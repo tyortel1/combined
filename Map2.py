@@ -1,3 +1,4 @@
+# main.py
 import sys
 import os
 import json
@@ -6,9 +7,9 @@ import math
 import numpy as np
 from scipy.spatial import KDTree
 from PySide2.QtWidgets import QApplication, QFileDialog, QMainWindow, QSpinBox, QSpacerItem, QToolBar, QCheckBox, QSlider, QLabel
-from PySide2.QtWidgets import QSizePolicy, QAction, QMessageBox, QErrorMessage, QDialog,QSlider, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
+from PySide2.QtWidgets import QSizePolicy, QAction, QMessageBox, QErrorMessage, QDialog, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
 from PySide2.QtGui import QIcon, QColor, QPainter, QPen, QFont
-from PySide2.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QRectF, Signal
+from PySide2.QtCore import Qt, QPointF, QCoreApplication, QMetaObject
 from shapely.geometry import LineString
 import SeisWare
 from Exporting import ExportDialog
@@ -23,146 +24,8 @@ from shapely.geometry import LineString, Point, MultiPoint, GeometryCollection
 from ColorEdit import ColorEditor
 import time
 import ujson as json 
+from DrawingArea import DrawingArea  # Import the DrawingArea class
 
-
-
-class DrawingArea(QWidget):
-    def __init__(self, map_instance, fixed_width, fixed_height, parent=None):
-        super().__init__(parent)
-        self.setFixedSize(fixed_width, fixed_height)
-        self.map_instance = map_instance
-        self.scale = 1.0
-        self.offset = QPointF(0, 0)
-        self.scaled_data = {}
-        self.currentLine = []
-        self.originalCurrentLine = []
-        self.intersectionPoints = []
-        self.originalIntersectionPoints = []
-        self.zone_color_df = pd.DataFrame()
-        self.clickPoints = []
-        self.rectangles = []
-        self.hovered_uwi = None
-        self.show_uwis = True
-        self.uwi_opacity = 0.5
-
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.translate(self.offset)
-        painter.scale(self.scale, self.scale)
-        painter.fillRect(self.rect(), Qt.white)
-
-        zone_colors = {index: QColor(*row['Zone Color (RGB)']) for index, row in self.zone_color_df.iterrows()} if not self.zone_color_df.empty else {}
-
-        for uwi, scaled_offsets in self.scaled_data.items():
-            points = []
-            for (scaled_point, tvd, zone) in scaled_offsets:
-                inverted_point = QPointF(scaled_point.x(), self.height() - scaled_point.y())
-                points.append((inverted_point, zone))
-
-            for i in range(1, len(points)):
-                zone = points[i - 1][1]
-                color = zone_colors.get(zone, QColor(0, 0, 0))
-                pen = QPen(color)
-                pen.setWidth(self.map_instance.line_width)
-                color.setAlphaF(self.map_instance.line_opacity)
-                painter.setPen(pen)
-                painter.drawLine(points[i - 1][0], points[i][0])
-
-            if self.show_uwis and points:
-                painter.save()
-                painter.translate(points[0][0])
-                painter.rotate(-45)
-                font = QFont()
-                if uwi == self.hovered_uwi:
-                    color = QColor(255, 0, 0)
-                    font.setPointSize(self.map_instance.uwi_width * 2)
-                    font.setBold(True)
-                else:
-                    color = QColor(0, 0, 0)
-                    font.setPointSize(self.map_instance.uwi_width)
-                    font.setBold(False)
-
-                color.setAlphaF(self.map_instance.uwi_opacity)
-                painter.setPen(color)
-                painter.setFont(font)
-                painter.drawText(0, 0, uwi)
-                painter.restore()
-
-        if len(self.currentLine) > 1:
-            redPen = QPen(Qt.red)
-            redPen.setWidth(2)
-            painter.setPen(redPen)
-            for i in range(1, len(self.currentLine)):
-                painter.drawLine(self.currentLine[i - 1], self.currentLine[i])
-
-        for point in self.intersectionPoints:
-            painter.drawEllipse(point, 5, 5)
-
-        for point in self.clickPoints:
-            painter.setPen(Qt.red)
-            painter.setBrush(Qt.red)
-            painter.drawRect(point.x() - 2, point.y() - 2, 4, 4)
-
-        for top_left, bottom_right in self.rectangles:
-            try:
-                linePen = QPen(Qt.blue)
-                linePen.setWidth(2)
-                painter.setPen(linePen)
-                painter.setBrush(Qt.NoBrush)
-
-                top_right = QPointF(bottom_right.x(), top_left.y())
-                bottom_left = QPointF(top_left.x(), bottom_right.y())
-
-                painter.drawLine(top_left, top_right)
-                painter.drawLine(top_right, bottom_right)
-                painter.drawLine(bottom_right, bottom_left)
-                painter.drawLine(bottom_left, top_left)
-            except Exception as e:
-                print(f"Error drawing lines: {e}")
-
-    def setScaledData(self, scaled_data, zone_color_df):
-        self.scaled_data = scaled_data
-        self.zone_color_df = zone_color_df
-        self.zone_color_df['Zone Color (RGB)'] = self.zone_color_df['Zone Color (RGB)'].apply(lambda x: tuple(x))
-        self.zone_color_df.index = self.zone_color_df.index.astype(int)
-        self.update()
-
-    def setCurrentLine(self, current_line):
-        self.currentLine = current_line
-        self.originalCurrentLine = [(point.x(), point.y()) for point in current_line]
-        self.update()
-
-    def setIntersectionPoints(self, points):
-        self.intersectionPoints = points
-        self.originalIntersectionPoints = [(point.x(), point.y()) for point in points]
-        self.update()
-
-    def addRectangle(self, top_left, bottom_right):
-        self.rectangles.clear()
-        self.rectangles.append((top_left, bottom_right))
-        self.update()
-
-    def clearCurrentLineAndIntersections(self):
-        self.currentLine = []
-        self.originalCurrentLine = []
-        self.intersectionPoints = []
-        self.originalIntersectionPoints = []
-        self.clickPoints = []
-        self.update()
-
-    def addClickPoint(self, point):
-        self.clickPoints.append(point)
-        self.update()
-
-    def setScale(self, new_scale):
-        self.scale = new_scale
-        self.update()
-
-    def setOffset(self, new_offset):
-        self.offset = new_offset
-        self.update()
 
 class Map(QMainWindow):
     def __init__(self):
@@ -241,9 +104,6 @@ class Map(QMainWindow):
         self.uwiCheckbox.stateChanged.connect(self.toggle_uwi_labels)
         self.optionsLayout.addWidget(self.uwiCheckbox)
     
-
-
-
         self.uwiWidthLabel = QLabel("UWI Size:", self)
         self.optionsLayout.addWidget(self.uwiWidthLabel)
 
@@ -254,7 +114,8 @@ class Map(QMainWindow):
         self.uwiWidthSlider.setValue(self.line_width)
         self.uwiWidthSlider.valueChanged.connect(self.change_uwi_width)
         self.optionsLayout.addWidget(self.uwiWidthSlider)
-                # Label for the opacity slider
+
+        # Label for the opacity slider
         self.opacityLabel = QLabel("UWI Label Opacity:", self)
         self.optionsLayout.addWidget(self.opacityLabel)
     
@@ -266,7 +127,7 @@ class Map(QMainWindow):
         self.opacitySlider.valueChanged.connect(self.change_opacity)
         self.optionsLayout.addWidget(self.opacitySlider)
 
-   # Label for the line width slider
+        # Label for the line width slider
         self.lineWidthSliderLabel = QLabel("Line Width:", self)
         self.optionsLayout.addWidget(self.lineWidthSliderLabel)
 
@@ -278,7 +139,6 @@ class Map(QMainWindow):
         self.lineWidthSlider.valueChanged.connect(self.change_line_width)
         self.optionsLayout.addWidget(self.lineWidthSlider)
 
-
         self.lineLabel = QLabel("Line Opacity", self)
         self.optionsLayout.addWidget(self.lineLabel)
     
@@ -289,9 +149,6 @@ class Map(QMainWindow):
         self.lineOpacitySlider.setValue(50)
         self.lineOpacitySlider.valueChanged.connect(self.change_line_opacity)
         self.optionsLayout.addWidget(self.lineOpacitySlider)
-
-   # Label for the line width slider
-
 
         # Adding a spacer to push everything to the top
         self.optionsLayout.addStretch()
@@ -309,7 +166,6 @@ class Map(QMainWindow):
         self.scrollArea.horizontalScrollBar().valueChanged.connect(self.updateOffset)
         self.scrollArea.verticalScrollBar().valueChanged.connect(self.updateOffset)
         self.scrollArea.setWidgetResizable(False) 
- # Adding the zoom layout
 
         # Menu bar
         self.menu_bar = QMenuBar(self)
@@ -367,20 +223,17 @@ class Map(QMainWindow):
         self.color_editor_action.triggered.connect(self.open_color_editor)
        
         # Zoom controls
-        self.zoomOut= self.toolbar.addAction(self.zoom_out_icon, "Zoom Out")
+        self.zoomOut = self.toolbar.addAction(self.zoom_out_icon, "Zoom Out")
         self.zoomOut.triggered.connect(self.zoom_out)
 
         self.zoomIn = self.toolbar.addAction(self.zoom_in_icon, "Zoom Out")
         self.zoomIn.triggered.connect(self.zoom_in)
   
-
         self.exportSw = self.toolbar.addAction(self.exportSw_icon, "Send to SeisWare")
         self.exportSw.triggered.connect(self.export_to_sw)
 
-
         self.retranslateUi()
         QMetaObject.connectSlotsByName(self)
-
 
     def retranslateUi(self):
         self.setWindowTitle(QCoreApplication.translate("MainWindow", "Zone Analyzer", None))
@@ -484,7 +337,7 @@ class Map(QMainWindow):
         self.scrollArea.verticalScrollBar().setRange(0, max(0, scaled_height - self.scrollArea.viewport().height()))
 
         self.scrollArea.horizontalScrollBar().setVisible(scaled_width > self.scrollArea.viewport().width())
-        self.scrollArea.verticalScrollBar().setV
+        self.scrollArea.verticalScrollBar().setVisible(scaled_height > self.scrollArea.viewport().height())
 
     def updateOffset(self):
         x = self.scrollArea.horizontalScrollBar().value()
@@ -495,16 +348,13 @@ class Map(QMainWindow):
         self.drawingArea.show_uwis = (state == Qt.Checked)
         self.drawingArea.update()
 
-
-        
     def change_uwi_width(self, value):
-        self.uwi_width= value 
+        self.uwi_width = value 
         self.drawingArea.update()
 
     def change_opacity(self, value):
         self.uwi_opacity = value / 100.0
         self.drawingArea.update()
-
 
     def change_line_width(self, value):
         self.line_width = value 
@@ -692,13 +542,13 @@ class Map(QMainWindow):
         
             # Total time
             print("Total export time: {:.2f} seconds".format(time.time() - start_time))
+
     def mapproperties(self):
         # Create a copy of the DataFrame
         zone_color_df_copy = self.zone_color_df.copy()
         # Pass the copy to the dialog
         dialog = SWPropertiesEdit(zone_color_df_copy)
         dialog.exec_()
-
 
     def export_to_sw(self):
         self.connection = SeisWare.Connection()
@@ -827,6 +677,7 @@ class Map(QMainWindow):
                 continue
 
         return 0
+
     def mousePressEvent(self, event):
         if self.drawing:
             if event.button() == Qt.LeftButton:
@@ -961,6 +812,7 @@ class Map(QMainWindow):
 
         print(f"Found closest UWI: {closest_uwi} with distance: {min_distance}")
         return closest_uwi
+
     def calculate_interpolated_tvd(self, intersection, well_line_points):
         intersection_coords = (intersection.x, intersection.y)
         for i in range(len(well_line_points) - 1):
@@ -1018,7 +870,6 @@ class Map(QMainWindow):
         self.plot_gb = PlotGB(self.grid_xyz_top, self.grid_xyz_bottom, self.scaled_points, self.total_zone_number, self.zone_color_df, self.intersections, main_app=self)
         self.plot_gb.show()
 
-
     def open_color_editor(self):
         editor = ColorEditor(self.zone_color_df, self)
         editor.color_changed.connect(self.update_zone_colors)
@@ -1027,8 +878,6 @@ class Map(QMainWindow):
     def update_zone_colors(self, updated_df):
         self.zone_color_df = updated_df
         self.drawingArea.setScaledData(self.scaled_data, self.zone_color_df)
-
-
 
     def handle_hover_event(self, uwi):
         self.drawingArea.hovered_uwi = uwi  
@@ -1047,6 +896,7 @@ class Map(QMainWindow):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec_()
+
 
 if __name__ == "__main__":
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
