@@ -7,12 +7,12 @@ from PySide2.QtWebEngineWidgets import QWebEngineView
 import pandas as pd
 
 class Plot(QDialog):
-    def __init__(self, grid_well_data_df, zone_color_df, total_zone_number, parent=None):
+    def __init__(self, depth_grid_data_df, depth_grid_color_df, parent=None):
         super().__init__(parent)
         self.main_app = parent
         self.grid_well_data_df = grid_well_data_df
-        self.zone_color_df = zone_color_df
-        self.total_zone_number = int(total_zone_number)
+        self.depth_grid_data_df = depth_grid_data_df
+        self.depth_grid_color_df = depth_grid_color_df
         self.uwi_list = self.grid_well_data_df['UWI'].unique().tolist()
         self.current_index = 0
         self.init_ui()

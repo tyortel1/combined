@@ -1,28 +1,25 @@
-
+import sys
 import SeisWare
 import pandas as pd
-import numpy as np
-from scipy.spatial import KDTree
-
-from Exporting import ExportDialog
-from PySide2.QtWidgets import QApplication, QFileDialog, QMainWindow, QSpinBox,QSpacerItem, QToolBar
-from PySide2.QtWidgets import QSizePolicy,QApplication,  QDialog, QWidget,QAbstractItemView, QVBoxLayout, QHBoxLayout,QMenu, QMenuBar, QLabel, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea, QMenu, QMessageBox, QErrorMessage
+from PySide2.QtWidgets import QApplication, QDialog, QLabel, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
 from PySide2.QtCore import Qt
-import SeisWare
 from PySide2.QtGui import QIcon, QColor
+import numpy as np
 
 
 class DataLoaderDialog(QDialog):
     def __init__(self, import_options_df=None, parent=None):
         super(DataLoaderDialog, self).__init__(parent)
         self.setWindowTitle("Load Data")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 800, 800)  # Adjusted height
         self.setupUi()
         self.connect_to_seisware()
         self.import_options_df = import_options_df
+        self.directional_surveys_df = pd.DataFrame()
+        self.depth_grid_data_df = pd.DataFrame()
+        self.attribute_grid_data_df = pd.DataFrame()
         if self.import_options_df is not None:
             self.set_import_parameters(self.import_options_df)
-
 
     def setupUi(self):
         layout = QVBoxLayout(self)
@@ -52,154 +49,249 @@ class DataLoaderDialog(QDialog):
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
-        # Layout for UWI list boxes and arrows
-        list_layout = QHBoxLayout()
 
+        uwi_label = QLabel("Select UWI:")
+        layout.addWidget(uwi_label)  
+        # Layout for UWI list boxes and arrows
+        well_list_layout = QHBoxLayout()
         self.uwi_listbox = QListWidget()
         self.uwi_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        list_layout.addWidget(self.uwi_listbox)
+        well_list_layout.addWidget(self.uwi_listbox)
 
-        arrow_layout = QVBoxLayout()
+        well_arrow_layout = QVBoxLayout()
+        well_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.move_all_wells_right_button = QPushButton()
+        self.move_all_wells_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
+        self.move_all_wells_right_button.clicked.connect(self.move_all_wells_right)
+        well_arrow_layout.addWidget(self.move_all_wells_right_button)
 
-        self.move_all_right_button = QPushButton()
-        self.move_all_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
-        self.move_all_right_button.clicked.connect(self.move_all_right)
-        arrow_layout.addWidget(self.move_all_right_button)
+        self.move_wells_right_button = QPushButton()
+        self.move_wells_right_button.setIcon(QIcon("icons/arrow_right.ico"))
+        self.move_wells_right_button.clicked.connect(self.move_selected_wells_right)
+        well_arrow_layout.addWidget(self.move_wells_right_button)
 
-        self.move_right_button = QPushButton()
-        self.move_right_button.setIcon(QIcon("icons/arrow_right.ico"))
-        self.move_right_button.clicked.connect(self.move_selected_right)
-        arrow_layout.addWidget(self.move_right_button)
+        self.move_wells_left_button = QPushButton()
+        self.move_wells_left_button.setIcon(QIcon("icons/arrow_left.ico"))
+        self.move_wells_left_button.clicked.connect(self.move_selected_wells_left)
+        well_arrow_layout.addWidget(self.move_wells_left_button)
 
-        self.move_left_button = QPushButton()
-        self.move_left_button.setIcon(QIcon("icons/arrow_left.ico"))
-        self.move_left_button.clicked.connect(self.move_selected_left)
-        arrow_layout.addWidget(self.move_left_button)
+        self.move_all_wells_left_button = QPushButton()
+        self.move_all_wells_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
+        self.move_all_wells_left_button.clicked.connect(self.move_all_wells_left)
+        well_arrow_layout.addWidget(self.move_all_wells_left_button)
 
-        self.move_all_left_button = QPushButton()
-        self.move_all_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
-        self.move_all_left_button.clicked.connect(self.move_all_left)
-        arrow_layout.addWidget(self.move_all_left_button)
-
-        arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        list_layout.addLayout(arrow_layout)
+        well_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        well_list_layout.addLayout(well_arrow_layout)
 
         self.selected_uwi_listbox = QListWidget()
         self.selected_uwi_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        list_layout.addWidget(self.selected_uwi_listbox)
+        well_list_layout.addWidget(self.selected_uwi_listbox)
 
-        layout.addLayout(list_layout)
+        layout.addLayout(well_list_layout)
 
-        # Top Grid
-        top_grid_layout = QHBoxLayout()
-        self.grid_top_label = QLabel("Top Grid:")
-        self.grid_top_label.setFixedWidth(label_width)
-        self.grid_combobox = QComboBox()
-        self.grid_combobox.setFixedWidth(dropdown_width)
-        top_grid_layout.addWidget(self.grid_top_label)
-        top_grid_layout.addWidget(self.grid_combobox)
-        top_grid_layout.addStretch()
-        layout.addLayout(top_grid_layout)
 
-        # Bottom Grid
-        bottom_grid_layout = QHBoxLayout()
-        self.grid_bottom_label = QLabel("Bottom Grid:")
-        self.grid_bottom_label.setFixedWidth(label_width)
-        self.grid_bottom_combobox = QComboBox()
-        self.grid_bottom_combobox.setFixedWidth(dropdown_width)
-        bottom_grid_layout.addWidget(self.grid_bottom_label)
-        bottom_grid_layout.addWidget(self.grid_bottom_combobox)
-        bottom_grid_layout.addStretch()
-        layout.addLayout(bottom_grid_layout)
+        depth_grids_label = QLabel("Select Depth Grids:")
+        layout.addWidget(depth_grids_label)  
+        # New UI elements for Depth Grids
+        depth_grid_list_layout = QHBoxLayout()
+        self.depth_grid_listbox = QListWidget()
+        self.depth_grid_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        depth_grid_list_layout.addWidget(self.depth_grid_listbox)
 
-        # Zones
-        zones_layout = QHBoxLayout()
-        self.number_of_zones_label = QLabel("Zones:")
-        self.number_of_zones_label.setFixedWidth(label_width)
-        self.number_of_zones = QSpinBox()
-        self.number_of_zones.setValue(6)
-        self.number_of_zones.setFixedWidth(dropdown_width)
-        zones_layout.addWidget(self.number_of_zones_label)
-        zones_layout.addWidget(self.number_of_zones)
-        zones_layout.addStretch()
-        layout.addLayout(zones_layout)
+        depth_grid_arrow_layout = QVBoxLayout()
+        depth_grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        self.calculate_button = QPushButton("Calculate")
-        self.calculate_button.clicked.connect(self.calculate_grid_well_data)
-        self.calculate_button.setFixedWidth(dropdown_width)
-        layout.addWidget(self.calculate_button)
+        self.move_all_depth_grids_right_button = QPushButton()
+        self.move_all_depth_grids_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
+        self.move_all_depth_grids_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
+        self.move_all_depth_grids_right_button.clicked.connect(self.move_all_depth_grids_right)
+        depth_grid_arrow_layout.addWidget(self.move_all_depth_grids_right_button)
+
+        self.move_depth_grids_right_button = QPushButton()
+        self.move_depth_grids_right_button.setIcon(QIcon("icons/arrow_right.ico"))
+        self.move_depth_grids_right_button.clicked.connect(self.move_selected_depth_grids_right)
+        depth_grid_arrow_layout.addWidget(self.move_depth_grids_right_button)
+
+        self.move_depth_grids_left_button = QPushButton()
+        self.move_depth_grids_left_button.setIcon(QIcon("icons/arrow_left.ico"))
+        self.move_depth_grids_left_button.clicked.connect(self.move_selected_depth_grids_left)
+        depth_grid_arrow_layout.addWidget(self.move_depth_grids_left_button)
+
+        self.move_all_depth_grids_left_button = QPushButton()
+        self.move_all_depth_grids_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
+        self.move_all_depth_grids_left_button.clicked.connect(self.move_all_depth_grids_left)
+        depth_grid_arrow_layout.addWidget(self.move_all_depth_grids_left_button)
+
+        depth_grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        depth_grid_list_layout.addLayout(depth_grid_arrow_layout)
+
+        self.selected_depth_grid_listbox = QListWidget()
+        self.selected_depth_grid_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        depth_grid_list_layout.addWidget(self.selected_depth_grid_listbox)
+
+        layout.addLayout(depth_grid_list_layout)
+
+
+        attribute_grids_label = QLabel("Select Attribute Grids:")
+        layout.addWidget(attribute_grids_label)  # Add this line for Attribute Grids label
+
+        # New UI elements for Attribute Grids
+        attribute_grid_list_layout = QHBoxLayout()
+        self.attribute_grid_listbox = QListWidget()
+        self.attribute_grid_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        attribute_grid_list_layout.addWidget(self.attribute_grid_listbox)
+
+        attribute_grid_arrow_layout = QVBoxLayout()
+        attribute_grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        self.move_all_attribute_grids_right_button = QPushButton()
+        self.move_all_attribute_grids_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
+        self.move_all_attribute_grids_right_button.clicked.connect(self.move_all_attribute_grids_right)
+        attribute_grid_arrow_layout.addWidget(self.move_all_attribute_grids_right_button)
+
+        self.move_attribute_grids_right_button = QPushButton()
+        self.move_attribute_grids_right_button.setIcon(QIcon("icons/arrow_right.ico"))
+        self.move_attribute_grids_right_button.clicked.connect(self.move_selected_attribute_grids_right)
+        attribute_grid_arrow_layout.addWidget(self.move_attribute_grids_right_button)
+
+        self.move_attribute_grids_left_button = QPushButton()
+        self.move_attribute_grids_left_button.setIcon(QIcon("icons/arrow_left.ico"))
+        self.move_attribute_grids_left_button.clicked.connect(self.move_selected_attribute_grids_left)
+        attribute_grid_arrow_layout.addWidget(self.move_attribute_grids_left_button)
+
+        self.move_all_attribute_grids_left_button = QPushButton()
+        self.move_all_attribute_grids_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
+        self.move_all_attribute_grids_left_button.clicked.connect(self.move_all_attribute_grids_left)
+        attribute_grid_arrow_layout.addWidget(self.move_all_attribute_grids_left_button)
+
+        attribute_grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        attribute_grid_list_layout.addLayout(attribute_grid_arrow_layout)
+
+        self.selected_attribute_grid_listbox = QListWidget()
+        self.selected_attribute_grid_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        attribute_grid_list_layout.addWidget(self.selected_attribute_grid_listbox)
+
+        layout.addLayout(attribute_grid_list_layout)
+
+        # Button to load data
+        self.load_button = QPushButton("Load Data")
+        self.load_button.clicked.connect(self.load_data)
+        layout.addWidget(self.load_button)
 
         self.connection = None
-       
-        self.project_var = ""
-        self.well_list = []
-        self.project_names = []
+
         self.project_list = []
-        self.curve_calibration_dict = {}
-        self.filter_name = ""
-        self.grid_xyz_top = []
-        self.grid_well_data = []
-        self.total_zone_number = None
-        self.grid_df = pd.DataFrame()
-        self.directional_survey_values = []
-        self.Grid_intersec_top = []
-        self.Grid_intersec_bottom = []
-        self.selected_item = None
+        self.well_list = []
+        self.uwi_to_well_dict = {}
+        self.selected_uwis = []
+        self.depth_grid_list = []
+        self.attribute_grid_list = []
+        self.grid_objects_with_names = []
+        self.selected_depth_grids = []
+        self.selected_attribute_grids = []
+        self.import_options_df = pd.DataFrame()
         self.uwis_and_offsets = []
-        self.line_segments = []
-        self.x_data = []
-        self.y_data = []
-        self.zonein_info_df = pd.DataFrame()
-        self.zone_color_df = pd.DataFrame()
-        self.grid_well_data_df = pd.DataFrame()
-        self.well_info_df = pd.DataFrame()
-        self.export_options = pd.DataFrame
-        self.closest_well = None
-     
-
-
+        self.directional_surveys = []
+        self.directional_surveys_df = pd.DataFrame()
+        self.grid_info_df = pd.DataFrame()
+        self.total_lat_data = []
+        self.grid_names = []
 
     def set_import_parameters(self, import_options_df):
         if not import_options_df.empty:
             self.project_dropdown.setCurrentText(import_options_df.get('Project', [''])[0])
             self.filter_dropdown.setCurrentText(import_options_df.get('Well Filter', [''])[0])
-            self.grid_combobox.setCurrentText(import_options_df.get('Top Grid', [''])[0])
-            self.grid_bottom_combobox.setCurrentText(import_options_df.get('Bottom Grid', [''])[0])
-            self.number_of_zones.setValue(import_options_df.get('Number of Zones', [0])[0])
-        
             selected_uwis = import_options_df.get('selected_uwis', [[]])[0]
+            selected_depth_grids = import_options_df.get('selected_depth_grids', [[]])[0]
+            selected_attribute_grids = import_options_df.get('selected_attribute_grids', [[]])[0]
 
             for i in range(self.uwi_listbox.count() - 1, -1, -1):
                 if self.uwi_listbox.item(i).text() in selected_uwis:
                     self.uwi_listbox.takeItem(i)
-            if isinstance(selected_uwis, list):  # Ensure selected_uwis is a list
+            if isinstance(selected_uwis, list):
                 self.selected_uwi_listbox.clear()
                 self.selected_uwi_listbox.addItems(selected_uwis)
 
-    def move_selected_right(self):
+            for i in range(self.depth_grid_listbox.count() - 1, -1, -1):
+                if self.depth_grid_listbox.item(i).text() in selected_depth_grids:
+                    self.depth_grid_listbox.takeItem(i)
+            if isinstance(selected_depth_grids, list):
+                self.selected_depth_grid_listbox.clear()
+                self.selected_depth_grid_listbox.addItems(selected_depth_grids)
+
+            for i in range(self.attribute_grid_listbox.count() - 1, -1, -1):
+                if self.attribute_grid_listbox.item(i).text() in selected_attribute_grids:
+                    self.attribute_grid_listbox.takeItem(i)
+            if isinstance(selected_attribute_grids, list):
+                self.selected_attribute_grid_listbox.clear()
+                self.selected_attribute_grid_listbox.addItems(selected_attribute_grids)
+
+    def move_selected_wells_right(self):
         selected_items = self.uwi_listbox.selectedItems()
         for item in selected_items:
             self.selected_uwi_listbox.addItem(item.text())
             self.uwi_listbox.takeItem(self.uwi_listbox.row(item))
 
-    def move_selected_left(self):
+    def move_selected_wells_left(self):
         selected_items = self.selected_uwi_listbox.selectedItems()
         for item in selected_items:
             self.uwi_listbox.addItem(item.text())
             self.selected_uwi_listbox.takeItem(self.selected_uwi_listbox.row(item))
 
-    def move_all_right(self):
+    def move_all_wells_right(self):
         while self.uwi_listbox.count() > 0:
             item = self.uwi_listbox.takeItem(0)
             self.selected_uwi_listbox.addItem(item)
 
-    def move_all_left(self):
+    def move_all_wells_left(self):
         while self.selected_uwi_listbox.count() > 0:
             item = self.selected_uwi_listbox.takeItem(0)
             self.uwi_listbox.addItem(item)
+
+    def move_selected_depth_grids_right(self):
+        selected_items = self.depth_grid_listbox.selectedItems()
+        for item in selected_items:
+            self.selected_depth_grid_listbox.addItem(item.text())
+            self.depth_grid_listbox.takeItem(self.depth_grid_listbox.row(item))
+
+    def move_selected_depth_grids_left(self):
+        selected_items = self.selected_depth_grid_listbox.selectedItems()
+        for item in selected_items:
+            self.depth_grid_listbox.addItem(item.text())
+            self.selected_depth_grid_listbox.takeItem(self.selected_depth_grid_listbox.row(item))
+
+    def move_all_depth_grids_right(self):
+        while self.depth_grid_listbox.count() > 0:
+            item = self.depth_grid_listbox.takeItem(0)
+            self.selected_depth_grid_listbox.addItem(item)
+
+    def move_all_depth_grids_left(self):
+        while self.selected_depth_grid_listbox.count() > 0:
+            item = self.selected_depth_grid_listbox.takeItem(0)
+            self.depth_grid_listbox.addItem(item)
+
+    def move_selected_attribute_grids_right(self):
+        selected_items = self.attribute_grid_listbox.selectedItems()
+        for item in selected_items:
+            self.selected_attribute_grid_listbox.addItem(item.text())
+            self.attribute_grid_listbox.takeItem(self.attribute_grid_listbox.row(item))
+
+    def move_selected_attribute_grids_left(self):
+        selected_items = self.selected_attribute_grid_listbox.selectedItems()
+        for item in selected_items:
+            self.attribute_grid_listbox.addItem(item.text())
+            self.selected_attribute_grid_listbox.takeItem(self.selected_attribute_grid_listbox.row(item))
+
+    def move_all_attribute_grids_right(self):
+        while self.attribute_grid_listbox.count() > 0:
+            item = self.attribute_grid_listbox.takeItem(0)
+            self.selected_attribute_grid_listbox.addItem(item)
+
+    def move_all_attribute_grids_left(self):
+        while self.selected_attribute_grid_listbox.count() > 0:
+            item = self.selected_attribute_grid_listbox.takeItem(0)
+            self.attribute_grid_listbox.addItem(item)
 
     def connect_to_seisware(self):
         self.connection = SeisWare.Connection()
@@ -222,15 +314,8 @@ class DataLoaderDialog(QDialog):
         self.project_dropdown.setCurrentIndex(-1)
         self.project_dropdown.currentIndexChanged.connect(self.on_project_select)
 
-
     def on_project_select(self, index):
-       
         self.reset_ui_and_data()
-      
-
-  
-        
-        
         project_name = self.project_dropdown.currentText()
 
         self.projects = [project for project in self.project_list if project.Name() == project_name]
@@ -241,30 +326,23 @@ class DataLoaderDialog(QDialog):
         self.login_instance = SeisWare.LoginInstance()
         try:
             self.login_instance.Open(self.connection, self.projects[0])
-            print(self.projects[0])
         except RuntimeError as err:
             self.show_error_message("Error", "Failed to connect to the project: " + str(err))
             return
-        
-        if self.open == False:
-            self.hide_working_message()
 
         self.well_filter = SeisWare.FilterList()
         try:
             self.login_instance.FilterManager().GetAll(self.well_filter)
         except RuntimeError as err:
-            self.show_error_message("Error", f"Failed to filters: {err}")
+            self.show_error_message("Error", f"Failed to get filters: {err}")
             return
-
-
 
         filter_list = []
         for filter in self.well_filter:
             filter_type = filter.FilterType()
             if filter_type == 2:
                 filter_name = filter.Name()
-                filter_info = f"{filter_name}"
-                filter_list.append(filter_info)
+                filter_list.append(filter_name)
 
         self.filter_dropdown.clear()
         self.filter_dropdown.addItems(filter_list)
@@ -272,34 +350,23 @@ class DataLoaderDialog(QDialog):
         self.filter_dropdown.setCurrentIndex(-1)
         self.filter_dropdown.blockSignals(False)
         self.filter_dropdown.currentIndexChanged.connect(self.on_filter_select)
-       
+
         self.grid_list = SeisWare.GridList()
         try:
             self.login_instance.GridManager().GetAll(self.grid_list)
         except RuntimeError as err:
-            self.show_error_message("Failed to get the grids from the project", err)
+            self.show_error_message("Failed to get the grids from the project", str(err))
+
         self.grids = [grid.Name() for grid in self.grid_list]
         self.grid_objects_with_names = [(grid, grid.Name()) for grid in self.grid_list]
 
-        self.grid_combobox.clear()
+        self.depth_grid_listbox.clear()
+        self.attribute_grid_listbox.clear()
 
-        self.grid_combobox.addItems(self.grids)
-        
-        
-        self.grid_combobox.blockSignals(True)
-        self.grid_combobox.setCurrentIndex(-1)
-        self.grid_bottom_combobox.clear()
-        self.grid_combobox.blockSignals(False)
-        self.grid_bottom_combobox.addItems(self.grids)
-        self.grid_combobox.currentIndexChanged.connect(self.on_grid_select)
-
-        self.grid_bottom_combobox.blockSignals(True)
-        
-        self.grid_bottom_combobox.setCurrentIndex(-1)
-        self.grid_bottom_combobox.blockSignals(False)
-        self.grid_bottom_combobox.currentIndexChanged.connect(self.on_grid_select_bottom)
-       
-
+        # Add all grids to both Depth Grids and Attribute Grids lists
+        for grid_name in self.grids:
+            self.depth_grid_listbox.addItem(grid_name)
+            self.attribute_grid_listbox.addItem(grid_name)
 
     def on_filter_select(self, index):
         self.uwi_listbox.clear()
@@ -326,86 +393,37 @@ class DataLoaderDialog(QDialog):
         self.load_uwi_list()
 
     def load_uwi_list(self):
-
         sorted_uwi_list = sorted(self.well_list, reverse=False)
         self.uwi_listbox.addItems(sorted_uwi_list)
 
-    def on_grid_select(self):
-        grid_name = self.grid_combobox.currentText()
-        selected_grid_object = None
-        for grid, name in self.grid_objects_with_names:
-            if name == grid_name:
-                selected_grid_object = grid
-                break
-       
-     
-        try:
-            self.login_instance.GridManager().PopulateValues(selected_grid_object)
-        except RuntimeError as err:
-            self.show_error_message("Failed to populate the values of grid %s from the project" % (grid), err)
-    
-        grid_values = SeisWare.GridValues()
-        grid.Values(grid_values)
-        
-        # Fill a DF with X, Y, Z values
-        self.grid_xyz_top = []
-        grid_values_list = list(grid_values.Data())
-       
-        counter = 0
-        for i in range(grid_values.Height()):
-            for j in range(grid_values.Width()):
-                self.grid_xyz_top.append((grid.Definition().RangeY().start + i * grid.Definition().RangeY().delta,
-                                grid.Definition().RangeX().start + j * grid.Definition().RangeX().delta,
-                                grid_values_list[counter]))
-                counter += 1
-              
-        # Create DataFrame
-      
-        self.top_grid_df = pd.DataFrame(self.grid_xyz_top, columns=["Y", "X", f"{grid.Name()}"])
-        #print(self.grid_xyz_top)
-        #print(self.top_grid_df)
+    def load_data(self):
+        self.selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
+        self.selected_depth_grids = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
 
-    def on_grid_select_bottom(self):
-        grid_name = self.grid_bottom_combobox.currentText()
-        selected_grid_object = None
-        for grid, name in self.grid_objects_with_names:
-            if name == grid_name:
-                selected_grid_object = grid
-                break
-    
-     
+        self.selected_attribute_grids = [self.selected_attribute_grid_listbox.item(i).text() for i in range(self.selected_attribute_grid_listbox.count())]
+        print(self.selected_attribute_grids)
+        print(self.selected_depth_grids)
 
-        try:
-            self.login_instance.GridManager().PopulateValues(selected_grid_object)
-        except RuntimeError as err:
-            self.show_error_message("Failed to populate the values of grid %s from the project" % (grid), err)
-    
-            
+        if not self.selected_uwis:
+            self.show_info_message("Info", "No wells selected for export.")
+            return
 
-        grid_values = SeisWare.GridValues()
-        grid.Values(grid_values)
-        
-        # Fill a DF with X, Y, Z values
-        self.grid_xyz_bottom = []
-      
-        grid_values_list = list(grid_values.Data())
-      
-        counter = 0
-        for i in range(grid_values.Height()):
-            for j in range(grid_values.Width()):
-                self.grid_xyz_bottom.append((grid.Definition().RangeY().start + i * grid.Definition().RangeY().delta,
-                                grid.Definition().RangeX().start + j * grid.Definition().RangeX().delta,
-                                grid_values_list[counter]))
-                counter += 1
-               
-        # Create DataFrame
-   
-        self.bottom_grid_df = pd.DataFrame(self.grid_xyz_bottom, columns=["Y", "X", f"{grid.Name()}"])
+        if not self.selected_depth_grids and not self.selected_attribute_grids:
+            self.show_info_message("Info", "No grids selected for export.")
+            return
 
-    def store_uwis_and_offsets(self):
+        self.store_directional_surveys()
+        self.store_depth_grid_data()
+        self.zone_color()
+        self.get_grid_names_and_store_info()
+
+        self.accept()  # This line ensures that the dialog is accepted and returns data
+
+    def store_directional_surveys(self):
         self.uwis_and_offsets = []
-        self.md_and_offsets = []
+        self.directional_surveys = []
         self.total_lat_data = []
+
         selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
         if not selected_uwis:
             self.show_info_message("Info", "No wells selected for export.")
@@ -451,7 +469,7 @@ class DataLoaderDialog(QDialog):
                         else:
                             inclination = None
 
-                        if inclination is not None and inclination < 95:
+                        if inclination is not None and inclination < 360:
                             x_offsets.append(x_offset)
                             y_offsets.append(y_offset)
                             md_values.append(md)
@@ -467,269 +485,243 @@ class DataLoaderDialog(QDialog):
                         total_lat = end_lat - start_lat
 
                     self.uwis_and_offsets.append((uwi, x_offsets, y_offsets))
-                    self.md_and_offsets.append((uwi, md_values, tvd_values, x_offsets, y_offsets))
+                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets))
                     self.total_lat_data.append((uwi, total_lat, surfaceX, surfaceY))
+
+                    max_points = max(len(md_values) for _, md_values, _, _, _ in self.directional_surveys)
+                    data_list = []
+                    for uwi, md_values, tvd_values, x_offsets, y_offsets in self.directional_surveys:
+                        for i in range(max_points):
+                            md = md_values[i] if i < len(md_values) else None
+                            tvd = tvd_values[i] if i < len(tvd_values) else None
+                            x_offset = x_offsets[i] if i < len(x_offsets) else None
+                            y_offset = y_offsets[i] if i < len(y_offsets) else None
+                            if None not in (md, tvd, x_offset, y_offset):
+                                data_list.append([uwi, md, tvd, x_offset, y_offset])
+                           
+
+                    columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset']
+                    self.directional_surveys_df = pd.DataFrame(data_list, columns=columns)
+              
 
                 else:
                     self.show_info_message("Warning", f"No directional survey found for well {uwi}.")
 
-    def calculate_zones(self, closest_z_top, closest_z_bottom, number_of_zones):
-        if closest_z_top is not None and closest_z_bottom is not None and number_of_zones > 1:
-            zone_interval = (closest_z_bottom - closest_z_top) / (number_of_zones - 2)
+    def store_depth_grid_data(self):
+        self.depth_grid_data = []
+        for grid_name in self.selected_depth_grids:
+            selected_grid_object = None
+            for grid, name in self.grid_objects_with_names:
+                if name == grid_name:
+                    selected_grid_object = grid
+                    break
 
-            zones = [closest_z_top + i * zone_interval for i in range(1, number_of_zones - 2)]
-            #print(zones)
+            try:
+                self.login_instance.GridManager().PopulateValues(selected_grid_object)
+            except RuntimeError as err:
+                self.show_error_message("Failed to populate the values of grid %s from the project" % grid_name, err)
+                return
+
+            grid_values = SeisWare.GridValues()
+            selected_grid_object.Values(grid_values)
+
+            grid_values_list = list(grid_values.Data())
+            for i in range(grid_values.Height()):
+                for j in range(grid_values.Width()):
+                    z_value = grid_values_list[i * grid_values.Width() + j]
+        
+                    # Check if Z is within the desired range before appending
+                    if -1000000 <= z_value <= 1000000:
+                        self.depth_grid_data.append({
+                            'Grid': grid_name,
+                            'X': selected_grid_object.Definition().RangeX().start + j * selected_grid_object.Definition().RangeX().delta,
+                            'Y': selected_grid_object.Definition().RangeY().start + i * selected_grid_object.Definition().RangeY().delta,
+                            'Z': z_value
+                        })
+        if self.depth_grid_data:
+            print("Depth Grid data sample:", self.depth_grid_data[0])
         else:
-            zones = [closest_z_top, closest_z_bottom]
-        return zones
+            print("No depth grid data found.")
 
-    def calculate_grid_well_data(self):
+        self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
+        print(self.depth_grid_data_df)
 
-
-
-        self.store_uwis_and_offsets()
-        self.grid_well_data = []
-
-        try:
-            self.total_zone_number = int(self.number_of_zones.text())
-        except ValueError:
-            print("Invalid number of zones. Please enter a valid integer.")
-            return
-
-        kdtree_top = KDTree([(point[1], point[0]) for point in self.grid_xyz_top]) if self.grid_xyz_top else None
-        kdtree_bottom = KDTree([(point[1], point[0]) for point in self.grid_xyz_bottom]) if self.grid_xyz_bottom else None
-
-        for (uwi, total_lat, surfaceX, surfaceY) in self.total_lat_data:
-            well = self.uwi_to_well_dict.get(uwi)
-            if well:
-                depth_unit = SeisWare.Unit.Meter
-                surfaceDatum = well.DatumElevation().Value(depth_unit)
-                directional_survey_values = [val for val in self.md_and_offsets if val[0] == uwi]
-                if not directional_survey_values:
-                    continue
-
-                combined_distance = 0
-                for survey_point in directional_survey_values:
-                    md_values, tvd_values, x_offsets, y_offsets = survey_point[1:]
-
-                    for i, (md, tvd, x_offset, y_offset) in enumerate(zip(md_values, tvd_values, x_offsets, y_offsets)):
-                        closest_z_top = self.grid_xyz_top[kdtree_top.query((x_offset, y_offset))[1]][2] if kdtree_top else None
-                        closest_z_bottom = self.grid_xyz_bottom[kdtree_bottom.query((x_offset, y_offset))[1]][2] if kdtree_bottom else None
-                        zones = self.calculate_zones(closest_z_top, closest_z_bottom, self.total_zone_number)
-                        if i > 0:
-                            prev_x_offset, prev_y_offset = x_offsets[i - 1], y_offsets[i - 1]
-                            combined_distance += np.sqrt((x_offset - prev_x_offset) ** 2 + (y_offset - prev_y_offset) ** 2)
-
-                        entry = [uwi, md, tvd, x_offset, y_offset, combined_distance, closest_z_top] + zones + [closest_z_bottom]
-                        self.grid_well_data.append(entry)
-                     
-
-        print(f"Grid well data prepared with {len(self.grid_well_data)} entries including zones and combined distances.")
-  
-        for entry in self.grid_well_data:
-            tvd = entry[2]
-            zones = entry[6:]
-            zone_in = None
-            zone_in_name = None
-         
-            for j in range(len(zones) - 1):
-
-                if j == 0 and tvd > zones[j]:
-                    zone_in = 0
-                    zone_in_name = 'Zone 0'
+    def store_attribute_grid_data(self):
+        self.attribute_grid_data = []
+        for grid_name in self.selected_attribute_grids:
+            selected_grid_object = None
+            for grid, name in self.grid_objects_with_names:
+                if name == grid_name:
+                    selected_grid_object = grid
                     break
-                elif j == len(zones) and tvd <= zones[j]:
-                    zone_in = j + 1
-                    zone_in_name = f'Zone {j + 1}'
-                    break
-                elif zones[j] >= tvd > (zones[j + 1]):
-                    zone_in = j + 1
-                    zone_in_name = f'Zone {j + 1}'
-                    break
-         
 
+            try:
+                self.login_instance.GridManager().PopulateValues(selected_grid_object)
+            except RuntimeError as err:
+                self.show_error_message("Failed to populate the values of grid %s from the project" % grid_name, err)
+                return
 
-            entry.append(zone_in)
-            entry.append(zone_in_name)
+            grid_values = SeisWare.GridValues()
+            selected_grid_object.Values(grid_values)
 
+            grid_values_list = list(grid_values.Data())
+            for i in range(grid_values.Height()):
+                for j in range(grid_values.Width()):
+                    self.attribute_grid_data.append({
+                        'Grid': grid_name,
+                        'X': selected_grid_object.Definition().RangeX().start + j * selected_grid_object.Definition().RangeX().delta,
+                        'Y': selected_grid_object.Definition().RangeY().start + i * selected_grid_object.Definition().RangeY().delta,
+                        'Z': grid_values_list[i * grid_values.Width() + j]
+                    })
 
+        if self.attribute_grid_data:
+            print("Attribute Grid data sample:", self.attribute_grid_data[0])
+        else:
+            print("No attribute grid data found.")
 
-        # Construct the DataFrame columns
-        max_columns = max(len(entry) for entry in self.grid_well_data)
-        base_columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Combined Distance']
-        zone_columns = [f'Zone {i}' for i in range(max_columns - len(base_columns) - 2)]
-        columns = base_columns + zone_columns + ['ZoneIn'] + ['ZoneIn_Name']
-
-        # Convert grid_well_data to DataFrame
-        self.grid_well_data_df = pd.DataFrame(self.grid_well_data, columns=columns)
-
-        self.well_info_df = pd.DataFrame(self.total_lat_data, columns=['UWI', 'Total Lateral Length', 'Surface X', 'Surface Y'])
-        #print(self.well_info_df)
-        project_name = self.project_dropdown.currentText()
-        self.zone_color()
-        self.extract_zonein_info()
-        self.collect_dialog_options()
-        self.accept()
-
-        return self.grid_well_data_df,self.grid_well_data , self.well_info_df, self.zonein_info_df, self.top_grid_df, self.bottom_grid_df, self.total_zone_number, self.zone_color_df, self.export_options, self.import_options_df, self.grid_xyz_top, self.grid_xyz_bottom, project_name
-    
-    def collect_dialog_options(self):
-        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
-    
-        options = {
-            'Project': [self.project_dropdown.currentText()],
-            'Well Filter': [self.filter_dropdown.currentText()],
-            'selected_uwis': [selected_uwis],
-            'Top Grid': [self.grid_combobox.currentText()],
-            'Bottom Grid': [self.grid_bottom_combobox.currentText()],
-            'Number of Zones': [self.number_of_zones.value()]
-        }
-
-        self.import_options_df = pd.DataFrame(options)
-        return self.import_options_df
-
-
-    def hex_to_rgb(self, hex_color):
-        # Convert hex color to RGB format
-        hex_color = hex_color.lstrip('#')
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        self.attribute_grid_data_df = pd.DataFrame(self.attribute_grid_data)
 
     def zone_color(self):
-        # Determine the zone names from the column headers 6 through -1
-        column_headers = self.grid_well_data_df.columns[6:-2]
-        #print(column_headers)
-        zone_names = [header for header in column_headers]
-       
+        # Get the names of the depth grids from the list box
+        depth_grid_names = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
+ 
+        print(depth_grid_names)
 
-        # Add a new zone for the bottom
-        bottom_zone_name = f'Zone {self.total_zone_number-1}'
-        zone_names.append(bottom_zone_name)
+        # Generate colors for each depth grid
+        num_grids = len(self.selected_depth_grids )
 
-        # Generate colors for each zone
-        num_zones = len(zone_names)
-        zone_colors_hex = [
-            QColor.fromHsv(int(i * 360 / (1.25 *(num_zones))), 255, 255).toRgb().name(QColor.HexRgb) for i in range(num_zones)
+        grid_colors_hex = [
+            QColor.fromHsv(int(i * 360 / num_grids), 255, 255).toRgb().name(QColor.HexRgb) for i in range(num_grids)
         ]
 
         # Convert hex colors to RGB
-        zone_colors_rgb = [self.hex_to_rgb(color) for color in zone_colors_hex]
+        grid_colors_rgb = [self.hex_to_rgb(color) for color in grid_colors_hex]
 
-        # Create a DataFrame for zone names and colors
-        zone_color_df = pd.DataFrame({
-            'Zone Name': zone_names,
-            'Zone Color (Hex)': zone_colors_hex,
-            'Zone Color (RGB)': zone_colors_rgb
+        # Create a DataFrame for depth grid names and colors
+        depth_grid_color_df = pd.DataFrame({
+            'Depth Grid Name': depth_grid_names,
+            'Color (Hex)': grid_colors_hex,
+            'Color (RGB)': grid_colors_rgb
         })
 
-        self.zone_color_df = zone_color_df
-       # print(self.zone_color_df)
+        self.depth_grid_color_df = depth_grid_color_df
 
-    def extract_zonein_info(self):
-    
-        df = self.grid_well_data_df
-        result = []
+        # Print the DataFrame for verification
+        print(self.depth_grid_color_df)
 
-        for uwi in df['UWI'].unique():
-            df_uwi = df[df['UWI'] == uwi].sort_values('MD')
-            current_zonein = df_uwi['ZoneIn'].iloc[0]
-            start_md = df_uwi['MD'].iloc[0]
+    def get_grid_names_and_store_info(self, output_file='grid_info.csv'):
+        # Combine grid names from both depth and attribute grids
+        depth_grid_names = self.depth_grid_data_df['Grid'].unique().tolist() if not self.depth_grid_data_df.empty else []
+        attribute_grid_names = self.attribute_grid_data_df['Grid'].unique().tolist() if not self.attribute_grid_data_df.empty else []
+        self.grid_names = depth_grid_names + attribute_grid_names
 
-            for i in range(1, len(df_uwi)):
-                if df_uwi['ZoneIn'].iloc[i] != current_zonein:
-                    end_md = df_uwi['MD'].iloc[i]
-                    zone_length = round(end_md - start_md, 2)
+        grid_info_list = []
 
-                    total_lateral_length = self.well_info_df.loc[self.well_info_df['UWI'] == uwi, 'Total Lateral Length'].values[0]
-                    zone_percentage = round((zone_length / total_lateral_length) * 100, 2)
+        # Calculate bin size, min, max values, and add color for each grid
+        for grid_name in self.grid_names:
+            if grid_name in depth_grid_names:
+                grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid_name]
+            else:
+                grid_data = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid_name]
 
-                    result.append({
-                        'UWI': uwi,
-                        'Zone Name': f'Zone {current_zonein}',
-                        'Zone Type': '',
-                        'Source': '',
-                        'MD Top Depth Meters': round(start_md, 2),
-                        'MD Base Depth Meters': round(end_md, 2),
-                        'Interval Zone Length Meters': zone_length,
-                        'Interval Zone Percentage': zone_percentage
-                    })
-                    current_zonein = df_uwi['ZoneIn'].iloc[i]
-                    start_md = end_md
+            if grid_data.empty:
+                continue
 
-            end_md = df_uwi['MD'].iloc[-1]
-            zone_length = round(end_md - start_md, 2)
-            total_lateral_length = self.well_info_df.loc[self.well_info_df['UWI'] == uwi, 'Total Lateral Length'].values[0]
-            zone_percentage = round((zone_length / total_lateral_length) * 100, 2)
+            min_x = grid_data['X'].min()
+            max_x = grid_data['X'].max()
+            min_y = grid_data['Y'].min()
+            max_y = grid_data['Y'].max()
+            min_z = grid_data['Z'].min()
+            max_z = grid_data['Z'].max()
 
-            result.append({
-                'UWI': uwi,
-                'Zone Name': f'Zone {current_zonein}',
-                'Zone Type': '',
-                'Source': '',
-                'MD Top Depth Meters': round(start_md, 2),
-                'MD Base Depth Meters': round(end_md, 2),
-                'Interval Zone Length Meters': zone_length,
-                'Interval Zone Percentage': zone_percentage
+            # Calculate bin size (assuming uniform spacing)
+            unique_x = sorted(grid_data['X'].unique())
+            unique_y = sorted(grid_data['Y'].unique())
+
+            if len(unique_x) > 1:
+                bin_size_x = unique_x[1] - unique_x[0]
+            else:
+                bin_size_x = None
+
+            if len(unique_y) > 1:
+                bin_size_y = unique_y[1] - unique_y[0]
+            else:
+                bin_size_y = None
+
+            # Get the color for the grid if available, otherwise set a default color
+            color_row = self.depth_grid_color_df[self.depth_grid_color_df['Depth Grid Name'] == grid_name]
+            if not color_row.empty:
+                color_rgb = color_row['Color (RGB)'].values[0]
+            else:
+                color_rgb = (255, 255, 255)  # Default color (white) if not found
+
+            grid_info_list.append({
+                'Grid': grid_name,
+                'min_x': min_x,
+                'max_x': max_x,
+                'min_y': min_y,
+                'max_y': max_y,
+                'min_z': min_z,
+                'max_z': max_z,
+                'bin_size_x': bin_size_x,
+                'bin_size_y': bin_size_y,
+                'Color (RGB)': color_rgb
             })
 
-        self.zonein_info_df = pd.DataFrame(result)
+        # Convert the grid info list to a DataFrame and write to a CSV file
+        self.grid_info_df = pd.DataFrame(grid_info_list)
 
-        #print(self.zonein_info_df)
-        self.calculate_zone_percentages()
+        return self.grid_info_df
 
+    def hex_to_rgb(self, hex_color):
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-    def calculate_zone_percentages(self):
-
-        df = self.grid_well_data_df
-        #print(self.grid_well_data_df)
-        zone_percentage_dict = {}
-
-        for uwi in df['UWI'].unique():
-            df_uwi = df[df['UWI'] == uwi]
-            total_entries = len(df_uwi)
-            zone_counts = df_uwi['ZoneIn'].value_counts().to_dict()
-            zone_percentages = {f'Zone {zone} Percentage': (count / total_entries) * 100 for zone, count in zone_counts.items()}
-            zone_percentage_dict[uwi] = zone_percentages
-
-        zone_percentage_df = pd.DataFrame(zone_percentage_dict).transpose().reset_index().rename(columns={'index': 'UWI'})
-        self.well_info_df = self.well_info_df.merge(zone_percentage_df, on='UWI', how='left').fillna(0)
-        #print(self.well_info_df)
+    def hex_to_rgb(self, hex_color):
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 
-  
+
+
     def show_error_message(self, title, message):
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle(title)
-        msg_box.showMessage(message)
+        msg_box.setText(message)
+        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.exec_()
+
+    def show_info_message(self, title, message):
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.exec_()
 
     def reset_ui_and_data(self):
-        # Reset UI components and internal data
         self.filter_dropdown.blockSignals(True)
         self.filter_dropdown.clear()
         self.filter_dropdown.blockSignals(False)
 
         self.uwi_listbox.clear()
         self.selected_uwi_listbox.clear()
-        self.grid_combobox.blockSignals(True)
-        self.grid_combobox.clear()
-        self.grid_combobox.blockSignals(False)
-        self.grid_bottom_combobox.blockSignals(True)
-        self.grid_bottom_combobox.clear()
-        self.grid_bottom_combobox.blockSignals(False)
+        self.depth_grid_listbox.clear()
+        self.selected_depth_grid_listbox.clear()
+        self.attribute_grid_listbox.clear()
+        self.selected_attribute_grid_listbox.clear()
 
         self.well_list.clear()
-        self.curve_calibration_dict.clear()
-        self.grid_xyz_top.clear()
-        self.grid_well_data.clear()
-        self.total_zone_number = None
-        self.grid_df = pd.DataFrame()
-        self.directional_survey_values.clear()
-        self.Grid_intersec_top.clear()
-        self.Grid_intersec_bottom.clear()
-        self.selected_item = None
-        self.uwis_and_offsets.clear()
-        self.line_segments.clear()
-        self.x_data.clear()
-        self.y_data.clear()
-        self.zonein_info_df = pd.DataFrame()
-        self.grid_well_data_df = pd.DataFrame()
-        self.well_info_df = pd.DataFrame()
+        self.depth_grid_list.clear()
+        self.attribute_grid_list.clear()
+        self.uwi_to_well_dict.clear()
+        self.selected_uwis.clear()
+
+        self.directional_surveys_df = pd.DataFrame()
+        self.depth_grid_data_df = pd.DataFrame()
+        self.attribute_grid_data_df = pd.DataFrame()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    dialog = DataLoaderDialog()
+    dialog.show()
+    sys.exit(app.exec_())

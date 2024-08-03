@@ -13,6 +13,8 @@ env/
 *.exe
 *.so
 *.dylib
+*.json
+*.csv
 
 # Ignore large data files
 *.zip
