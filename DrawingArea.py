@@ -1,7 +1,10 @@
 import os
 from PySide2.QtWidgets import QWidget
-from PySide2.QtGui import QPainter, QColor, QPen, QFont
+from PySide2.QtGui import QPainter, QColor, QPen, QFont, QPainterPath
 from PySide2.QtCore import Qt, QPointF
+from PySide2.QtGui import QPainterPath
+from scipy import interpolate
+import numpy as np
 
 class DrawingArea(QWidget):
     def __init__(self, map_instance, fixed_width, fixed_height, parent=None):
@@ -22,6 +25,7 @@ class DrawingArea(QWidget):
         self.show_uwis = True
         self.uwi_opacity = 0.5
         self.gridPoints = []  # To store grid points and their corresponding values
+        self.zoneTicks = []  # To store zone tick marks
         self.color_palette = self.load_color_palette('Palettes/Rainbow.pal')  # Load color palette
         self.min_x = 0
         self.max_x = 1
@@ -58,8 +62,27 @@ class DrawingArea(QWidget):
             # Draw lines
             if len(points) > 1:
                 painter.setPen(pen)
-                for i in range(1, len(points)):
-                    painter.drawLine(points[i - 1], points[i])
+        
+                # Convert points to numpy arrays
+                x = np.array([p.x() for p in points])
+                y = np.array([p.y() for p in points])
+        
+                # Simple moving average smoothing
+                window_size = 5  # Adjust this for more or less smoothing
+                weights = np.ones(window_size) / window_size
+                y_smooth = np.convolve(y, weights, mode='valid')
+                x_smooth = x[window_size-1:]
+
+                # Create a QPainterPath for the smooth curve
+                path = QPainterPath()
+                path.moveTo(x[0], y[0])  # Start from the first original point
+                for i in range(len(x_smooth)):
+                    path.lineTo(x_smooth[i], y_smooth[i])
+                path.lineTo(x[-1], y[-1])  # End at the last original point
+        
+                # Draw the smooth path
+                painter.drawPath(path)
+
 
             # Draw UWI labels
             if self.show_uwis and points:
@@ -113,7 +136,6 @@ class DrawingArea(QWidget):
             painter.drawLine(top_right, bottom_right_scaled)
             painter.drawLine(bottom_right_scaled, bottom_left)
             painter.drawLine(bottom_left, top_left_scaled)
-        # Draw nodes
 
         # Draw grid points with colors
         print("Drawing grid points:", self.gridPoints)  # Debugging information
@@ -125,6 +147,16 @@ class DrawingArea(QWidget):
             painter.setBrush(color)
             scaled_point = self.scale_and_translate_point(point)
             painter.drawEllipse(scaled_point, 3, 3)
+
+        # Draw zone tick marks
+        for x, y, md, angle in self.zoneTicks:
+            scaled_point = self.scale_and_translate_point(QPointF(x, y))
+            tick_length = 5
+            dx = tick_length * np.cos(angle + np.pi/2)
+            dy = tick_length * np.sin(angle + np.pi/2)
+            painter.setPen(QPen(Qt.green, 2, Qt.DashLine))
+            painter.drawLine(scaled_point.x() - dx, scaled_point.y() - dy, scaled_point.x() + dx, scaled_point.y() + dy)
+            painter.drawText(scaled_point.x() + dx, scaled_point.y() + dy, f'{md:.1f} m')  # Display the MD value next to the tick mark
 
     def scale_and_translate_point(self, point):
         # Calculate the scale factors
@@ -189,4 +221,10 @@ class DrawingArea(QWidget):
 
     def setGridPoints(self, points_with_values):
         self.gridPoints = points_with_values
+        self.update()
+
+    def setZoneTicks(self, zone_ticks):
+        # Convert zone_ticks to the drawing coordinate system
+        self.zoneTicks = [(self.scale_and_translate_point(QPointF(x, y)), md, angle) 
+                          for x, y, md, angle in zone_ticks]
         self.update()

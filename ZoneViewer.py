@@ -7,6 +7,9 @@ from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont
 from ColumnSelectDialog import ColumnSelectionDialog
 
 class ZoneViewerDialog(QDialog):
+
+
+
     def __init__(self, df, zone_names, selected_uwis, parent=None):
         super(ZoneViewerDialog, self).__init__(parent)
         self.setWindowTitle("Zone Viewer")

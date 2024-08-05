@@ -1,5 +1,5 @@
 import pandas as pd
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox
 from PySide2.QtCore import Qt, QPointF, Signal, Slot
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWebChannel import QWebChannel
@@ -11,17 +11,24 @@ from scipy.spatial import KDTree
 
 class PlotGB(QDialog):
     hoverEvent = Signal(str)
+    closed = Signal()
 
-    def __init__(self, depth_grid_data_df, depth_grid_color_df, currentLine, intersections=None, main_app=None, parent=None):
+    def __init__(self, depth_grid_data_df, grid_info_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections=None, main_app=None, parent=None):
         super(PlotGB, self).__init__(parent)
         self.main_app = main_app
         self.depth_grid_data_df = depth_grid_data_df
-        self.depth_grid_color_df = depth_grid_color_df
+        self.grid_info_df = grid_info_df
         self.current_line = currentLine
+        self.kd_tree_depth_grids = kd_tree_depth_grids
+        self.depth_grid_data_dict = depth_grid_data_dict  # Depth grid dictionary
         self.intersections = intersections or []
         self.setWindowTitle("Gun Barrel Plot")
         self.setGeometry(100, 100, 1200, 800)
         self.setupUi()
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
 
     def setupUi(self):
         # Create the plot layout
@@ -54,7 +61,6 @@ class PlotGB(QDialog):
                 line_coords = [(point.x(), point.y()) for point in self.current_line]
             else:
                 line_coords = [(point[0], point[1]) for point in self.current_line]
-            print(f"Line coordinates: {line_coords}")
 
             # Generate intermediate points along the line
             num_samples = 200  # Number of points to sample along the line
@@ -63,35 +69,39 @@ class PlotGB(QDialog):
             gun_barrel_data = []
             combined_distance = 0
 
-            # Create KD-Trees for each grid
-            kdtrees = {grid: KDTree(self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.depth_grid_data_df['Grid'].unique()}
-
             for i, (x, y) in enumerate(sampled_line_coords):
                 # Initialize closest Z values for each grid
-                closest_z_values = {grid: 0 for grid in kdtrees}
+                closest_z_values = {grid: None for grid in self.kd_tree_depth_grids}
 
                 # Query each KD-Tree
-                for grid, kdtree in kdtrees.items():
+                for grid, kdtree in self.kd_tree_depth_grids.items():
                     if kdtree.data.size > 0:
                         distances, indices = kdtree.query((x, y))
-                        if indices < len(self.depth_grid_data_df):
-                            closest_z_values[grid] = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid].iloc[indices]['Z']
+                        if isinstance(indices, np.ndarray):  # Handle multiple indices
+                            indices = indices[0]
+                        if 0 <= indices < len(self.depth_grid_data_dict[grid]):
+                            z_value = self.depth_grid_data_dict[grid][indices]
+                            closest_z_values[grid] = z_value if pd.notnull(z_value) else float('nan')
+                            # print(f"Grid: {grid}, Point: ({x}, {y}), Z Value: {z_value}, Index: {indices}, Distances: {distances}")
+                        else:
+                            print(f"Invalid index for KDTree query: {indices}")
 
                 # Calculate the combined distance
                 if i > 0:
                     prev_x, prev_y = sampled_line_coords[i - 1]
-                    combined_distance += np.sqrt((x - prev_x) ** 2 + (y - prev_y) ** 2)
-                    print(combined_distance)
+                    segment_length = np.sqrt((x - prev_x) ** 2 + (y - prev_y) ** 2)
+                    combined_distance += segment_length
+                    if np.isinf(combined_distance) or np.isnan(combined_distance):
+                        print(f"Invalid combined distance calculation at index {i}: segment_length={segment_length}, combined_distance={combined_distance}")
                 else:
                     combined_distance = 0  # First point has distance 0
 
                 # Prepare the entry data
-                entry = [x, y, combined_distance] + [closest_z_values[grid] for grid in kdtrees]
+                entry = [x, y, combined_distance] + [closest_z_values[grid] for grid in self.kd_tree_depth_grids]
                 gun_barrel_data.append(entry)
-            print(gun_barrel_data)
-            
+            valid_grids = [grid for grid in self.kd_tree_depth_grids.keys() if grid in set(self.grid_info_df['Grid']) & set(self.depth_grid_data_df['Grid'])]
             # Define column names
-            columns = ['x', 'y', 'combined_distance'] + list(self.depth_grid_color_df['Depth Grid Name'])
+            columns = ['x', 'y', 'combined_distance'] + valid_grids
 
             # Create DataFrame with defined columns
             df = pd.DataFrame(gun_barrel_data, columns=columns)
@@ -101,41 +111,75 @@ class PlotGB(QDialog):
 
             # Extract combined distances and grid values
             combined_distances = df['combined_distance'].tolist()
-            grid_values = {grid_name: df[grid_name].tolist() for grid_name in self.depth_grid_color_df['Depth Grid Name']}
-
+            grid_values = {grid_name: df[grid_name].tolist() for grid_name in valid_grids}
+            sorted_grids = sorted(grid_values.keys(), key=lambda grid: min(grid_values[grid]))
             fig = go.Figure()
 
             # Plot and fill grids
-            for grid_name in self.depth_grid_color_df['Depth Grid Name']:
-                r, g, b = self.depth_grid_color_df.loc[self.depth_grid_color_df['Depth Grid Name'] == grid_name, 'Color (RGB)'].values[0]
-                grid_color_rgb = f'{r}, {g}, {b}'
-                grid_color_rgba = f'rgba({r}, {g}, {b}, 0.3)'
+            for i, grid_name in enumerate(sorted_grids):
+                try:
+                    # Ensure the grid name exists in the DataFrame
+                    grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name]
+                    if grid_row.empty:
+                        print(f"Grid {grid_name} not found in grid_info_df")
+                        continue
 
-                fig.add_trace(go.Scatter(
-                    x=combined_distances,
-                    y=grid_values[grid_name],
-                    mode='lines',
-                    name=grid_name,
-                    line=dict(color=f'rgb({grid_color_rgb})')
-                ))
+                    r, g, b = grid_row['Color (RGB)'].values[0]
+                    grid_color_rgb = f'{r}, {g}, {b}'
+                    grid_color_rgba = f'rgba({r}, {g}, {b}, 0.3)'
 
-                # Only fill if there is a next grid to fill to
-                if grid_name != self.depth_grid_color_df['Depth Grid Name'].iloc[0]:
-                    previous_grid_name = self.depth_grid_color_df['Depth Grid Name'].iloc[self.depth_grid_color_df['Depth Grid Name'].tolist().index(grid_name) - 1]
-                    previous_grid_values = grid_values[previous_grid_name]
+                    # Ensure the grid values are available
+                    if grid_name not in grid_values:
+                        print(f"Grid values for {grid_name} not found")
+                        continue
+
+                    # Plot the grid line with the grid's color
                     fig.add_trace(go.Scatter(
-                        x=combined_distances, 
-                        y=previous_grid_values, 
-                        fill='tonexty', 
-                        fillcolor=f'{grid_color_rgba}', 
-                        mode='none', 
-                        showlegend=False
+                        x=combined_distances,
+                        y=grid_values[grid_name],
+                        mode='lines',
+                        name=grid_name,
+                        line=dict(color=f'rgb({grid_color_rgb})')
                     ))
 
-            # Plot intersection points as black dots
+                    # Only fill between the current grid and the grid directly below it
+                    if i < len(sorted_grids) - 1:
+                        next_grid_name = sorted_grids[i + 1]
+                        if next_grid_name not in grid_values:
+                            print(f"Next grid values for {next_grid_name} not found")
+                            continue
+
+                        next_grid_values = grid_values[next_grid_name]
+                        fig.add_trace(go.Scatter(
+                            x=combined_distances,
+                            y=next_grid_values,
+                            fill='tonexty',
+                            fillcolor=grid_color_rgba,
+                            mode='none',
+                            showlegend=False
+                        ))
+
+                except IndexError as e:
+                    print(f"Error accessing data for grid {grid_name}: {e}")
+                    continue
+                except Exception as e:
+                    print(f"Unexpected error for grid {grid_name}: {e}")
+                    continue
+
+            # Extracting intersection information and filtering invalid TVDs
             intersection_distances = [item[4] for item in self.intersections]
             intersection_tvds = [item[3] for item in self.intersections]
-            intersection_uwis = [item[0] for item in self.intersections] 
+            intersection_uwis = [item[0] for item in self.intersections]
+
+            # Filter out invalid TVDs (like inf or NaN)
+            valid_intersections = [(dist, tvd, uwi) for dist, tvd, uwi in zip(intersection_distances, intersection_tvds, intersection_uwis) if np.isfinite(tvd)]
+            intersection_distances, intersection_tvds, intersection_uwis = zip(*valid_intersections) if valid_intersections else ([], [], [])
+
+            # Print debug information for intersections
+            print(f"Intersection Distances: {intersection_distances}")
+            print(f"Intersection TVDs: {intersection_tvds}")
+            print(f"Intersection UWIs: {intersection_uwis}")
+
             fig.add_trace(go.Scatter(
                 x=intersection_distances,
                 y=intersection_tvds,
@@ -157,7 +201,7 @@ class PlotGB(QDialog):
                         showarrow=False,
                         textangle=-45,  # Rotate text by 45 degrees
                         xanchor='left',
-                        yanchor='bottom'
+                        yanchor='bottom',
                     )
                 )
 
@@ -241,6 +285,13 @@ class PlotGB(QDialog):
         sampled_points.append(line_coords[-1])
         return sampled_points
 
+    def update_data(self,grid_info_df):
+        self.grid_info_df = grid_info_df
+        self.update_plot(self.grid_info_df) 
+
+    def update_plot(self, grid_info_df):
+        self.grid_info_df = grid_info_df
+        self.plot_intersection_line() 
     @Slot(str)
     def receiveHoverEvent(self, uwi):
         print(f'Hover event received for UWI: {uwi}')
@@ -269,7 +320,13 @@ if __name__ == "__main__":
     currentLine = [QPointF(0, 0), QPointF(1, 1)]
     intersections = [(1, 2, 3, 4, 5)]
 
+    # Create KD-Trees for testing
+    kd_tree_depth_grids = {grid: KDTree(depth_grid_data_df[depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in depth_grid_data_df['Grid'].unique()}
+
+    # Create Depth Grid Data Dictionary for testing
+    depth_grid_data_dict = {grid: depth_grid_data_df[depth_grid_data_df['Grid'] == grid]['Z'].values for grid in depth_grid_data_df['Grid'].unique()}
+
     app = QApplication(sys.argv)
-    window = PlotGB(depth_grid_data_df, depth_grid_color_df, currentLine, intersections)
+    window = PlotGB(depth_grid_data_df, depth_grid_color_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections)
     window.show()
     sys.exit(app.exec_())

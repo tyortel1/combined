@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33530.505
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Well Attribute Viewer", "Well Attribute Viewer.pyproj", "{2680E205-FCA6-4909-A64F-A8995707A8AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2680E205-FCA6-4909-A64F-A8995707A8AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2680E205-FCA6-4909-A64F-A8995707A8AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D7A78C8E-D299-464E-A9C5-639F6D9AA10E}
+	EndGlobalSection
+EndGlobal

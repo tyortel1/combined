@@ -1,4 +1,4 @@
-# main.py
+# main.pydef well
 import sys
 import os
 import json
@@ -26,7 +26,9 @@ from shapely.geometry import LineString, Point, MultiPoint, GeometryCollection
 from ColorEdit import ColorEditor
 import time
 import ujson as json 
-from DrawingArea import DrawingArea  # Import the DrawingArea class
+from DrawingArea import DrawingArea
+from ProjectSaver import ProjectSaver
+from ProjectOpen import ProjectLoader# Import the DrawingArea class
 
 
 class Map(QMainWindow):
@@ -44,6 +46,7 @@ class Map(QMainWindow):
         self.master_df = pd.DataFrame()
         self.depth_grid_data_df = pd.DataFrame()
         self.attribute_grid_data_df = pd.DataFrame()
+        self.zone_data_df = pd.DataFrame()
         self.grid_info_df = pd.DataFrame()
         self.grid_xyz_bottom = []
         self.grid_xyz_top = []
@@ -53,12 +56,22 @@ class Map(QMainWindow):
         self.grid_scaled_max_x = None
         self.grid_scaled_min_y = None
         self.grid_scaled_max_y = None
+        self.kd_tree = None
+        self.uwi_points = []
+        self.uwi_map = {}
+        self.depth_grid_data_dict = {}
+        self.kd_tree_wells = {}
+        self.attribute_grid_data_dict = {}
+        self.kd_tree_depth_grids = None
+        self.kd_tree_att_grids = None
 
         self.drawing = False
         self.lastPoint = None
         self.data = []
         self.current_line = []
         self.originalCurrentLine = []
+        self.open_windows = []
+        self.plot_gb_windows = []
         self.scale = 1.0
         self.zoom_center = QPointF(0, 0)
         self.offset_x = 0
@@ -76,13 +89,19 @@ class Map(QMainWindow):
         self.intersectionPoints = []
         self.project_list = []
         self.zone_names = []
-        self.uwi_list = []  # List to store UWI
+        self.well_list = []  # List to store UWI
         
         self.connection = SeisWare.Connection()
-
+        self.project_saver = None
+        self.file_name = None
         self.setupUi()
-        self.set_interactive_elements_enabled(False) 
+        self.set_interactive_elements_enabled(False)
+        self.project_loader = ProjectLoader(self)
  
+    def set_project_file_name(self, file_name):
+        self.project_file_name = file_name
+        self.project_saver = ProjectSaver(self.project_file_name)
+
     def closeEvent(self, event):
         # Perform any cleanup here
         self.cleanup()
@@ -111,15 +130,20 @@ class Map(QMainWindow):
         # Dropdown to select grid
         self.gridDropdown = QComboBox(self)
         self.gridDropdown.addItem("Select Grid")
-        #self.gridDropdown.currentIndexChanged.connect(self.grid_selected)
         self.optionsLayout.addWidget(self.gridDropdown)
+
+        # Dropdown to select zone
+        self.zoneDropdown = QComboBox(self)
+        self.zoneDropdown.addItem("Select Zone")
+        self.zoneDropdown.currentIndexChanged.connect(self.zone_selected)
+        self.optionsLayout.addWidget(self.zoneDropdown)
 
         # Checkbox to show/hide UWI labels
         self.uwiCheckbox = QCheckBox("Show UWI Labels", self)
         self.uwiCheckbox.setChecked(True)
         self.uwiCheckbox.stateChanged.connect(self.toggle_uwi_labels)
         self.optionsLayout.addWidget(self.uwiCheckbox)
-    
+
         self.uwiWidthLabel = QLabel("UWI Size:", self)
         self.optionsLayout.addWidget(self.uwiWidthLabel)
 
@@ -134,7 +158,7 @@ class Map(QMainWindow):
         # Label for the opacity slider
         self.opacityLabel = QLabel("UWI Label Opacity:", self)
         self.optionsLayout.addWidget(self.opacityLabel)
-    
+
         # Slider to change the opacity of UWI labels
         self.opacitySlider = QSlider(Qt.Horizontal, self)
         self.opacitySlider.setMinimum(0)
@@ -157,8 +181,8 @@ class Map(QMainWindow):
 
         self.lineLabel = QLabel("Line Opacity", self)
         self.optionsLayout.addWidget(self.lineLabel)
-    
-        # Slider to change the line of UWI labels
+
+        # Slider to change the line opacity
         self.lineOpacitySlider = QSlider(Qt.Horizontal, self)
         self.lineOpacitySlider.setMinimum(0)
         self.lineOpacitySlider.setMaximum(100)
@@ -181,20 +205,20 @@ class Map(QMainWindow):
         self.mainLayout.addWidget(self.scrollArea, 7)  # Occupy remaining 7/8ths of the window
         self.scrollArea.horizontalScrollBar().valueChanged.connect(self.updateOffset)
         self.scrollArea.verticalScrollBar().valueChanged.connect(self.updateOffset)
-        self.scrollArea.setWidgetResizable(False) 
+        self.scrollArea.setWidgetResizable(False)
 
         # Menu bar
         self.menu_bar = QMenuBar(self)
         self.setMenuBar(self.menu_bar)
-    
+
         file_menu = self.menu_bar.addMenu("Project")
 
         new_project_action = file_menu.addAction("Create")
         new_project_action.triggered.connect(self.create_new_project)
 
         open_action = file_menu.addAction("Open")
-        open_action.triggered.connect(self.open_from_file)
-    
+        open_action.triggered.connect(self.open_project)
+
         # Launch menu
         self.launch_menu = self.menu_bar.addMenu("Launch")
         self.launch_menu.setEnabled(False)
@@ -238,28 +262,25 @@ class Map(QMainWindow):
 
         self.gun_barrel_action = self.toolbar.addAction(self.gun_barrel_icon, "Create Gun Barrel")
         self.gun_barrel_action.triggered.connect(self.toggleDrawing)
-    
-        self.color_editor_action = self.toolbar.addAction(self.color_editor_icon, "Create Gun Barrel")
+
+        self.color_editor_action = self.toolbar.addAction(self.color_editor_icon, "Edit Grid Colors")
         self.color_editor_action.triggered.connect(self.open_color_editor)
-       
+
         # Zoom controls
         self.zoomOut = self.toolbar.addAction(self.zoom_out_icon, "Zoom Out")
         self.zoomOut.triggered.connect(self.zoom_out)
 
-        self.zoomIn = self.toolbar.addAction(self.zoom_in_icon, "Zoom Out")
+        self.zoomIn = self.toolbar.addAction(self.zoom_in_icon, "Zoom In")
         self.zoomIn.triggered.connect(self.zoom_in)
-  
+
         self.exportSw = self.toolbar.addAction(self.exportSw_icon, "Send to SeisWare")
         self.exportSw.triggered.connect(self.export_to_sw)
 
         self.retranslateUi()
         QMetaObject.connectSlotsByName(self)
-
-
-
-
-
-
+    
+        # Populate the zone dropdown with available zones
+        
 
     def grid_selected(self, index):
         if index == 0:  # "Select Grid" is selected
@@ -289,7 +310,7 @@ class Map(QMainWindow):
 
         pd.set_option('display.max_columns', None)  # Show all columns
         pd.set_option('display.max_colwidth', None)  # Show full column width
-        print(direction_survey_df)
+     
 
         uwis_and_offsets = []
         for uwi in direction_survey_df['UWI'].unique():
@@ -307,11 +328,19 @@ class Map(QMainWindow):
         self.min_y = min(min(y_offsets) for _, _, y_offsets, _ in self.data)
         self.max_y = max(max(y_offsets) for _, _, y_offsets, _ in self.data)
 
+        self.uwi_points = []
+        self.uwi_map = {}
+
         for uwi, x_offsets, y_offsets, tvds in self.data:
             points = [(QPointF(x, y), tvd) for x, y, tvd in zip(x_offsets, y_offsets, tvds)]
             self.scaled_data[uwi] = points
+            for x, y in zip(x_offsets, y_offsets):
+                self.uwi_points.append((x, y))
+                self.uwi_map[(x, y)] = uwi
 
-        print(self.scaled_data)
+        # Build KDTree for efficient spatial queries
+        self.kd_tree_wells = KDTree(self.uwi_points)
+     
         self.drawingArea.setScaledData(self.scaled_data, self.min_x, self.max_x, self.min_y, self.max_y)
         self.set_interactive_elements_enabled(True)
 
@@ -336,7 +365,7 @@ class Map(QMainWindow):
             points_with_values.append((QPointF(scaled_x, scaled_y), value))
 
         # Draw the points on the map
-        print("Setting grid points:", points_with_values)  # Debugging information
+   
         self.drawingArea.setGridPoints(points_with_values)
 
     def zoom_in(self):
@@ -406,11 +435,12 @@ class Map(QMainWindow):
         }
 
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Create New Project", "", "JSON Files (*.json);;All Files (*)", options=options)
-        if file_name:
-            self.project_file_name = file_name
-            with open(file_name, 'w') as file:
-                json.dump(self.project_data, file, indent=4)
+        self.file_name, _ = QFileDialog.getSaveFileName(self, "Create New Project", "", "JSON Files (*.json);;All Files (*)", options=options)
+        if self.file_name:
+            self.project_file_name = self.file_name
+            self.project_saver = ProjectSaver(self.file_name)
+            self.project_saver.project_data = self.project_data
+            self.project_saver.save_project_data()
 
             self.set_interactive_elements_enabled(False)
             self.import_menu.setEnabled(True)
@@ -425,22 +455,43 @@ class Map(QMainWindow):
             self.export_options = pd.DataFrame()
             self.zone_color_df = pd.DataFrame()
         
-        file_basename = os.path.basename(file_name)
+        file_basename = os.path.basename(self.file_name)
         self.setWindowTitle(QCoreApplication.translate("MainWindow", f"Zone Analyzer - {file_basename}", None))
 
     def dataloader(self):
-        
         dialog = DataLoaderDialog(self.import_options_df)
         if dialog.exec_() == QDialog.Accepted:
             self.directional_surveys_df = dialog.directional_surveys_df
             self.depth_grid_data_df = dialog.depth_grid_data_df
             self.attribute_grid_data_df = dialog.attribute_grid_data_df
+       
             self.import_options_df = dialog.import_options_df
             self.selected_uwis = dialog.selected_uwis
             self.depth_grid_color_df = dialog.depth_grid_color_df
             self.grid_info_df = dialog.grid_info_df
-     
+            self.well_list = dialog.well_list
 
+            # Construct KD-Trees
+            self.kd_tree_depth_grids = {
+                grid: KDTree(self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values)
+                for grid in self.depth_grid_data_df['Grid'].unique()
+            }
+
+            self.kd_tree_att_grids = {
+                grid: KDTree(self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid][['X', 'Y']].values)
+                for grid in self.attribute_grid_data_df['Grid'].unique()
+            }
+
+            # Prepare data dictionaries for quick Z value access
+            self.depth_grid_data_dict = {
+                grid: self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid]['Z'].values
+                for grid in self.kd_tree_depth_grids
+            }
+
+            self.attribute_grid_data_dict = {
+                grid: self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid]['Z'].values
+                for grid in self.kd_tree_att_grids
+            }
 
             self.populate_grid_dropdown()
             self.setData(self.directional_surveys_df)
@@ -449,23 +500,20 @@ class Map(QMainWindow):
             self.export_menu.setEnabled(True)
             self.launch_menu.setEnabled(True)
             self.set_interactive_elements_enabled(True)
-
             if hasattr(self, 'project_file_name') and self.project_file_name:
-                self.project_data = {
-                    'directional_surveys': self.directional_surveys_df.to_dict(orient='list') if isinstance(self.directional_surveys_df, pd.DataFrame) else {},
-                    'depth_grid_data': self.depth_grid_data_df.to_dict(orient='list') if isinstance(self.depth_grid_data_df, pd.DataFrame) else {},
-                    'attribute_grid_data': self.attribute_grid_data_df.to_dict(orient='list') if isinstance(self.attribute_grid_data_df, pd.DataFrame) else {},
-                    'import_options': self.import_options_df.to_dict(orient='list') if isinstance(self.import_options_df, pd.DataFrame) else {},
-                    'selected_uwis': self.selected_uwis,
-                    'depth_grid_colors': self.depth_grid_color_df.to_dict(orient='list') if isinstance(self.depth_grid_color_df, pd.DataFrame) else {},
-                    'grid_info': self.grid_info_df.to_dict(orient='list') if isinstance(self.grid_info_df, pd.DataFrame) else {},
-                }
-                with open(self.project_file_name, 'w') as file:
-                    json.dump(self.project_data, file, indent=4)
+                # Use the ProjectSaver class to save specific parts of the project data
+                self.project_saver = ProjectSaver(self.project_file_name)
+                self.project_saver.save_directional_surveys(self.directional_surveys_df)
+                self.project_saver.save_depth_grid_data(self.depth_grid_data_df)
+                self.project_saver.save_attribute_grid_data(self.attribute_grid_data_df)
+                self.project_saver.save_import_options(self.import_options_df)
+                self.project_saver.save_selected_uwis(self.selected_uwis)
+                self.project_saver.save_depth_grid_colors(self.depth_grid_color_df)
+                self.project_saver.save_grid_info(self.grid_info_df)
+                self.project_saver.save_well_list(self.well_list)
+
                 self.export_menu.setEnabled(True)
                 self.launch_menu.setEnabled(True)
-
-
 
 
     def dataload_well_zones(self):
@@ -489,22 +537,14 @@ class Map(QMainWindow):
                 pd.set_option('display.max_columns', None)
                 pd.set_option('display.max_rows', None)
 
-                # Print the updated DataFrame to verify the contents
-                print(self.master_df)
+                # Ensure the project saver is initialized
+                if not hasattr(self, 'project_saver'):
+                    self.project_saver = ProjectSaver(self.project_file_name)
 
-                # Load existing project data
-                if os.path.exists(self.project_file_name):
-                    with open(self.project_file_name, 'r') as file:
-                        self.project_data = json.load(file)
-                else:
-                    self.project_data = {}
+                # Save the updated master_df using the ProjectSaver
+                self.project_saver.save_master_df(self.master_df)
 
-                # Update project data with the new export options
-                self.project_data['master_df'] = self.master_df.to_dict()
-
-                # Save the updated project data to the JSON file
-                with open(self.project_file_name, 'w') as file:
-                    json.dump(self.project_data, file, indent=4)
+                print("Project data updated and saved")
 
                 self.export_menu.setEnabled(True)
                 self.launch_menu.setEnabled(True)
@@ -512,12 +552,11 @@ class Map(QMainWindow):
 
 
     def populate_grid_dropdown(self):
-        if not hasattr(self, 'grid_info_df'):
-            self.get_grid_names_and_store_info()  # Ensure grid_info_df is populated
+ # Ensure grid_info_df is populated
 
         self.gridDropdown.clear()
         self.gridDropdown.addItem("Select Grid")
-
+     
         # Get grid names from the grid_info_df
         grid_names = self.grid_info_df['Grid'].tolist()
         self.gridDropdown.addItems(grid_names)
@@ -527,8 +566,7 @@ class Map(QMainWindow):
         print(self.master_df)
         if not self.master_df.empty:
             dialog = ZoneViewerDialog(self.master_df, self.zone_names, self.selected_uwis, self)
-
-            dialog.exec_()
+            dialog.show()
 
 
     def handle_well_attributes(self, df, uwi_header):
@@ -542,50 +580,32 @@ class Map(QMainWindow):
 
 
 
-    def open_from_file(self):
-        self.open = True
-
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "JSON Files (*.json);;All Files (*)", options=options)
-        if file_name:
-            self.project_file_name = file_name
-            with open(file_name, 'r') as file:
-                data_loaded = json.load(file)
-
-            # Load DataFrames from JSON if they exist
-            self.directional_surveys_df = pd.DataFrame(data_loaded.get('directional_surveys', {}))
-            self.depth_grid_data_df = pd.DataFrame(data_loaded.get('depth_grid_data', {}))
-            self.attribute_grid_data_df = pd.DataFrame(data_loaded.get('attribute_grid_data', {}))
-            self.import_options_df = pd.DataFrame(data_loaded.get('import_options', {}))
-            self.selected_uwis = data_loaded.get('selected_uwis', [])
-            self.depth_grid_color_df = pd.DataFrame(data_loaded.get('depth_grid_colors', {}))
-            self.grid_info_df = pd.DataFrame(data_loaded.get('grid_info', {}))
-           
-            # Populate the grid dropdown with grid names
-            self.populate_grid_dropdown()
-
-            # Enable menus and update window title
-            self.import_menu.setEnabled(True)
-            self.launch_menu.setEnabled(True)
-            file_basename = os.path.basename(file_name)
-            self.setWindowTitle(f"Zone Analyzer - {file_basename}")
-
-            # Update data in the application
-            self.setData(self.directional_surveys_df)
-            self.set_interactive_elements_enabled(True)
-            self.populate_grid_dropdown()
-
-            self.open = False  
+    def open_project(self):
+        self.project_loader.open_from_file()
+        self.populate_zone_dropdown()
 
     def plot_data(self, uwi=None):
-        if not self.depth_grid_data_df.empty:
+        print("UWIs available:", self.well_list)
+        if not self.directional_surveys_df.empty and not self.depth_grid_data_df.empty:
             try:
                 if uwi:
-                    selected_data = self.depth_grid_data_df[self.grid_well_data_df['UWI'] == uwi]
-                    navigator = Plot(selected_data, self.depth_grid_color_df, parent=self)
+                    # Select data for the specified UWI
+                    current_uwi = uwi
                 else:
-                    navigator = Plot(self.grid_well_data_df, self.depth_grid_color_df,  parent=self)
+                    # Select data for the first UWI in the list (assuming this is the "current" UWI)
+                    current_uwi = self.well_list[0]
+                    current_uwi = self.well_list[0]
+
+                if current_uwi not in self.well_list:
+                    raise ValueError(f"UWI {current_uwi} not found in well list.")
+                
+                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, parent=self)
+                self.open_windows.append(navigator)
+                
                 navigator.show()
+                navigator.closed.connect(lambda: self.open_windows.remove(navigator))
+
+
             except Exception as e:
                 print(f"Error initializing Plot: {e}")
                 self.show_info_message("Error", f"Failed to initialize plot navigator: {e}")
@@ -594,47 +614,11 @@ class Map(QMainWindow):
 
 
 
+
+
+
     def export(self):
-        app = QApplication.instance()
-        if app is None:
-            app = QApplication([])
-
-        if self.export_options is not None and not self.export_options.empty:
-            dialog = ExportDialog(self.grid_well_data_df, self.well_info_df, self.zonein_info_df, self.top_grid_df, self.bottom_grid_df, self.total_zone_number, self.export_options)
-        else:
-            dialog = ExportDialog(self.grid_well_data_df, self.well_info_df, self.zonein_info_df, self.top_grid_df, self.bottom_grid_df, self.total_zone_number)
-
-        dialog.exec_()
-
-        if hasattr(dialog, 'export_options') and dialog.export_options is not None:
-            self.export_options = dialog.export_options
-
-            # Profile start time
-            start_time = time.time()
-
-            # Load existing project data
-            if os.path.exists(self.project_file_name):
-                with open(self.project_file_name, 'r') as file:
-                    self.project_data = json.load(file)
-        
-            print("Time to load project data: {:.2f} seconds".format(time.time() - start_time))
-
-            # Update project data with the new export options
-            self.project_data['export_options'] = self.export_options.to_dict() if isinstance(self.export_options, pd.DataFrame) else {}
-
-            # Profile update time
-            update_time = time.time()
-        
-            # Save the updated project data to the same file
-            with open(self.project_file_name, 'w') as file:
-                json.dump(self.project_data, file)  # Reduced or no indentation
-        
-            print("Time to save project data: {:.2f} seconds".format(time.time() - update_time))
-            print("Export options saved to file:", self.project_file_name)
-            print(self.export_options)
-        
-            # Total time
-            print("Total export time: {:.2f} seconds".format(time.time() - start_time))
+        pass
 
     def mapproperties(self):
         # Create a copy of the DataFrame
@@ -780,17 +764,20 @@ class Map(QMainWindow):
             return
 
         if event.button() == Qt.RightButton:
+            print('help')
             canvas_height = self.drawingArea.height()
             point = self.scrollArea.widget().mapFromGlobal(event.globalPos())
             adjusted_x = (point.x() + self.scrollArea.horizontalScrollBar().value()) / self.drawingArea.scale
-            adjusted_y = canvas_height - ((point.y() + self.scrollArea.verticalScrollBar().value()) / self.drawingArea.scale)
+            adjusted_y = (point.y() + self.scrollArea.verticalScrollBar().value()) / self.drawingArea.scale
             adjusted_point = QPointF(adjusted_x, adjusted_y)
 
             if adjusted_point.x() < 0 or adjusted_point.y() < 0:
                 print(f"Warning: Adjusted point is out of bounds: {adjusted_point}")
 
-            closest_uwi = self.find_closest_uwi(adjusted_point)
+            original_point = self.map_to_data_coords(adjusted_point)
+            closest_uwi = self.find_closest_uwi(QPointF(original_point[0], original_point[1]))
             if closest_uwi:
+                print(closest_uwi)
                 self.plot_data(closest_uwi)
                 self.drawingArea.hovered_uwi = closest_uwi  
                 self.drawingArea.update()
@@ -813,7 +800,7 @@ class Map(QMainWindow):
         self.currentLine.append(QPointF(scaled_x, scaled_y))
         self.originalCurrentLine.append((scaled_x, scaled_y))
         self.drawingArea.setCurrentLine(self.currentLine)
-        print(self.currentLine)
+   
         self.drawingArea.addClickPoint(QPointF(scaled_x, scaled_y))
         # Add this line to add a node
         self.lastPoint = QPointF(scaled_x, scaled_y)
@@ -821,6 +808,8 @@ class Map(QMainWindow):
         self.drawingArea.update()
 
     def handle_right_click(self):
+
+
         canvas_height = self.drawingArea.height()
         self.drawing = False
 
@@ -846,6 +835,7 @@ class Map(QMainWindow):
             segment_number = 0
             total_cumulative_distance = 0
 
+    
             for i in range(len(new_line_coords) - 1):
                 first_x, first_y = new_line_coords[i]
                 last_x, last_y = new_line_coords[i + 1]
@@ -871,7 +861,22 @@ class Map(QMainWindow):
                         for point in points:
                             intersection_qpoint = self.data_to_map_coords(QPointF(point.x, point.y))
                             self.originalIntersectionPoints.append(intersection_qpoint)
-                            tvd_value = self.calculate_interpolated_tvd(point, well_line_points)
+
+                            # Find the two closest well points to the intersection
+                            well_line_points_sorted = sorted(well_line_points, key=lambda wp: ((wp[0] - point.x) ** 2 + (wp[1] - point.y) ** 2) ** 0.5)
+                            p1, p2 = well_line_points_sorted[0], well_line_points_sorted[1]
+
+                            # Perform linear interpolation
+                            x1, y1, tvd1 = p1
+                            x2, y2, tvd2 = p2
+                            tvd_value = self.calculate_interpolated_tvd(point, [(x1, y1, tvd1), (x2, y2, tvd2)])
+
+                            # Debugging information
+                            print(f"UWI: {uwi}, Intersection Point: ({point.x}, {point.y}), TVD Value: {tvd_value}")
+
+                            if not np.isfinite(tvd_value):
+                                print(f"Warning: Non-finite TVD Value encountered for UWI: {uwi}, Point: ({point.x}, {point.y})")
+
                             cumulative_distance = total_cumulative_distance + math.sqrt((point.x - first_x) ** 2 + (point.y - first_y) ** 2)
                             self.intersections.append((uwi, point.x, point.y, tvd_value, cumulative_distance))
 
@@ -918,35 +923,32 @@ class Map(QMainWindow):
     def is_between(self, point, point1, point2):
         cross_product = (point[1] - point1[1]) * (point2[0] - point1[0]) - (point[0] - point1[0]) * (point2[1] - point1[1])
         if abs(cross_product) > 1e-6:
+            print(f"Point {point} is not between {point1} and {point2} due to cross product")
             return False
 
         dot_product = (point[0] - point1[0]) * (point2[0] - point1[0]) + (point[1] - point1[1]) * (point2[1] - point1[1])
         if dot_product < 0:
+            print(f"Point {point} is not between {point1} and {point2} due to dot product")
             return False
 
         squared_length = (point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2
         if dot_product > squared_length:
+            print(f"Point {point} is not between {point1} and {point2} due to squared length")
             return False
 
         return True
 
     def find_closest_uwi(self, point):
-        min_distance = float('inf')
-        closest_uwi = None
+
+        if self.kd_tree_wells is None:
+            return None
+
         point_array = np.array([point.x(), point.y()])
+        distance, index = self.kd_tree_wells.query(point_array)
+        closest_point = self.uwi_points[index]
+        closest_uwi = self.uwi_map[closest_point]
+        print(f"Found closest UWI: {closest_uwi} with distance: {distance}")
 
-        for uwi, scaled_offsets in self.scaled_data.items():
-            scaled_points = np.array([[p.x(), p.y()] for p, tvd in scaled_offsets])
-            distances = np.linalg.norm(scaled_points - point_array, axis=1)
-            min_idx = np.argmin(distances)
-            distance = distances[min_idx]
-
-            if distance < min_distance:
-                min_distance = distance
-                closest_uwi = uwi
-                print(f"New closest UWI: {closest_uwi}, Distance: {min_distance}")
-
-        print(f"Found closest UWI: {closest_uwi} with distance: {min_distance}")
         return closest_uwi
 
     def toggleDrawing(self):
@@ -977,21 +979,162 @@ class Map(QMainWindow):
             QMessageBox.warning(self, "Warning", "You need to draw a line first.")
             return
 
-        self.plot_gb = PlotGB(self.depth_grid_data_df, self.depth_grid_color_df, new_line_coords, self.intersections, main_app=self)
+        self.plot_gb = PlotGB(
+            self.depth_grid_data_df, 
+            self.grid_info_df, 
+            new_line_coords, 
+            self.kd_tree_depth_grids,
+            self.depth_grid_data_dict,
+            self.intersections, 
+            main_app=self
+        )
+        # Add to the list of windows
+        self.plot_gb_windows.append(self.plot_gb)
+
+        # Show the window
         self.plot_gb.show()
+        self.plot_gb.closed.connect(lambda: self.plot_gb_windows.remove(self.plot_gb))
+
+    def update_plot_gb_windows(self):
+        for window in self.plot_gb_windows:
+            window.update_data(
+                self.depth_grid_data_df, 
+                self.grid_info_df, 
+                self.kd_tree_depth_grids,
+                self.depth_grid_data_dict,
+                self.intersections
+            )
 
     def open_color_editor(self):
-        editor = ColorEditor(self.zone_color_df, self)
-        editor.color_changed.connect(self.update_zone_colors)
-        editor.exec_()
+        if self.project_saver is None:
+            raise ValueError("Project saver is not initialized. Ensure the project file is set.")
 
-    def update_zone_colors(self, updated_df):
-        self.zone_color_df = updated_df
-        self.drawingArea.setScaledData(self.scaled_data, self.zone_color_df)
+        editor = ColorEditor(self.grid_info_df, self)
+        editor.color_changed.connect(self.update_grid_info_df)
+        editor.exec_()  # Display the color editor dialog
+
+    def update_grid_info_df(self, updated_grid_info_df):
+        self.grid_info_df = updated_grid_info_df
+        self.project_saver.save_grid_info(self.grid_info_df)
+        self.refresh_open_windows()
+        print("Updated grid colors saved")
+
+    def refresh_open_windows(self):
+        for window in self.open_windows:
+            window.update_plot(self.grid_info_df)
+        for window in self.plot_gb_windows:  # Fixed this to use the correct list
+            window.update_data(self.grid_info_df)
 
     def handle_hover_event(self, uwi):
         self.drawingArea.hovered_uwi = uwi  
         self.drawingArea.update()
+
+    def populate_zone_dropdown(self):
+        print(self.zone_names)
+        print(self.master_df)
+        if not self.master_df.empty:
+            print(self.master_df.head(5)) 
+            zones = self.master_df[self.master_df['Attribute Type'] == 'Zone']
+            print(zones)
+            zone_names = zones['Zone Name'].unique()
+            self.zoneDropdown.addItems(zone_names)
+
+    def zone_selected(self):
+        selected_zone = self.zoneDropdown.currentText()
+        if selected_zone != "Select Zone":
+            self.plot_zones(selected_zone)
+
+    def plot_zones(self, zone_name):
+        zones = self.master_df[(self.master_df['Attribute Type'] == 'Zone') & (self.master_df['Zone Name'] == zone_name)]
+
+        for _, zone in zones.iterrows():
+            uwi = zone['UWI']
+            top_md = zone['Top Depth']
+            base_md = zone['Base Depth']
+            top_x, top_y, base_x, base_y, angle_top, angle_base = self.calculate_offsets(uwi, top_md, base_md)
+            if top_x is not None and top_y is not None and base_x is not None and base_y is not None:
+                # Append to the DataFrame
+                self.zone_data_df = self.zone_data_df.append({
+                    'UWI': uwi,
+                    'Zone Name': zone_name,
+                    'Top X': top_x,
+                    'Top Y': top_y,
+                    'Base X': base_x,
+                    'Base Y': base_y,
+                    'Top MD': top_md * 0.3048,  # Convert to meters
+                    'Base MD': base_md * 0.3048,  # Convert to meters
+                    'Angle Top': angle_top,
+                    'Angle Base': angle_base
+                }, ignore_index=True)
+
+        # Plot all collected zones
+        self.plot_all_zones()
+        
+    def calculate_offsets(self, uwi, top_md_ft, base_md_ft):
+        # Convert top and base MD from feet to meters
+        top_md_m = top_md_ft * 0.3048
+        base_md_m = base_md_ft * 0.3048
+
+        well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+
+        if well_data.empty:
+            return None, None, None, None, None, None
+
+        def interpolate(md, data):
+            # Find the two bracketing points
+            below = data[data['MD'] <= md]
+            above = data[data['MD'] >= md]
+
+            if below.empty or above.empty:
+                return None, None, None, None
+
+            below = below.iloc[-1]
+            above = above.iloc[0]
+
+            if below['MD'] == above['MD']:  # Exact match
+                return below['X Offset'], below['Y Offset'], below['X Offset'], below['Y Offset']
+
+            # Linear interpolation
+            x = below['X Offset'] + (above['X Offset'] - below['X Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+            y = below['Y Offset'] + (above['Y Offset'] - below['Y Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+            return x, y, below['X Offset'], below['Y Offset'], above['X Offset'], above['Y Offset']
+
+        # Interpolate for top and base MDs
+        top_x, top_y, below_top_x, below_top_y, above_top_x, above_top_y = interpolate(top_md_m, well_data)
+        base_x, base_y, below_base_x, below_base_y, above_base_x, above_base_y = interpolate(base_md_m, well_data)
+
+        # Return None if interpolation fails
+        if top_x is None or top_y is None or base_x is None or base_y is None:
+            return None, None, None, None, None, None
+
+        # Calculate the angle perpendicular to the line segment defined by the offsets
+        dx_top = above_top_x - below_top_x
+        dy_top = above_top_y - below_top_y
+        angle_top = np.arctan2(dy_top, dx_top) + np.pi / 2  # Perpendicular angle for top
+
+        dx_base = above_base_x - below_base_x
+        dy_base = above_base_y - below_base_y
+        angle_base = np.arctan2(dy_base, dx_base) + np.pi / 2  # Perpendicular angle for base
+
+        return top_x, top_y, base_x, base_y, angle_top, angle_base
+
+    def plot_all_zones(self):
+        zone_ticks = []
+        for _, row in self.zone_data_df.iterrows():
+            top_x = row['Top X']
+            top_y = row['Top Y']
+            base_x = row['Base X']
+            base_y = row['Base Y']
+            top_md = row['Top MD']
+            base_md = row['Base MD']
+            angle_top = row['Angle Top']
+            angle_base = row['Angle Base']
+
+            # Append tick information for top and base
+            zone_ticks.append((top_x, top_y, top_md, angle_top))
+            zone_ticks.append((base_x, base_y, base_md, angle_base))
+        print(zone_ticks)
+        self.drawingArea.setZoneTicks(zone_ticks)
 
     def show_error_message(self, title, message):
         msg_box = QMessageBox(self)

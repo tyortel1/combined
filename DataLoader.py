@@ -5,6 +5,7 @@ from PySide2.QtWidgets import QApplication, QDialog, QLabel, QComboBox, QVBoxLay
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon, QColor
 import numpy as np
+from scipy.spatial import KDTree
 
 
 class DataLoaderDialog(QDialog):
@@ -18,6 +19,8 @@ class DataLoaderDialog(QDialog):
         self.directional_surveys_df = pd.DataFrame()
         self.depth_grid_data_df = pd.DataFrame()
         self.attribute_grid_data_df = pd.DataFrame()
+        self.kd_tree_depth_grids = None
+        self.kd_tree_att_grids = None
         if self.import_options_df is not None:
             self.set_import_parameters(self.import_options_df)
 
@@ -395,6 +398,7 @@ class DataLoaderDialog(QDialog):
     def load_uwi_list(self):
         sorted_uwi_list = sorted(self.well_list, reverse=False)
         self.uwi_listbox.addItems(sorted_uwi_list)
+        return self.well_list
 
     def load_data(self):
         self.selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
@@ -414,6 +418,7 @@ class DataLoaderDialog(QDialog):
 
         self.store_directional_surveys()
         self.store_depth_grid_data()
+        self.store_attribute_grid_data()
         self.zone_color()
         self.get_grid_names_and_store_info()
 
@@ -435,8 +440,10 @@ class DataLoaderDialog(QDialog):
                 depth_unit = SeisWare.Unit.Meter
                 x_offsets = []
                 y_offsets = []
+                y_offsets = []
                 md_values = []
                 tvd_values = []
+                cumulative_distances = []
 
                 surfaceX = well.TopHole().x.Value(depth_unit)
                 surfaceY = well.TopHole().y.Value(depth_unit)
@@ -451,61 +458,48 @@ class DataLoaderDialog(QDialog):
                     srvypoints = SeisWare.DirectionalSurveyPointList()
                     dirsrvy[0].Values(srvypoints)
 
-                    previous_md = None
-                    previous_tvd = None
+                    cumulative_distance = 0
                     start_lat = None
                     total_lat = 0
 
-                    for i in srvypoints:
-                        x_offset = surfaceX + i.xOffset.Value(depth_unit)
-                        y_offset = surfaceY + i.yOffset.Value(depth_unit)
-                        tvd = surfaceDatum - i.tvd.Value(depth_unit)
-                        md = i.md.Value(depth_unit)
+                    for i, point in enumerate(srvypoints):
+                        x_offset = surfaceX + point.xOffset.Value(depth_unit)
+                        y_offset = surfaceY + point.yOffset.Value(depth_unit)
+                        tvd = surfaceDatum - point.tvd.Value(depth_unit)
+                        md = point.md.Value(depth_unit)
 
-                        if previous_md is not None and previous_tvd is not None:
-                            delta_md = md - previous_md
-                            delta_tvd = tvd - previous_tvd
-                            inclination = np.degrees(np.arccos(delta_tvd / delta_md)) if delta_md != 0 else None
-                        else:
-                            inclination = None
+                        if i > 0:
+                            prev_x_offset = x_offsets[-1]
+                            prev_y_offset = y_offsets[-1]
+                            distance = np.sqrt((x_offset - prev_x_offset) ** 2 + (y_offset - prev_y_offset) ** 2)
+                            cumulative_distance += distance
 
-                        if inclination is not None and inclination < 360:
-                            x_offsets.append(x_offset)
-                            y_offsets.append(y_offset)
-                            md_values.append(md)
-                            tvd_values.append(tvd)
-                            if start_lat is None:
-                                start_lat = md
+                        x_offsets.append(x_offset)
+                        y_offsets.append(y_offset)
+                        md_values.append(md)
+                        tvd_values.append(tvd)
+                        cumulative_distances.append(cumulative_distance)
 
-                        previous_md = md
-                        previous_tvd = tvd
+                        if start_lat is None:
+                            start_lat = md
 
                     end_lat = md
                     if start_lat is not None:
                         total_lat = end_lat - start_lat
 
                     self.uwis_and_offsets.append((uwi, x_offsets, y_offsets))
-                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets))
+                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances))
                     self.total_lat_data.append((uwi, total_lat, surfaceX, surfaceY))
 
-                    max_points = max(len(md_values) for _, md_values, _, _, _ in self.directional_surveys)
-                    data_list = []
-                    for uwi, md_values, tvd_values, x_offsets, y_offsets in self.directional_surveys:
-                        for i in range(max_points):
-                            md = md_values[i] if i < len(md_values) else None
-                            tvd = tvd_values[i] if i < len(tvd_values) else None
-                            x_offset = x_offsets[i] if i < len(x_offsets) else None
-                            y_offset = y_offsets[i] if i < len(y_offsets) else None
-                            if None not in (md, tvd, x_offset, y_offset):
-                                data_list.append([uwi, md, tvd, x_offset, y_offset])
-                           
+        # Flatten the directional surveys into a DataFrame
+        data_list = []
+        for uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances in self.directional_surveys:
+            for i in range(len(md_values)):
+                data_list.append([uwi, md_values[i], tvd_values[i], x_offsets[i], y_offsets[i], cumulative_distances[i]])
 
-                    columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset']
-                    self.directional_surveys_df = pd.DataFrame(data_list, columns=columns)
-              
+        columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance']
+        self.directional_surveys_df = pd.DataFrame(data_list, columns=columns)
 
-                else:
-                    self.show_info_message("Warning", f"No directional survey found for well {uwi}.")
 
     def store_depth_grid_data(self):
         self.depth_grid_data = []
@@ -544,7 +538,9 @@ class DataLoaderDialog(QDialog):
             print("No depth grid data found.")
 
         self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
+        self.kd_tree_depth_grids = {grid: KDTree(self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.depth_grid_data_df['Grid'].unique()}
         print(self.depth_grid_data_df)
+
 
     def store_attribute_grid_data(self):
         self.attribute_grid_data = []
@@ -580,6 +576,9 @@ class DataLoaderDialog(QDialog):
             print("No attribute grid data found.")
 
         self.attribute_grid_data_df = pd.DataFrame(self.attribute_grid_data)
+      
+        self.kd_tree_att_grids = {grid: KDTree(self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.attribute_grid_data_df['Grid'].unique()}
+
 
     def zone_color(self):
         # Get the names of the depth grids from the list box
@@ -621,8 +620,10 @@ class DataLoaderDialog(QDialog):
         for grid_name in self.grid_names:
             if grid_name in depth_grid_names:
                 grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid_name]
+                grid_type = "Depth"
             else:
                 grid_data = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid_name]
+                grid_type = "Attribute"
 
             if grid_data.empty:
                 continue
@@ -657,6 +658,7 @@ class DataLoaderDialog(QDialog):
 
             grid_info_list.append({
                 'Grid': grid_name,
+                'Type': grid_type,
                 'min_x': min_x,
                 'max_x': max_x,
                 'min_y': min_y,
