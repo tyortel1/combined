@@ -26,9 +26,30 @@ class ProjectLoader:
             self.parent.selected_uwis = data_loaded.get('selected_uwis', [])
             self.parent.grid_info_df = pd.DataFrame(data_loaded.get('grid_info', {}))
             self.parent.well_list = data_loaded.get('well_list', [])
-            
-            # Load master_df from JSON if it exists
             self.parent.master_df = pd.DataFrame(data_loaded.get('master_df', {}))
+
+            # Load zone names
+            self.parent.zone_names = data_loaded.get('zone_names', [])
+
+            # Load map parameters
+            self.parent.line_width = data_loaded.get('line_width', 2)
+            self.parent.line_opacity = data_loaded.get('line_opacity', 0.8)
+            self.parent.uwi_width = data_loaded.get('uwi_width', 80)
+            self.parent.uwi_opacity = data_loaded.get('uwi_opacity', 1.0)
+
+
+            if 'zone_viewer_settings' in data_loaded:
+                self.parent.save_zone_viewer_settings = data_loaded['zone_viewer_settings']
+               
+            if 'zone_criteria' in data_loaded:
+                print(data_loaded)
+                self.load_zone_criteria_df(data_loaded)
+            grid_selected = data_loaded.get('selected_grid', 'Select Grids')
+            selected_zone = data_loaded.get('selected_zone', 'Select Zones')
+            print(selected_zone)
+
+            self.parent.populate_grid_dropdown(grid_selected)
+            self.parent.populate_zone_dropdown(selected_zone)
 
             # Debugging: Print DataFrame columns and head to verify loading
             print("Depth Grid DataFrame Columns:", self.parent.depth_grid_data_df.columns)
@@ -57,22 +78,47 @@ class ProjectLoader:
             else:
                 print("Attribute grid data is empty or 'Grid' column not found.")
 
-            self.parent.depth_grid_data_dict = {
-                grid: self.parent.depth_grid_data_df[self.parent.depth_grid_data_df['Grid'] == grid]['Z'].values
-                for grid in self.parent.kd_tree_depth_grids
-            }
+            if self.parent.depth_grid_data_df is not None and self.parent.kd_tree_depth_grids is not None:
+                self.parent.depth_grid_data_dict = {
+                    grid: self.parent.depth_grid_data_df[self.parent.depth_grid_data_df['Grid'] == grid]['Z'].values
+                    for grid in self.parent.kd_tree_depth_grids
+                }
 
-            self.parent.attribute_grid_data_dict = {
-                grid: self.parent.attribute_grid_data_df[self.parent.attribute_grid_data_df['Grid'] == grid]['Z'].values
-                for grid in self.parent.kd_tree_att_grids
-            }
+            # Check if 'attribute_grid_data_df' and 'kd_tree_att_grids' are not None
+            if self.parent.attribute_grid_data_df is not None and self.parent.kd_tree_att_grids is not None:
+                self.parent.attribute_grid_data_dict = {
+                    grid: self.parent.attribute_grid_data_df[self.parent.attribute_grid_data_df['Grid'] == grid]['Z'].values
+                    for grid in self.parent.kd_tree_att_grids
+                }
 
-            # Populate the grid dropdown with grid names
-            self.parent.populate_grid_dropdown()
-            self.parent.setData(self.parent.directional_surveys_df)
+
+            self.parent.setData()
+
+
+            self.parent.populate_grid_dropdown(grid_selected)
+            self.parent.populate_zone_dropdown(selected_zone)
+            if selected_zone is not None and selected_zone != "Select Zone":
+                self.parent.populate_zone_attributes()
+
+
+            self.parent.zoneDropdown.currentText()
 
             # Enable menus and update window title
             self.parent.import_menu.setEnabled(True)
             self.parent.launch_menu.setEnabled(True)
+            self.parent.calculate_menu.setEnabled(True)
             file_basename = os.path.basename(file_name)
             self.parent.setWindowTitle(f"Zone Analyzer - {file_basename}")
+
+    def load_zone_criteria_df(self, data_loaded):
+        """Load the zone criteria DataFrame from the project data."""
+        # Load the data into a DataFrame
+        zone_criteria_df = pd.DataFrame(data_loaded.get('zone_criteria', {}))
+
+        # Retrieve and apply the column order
+        column_order = data_loaded.get('zone_criteria_columns', None)
+        if column_order:
+            zone_criteria_df = zone_criteria_df[column_order]
+    
+        self.parent.zone_criteria_df = zone_criteria_df
+        print(self.parent.zone_criteria_df)

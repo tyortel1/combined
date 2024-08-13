@@ -15,6 +15,7 @@ env/
 *.dylib
 *.json
 *.csv
+*.xlsx
 
 # Ignore large data files
 *.zip

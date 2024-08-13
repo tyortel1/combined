@@ -1,4 +1,3 @@
-# DataLoadWellZones.py
 import pandas as pd
 from PySide2.QtWidgets import QDialog, QFileDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
 from PySide2.QtCore import Qt
@@ -29,8 +28,16 @@ class DataLoadWellZonesDialog(QDialog):
         self.layout.addWidget(self.zone_type_label)
 
         self.zone_type_combo = QComboBox(self)
-        self.zone_type_combo.addItems(["Completions", "Tests", "Production", "Injection"])
+        self.zone_type_combo.addItems(["Completions", "Tests", "Production", "Injection", "Stage", "Intersection"])
         self.layout.addWidget(self.zone_type_combo)
+
+        # Unit Dropdown
+        self.unit_label = QLabel("Unit of Measurement:", self)
+        self.layout.addWidget(self.unit_label)
+
+        self.unit_combo = QComboBox(self)
+        self.unit_combo.addItems(["Feet", "Meters"])
+        self.layout.addWidget(self.unit_combo)
 
         self.file_button = QPushButton("Select CSV File", self)
         self.file_button.clicked.connect(self.select_file)
@@ -72,7 +79,6 @@ class DataLoadWellZonesDialog(QDialog):
         self.scroll_area.setWidget(self.scroll_content)
         self.headers_checkboxes = []
         self.headers_dropdowns = []
-
 
     def load_headers(self):
         if not self.file_path:
@@ -142,6 +148,7 @@ class DataLoadWellZonesDialog(QDialog):
         attribute_type = self.attribute_type_combo.currentText()
         zone_name = self.zone_name_input.text().strip()
         zone_type = self.zone_type_combo.currentText()
+        unit = self.unit_combo.currentText()  # Assuming you have a unit dropdown for selecting Feet or Meters
 
         uwi_header = self.get_special_header("UWI")
         if not uwi_header:
@@ -158,11 +165,8 @@ class DataLoadWellZonesDialog(QDialog):
             top_depth_header = base_depth_header = None
 
         # Validate UWIs
-        print(df, self.uwi_list)
         df[uwi_header] = df[uwi_header].astype(str).str.strip()
         self.uwi_list = [uwi.strip() for uwi in self.uwi_list]
-
-        # Validate UWIs
         valid_df = df[df[uwi_header].isin(self.uwi_list)]
         invalid_uwis = df[~df[uwi_header].isin(self.uwi_list)]
 
@@ -192,6 +196,13 @@ class DataLoadWellZonesDialog(QDialog):
         # Rename UWI column
         valid_df.rename(columns={uwi_header: 'UWI'}, inplace=True)
 
+        # Convert depths if necessary
+        if unit == "Feet":
+            if 'Top Depth' in valid_df.columns:
+                valid_df['Top Depth'] = (valid_df['Top Depth'] * 0.3048).round(2)  # Convert feet to meters and round to 2 decimals
+            if 'Base Depth' in valid_df.columns:
+                valid_df['Base Depth'] = (valid_df['Base Depth'] * 0.3048).round(2)  
+
         # Reorder columns
         columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth'] + \
                   [col for col in valid_df.columns if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth']]
@@ -199,7 +210,6 @@ class DataLoadWellZonesDialog(QDialog):
 
         self.accept()
         return valid_df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header
-
 
     def get_special_header(self, special_type):
         for checkbox, dropdown in zip(self.headers_checkboxes, self.headers_dropdowns):
@@ -224,4 +234,5 @@ if __name__ == "__main__":
             print(f"UWI Header: {uwi_header}")
             print(f"Top Depth Header: {top_depth_header}")
             print(f"Base Depth Header: {base_depth_header}")
+
     sys.exit(app.exec_())
