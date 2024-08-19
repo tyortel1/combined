@@ -11,21 +11,24 @@ from HighlightCriteriaDialog import HighlightCriteriaDialog
 class ZoneViewerDialog(QDialog):
     settingsClosed = Signal(dict)
 
-    def __init__(self, df, zone_names, selected_uwis, save_zone_viewer_settings=None,zone_criteria_df=None, parent=None):
+    def __init__(self, df, zone_names, selected_uwis, save_zone_viewer_settings=None,zone_criteria_df=None, column_filters=None, parent=None):
         super(ZoneViewerDialog, self).__init__(parent)
-        self.setWindowTitle("Zone Viewer")
+        self.setWindowTitle("Zone Properties")
         self.resize(1500, 1200)
 
         # Set window flags to include the maximize button
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
 
         self.df = df
+        print(self.df)
         self.zone_names = zone_names
         self.selected_uwis = selected_uwis
         self.selected_columns = df.columns.tolist()  # Initially select all columns
         self.settings_dict = save_zone_viewer_settings
         self.page_size = 1000  # Number of rows per page
         self.current_page = 0
+        self.column_filters = column_filters if column_filters is not None else {}
+        self.current_config_name = None
 
         self.df_criteria = zone_criteria_df if zone_criteria_df is not None else pd.DataFrame()
         self.highlight_criteria = pd.DataFrame()  
@@ -101,26 +104,58 @@ class ZoneViewerDialog(QDialog):
         self.filter_layout = QVBoxLayout()
         self.filter_layout.setSpacing(5)
 
+        self.filter_layout.addWidget(QLabel("Column Filters:"))
+        self.column_filter_dropdown = QComboBox(self)
+        self.column_filter_dropdown.addItem("Select Saved Configuration") 
+        self.column_filter_dropdown.addItems(self.column_filters.keys())
+        self.column_filter_dropdown.currentIndexChanged.connect(self.apply_column_filter)
+        
+        self.filter_layout.addWidget(self.column_filter_dropdown)
 
-        self.search_bar = QLineEdit(self)
-        self.search_bar.setPlaceholderText("Search...")
-        self.search_bar.returnPressed.connect(self.apply_search_filter)
-        self.filter_layout.addWidget(self.search_bar, 0)
 
+                # Sort dropdown with label
+        self.filter_layout.addWidget(QLabel("Sort By:"))
         self.sort_dropdown = QComboBox(self)
         self.sort_dropdown.addItem("Sort by...")  # Default text
-        self.sort_dropdown.addItems(self.df.columns.tolist())
+
+        # Sort the columns alphabetically before adding them to the dropdown
+        sorted_columns = sorted(self.df.columns.tolist())
+        self.sort_dropdown.addItems(sorted_columns)
+
         self.sort_dropdown.currentIndexChanged.connect(self.sort_data)
         self.filter_layout.addWidget(self.sort_dropdown)
 
 
+        # Search bar with label
+        self.filter_layout.addWidget(QLabel("Search:"))
+        self.search_bar = QLineEdit(self)
+        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.returnPressed.connect(self.apply_search_filter)
+        self.filter_layout.addWidget(self.search_bar)
+
+
+
+        # Criteria dropdowns
+        self.filter_criteria_dropdown = QComboBox(self)
+        self.filter_criteria_dropdown.addItem("None")
+        self.filter_criteria_dropdown.currentIndexChanged.connect(self.apply_filters)
+
+        self.highlight_criteria_dropdown = QComboBox(self)
+        self.highlight_criteria_dropdown.addItem("None")
+        self.highlight_criteria_dropdown.currentIndexChanged.connect(self.apply_filters)
+
+        # UWI Filter
+        # Sort the columns alphabetically before adding them to the dropdown
+        sorted_columns = sorted(self.df.columns.tolist())
+        self.sort_dropdown.addItems(sorted_columns)
 
         # UWI Filter
         self.uwi_filter_label = QLabel("Filter by UWI")
         self.uwi_filter = QComboBox(self)
         self.uwi_filter.setFixedSize(QSize(180, 25))
         self.uwi_filter.addItem("All")
-        self.uwi_filter.addItems(self.selected_uwis)
+        sorted_uwis = sorted(self.selected_uwis)
+        self.uwi_filter.addItems(sorted_uwis)
         self.uwi_filter.setCurrentText("All")  # Set initial value
         self.uwi_filter.currentTextChanged.connect(self.apply_filters)
         self.filter_layout.addWidget(self.uwi_filter_label)
@@ -131,7 +166,8 @@ class ZoneViewerDialog(QDialog):
         self.attribute_filter = QComboBox(self)
         self.attribute_filter.setFixedSize(QSize(180, 25))
         self.attribute_filter.addItem("All")
-        self.attribute_filter.addItems(["Well", "Zone"])
+        sorted_attributes = sorted(["Well", "Zone"])
+        self.attribute_filter.addItems(sorted_attributes)
         self.attribute_filter.setCurrentText("All")  # Set initial value
         self.attribute_filter.currentTextChanged.connect(self.apply_filters)
         self.filter_layout.addWidget(self.attribute_filter_label)
@@ -142,7 +178,8 @@ class ZoneViewerDialog(QDialog):
         self.zone_name_filter = QComboBox(self)
         self.zone_name_filter.setFixedSize(QSize(180, 25))
         self.zone_name_filter.addItem("All")
-        self.zone_name_filter.addItems(self.zone_names)
+        sorted_zone_names = sorted(self.zone_names)
+        self.zone_name_filter.addItems(sorted_zone_names)
         self.zone_name_filter.setCurrentText("All")  # Set initial value
         self.zone_name_filter.currentTextChanged.connect(self.apply_filters)
         self.filter_layout.addWidget(self.zone_name_filter_label)
@@ -153,20 +190,14 @@ class ZoneViewerDialog(QDialog):
         self.zone_type_filter = QComboBox(self)
         self.zone_type_filter.setFixedSize(QSize(180, 25))
         self.zone_type_filter.addItem("All")
-        self.zone_type_filter.addItems(["Completions", "Tests", "Production", "Injection"])
+        sorted_zone_types = sorted(["Completions", "Tests", "Production", "Injection"])
+        self.zone_type_filter.addItems(sorted_zone_types)
         self.zone_type_filter.setCurrentText("All")  # Set initial value
         self.zone_type_filter.currentTextChanged.connect(self.apply_filters)
         self.filter_layout.addWidget(self.zone_type_filter_label)
         self.filter_layout.addWidget(self.zone_type_filter)
 
-        # Criteria dropdowns
-        self.filter_criteria_dropdown = QComboBox(self)
-        self.filter_criteria_dropdown.addItem("None")
-        self.filter_criteria_dropdown.currentIndexChanged.connect(self.apply_filters)
 
-        self.highlight_criteria_dropdown = QComboBox(self)
-        self.highlight_criteria_dropdown.addItem("None")
-        self.highlight_criteria_dropdown.currentIndexChanged.connect(self.apply_filters)
 
         self.filter_layout.addWidget(QLabel("Filter by Criteria:"))
         self.filter_layout.addWidget(self.filter_criteria_dropdown)
@@ -277,6 +308,32 @@ class ZoneViewerDialog(QDialog):
         self.current_page = 0
         self.update_page_label()
         self.load_data()
+
+    def apply_column_filter(self):
+        selected_filter = self.column_filter_dropdown.currentText()
+
+        if selected_filter == "Select Saved Configuration":
+            # Default to all columns if "Select Saved Configuration" is selected
+            self.selected_columns = self.df.columns.tolist()
+            print("Defaulting to all columns")  # Debugging statement
+        elif selected_filter in self.column_filters:
+            # Apply the filter based on the selected configuration
+            self.selected_columns = self.column_filters[selected_filter]
+            print(f"Selected columns for filter: {self.selected_columns}")  # Debugging statement
+        else:
+            # If the filter is not found, log or handle this case if necessary
+            print(f"Filter '{selected_filter}' not found in column_filters")  # Debugging statement
+
+        # Reload the data to apply the selected columns
+        self.load_data()
+
+
+    def apply_columns(self, columns):
+        """Method to show or hide columns based on the selected filter."""
+        self.selected_columns = columns
+        self.load_data() 
+
+
         
     def apply_filters(self):
         self.search_bar.setText("")
@@ -360,7 +417,7 @@ class ZoneViewerDialog(QDialog):
         self.filter_criteria_dropdown.blockSignals(False)
         self.highlight_criteria_dropdown.blockSignals(False)
         self.sort_dropdown.blockSignals(False)
-        print(self.filtered_df)
+    
         self.current_page = 0
         self.update_page_label()
         self.load_data()
@@ -391,7 +448,7 @@ class ZoneViewerDialog(QDialog):
 
             # Apply highlight color
             color = row.get('HighlightColor', None)
-            print(f"Row HighlightColor: {color}")  # Debugging statement to check the color value
+       
             if pd.notna(color):  # Check if the color is not NaN
                 qcolor = QColor(color)
                 for item in items:
@@ -417,7 +474,7 @@ class ZoneViewerDialog(QDialog):
 
         if dialog.exec_() == QDialog.Accepted:
             self.df_criteria = dialog.criteria_df
-            print(self.df_criteria)
+        
             criteria_name = dialog.criteria_name
     
             
@@ -436,7 +493,7 @@ class ZoneViewerDialog(QDialog):
                 self.filter_criteria_dropdown.currentText() == criteria_name:
                 self.load_data()
 
-            print(self.df_criteria)
+      
         self.apply_filters()
 
 
@@ -597,10 +654,43 @@ class ZoneViewerDialog(QDialog):
             self.load_data()
 
     def open_column_selection_dialog(self):
-        dialog = ColumnSelectionDialog(self.df.columns.tolist(), self.selected_columns, self)
+        # Retrieve the currently selected configuration name from the dropdown
+        self.current_config_name = self.column_filter_dropdown.currentText()
+
+        # Open the dialog with the current columns, selected columns, column filters, and the current configuration name
+        dialog = ColumnSelectionDialog(
+            all_columns=self.df.columns.tolist(),
+            selected_columns=self.selected_columns,
+            column_filters=self.column_filters,
+            current_config_name=self.current_config_name,
+            parent=self
+        )
+
+
         if dialog.exec_() == QDialog.Accepted:
-            self.selected_columns = dialog.get_selected_columns()
+            # Get the updated column filters from the dialog
+            self.column_filters = dialog.column_filters
+            self.current_config_name = dialog.current_config_name
+       
+
+            # Update the column_filter_dropdown with the new saved column sets
+            self.column_filter_dropdown.clear()
+            self.column_filter_dropdown.addItem("Select Saved Configuration")  # Add a default item
+            self.column_filter_dropdown.addItems(self.column_filters.keys())
+
+            # Set the dropdown to the current configuration name if it exists
+            if self.current_config_name and self.current_config_name in self.column_filters:
+                self.column_filter_dropdown.setCurrentText(self.current_config_name)
+                self.selected_columns = self.column_filters[self.current_config_name]
+            else:
+                # If the current configuration name is not found, use the default selected columns from the dialog
+                self.column_filter_dropdown.setCurrentText("Select Saved Configuration")
+                self.selected_columns = dialog.get_selected_columns()
+
+            # Load the data based on the selected columns
             self.load_data()
+
+            # Save the current configuration name to settings
             self.update_settings_dict()
 
     def apply_column_dimensions(self):
@@ -640,7 +730,8 @@ class ZoneViewerDialog(QDialog):
             "zone_name_filter": self.zone_name_filter.currentText(),
             "zone_type_filter": self.zone_type_filter.currentText(),
             "filter_criteria": self.filter_criteria_dropdown.currentText(),  # Save current filter criteria selection
-            "highlight_criteria": self.highlight_criteria_dropdown.currentText()  # Save current highlight criteria selection
+            "highlight_criteria": self.highlight_criteria_dropdown.currentText(),  # Save current highlight criteria selection
+            "current_column_filter": self.current_config_name
         }
 
     def load_settings(self):
@@ -718,14 +809,14 @@ class ZoneViewerDialog(QDialog):
 
 
 
-
     def closeEvent(self, event):
         self.update_settings_dict()
 
         # Emit the settings and criteria DataFrame back to the main application
         self.settingsClosed.emit({
             "settings": self.settings_dict,
-            "criteria": self.df_criteria
+            "criteria": self.df_criteria,
+            "columns" : self.column_filters
         })
 
         super().closeEvent(event)

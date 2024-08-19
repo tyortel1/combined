@@ -1,4 +1,4 @@
-# main.pydef well
+﻿# main.pydef well
 from email.policy import default
 import sys
 import os
@@ -13,7 +13,7 @@ from scipy.spatial import KDTree
 from PySide2.QtWidgets import QGraphicsView, QApplication, QFileDialog, QToolButton, QMainWindow, QSpinBox, QSpacerItem, QToolBar, QCheckBox, QSlider, QLabel
 from PySide2.QtWidgets import QSizePolicy, QAction, QMessageBox, QErrorMessage, QDialog, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
 import atexit
-from PySide2.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent
+from PySide2.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent, QBrush, QPixmap, QLinearGradient
 from PySide2.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QPoint
 from shapely.geometry import LineString
 import SeisWare
@@ -102,11 +102,14 @@ class Map(QMainWindow, Ui_MainWindow):
         self.well_data = {}
         self.scaled_data = {}
         self.scaled_data_md = {}
+        self.column_filters = {}
         self.save_zone_viewer_settings = {}
         self.intersectionPoints = []
         self.processed_data = []
         self.project_list = []
         self.zone_names = []
+        self.zone_zone_names = []
+        self.well_zone_names = []
         self.well_list = []  # List to store UWI
         
         self.connection = SeisWare.Connection()
@@ -117,19 +120,36 @@ class Map(QMainWindow, Ui_MainWindow):
         self.selected_grid = None
         self.selected_grid_colorbar = None
         self.selected_zone_attribute_colorbar = None
+
+        self.selected_color_palette = None 
+        self.selected_color_bar = None
+
  
         self.set_interactive_elements_enabled(False)
         self.project_loader = ProjectLoader(self)
         atexit.register(self.shutdown_and_save_all)
                 # Connect signals to slots
         # Connect signals to slots
+        
+     
+
+
+        
+
+
+        
         self.gridDropdown.currentIndexChanged.connect(self.grid_selected)
-        self.gridDropdown.currentIndexChanged.connect(self.grid_color_selected)
         self.zoneDropdown.currentIndexChanged.connect(self.zone_selected)
         self.zoneAttributeDropdown.currentIndexChanged.connect(self.zone_attribute_selected)
-        self.zoneAttributeColorBarDropdown.currentIndexChanged.connect(self.zone_attribute_color_selected)
+        self.WellZoneDropdown.currentIndexChanged.connect(self.well_zone_selected)
+        self.WellAttributeDropdown.currentIndexChanged.connect(self.well_attribute_selected)
+        self.WellAttributeColorBarDropdown.currentIndexChanged.connect(self.well_attribute_selected)
 
         self.gridColorBarDropdown.currentIndexChanged.connect(self.grid_color_selected)
+        self.zoneAttributeColorBarDropdown.currentIndexChanged.connect(self.zone_attribute_color_selected)
+        self.WellAttributeColorBarDropdown.currentIndexChanged.connect(self.well_attribute_selected)
+
+
 
 
         self.uwiCheckbox.stateChanged.connect(self.toggle_uwi_labels)
@@ -145,7 +165,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.zone_viewer_action.triggered.connect(self.launch_zone_viewer)
         self.zoomOut.triggered.connect(self.zoom_out)
         self.zoomIn.triggered.connect(self.zoom_in)
-        self.exportSw.triggered.connect(self.export_to_sw)
+        #self.exportSw.triggered.connect(self.export_to_sw)
         self.toggle_button.clicked.connect(self.toggle_draw_mode)
         self.new_project_action.triggered.connect(self.create_new_project)
         self.open_action.triggered.connect(self.open_project)
@@ -154,7 +174,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.calc_inzone_action.triggered.connect(self.inzone_dialog)
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
-        self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
+    
 
       
 
@@ -258,24 +278,38 @@ class Map(QMainWindow, Ui_MainWindow):
     def populate_zone_dropdown(self, selected_zone=None):
         """Populates the dropdown with zone names and sets the selected zone if provided."""
         self.selected_zone = selected_zone
-    
-        if not self.master_df.empty:
 
-        
+        if not self.master_df.empty:
+            # Filter out any entries where 'Attribute Type' is 'Well'
+            zone_df = self.master_df[self.master_df['Attribute Type'] == "Zone"]
+
+            # Get the unique zone names from the filtered DataFrame
+            self.zone_zone_names = zone_df['Zone Name'].unique().tolist()
+
             # Block signals to prevent unwanted triggers during population
             self.zoneDropdown.blockSignals(True)
             self.zoneDropdown.clear()
             self.zoneDropdown.addItem("Select Zone")
-            self.zoneDropdown.addItems(self.zone_names)
+            self.zoneDropdown.addItems(self.zone_zone_names)
             self.zoneDropdown.blockSignals(False)
-        
+
             # Set the selected zone if provided and if it exists in the dropdown
-            if self.selected_zone and self.selected_zone in self.zone_names:
+            if self.selected_zone and self.selected_zone in self.zone_zone_names:
                 self.zoneDropdown.setCurrentText(selected_zone)
                 self.zoneAttributeDropdown.setEnabled(True)
-
             else:
-                self.zoneDropdown.setCurrentText('Select Zones')  # Clear selection if zone is not found
+                self.zoneDropdown.setCurrentText('Select Zone')  # Clear selection if zone is not found
+                self.zoneAttributeDropdown.setEnabled(False)
+        else:
+            self.zoneDropdown.clear()
+            self.zoneDropdown.addItem("No Zones Available")
+            self.zoneAttributeDropdown.setEnabled(False)
+
+
+
+
+
+
 
 
     def populate_zone_attributes(self):
@@ -288,21 +322,25 @@ class Map(QMainWindow, Ui_MainWindow):
         # Filter master_df for the selected zone
         zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
 
-        zone_df = zone_df[zone_df['Zone Type'].str.lower() != 'intersection']
         
         # Drop fixed columns that are not relevant for selection
         columns_to_exclude = [
             'Zone Name', 'Zone Type', 'Attribute Type', 
             'Top Depth', 'Base Depth', 'UWI', 
-            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset'
+            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
         ]
         remaining_df = zone_df.drop(columns=columns_to_exclude)
 
         # Find columns with numeric data types
         numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
+        numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
 
         # Further filter to only include columns with at least one non-null value
         non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
+
+            # Ensure "Grid Name" is included if it has non-null values
+        if 'Grid Name' in zone_df.columns and zone_df['Grid Name'].notnull().any():
+            non_null_numeric_columns.append('Grid Name')
 
         # Clear the dropdown before populating
         self.zoneAttributeDropdown.blockSignals(True)
@@ -324,6 +362,10 @@ class Map(QMainWindow, Ui_MainWindow):
             return
 
         self.selected_grid = self.gridDropdown.currentText()
+
+        # Load the color palette before using it
+        self.get_grid_color()
+
         if self.selected_grid in self.depth_grid_data_df['Grid'].unique():
             selected_grid_df = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == self.selected_grid]
         else:
@@ -354,53 +396,55 @@ class Map(QMainWindow, Ui_MainWindow):
         # Update the drawing area with the new grid points and grid info
         self.drawingArea.setGridPoints(grid_points_with_values, min_x, max_x, min_y, max_y, min_z, max_z, bin_size_x, bin_size_y)
 
+        self.display_color_range(self.gridColorRangeDisplay, self.selected_color_palette, min_z, max_z)
+
     def grid_color_selected(self):
         # Get the selected color bar from the dropdown
         self.selected_color_bar = self.gridColorBarDropdown.currentText()
-       
 
+        # Get the current index from the grid dropdown
+        index = self.gridDropdown.currentIndex()
+
+        # Call grid_selected with the current index
+        self.grid_selected(index)
+
+    def get_grid_color(self):
         # Define the path to the color palettes directory
+        self.selected_color_bar = self.gridColorBarDropdown.currentText()
         palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
         file_path = os.path.join(palettes_dir, self.selected_color_bar)
 
         # Load the color palette
         self.selected_color_palette = self.load_color_palette(file_path)
-
-
-        # Check if there is a selected grid
-        if hasattr(self, 'selected_grid') and self.selected_grid:
-            # Reload the grid data with the new color palette
-            self.grid_selected(self.gridDropdown.currentIndex())
+        print(self.selected_color_palette)
 
     def zone_selected(self):
         """Handles the selection of a zone from the dropdown."""
         self.selected_zone = self.zoneDropdown.currentText()
-        
-
-
+ 
         if self.selected_zone == "Select Zone":
             # Clear the zones in the plotting area
+            
+            self.processed_data = []
             self.drawingArea.clearZones()
-            self.processed_dataself.processed_data = []
+            
 
         else:
-            
+            self.processed_data = []
             self.plot_zones(self.selected_zone)
-        
-            
-            
+         
             
         for uwi, well in self.well_data.items():
             mds = well['mds']  # Get the list of measured depths
             well['md_colors'] = [QColor(Qt.black)] * len(mds) 
 
         
-        self.drawingArea.setScaledData(self.well_data)
+        
         
         self.zoneAttributeDropdown.blockSignals(True)
         self.zoneAttributeDropdown.clear()
         self.populate_zone_attributes()
-        self.zoneAttributeDropdown.addItem("Select Zone Attribute")
+        self.drawingArea.setScaledData(self.well_data)
         self.zoneAttributeDropdown.blockSignals(False)
         self.zoneAttributeDropdown.setEnabled(False)
 
@@ -408,21 +452,117 @@ class Map(QMainWindow, Ui_MainWindow):
         return
 
     def zone_attribute_selected(self):
+        self.drawingArea.clearUWILines()
         # Get the selected zone attribute from the dropdown
         self.selected_zone_attribute = self.zoneAttributeDropdown.currentText()
 
         # Check if a zone and zone attribute are selected
         if self.selected_zone and self.selected_zone_attribute:
-            if self.selected_zone_attribute != "Select Zone Attribute":
-                # Process zone attribute data
-                self.preprocess_zone_attribute_data()
+            if self.selected_zone_attribute == "Grid Name":
+                # If the selected attribute is "Grid Name", apply the grid name colors
+                self.apply_grid_name_colors()
+                self.drawingArea.setScaledData(self.well_data)
 
-                # Update the drawing area with the processed data
-                self.drawingArea.setScaledData(self.well_data)  # Send the output data to the drawing area
+
+            elif self.selected_zone_attribute == "Select Zone Attribute":
+                # Change all colors for the selected zone to black
+                for uwi in self.well_data:
+                    well_data = self.well_data[uwi]
+                    well_data['md_colors'] = [QColor(Qt.black) for _ in well_data['mds']]
+                # Update the drawing area with the blackened data
+                self.drawingArea.setScaledData(self.well_data)
             else:
-                # Handle the case where "Select Zone Attribute" is chosen
-                self.drawingArea.clearUWILines()
-                self.drawingArea.setScaledData(self.well_data)  # Or reset as needed
+                # Process zone attribute data for other attributes
+                self.preprocess_zone_attribute_data()
+                # Update the drawing area with the processed data
+                self.drawingArea.setScaledData(self.well_data)
+
+    def apply_grid_name_colors(self):
+        """Simplified method to apply grid name colors directly when Zone Name equals Grid Name."""
+        # Filter the DataFrame for the selected zone
+        zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
+
+        if zone_df.empty:
+            QMessageBox.warning(self, "Warning", f"No data found for zone '{self.selected_zone}'.")
+            return
+
+        # Create a color map for each UWI with top depth, base depth, and the associated color
+        uwi_color_map = {}
+
+        # Iterate through each zone and populate the color map
+        for _, zone in zone_df.iterrows():
+            uwi = zone['UWI']
+            grid_name = zone['Grid Name']
+            top_depth = zone['Top Depth']
+            base_depth = zone['Base Depth']
+
+            # Retrieve the color for the grid from grid_info_df
+            grid_color = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name, 'Color (RGB)'].values
+            if grid_color.size == 0:
+                qcolor = QColor(Qt.black)  # Default color if not found
+            else:
+                rgb_values = grid_color[0]  # Extract the RGB list
+                qcolor = QColor(*rgb_values)
+
+            # If the UWI is not already in the color map, add it
+            if uwi not in uwi_color_map:
+                uwi_color_map[uwi] = []
+
+            # Add the top depth, base depth, and color as a tuple
+            uwi_color_map[uwi].append(( top_depth, base_depth, qcolor))
+        print(uwi_color_map)
+
+        for _, zone in zone_df.iterrows():
+            uwi = zone['UWI']
+            attribute_value = zone[self.selected_zone_attribute]
+            top_depth = zone['Top Depth']
+            base_depth = zone['Base Depth']
+            top_x_offset = zone['Top X Offset']
+            top_y_offset = zone['Top Y Offset']
+            base_x_offset = zone['Base X Offset']
+            base_y_offset = zone['Base Y Offset']
+            top_point = QPointF(top_x_offset, top_y_offset)
+            base_point = QPointF(base_x_offset, base_y_offset)
+
+
+            # Insert top depth data
+            self.well_data[uwi]['x_offsets'].append(top_x_offset)
+            self.well_data[uwi]['y_offsets'].append(top_y_offset)
+            self.well_data[uwi]['mds'].append(top_depth)
+            self.well_data[uwi]['points'].append(top_point)
+
+        # After adding all points, sort each well's data by MD
+        for uwi in self.well_data:
+            well_data = self.well_data[uwi]
+            sorted_indices = sorted(range(len(well_data['mds'])), key=lambda i: well_data['mds'][i])
+            well_data['x_offsets'] = [well_data['x_offsets'][i] for i in sorted_indices]
+            well_data['y_offsets'] = [well_data['y_offsets'][i] for i in sorted_indices]
+            well_data['mds'] = [well_data['mds'][i] for i in sorted_indices]
+            well_data['points'] = [well_data['points'][i] for i in sorted_indices]
+
+        # Apply the colors to the well data
+        for uwi, well_data in self.well_data.items():
+            mds = well_data['mds']
+            well_data['md_colors'] = []  # Clear and prepare the list for new colors
+
+            if uwi in uwi_color_map:
+                depth_color_list = uwi_color_map[uwi]
+                print(depth_color_list)
+
+                # Iterate through the measured depths and assign colors
+                for md in mds:
+                    assigned_color = QColor(Qt.black)  # Default color
+
+                    # Iterate over the depth_color_list in the given order
+                    for top_depth, base_depth, color in depth_color_list:
+                        # Ensure both UWI and depth range match
+                        if top_depth <= md < base_depth:
+                            assigned_color = color
+                            print(md, assigned_color)
+                            break  # Exit once the first matching color is found
+
+                    well_data['md_colors'].append(assigned_color)
+            
 
     def zone_attribute_color_selected(self):
         self.selected_zone_attribute_colorbar = self.zoneAttributeColorBarDropdown.currentText()
@@ -439,6 +579,7 @@ class Map(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Error", f"An error occurred while updating colors: {e}")
 
     def preprocess_zone_attribute_data(self):
+        zone_df = pd.DataFrame
         """Populates the well data with colors based on the selected zone."""
         zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
     
@@ -494,14 +635,6 @@ class Map(QMainWindow, Ui_MainWindow):
             top_point = QPointF(top_x_offset, top_y_offset)
             base_point = QPointF(base_x_offset, base_y_offset)
 
-            if uwi not in self.well_data:
-                self.well_data[uwi] = {
-                    'x_offsets': [],
-                    'y_offsets': [],
-                    'tvds': [],  # You may need to interpolate TVD values if needed
-                    'mds': [],
-                    'points': []
-                }
 
             # Insert top depth data
             self.well_data[uwi]['x_offsets'].append(top_x_offset)
@@ -538,32 +671,33 @@ class Map(QMainWindow, Ui_MainWindow):
                             break
                  
                     well['md_colors'].append(assigned_color)
-        self.save_well_data_to_excel()
+        self.display_color_range(self.zoneAttributeColorRangeDisplay, color_palette, min_value, max_value)
 
-    def save_well_data_to_excel(self):
-        import pandas as pd
-        import os
 
-        data = []
-        for uwi, well in self.well_data.items():
-            for i in range(len(well['mds'])):
-                data.append({
-                    'UWI': uwi,
-                    'MD': well['mds'][i],
-                    'TVD': well['tvds'][i] if i < len(well['tvds']) else None,
-                    'X Offset': well['x_offsets'][i],
-                    'Y Offset': well['y_offsets'][i],
-                    'Point': well['points'][i] if i < len(well['points']) else None,
-                    'Color': well['md_colors'][i] if i < len(well['md_colors']) else None  # Add md_colors here
-                })
 
-        # Convert to DataFrame
-        df = pd.DataFrame(data)
+    def zone_attribute_color_selected(self):
+        """Handles the selection of a new color bar for zone attributes."""
+        self.selected_zone_attribute_colorbar = self.WellAttributeColorBarDropdown.currentText()
+    
+        # Construct the path to the palette file
+        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
+        file_path = os.path.join(palettes_dir, self.selected_zone_attribute_colorbar)
 
-        # Save to Excel
-        project_dir = os.path.dirname(__file__)
-        excel_path = os.path.join(project_dir, 'well_data.xlsx')
-        df.to_excel(excel_path, index=False)
+        try:
+            # Preprocess data and apply the selected color palette
+            self.preprocess_zone_attribute_data()
+        
+            # Pass the updated well_data only, as processed_data is no longer needed
+            self.drawingArea.setScaledData(self.well_data)
+        
+        except FileNotFoundError:
+            QMessageBox.warning(self, "Error", f"The palette file '{file_path}' was not found.")
+        except Exception as e:
+            # Log the error and display a message box
+        
+            QMessageBox.warning(self, "Error", f"An error occurred while updating colors: {e}")
+
+
 
 
     def get_color_for_md(self, uwi, md):
@@ -573,40 +707,6 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Return the color associated with the specific MD
         return self.well_data[uwi]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
-
-    def load_color_palette(self, file_path):
-        color_palette = []
-        try:
-            if not file_path.endswith('.pal'):
-                file_path += '.pal'
-
-            with open(file_path, 'r') as file:
-                lines = file.readlines()
-                start_index = 2  # Assuming the first two lines are metadata
-                for line in lines[start_index:]:
-                    if line.strip():  # Check if the line is not empty
-                        try:
-                            r, g, b = map(int, line.strip().split())
-                            color_palette.append(QColor(r, g, b))
-                        except ValueError:
-                            print(f"Skipping invalid line: {line.strip()}")  # Debugging output
-                            continue
-        except FileNotFoundError:
-            print(f"Error: The file '{file_path}' was not found.")
-        except IOError as e:
-            print(f"Error: An IOError occurred while trying to read '{file_path}': {e}")
-        return color_palette
-
-    def map_value_to_color(self, value, min_value, max_value, color_palette):
-        """Map a value to a color based on the min and max range."""
-        if max_value == min_value:
-            return color_palette[0] if color_palette else QColor(0, 0, 0)
-
-        normalized_value = (value - min_value) / (max_value - min_value)
-        index = int(normalized_value * (len(color_palette) - 1))
-        index = max(0, min(index, len(color_palette) - 1))
-    
-        return color_palette[index]
 
     
     def draw_grid_on_map(self, grid_df):
@@ -647,7 +747,7 @@ class Map(QMainWindow, Ui_MainWindow):
             ][['UWI', 'Zone Name', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Top Depth', 'Base Depth', 'Angle Top', 'Angle Base']]
 
             self.zone_data_df.columns = [
-                'UWI', 'Zone Name', 'Top X', 'Top Y', 'Base X', 'Base Y', 'Top MD', 'Base MD', 'Angle Top', 'Angle Base'
+                'UWI', 'Zone Name', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Top Depth', 'Base Depth', 'Angle Top', 'Angle Base'
             ]
                       
           
@@ -660,42 +760,91 @@ class Map(QMainWindow, Ui_MainWindow):
                 uwi = zone['UWI']
                 top_md = zone['Top Depth']
                 base_md = zone['Base Depth']
-                top_x, top_y, base_x, base_y, angle_top, angle_base = self.calculate_offsets(uwi, top_md, base_md)
+                top_x, top_y, base_x, base_y = self.calculate_offsets(uwi, top_md, base_md)
+
                 if top_x is not None and top_y is not None and base_x is not None and base_y is not None:
                     # Append to the DataFrame
                     self.zone_data_df = self.zone_data_df.append({
                         'UWI': uwi,
                         'Zone Name': zone_name,
-                        'Top X': top_x,
-                        'Top Y': top_y,
-                        'Base X': base_x,
-                        'Base Y': base_y,
-                        'Top MD': top_md,
-                        'Base MD': base_md,
-                        'Angle Top': angle_top,
-                        'Angle Base': angle_base
+                        'Top X Offset': top_x,
+                        'Top Y Offset': top_y,
+                        'Base X Offset': base_x,
+                        'Base Y Offset': base_y,
+                        'Top Depth': top_md,
+                        'Base Depth': base_md,
                     }, ignore_index=True)
 
-                    # Update master_df with new offsets
-                    # Update master_df with new offsets
-                    mask = (
-                        (self.master_df['UWI'] == uwi) &
-                        (self.master_df['Zone Name'] == zone_name) &
-                        (self.master_df['Top Depth'] == top_md) &
-                        (self.master_df['Base Depth'] == base_md)
-                    )
-        
-                    if not self.master_df[mask].empty:
-                        self.master_df.loc[mask, 'Top X Offset'] = top_x
-                        self.master_df.loc[mask, 'Top Y Offset'] = top_y
-                        self.master_df.loc[mask, 'Base X Offset'] = base_x
-                        self.master_df.loc[mask, 'Base Y Offset'] = base_y
-                        self.master_df.loc[mask, 'Angle Top'] = angle_top
-                        self.master_df.loc[mask, 'Angle Base'] = angle_base
+            # Calculate angles after all data has been appended
+            for uwi in self.zone_data_df['UWI'].unique():
+                uwi_data = self.zone_data_df[self.zone_data_df['UWI'] == uwi]
 
-            # Save the updated master_df
+                # Get the first and last X, Y offsets
+                first_row = uwi_data.iloc[0]
+                last_row = uwi_data.iloc[-1]
+                x2 = last_row['Base X Offset']
+                x1 = first_row['Top X Offset']
+                y1 = first_row['Top Y Offset']
+                y2 = last_row['Base Y Offset']
+                last_row = uwi_data.iloc[-1]
+
+                dx = x2 - x1
+                dy = y1 - y2  
+
+                angle = np.arctan2(dy, dx)  # Calculate the angle in radians
+
+                # Normalize the angle to the range [0, 2π)
+                if angle < 0:
+                    angle += 2 * np.pi
+
+                # Define the target angles (0, π/2, π, 3π/2, 2π) in radians
+                target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
+
+                # Round to the nearest target angle
+                rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
+
+                # Rotate the angle by 90 degrees (π/2 radians)
+                rotated_angle = rounded_angle + np.pi/2
+
+                # Normalize the rotated angle to the range [0, 2π)
+                if rotated_angle >= 2 * np.pi:
+                    rotated_angle -= 2 * np.pi
+
+                # Update the angle in the DataFrame
+                self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, 'Angle Top'] = rotated_angle
+                self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, 'Angle Base'] = rotated_angle
+ 
+
+            for _, row in self.zone_data_df.iterrows():
+                uwi = row['UWI']
+                top_md = row['Top Depth']
+                base_md = row['Base Depth']
+                top_x = row['Top X Offset']
+                top_y = row['Top Y Offset']
+                base_x = row['Base X Offset']
+                base_y = row['Base Y Offset']
+                rotated_angle = row['Angle Top']  # Angle Top and Base should be the same
+
+                # Create a mask to identify the correct row in master_df
+                mask = (
+                    (self.master_df['UWI'] == uwi) &
+                    (self.master_df['Zone Name'] == zone_name) &
+                    (self.master_df['Top Depth'] == top_md) &
+                    (self.master_df['Base Depth'] == base_md)
+                )
+
+                # Update the master_df with the corresponding data
+                if not self.master_df[mask].empty:
+                    self.master_df.loc[mask, 'Top X Offset'] = top_x
+                    self.master_df.loc[mask, 'Top Y Offset'] = top_y
+                    self.master_df.loc[mask, 'Base X Offset'] = base_x
+                    self.master_df.loc[mask, 'Base Y Offset'] = base_y
+                    self.master_df.loc[mask, 'Angle Top'] = rotated_angle
+                    self.master_df.loc[mask, 'Angle Base'] = rotated_angle
+
+        # Save the updated master_df
             self.project_saver.save_master_df(self.master_df)
-
+   
         # Plot all collected zones
         self.plot_all_zones()
 
@@ -713,23 +862,9 @@ class Map(QMainWindow, Ui_MainWindow):
         top_x, top_y, below_top_x, below_top_y, above_top_x, above_top_y = self.interpolate(top_md_m, well_data)
         base_x, base_y, below_base_x, below_base_y, above_base_x, above_base_y = self.interpolate(base_md_m, well_data)
 
-        # Return None if interpolation fails
-        if top_x is None or top_y is None or base_x is None or base_y is None:
-            return None, None, None, None, None, None
-
-        # Calculate the angle perpendicular to the line segment defined by the offsets
-        dx_top = above_top_x - below_top_x
-        dy_top = above_top_y - below_top_y
-        angle_top = np.arctan2(dy_top, dx_top) + np.pi / 2  # Perpendicular angle for top
-
-        dx_base = above_base_x - below_base_x
-        dy_base = above_base_y - below_base_y
-        angle_base = np.arctan2(dy_base, dx_base) + np.pi / 2  # Perpendicular angle for base
 
 
-
-
-        return top_x, top_y, base_x, base_y, angle_top, angle_base
+        return top_x, top_y, base_x, base_y
 
     def interpolate(self, md, data):
 
@@ -739,8 +874,6 @@ class Map(QMainWindow, Ui_MainWindow):
         # Find the two bracketing points
         below = data[data['MD'] <= (md +.1)]
         above = data[data['MD'] >= (md -.1)]
-        if md == 1830.63 or md == 1394.92:
-            print('stop')
         if below.empty or above.empty:
             return None, None, None, None, None, None
 
@@ -758,25 +891,179 @@ class Map(QMainWindow, Ui_MainWindow):
     def plot_all_zones(self):
         try:
             zone_ticks = []
+            print(self.zone_data_df)
             for _, row in self.zone_data_df.iterrows():
-                top_x, top_y = row['Top X'], row['Top Y']
-                base_x, base_y = row['Base X'], row['Base Y']
-                top_md, base_md = row['Top MD'], row['Base MD']
+                top_x, top_y = row['Top X Offset'], row['Top Y Offset']
+                base_x, base_y = row['Base X Offset'], row['Base Y Offset']
+                top_md, base_md = row['Top Depth'], row['Base Depth']
                 angle_top, angle_base = row['Angle Top'], row['Angle Base']
 
                 # Append tick information for top and base
                 zone_ticks.append((top_x, top_y, top_md, angle_top))
                 zone_ticks.append((base_x, base_y, base_md, angle_base))
-            
-            
+        
             self.drawingArea.clearZones()
             self.drawingArea.setZoneTicks(zone_ticks)
+        except Exception as e:
+            print(f"Error plotting zones: {e}")
             
 
 
 
         except Exception as e:
             print(f"Error in plot_all_zones: {e}")
+
+
+    def populate_well_zone_dropdown(self):
+        """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
+    
+        # Clear the dropdown and set a default option
+        self.WellZoneDropdown.blockSignals(True)
+        self.WellZoneDropdown.clear()
+        self.WellZoneDropdown.addItem("Select Well Zone")
+
+        if not self.master_df.empty:
+            # Filter the DataFrame to include only entries where 'Attribute Type' is 'Well'
+            well_df = self.master_df[self.master_df['Attribute Type'] == "Well"]
+
+            # Get the unique zone names from the filtered DataFrame
+            self.well_zone_names = well_df['Zone Name'].unique().tolist()
+
+            # Populate the dropdown with the filtered zone names
+            if self.well_zone_names:
+                self.WellZoneDropdown.addItems(self.well_zone_names)
+    
+        self.WellZoneDropdown.blockSignals(False)
+
+    def well_zone_selected(self):
+        """Handles the selection of a zone from the dropdown."""
+        self.selected_zone = self.WellZoneDropdown.currentText()
+ 
+        if self.selected_zone == "Select Well Zone":
+            self.WellAttributeDropdown.setEnabled(False) 
+            # Clear the zones in the plotting area
+
+        else:
+            pass
+         
+      
+        
+        
+        self.WellAttributeDropdown.blockSignals(True)
+        self.WellAttributeDropdown.clear()
+        self.populate_well_attribute_dropdown()
+
+        self.WellAttributeDropdown.blockSignals(False)
+        self.WellAttributeDropdown.setEnabled(False)
+
+        self.WellAttributeDropdown.setEnabled(True) 
+        return
+
+    def populate_well_attribute_dropdown(self):
+        """Populate the well attribute dropdown with numeric attributes for the selected well zone."""
+    
+        # Get the selected well zone from the well zone dropdown
+        selected_well_zone = self.WellZoneDropdown.currentText()
+
+        # Check if master_df is empty or no valid zone is selected
+        if self.master_df.empty or selected_well_zone == "Select Well Zone":
+            print("No well zone selected or Master DataFrame is empty. No operations performed.")
+            return  # Stop further processing
+
+        # Filter master_df for the selected well zone
+        well_zone_df = self.master_df[(self.master_df['Zone Name'] == selected_well_zone) & 
+                                      (self.master_df['Attribute Type'] == "Well")]
+
+        # Drop fixed columns that are not relevant for selection
+        columns_to_exclude = [
+            'Zone Name', 'Zone Type', 'Attribute Type', 
+            'Top Depth', 'Base Depth', 'UWI', 
+            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
+        ]
+        remaining_df = well_zone_df.drop(columns=columns_to_exclude)
+
+        # Find columns with numeric data types
+        numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
+        numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
+
+        # Further filter to only include columns with at least one non-null value
+        non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
+
+        # Clear the dropdown before populating
+        self.WellAttributeDropdown.blockSignals(True)
+        self.WellAttributeDropdown.clear()
+
+        if non_null_numeric_columns:
+            self.WellAttributeDropdown.addItem("Select Well Attribute")
+            self.WellAttributeDropdown.addItems(non_null_numeric_columns)
+            self.WellAttributeDropdown.setEnabled(True)
+        else:
+            self.WellAttributeDropdown.addItem("No Attributes Available")
+            self.WellAttributeDropdown.setEnabled(False)
+
+        self.WellAttributeDropdown.blockSignals(False)
+
+
+    def well_attribute_selected(self):
+        """Handle the event when a well attribute is selected."""
+    
+        # Get the selected attribute from the dropdown
+        selected_attribute = self.WellAttributeDropdown.currentText()
+    
+        # Ensure a valid attribute is selected
+        if selected_attribute == "Select Well Attribute" or not selected_attribute:
+            return
+
+        # Filter the master_df for the selected well zone and attribute type
+        selected_well_zone = self.WellZoneDropdown.currentText()
+        well_zone_df = self.master_df[(self.master_df['Zone Name'] == selected_well_zone) &
+                                      (self.master_df['Attribute Type'] == "Well")]
+
+        # Check if the selected attribute is in the filtered DataFrame
+        if selected_attribute not in well_zone_df.columns:
+            return
+
+        # Load the selected color palette
+        color_bar_name = self.WellAttributeColorBarDropdown.currentText()
+        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
+        file_path = os.path.join(palettes_dir, color_bar_name)
+
+        try:
+            color_palette = self.load_color_palette(file_path)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Could not load color palette: {e}")
+            return
+
+        # Calculate the min and max values for the selected attribute
+        min_value = well_zone_df[selected_attribute].min()
+        max_value = well_zone_df[selected_attribute].max()
+
+        # Update the color bar display
+        self.display_color_range(self.WellAttributeColorRangeDisplay, color_palette, min_value, max_value)
+
+        # Map each value in the selected attribute to a color
+        well_zone_df['color'] = well_zone_df[selected_attribute].apply(
+            lambda value: self.map_value_to_color(value, min_value, max_value, color_palette)
+        )
+
+        # Prepare data to send to the drawing area using the Top X and Top Y Offsets
+        points_with_colors = [
+            (QPointF(row['Top X Offset'], row['Top Y Offset']), row['color'])
+            for _, row in well_zone_df.iterrows()
+        ]
+
+        # Clear existing well attribute boxes and add new ones
+        self.drawingArea.clearWellAttributeBoxes()
+        self.drawingArea.add_well_attribute_boxes(points_with_colors)
+
+
+
+
+
+
+
+
+
 
     def load_color_palette(self, file_path):
         color_palette = []
@@ -803,7 +1090,6 @@ class Map(QMainWindow, Ui_MainWindow):
         if max_value == min_value:
             return color_palette[0] if color_palette else QColor(0, 0, 0)
 
-
         # Normalize the value to a range between 0 and 1
         normalized_value = (value - min_value) / (max_value - min_value)
     
@@ -814,6 +1100,77 @@ class Map(QMainWindow, Ui_MainWindow):
         index = max(0, min(index, len(color_palette) - 1))
     
         return color_palette[index]
+
+
+    def display_color_range(self, color_range_display, color_palette, min_attr, max_attr):
+        """Display the color range gradient with dashes and values above it."""
+        if not color_palette or min_attr is None or max_attr is None:
+            print("Unable to display color range.")
+            color_range_display.setPixmap(QPixmap(color_range_display.size()))
+            return
+
+        pixmap = QPixmap(color_range_display.size())
+        pixmap.fill(Qt.white)
+
+        painter = QPainter(pixmap)
+    
+        # Calculate dimensions
+        margin = 5
+        dash_height = 5
+        text_height = 10  # Reduced text height to accommodate smaller font
+        color_bar_height = 20
+        total_height = margin + text_height + dash_height + color_bar_height + margin
+        color_bar_y = total_height - color_bar_height - margin
+        edge_padding = 10  # Increased padding
+
+        # Draw color gradient (left to right: min to max)
+        gradient = QLinearGradient(edge_padding, color_bar_y, 
+                                   color_range_display.width() - edge_padding, color_bar_y)
+        for i, color in enumerate(color_palette):
+            gradient.setColorAt(i / (len(color_palette) - 1), color)
+
+        painter.setBrush(QBrush(gradient))
+        painter.drawRect(edge_padding, color_bar_y, 
+                         color_range_display.width() - 2 * edge_padding, color_bar_height)
+
+        # Prepare for drawing text and dashes
+        painter.setPen(Qt.black)
+        font = painter.font()
+        font.setPointSize(5)  # Smaller font size
+        painter.setFont(font)
+
+        # Calculate intermediate values
+        num_intervals = 4
+        interval = (max_attr - min_attr) / num_intervals
+        values = [round(min_attr + i * interval) for i in range(num_intervals + 1)]  # Rounded to nearest integer
+
+        for i, value in enumerate(values):
+            x = int(i * (color_range_display.width() - 2 * edge_padding) / num_intervals) + edge_padding
+    
+            # Draw dash
+            painter.drawLine(x, color_bar_y - dash_height, x, color_bar_y)
+    
+            # Draw value
+            text = f"{value}"
+            text_width = painter.fontMetrics().width(text)
+    
+            # Adjust text position for edge values
+            if i == 0:  # Leftmost value
+                text_x = edge_padding
+            elif i == num_intervals:  # Rightmost value
+                text_x = color_range_display.width() - text_width - edge_padding
+            else:
+                text_x = x - text_width / 2
+    
+            painter.drawText(text_x, margin + text_height, text)
+
+        painter.end()
+        color_range_display.setPixmap(pixmap)
+
+
+
+
+
 
 
     def retranslateUi(self):
@@ -981,13 +1338,12 @@ class Map(QMainWindow, Ui_MainWindow):
             # Show error message if no UWI is selected
             QMessageBox.warning(self, "Error", "Load Wells First")
             return
-        dialog = DataLoadWellZonesDialog(self.selected_uwis)
+        dialog = DataLoadWellZonesDialog(self.selected_uwis, self.directional_surveys_df)
         if dialog.exec_() == QDialog.Accepted:
             result = dialog.import_data()
             if result:
                 df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header = result
-
-                    # Append the new data to the existing DataFrame
+                print(df)                    # Append the new data to the existing DataFrame
                 # Ensure zone_name is a list, even if it's a single item
                 if isinstance(zone_name, str):
                     zone_name = [zone_name]
@@ -995,13 +1351,14 @@ class Map(QMainWindow, Ui_MainWindow):
                 # Append the new data to the existing DataFrame
                 if not self.master_df.empty:
                     self.master_df = pd.concat([self.master_df, df], ignore_index=True)
+                    print(self.master_df)
                 else:
                     self.master_df = df
 
                 # Update zone names
                 self.zone_names.extend(zone_name)
                 self.zone_names = list(set(self.zone_names))  # Remove duplicates
-
+                print(self.zone_names)
                 # Ensure the project saver is initialized
                 if not hasattr(self, 'project_saver'):
                     self.project_saver = ProjectSaver(self.project_file_name)
@@ -1012,6 +1369,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
                 print("Project data updated and saved")
                 self.populate_zone_dropdown()
+                self.populate_well_attribute_dropdown()
                 self.export_menu.setEnabled(True)
                 self.launch_menu.setEnabled(True)
 
@@ -1251,8 +1609,9 @@ class Map(QMainWindow, Ui_MainWindow):
 ######################################Launch####################################
     def launch_zone_viewer(self):
         # Create the dialog with settings if available
-        print(self.zone_criteria_df)
-        dialog = ZoneViewerDialog(self.master_df, self.zone_names, self.selected_uwis, self.save_zone_viewer_settings, self.zone_criteria_df, self)
+        print(self.column_filters)
+        print(self.master_df)
+        dialog = ZoneViewerDialog(self.master_df, self.zone_names, self.selected_uwis, self.save_zone_viewer_settings, self.zone_criteria_df,self.column_filters, self)
 
         # Connect the signal for saving settings when the dialog is closed
         dialog.settingsClosed.connect(self.save_zone_settings)
@@ -1260,19 +1619,29 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.show()
 
     def save_zone_settings(self, data):
-        # Extract the settings and criteria DataFrame from the data dictionary
+        # Extract the settings, criteria DataFrame, and column filters from the data dictionary
         settings = data.get("settings")
         criteria_df = data.get("criteria")
-        print(settings)
-        print(criteria_df)
+        self.column_filters = data.get("columns")
+
+        # Print statements for debugging purposes
+        print("Settings:", settings)
+        print("Criteria DataFrame:", criteria_df)
+        print("Column Filters:", self.column_filters)
 
         # Save the settings
-        self.save_zone_viewer_settings = settings
-        self.project_saver.save_zone_viewer_settings(self.save_zone_viewer_settings)
+        if settings is not None:
+            self.save_zone_viewer_settings = settings
+            self.project_saver.save_zone_viewer_settings(self.save_zone_viewer_settings)
+
+        # Save the column filters
+        if self.column_filters is not None:
+            self.project_saver.save_column_filters(self.column_filters)
 
         # Save the criteria DataFrame
-        self.zone_criteria_df = criteria_df
-        self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
+        if criteria_df is not None:
+            self.zone_criteria_df = criteria_df
+            self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
 
     def plot_data(self, uwi=None):
         print("UWIs available:", self.well_list)
@@ -1395,6 +1764,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.master_df.to_csv(master_file_path, index=False)
         print(f"Master DataFrame saved to '{master_file_path}'")
 
+   
 
 
 
@@ -1412,6 +1782,8 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.exec_()
         self.master_df = dialog.updated_master
   
+
+
         self.populate_zone_attributes()
         self.project_saver.save_master_df(self.master_df)
 
@@ -1461,132 +1833,133 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.exec_()
 
     def export_to_sw(self):
-        self.connection = SeisWare.Connection()
-        try:
-            serverInfo = SeisWare.Connection.CreateServer()
-            self.connection.Connect(serverInfo.Endpoint(), 50000)
-        except RuntimeError as err:
-            self.show_error_message("Connection Error", f"Failed to connect to the server: {err}")
-            return
+        pass
+        #self.connection = SeisWare.Connection()
+        #try:
+        #    serverInfo = SeisWare.Connection.CreateServer()
+        #    self.connection.Connect(serverInfo.Endpoint(), 50000)
+        #except RuntimeError as err:
+        #    self.show_error_message("Connection Error", f"Failed to connect to the server: {err}")
+        #    return
 
-        self.project_list = SeisWare.ProjectList()
-        try:
-            self.connection.ProjectManager().GetAll(self.project_list)
-        except RuntimeError as err:
-            self.show_error_message("Error", f"Failed to get the project list from the server: {err}")
-            return
+        #self.project_list = SeisWare.ProjectList()
+        #try:
+        #    self.connection.ProjectManager().GetAll(self.project_list)
+        #except RuntimeError as err:
+        #    self.show_error_message("Error", f"Failed to get the project list from the server: {err}")
+        #    return
 
-        project_name = self.import_options_df.get('Project', [''])[0]
+        #project_name = self.import_options_df.get('Project', [''])[0]
 
-        self.projects = [project for project in self.project_list if project.Name() == project_name]
+        #self.projects = [project for project in self.project_list if project.Name() == project_name]
       
-        if not self.projects:
-            self.show_error_message("Error", "No project was found")
-            return
+        #if not self.projects:
+        #    self.show_error_message("Error", "No project was found")
+        #    return
 
-        self.login_instance = SeisWare.LoginInstance()
-        try:
-            self.login_instance.Open(self.connection, self.projects[0])
-        except RuntimeError as err:
-            self.show_error_message("Error", "Failed to connect to the project: " + str(err))
-            return
+        #self.login_instance = SeisWare.LoginInstance()
+        #try:
+        #    self.login_instance.Open(self.connection, self.projects[0])
+        #except RuntimeError as err:
+        #    self.show_error_message("Error", "Failed to connect to the project: " + str(err))
+        #    return
 
-        well_manager = self.login_instance.WellManager()
-        zone_manager = self.login_instance.ZoneManager()
-        zone_type_manager = self.login_instance.ZoneTypeManager()
-        well_zone_manager = self.login_instance.WellZoneManager()
+        #well_manager = self.login_instance.WellManager()
+        #zone_manager = self.login_instance.ZoneManager()
+        #zone_type_manager = self.login_instance.ZoneTypeManager()
+        #well_zone_manager = self.login_instance.WellZoneManager()
 
-        well_list = SeisWare.WellList()
-        zone_list = SeisWare.ZoneList()
-        zone_type_list = SeisWare.ZoneTypeList()
+        #well_list = SeisWare.WellList()
+        #zone_list = SeisWare.ZoneList()
+        #zone_type_list = SeisWare.ZoneTypeList()
 
-        try:
-            well_manager.GetAll(well_list)
-            zone_manager.GetAll(zone_list)
-            zone_type_manager.GetAll(zone_type_list)
-        except SeisWare.SDKException as e:
-            print("Failed to get necessary data.")
-            print(e)
-            return 1
+        #try:
+        #    well_manager.GetAll(well_list)
+        #    zone_manager.GetAll(zone_list)
+        #    zone_type_manager.GetAll(zone_type_list)
+        #except SeisWare.SDKException as e:
+        #    print("Failed to get necessary data.")
+        #    print(e)
+        #    return 1
 
-        zone_type_name = "DrilledZone"
-        zone_type_exists = any(zone_type.Name() == zone_type_name for zone_type in zone_type_list)
+        #zone_type_name = "DrilledZone"
+        #zone_type_exists = any(zone_type.Name() == zone_type_name for zone_type in zone_type_list)
 
-        if not zone_type_exists:
-            new_zone_type = SeisWare.ZoneType()
-            new_zone_type.Name(zone_type_name)
-            try:
-                zone_type_manager.Add(new_zone_type)
-                zone_type_manager.GetAll(zone_type_list)
-                print(f"Successfully added new zone type: {zone_type_name}")
-            except SeisWare.SDKException as e:
-                print(f"Failed to add the new zone type: {zone_type_name}")
-                print(e)
-                return 1
-        else:
-            print(f"Zone type '{zone_type_name}' already exists.")
+        #if not zone_type_exists:
+        #    new_zone_type = SeisWare.ZoneType()
+        #    new_zone_type.Name(zone_type_name)
+        #    try:
+        #        zone_type_manager.Add(new_zone_type)
+        #        zone_type_manager.GetAll(zone_type_list)
+        #        print(f"Successfully added new zone type: {zone_type_name}")
+        #    except SeisWare.SDKException as e:
+        #        print(f"Failed to add the new zone type: {zone_type_name}")
+        #        print(e)
+        #        return 1
+        #else:
+        #    print(f"Zone type '{zone_type_name}' already exists.")
 
-        drilled_zone_type_id = next((zone_type.ID() for zone_type in zone_type_list if zone_type.Name() == zone_type_name), None)
-        if drilled_zone_type_id is None:
-            print(f"Failed to retrieve the ID for zone type: {zone_type_name}")
-            return 1
+        #drilled_zone_type_id = next((zone_type.ID() for zone_type in zone_type_list if zone_type.Name() == zone_type_name), None)
+        #if drilled_zone_type_id is None:
+        #    print(f"Failed to retrieve the ID for zone type: {zone_type_name}")
+        #    return 1
 
-        for index, row in self.zonein_info_df.iterrows():
-            zone_name = row['Zone Name']
-            if not any(zone.Name() == zone_name for zone in zone_list):
-                new_zone = SeisWare.Zone()
-                new_zone.Name(zone_name)
-                try:
-                    zone_manager.Add(new_zone)
-                    zone_manager.GetAll(zone_list)
-                    print(f"Successfully added new zone: {zone_name}")
-                except SeisWare.SDKException as e:
-                    print(f"Failed to add the new zone: {zone_name}")
-                    print(e)
-                    return 1
-            else:
-                print(f"Zone '{zone_name}' already exists.")
+        #for index, row in self.zonein_info_df.iterrows():
+        #    zone_name = row['Zone Name']
+        #    if not any(zone.Name() == zone_name for zone in zone_list):
+        #        new_zone = SeisWare.Zone()
+        #        new_zone.Name(zone_name)
+        #        try:
+        #            zone_manager.Add(new_zone)
+        #            zone_manager.GetAll(zone_list)
+        #            print(f"Successfully added new zone: {zone_name}")
+        #        except SeisWare.SDKException as e:
+        #            print(f"Failed to add the new zone: {zone_name}")
+        #            print(e)
+        #            return 1
+        #    else:
+        #        print(f"Zone '{zone_name}' already exists.")
 
-        well_map = {well.UWI(): well for well in well_list}
-        zone_map = {zone.Name(): zone for zone in zone_list}
+        #well_map = {well.UWI(): well for well in well_list}
+        #zone_map = {zone.Name(): zone for zone in zone_list}
 
-        for index, row in self.zonein_info_df.iterrows():
-            well_uwi = row['UWI']
-            if well_uwi not in well_map:
-                print(f"No well was found for UWI {well_uwi} in row {index}")
-                continue
+        #for index, row in self.zonein_info_df.iterrows():
+        #    well_uwi = row['UWI']
+        #    if well_uwi not in well_map:
+        #        print(f"No well was found for UWI {well_uwi} in row {index}")
+        #        continue
 
-            well = well_map[well_uwi]
-            well_id = well.ID()
+        #    well = well_map[well_uwi]
+        #    well_id = well.ID()
 
-            zone_name = row['Zone Name']
-            if zone_name not in zone_map:
-                print(f"No zone was found for name {zone_name} in row {index}")
-                continue
+        #    zone_name = row['Zone Name']
+        #    if zone_name not in zone_map:
+        #        print(f"No zone was found for name {zone_name} in row {index}")
+        #        continue
 
-            zone = zone_map[zone_name]
+        #    zone = zone_map[zone_name]
 
-            new_well_zone = SeisWare.WellZone()
+        #    new_well_zone = SeisWare.WellZone()
 
-            try:
-                new_well_zone.WellID(well_id)
-                new_well_zone.Zone(zone)
-                new_well_zone.ZoneTypeID(drilled_zone_type_id)
-                new_well_zone.TopMD(SeisWare.Measurement(row['MD Top Depth Meters'], SeisWare.Unit.Meter))
-                new_well_zone.BaseMD(SeisWare.Measurement(row['MD Base Depth Meters'], SeisWare.Unit.Meter))
-            except KeyError as e:
-                print(f"Invalid data for well zone in row {index}: {e}")
-                continue
+        #    try:
+        #        new_well_zone.WellID(well_id)
+        #        new_well_zone.Zone(zone)
+        #        new_well_zone.ZoneTypeID(drilled_zone_type_id)
+        #        new_well_zone.TopMD(SeisWare.Measurement(row['MD Top Depth Meters'], SeisWare.Unit.Meter))
+        #        new_well_zone.BaseMD(SeisWare.Measurement(row['MD Base Depth Meters'], SeisWare.Unit.Meter))
+        #    except KeyError as e:
+        #        print(f"Invalid data for well zone in row {index}: {e}")
+        #        continue
           
-            try:
-                well_zone_manager.Add(new_well_zone)
-                print(f"Successfully added well zone for UWI {well_uwi}")
-            except SeisWare.SDKException as e:
-                print(f"Failed to add well zone for UWI {well_uwi}")
-                print(e)
-                continue
+        #    try:
+        #        well_zone_manager.Add(new_well_zone)
+        #        print(f"Successfully added well zone for UWI {well_uwi}")
+        #    except SeisWare.SDKException as e:
+        #        print(f"Failed to add well zone for UWI {well_uwi}")
+        #        print(e)
+        #        continue
 
-        return 0
+        #return 0
 
 
 

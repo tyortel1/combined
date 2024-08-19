@@ -128,6 +128,24 @@ class PlotGB(QDialog):
                     grid_color_rgb = f'{r}, {g}, {b}'
                     grid_color_rgba = f'rgba({r}, {g}, {b}, 0.3)'
 
+
+                    
+                    r, g, b = grid_row['Color (RGB)'].values[0]
+                    grid_color_rgb = f'{r}, {g}, {b}'
+                    grid_color_rgba = f'rgba({r}, {g}, {b}, 0.3)'
+
+                                        # Determine the color of the previous grid if it exists
+                    if i + 1 < len(sorted_grids):
+                        next_grid_name = sorted_grids[i + 1]
+                        next_grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == next_grid_name]
+                        if not next_grid_row.empty:
+                            next_r, next_g, next_b = next_grid_row['Color (RGB)'].values[0]
+                            next_grid_rgba = f'rgba({next_r}, {next_g}, {next_b}, 0.3)'
+                        else:
+                            next_grid_rgba = 'rgba(0, 0, 0, 0.3)'  # Fallback if the next grid is not found
+                    else:
+                        next_grid_rgba = 'rgba(0, 0, 0, 0.3)'  # Fallback for the last grid
+
                     # Ensure the grid values are available
                     if grid_name not in grid_values:
                         print(f"Grid values for {grid_name} not found")
@@ -154,7 +172,7 @@ class PlotGB(QDialog):
                             x=combined_distances,
                             y=next_grid_values,
                             fill='tonexty',
-                            fillcolor=grid_color_rgba,
+                            fillcolor=next_grid_rgba,
                             mode='none',
                             showlegend=False
                         ))

@@ -420,6 +420,7 @@ class Plot(QDialog):
             self.combined_distances = self.current_well_data['Cumulative Distance'].tolist()
             self.tvd_values = self.current_well_data['TVD'].tolist()
 
+
             uwi_grid_data = []
 
             for i, row in self.current_well_data.iterrows():
@@ -439,6 +440,7 @@ class Plot(QDialog):
                 # Prepare the entry data for the DataFrame
                 entry = [x, y, self.combined_distances[i]] + [closest_z_values[grid] for grid in self.kd_tree_depth_grids.keys()]
                 uwi_grid_data.append(entry)
+                print(uwi_grid_data)
 
             # Define valid grids present in both depth_grid_data_df and grid_info_df
             valid_grids = [grid for grid in self.kd_tree_depth_grids.keys() if grid in set(self.grid_info_df['Grid']) & set(self.depth_grid_data_df['Grid'])]
@@ -479,9 +481,22 @@ class Plot(QDialog):
                     grid_color_rgb = f'{r}, {g}, {b}'
                     grid_color_rgba = f'rgba({r}, {g}, {b}, 0.3)'
 
+                                        # Determine the color of the previous grid if it exists
+                    if i + 1 < len(sorted_grids):
+                        next_grid_name = sorted_grids[i + 1]
+                        next_grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == next_grid_name]
+                        if not next_grid_row.empty:
+                            next_r, next_g, next_b = next_grid_row['Color (RGB)'].values[0]
+                            next_grid_rgba = f'rgba({next_r}, {next_g}, {next_b}, 0.3)'
+                        else:
+                            next_grid_rgba = 'rgba(0, 0, 0, 0.3)'  # Fallback if the next grid is not found
+                    else:
+                        next_grid_rgba = 'rgba(0, 0, 0, 0.3)'  # Fallback for the last grid
+
                     if grid_name not in grid_values:
                         print(f"Grid values for {grid_name} not found")
                         continue
+
 
                     # Plot the grid line with the grid's color
                     fig.add_trace(go.Scatter(
@@ -503,7 +518,7 @@ class Plot(QDialog):
                             x=self.combined_distances,
                             y=next_grid_values,
                             fill='tonexty',
-                            fillcolor=grid_color_rgba,
+                            fillcolor=next_grid_rgba,
                             mode='none',
                             showlegend=False
                         ))

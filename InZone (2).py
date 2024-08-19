@@ -120,13 +120,6 @@ class InZoneDialog(QDialog):
         return well_lines
 
     def create_grid_dataframe(self):
-
-        zone_name = self.zone_name_edit.text().strip()
-
-        if not zone_name:
-            QMessageBox.warning(self, "Error", "Zone name cannot be empty. Please enter a valid zone name.")
-            return
-
         """Create a DataFrame for each well with X, Y offsets, TVD, and closest Z values for each grid."""
         data = []
 
@@ -358,7 +351,7 @@ class InZoneDialog(QDialog):
             self.zone_names.append(zone_name)
         print(df_intersections)
         return df_intersections
-    
+
     def update_master_df(self, valid_df):
         print('updating')
         # Ensure the master_df has the required columns

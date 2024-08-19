@@ -79,7 +79,7 @@ class ProjectSaver:
         self.submit_save_task()
 
     def save_master_df(self, master_df):
-       
+        master_df = master_df.fillna(0)
         
         with self.lock:
             self.project_data['master_df'] = master_df.to_dict(orient='list')
@@ -101,16 +101,22 @@ class ProjectSaver:
 
     def save_zone_criteria_df(self, zone_criteria_df):
         """Save the zone criteria DataFrame to the project data."""
-        print(zone_criteria_df)
+     
         with self.lock:
             # Store the DataFrame as a dictionary
             self.project_data['zone_criteria'] = zone_criteria_df.to_dict(orient='list')
         
             # Store the column order explicitly
             self.project_data['zone_criteria_columns'] = list(zone_criteria_df.columns)
-            print(self.project_data)
+         
             
         self.submit_save_task()
+
+
+    def save_column_filters(self, column_filters ):
+        with self.lock:  # Assuming self.lock is defined as a threading.Lock() elsewhere in your class
+            self.project_data['column_filters'] = column_filters  # Store the filters in your project data
+        self.submit_save_task()  # Assuming this handles the actual saving process asynchronously
 
     def shutdown(self, line_width, line_opacity, uwi_width, uwi_opacity, selected_grid, selected_zone):
         with self.lock:

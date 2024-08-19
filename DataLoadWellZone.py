@@ -1,9 +1,10 @@
+from genericpath import samefile
 import pandas as pd
 from PySide2.QtWidgets import QDialog, QFileDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
 from PySide2.QtCore import Qt
 
 class DataLoadWellZonesDialog(QDialog):
-    def __init__(self, uwi_list=None, parent=None):
+    def __init__(self, uwi_list=None, directional_surveys_df=None, parent=None):
         super(DataLoadWellZonesDialog, self).__init__()
         self.setWindowTitle("Load Well Zones and Attributes")
         self.setMinimumSize(600, 600)
@@ -55,13 +56,14 @@ class DataLoadWellZonesDialog(QDialog):
 
         self.import_button = QPushButton("Import", self)
         self.import_button.setEnabled(False)
-        self.import_button.clicked.connect(self.import_data)
+        self.import_button.clicked.connect(self.accept_import)
         self.layout.addWidget(self.import_button)
 
         self.file_path = None
         self.headers_checkboxes = []
         self.headers_dropdowns = []
         self.uwi_list = uwi_list
+        self.directional_surveys_df = directional_surveys_df
 
     def select_file(self):
         options = QFileDialog.Options()
@@ -135,6 +137,10 @@ class DataLoadWellZonesDialog(QDialog):
         any_checked = any(checkbox.isChecked() for checkbox in self.headers_checkboxes)
         self.import_button.setEnabled(any_checked)
 
+
+    def accept_import(self):
+        self.accept()
+
     def import_data(self):
         if not self.file_path:
             return
@@ -182,6 +188,17 @@ class DataLoadWellZonesDialog(QDialog):
         valid_df['Zone Name'] = zone_name
         valid_df['Zone Type'] = zone_type
 
+
+            # If the attribute type is 'Well', add X and Y offsets using directional surveys
+        if attribute_type == "Well":
+            valid_df['Top X Offset'] = valid_df['Base X Offset'] = valid_df[uwi_header].apply(
+                lambda uwi: self.get_first_xy_from_survey(uwi, 'X')
+            )
+            valid_df['Top Y Offset'] = valid_df['Base Y Offset'] = valid_df[uwi_header].apply(
+                lambda uwi: self.get_first_xy_from_survey(uwi, 'Y')
+            )
+
+
         # Add Top Depth and Base Depth columns with NaN if they don't exist
         if top_depth_header:
             valid_df['Top Depth'] = valid_df[top_depth_header]
@@ -207,8 +224,13 @@ class DataLoadWellZonesDialog(QDialog):
         columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth'] + \
                   [col for col in valid_df.columns if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth']]
         valid_df = valid_df[columns]
+        print(valid_df)
 
-        self.accept()
+
+
+
+
+        
         return valid_df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header
 
     def get_special_header(self, special_type):
@@ -216,6 +238,17 @@ class DataLoadWellZonesDialog(QDialog):
             if dropdown.currentText() == special_type and checkbox.isChecked():
                 return checkbox.text()
         return None
+
+
+    def get_first_xy_from_survey(self, uwi, coord):
+        """Helper function to get the first X or Y value from the directional surveys."""
+        survey = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+        if not survey.empty:
+            if coord == 'X':
+                return survey.iloc[0]['X Offset']
+            elif coord == 'Y':
+                return survey.iloc[0]['Y Offset']
+        return float('nan')
 
 if __name__ == "__main__":
     import sys

@@ -1,5 +1,5 @@
 import os
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton, QAction
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout, QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton, QAction
 from PySide2.QtCore import Qt, QMetaObject
 from PySide2.QtGui import QIcon
 
@@ -26,12 +26,31 @@ class Ui_MainWindow:
         MainWindow.gridDropdown.addItem("Select Grid")
         MainWindow.optionsLayout.addWidget(MainWindow.gridDropdown)
 
+                # Dropdown to select grid color bar
+
+                # Color range display for grid
+        MainWindow.gridColorRangeDisplay = QLabel(MainWindow)
+        MainWindow.gridColorRangeDisplay.setFixedHeight(50)
+        MainWindow.gridColorRangeDisplay.setFixedWidth(220)
+        MainWindow.gridColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
+        MainWindow.optionsLayout.addWidget(MainWindow.gridColorRangeDisplay)
+
         # Dropdown to select grid color bar
         MainWindow.gridColorBarLabel = QLabel("Select Grid Color Bar:", MainWindow)
         MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarLabel)
         MainWindow.gridColorBarDropdown = QComboBox(MainWindow)
         MainWindow.gridColorBarDropdown.addItem("Rainbow") 
         MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarDropdown)
+
+        MainWindow.optionsLayout.addSpacing(25)
+                # Separator line below grid color range display
+        MainWindow.gridSeparator = QFrame(MainWindow)
+        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
+        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
+        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+
+        MainWindow.optionsLayout.addSpacing(5)
+
 
         # Dropdown to select zone
         MainWindow.zoneLabel = QLabel("Select Zone:", MainWindow)
@@ -47,12 +66,74 @@ class Ui_MainWindow:
         MainWindow.zoneAttributeDropdown.addItem("Select Zone Attribute")
         MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeDropdown)
 
-        # Dropdown to select zone color bar
+
+
+                # Color range display for zone attribute
+        MainWindow.zoneAttributeColorRangeDisplay = QLabel(MainWindow)
+        MainWindow.zoneAttributeColorRangeDisplay.setFixedHeight(50)
+        MainWindow.zoneAttributeColorRangeDisplay.setFixedWidth(220)
+        MainWindow.zoneAttributeColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
+        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorRangeDisplay)
+
+                # Dropdown to select zone color bar
         MainWindow.zoneAttributeColorBarLable = QLabel("Select Zone Color Bar:", MainWindow)
         MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorBarLable)
         MainWindow.zoneAttributeColorBarDropdown = QComboBox(MainWindow)
         MainWindow.zoneAttributeColorBarDropdown.addItem("Rainbow")
         MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorBarDropdown)
+
+
+        MainWindow.optionsLayout.addSpacing(25)
+
+                # Separator line below grid color range display
+        MainWindow.gridSeparator = QFrame(MainWindow)
+        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
+        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
+        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+
+        MainWindow.optionsLayout.addSpacing(5)
+
+
+
+        # Dropdown to select Well Zone
+        MainWindow.WellZoneLabel = QLabel("Select Well Zone:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.WellZoneLabel)
+        MainWindow.WellZoneDropdown = QComboBox(MainWindow)
+        MainWindow.WellZoneDropdown.addItem("Select Well Zone")
+        MainWindow.optionsLayout.addWidget(MainWindow.WellZoneDropdown)
+
+        # Dropdown to select Well Attribute
+        MainWindow.WellAttributeLabel = QLabel("Select Well Attribute:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeLabel)
+        MainWindow.WellAttributeDropdown = QComboBox(MainWindow)
+        MainWindow.WellAttributeDropdown.addItem("Select Well Attribute")
+        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeDropdown)
+
+        # Color range display for Well attribute
+        MainWindow.WellAttributeColorRangeDisplay = QLabel(MainWindow)
+        MainWindow.WellAttributeColorRangeDisplay.setFixedHeight(50)
+        MainWindow.WellAttributeColorRangeDisplay.setFixedWidth(220)
+        MainWindow.WellAttributeColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
+        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorRangeDisplay)
+
+        # Dropdown to select Well Color Bar
+        MainWindow.WellAttributeColorBarLabel = QLabel("Select Well Color Bar:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorBarLabel)
+        MainWindow.WellAttributeColorBarDropdown = QComboBox(MainWindow)
+        MainWindow.WellAttributeColorBarDropdown.addItem("Rainbow")
+        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorBarDropdown)
+
+
+        MainWindow.optionsLayout.addSpacing(25)
+
+                # Separator line below grid color range display
+        MainWindow.gridSeparator = QFrame(MainWindow)
+        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
+        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
+        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+
+        MainWindow.optionsLayout.addSpacing(5)
+
 
         # Checkbox to show/hide UWI labels
         MainWindow.uwiCheckbox = QCheckBox("Show UWI Labels", MainWindow)
@@ -176,7 +257,7 @@ class Ui_MainWindow:
         MainWindow.gun_barrel_icon = QIcon("icons/gunb.ico")
         MainWindow.zoom_in_icon = QIcon("icons/Zoom_in.ico")
         MainWindow.zoom_out_icon = QIcon("icons/Zoom_out.ico")
-        MainWindow.exportSw_icon = QIcon("icons/export.ico")
+        #MainWindow.exportSw_icon = QIcon("icons/export.ico")
         MainWindow.color_editor_icon = QIcon("icons/color_editor.ico")
 
         MainWindow.plot_tool_action = QAction(MainWindow.plot_icon, "QC Zones", MainWindow)
@@ -195,8 +276,8 @@ class Ui_MainWindow:
         MainWindow.zoomIn = QAction(MainWindow.zoom_in_icon, "Zoom In", MainWindow)
         MainWindow.toolbar.addAction(MainWindow.zoomIn)
 
-        MainWindow.exportSw = QAction(MainWindow.exportSw_icon, "Send to SeisWare", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.exportSw)
+        #MainWindow.exportSw = QAction(MainWindow.exportSw_icon, "Send to SeisWare", MainWindow)
+        #MainWindow.toolbar.addAction(MainWindow.exportSw)
 
         # Toggle button for draw/pan mode
         MainWindow.toggle_button = QToolButton(MainWindow)
@@ -221,3 +302,4 @@ class Ui_MainWindow:
 
         self.zoneAttributeColorBarDropdown.addItems(color_bar_files)
         self.gridColorBarDropdown.addItems(color_bar_files)
+        self.WellAttributeColorBarDropdown.addItems(color_bar_files)

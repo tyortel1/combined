@@ -37,19 +37,28 @@ class ProjectLoader:
             self.parent.uwi_width = data_loaded.get('uwi_width', 80)
             self.parent.uwi_opacity = data_loaded.get('uwi_opacity', 1.0)
 
-
+            # Load zone viewer settings if they exist
             if 'zone_viewer_settings' in data_loaded:
                 self.parent.save_zone_viewer_settings = data_loaded['zone_viewer_settings']
-               
+
+            # Load zone criteria if they exist
             if 'zone_criteria' in data_loaded:
-                print(data_loaded)
                 self.load_zone_criteria_df(data_loaded)
+
+            # Load the saved column filters if they exist
+            if 'column_filters' in data_loaded:
+                self.parent.column_filters = data_loaded['column_filters']
+                # Apply the loaded column filters as needed, possibly refreshing UI elements or data
+     
+
+            # Load selected grid and zone
             grid_selected = data_loaded.get('selected_grid', 'Select Grids')
             selected_zone = data_loaded.get('selected_zone', 'Select Zones')
-            print(selected_zone)
 
-            self.parent.populate_grid_dropdown(grid_selected)
-            self.parent.populate_zone_dropdown(selected_zone)
+
+
+            
+
 
             # Debugging: Print DataFrame columns and head to verify loading
             print("Depth Grid DataFrame Columns:", self.parent.depth_grid_data_df.columns)
@@ -92,16 +101,18 @@ class ProjectLoader:
                 }
 
 
+            
+
+
+            
+            
+            self.parent.populate_zone_dropdown(selected_zone)
+            self.parent.populate_grid_dropdown(grid_selected)
+            self.parent.populate_well_zone_dropdown()
             self.parent.setData()
 
 
-            self.parent.populate_grid_dropdown(grid_selected)
-            self.parent.populate_zone_dropdown(selected_zone)
-            if selected_zone is not None and selected_zone != "Select Zone":
-                self.parent.populate_zone_attributes()
-
-
-            self.parent.zoneDropdown.currentText()
+            
 
             # Enable menus and update window title
             self.parent.import_menu.setEnabled(True)
@@ -121,4 +132,4 @@ class ProjectLoader:
             zone_criteria_df = zone_criteria_df[column_order]
     
         self.parent.zone_criteria_df = zone_criteria_df
-        print(self.parent.zone_criteria_df)
+    
