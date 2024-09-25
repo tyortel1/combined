@@ -1,26 +1,34 @@
 import os
 import sys
 import pandas as pd
-from PySide2.QtWidgets import QApplication, QLineEdit, QDialog, QVBoxLayout, QTableView, QFileDialog, QAbstractItemView, QHBoxLayout, QPushButton, QLabel, QComboBox, QToolBar, QAction, QSlider, QWidget, QListWidget, QFormLayout
+from PySide2.QtWidgets import QApplication,QMessageBox, QLineEdit, QDialog, QVBoxLayout, QTableView, QFileDialog, QAbstractItemView, QHBoxLayout, QPushButton, QLabel, QComboBox, QToolBar, QAction, QSlider, QWidget, QListWidget, QFormLayout
 from PySide2.QtCore import QSize, Qt
 from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QColor
 from ColumnSelectDialog import ColumnSelectionDialog
 from PySide2.QtCore import Signal
 from HighlightCriteriaDialog import HighlightCriteriaDialog
+from CriteriaToZone import CriteriaToZoneDialog
+from DecisionTreeDialog import DecisionTreeDialog
+from DeleteZone import DeleteZone
+from CalculateCorrelations import CalculateCorrelations
+
+
 
 class ZoneViewerDialog(QDialog):
     settingsClosed = Signal(dict)
+    dataUpdated = Signal(pd.DataFrame)
+    newAttributeAdded = Signal(str) 
+    zoneNamesUpdated = Signal(list) 
 
-    def __init__(self, df, zone_names, selected_uwis, save_zone_viewer_settings=None,zone_criteria_df=None, column_filters=None, parent=None):
-        super(ZoneViewerDialog, self).__init__(parent)
+    def __init__(self, df, zone_names, selected_uwis, save_zone_viewer_settings=None,zone_criteria_df=None, column_filters=None):
+        super(ZoneViewerDialog, self).__init__()
         self.setWindowTitle("Zone Properties")
         self.resize(1500, 1200)
-
-        # Set window flags to include the maximize button
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+         # Set window flags to include the maximize button
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
         self.df = df
-        print(self.df)
+       
         self.zone_names = zone_names
         self.selected_uwis = selected_uwis
         self.selected_columns = df.columns.tolist()  # Initially select all columns
@@ -45,7 +53,11 @@ class ZoneViewerDialog(QDialog):
         icon_path = "icons"  # Folder where your icons are stored
         columns_icon = QIcon(os.path.join(icon_path, "Filter-Icon.ico"))
         highlight_icon = QIcon(os.path.join(icon_path, "ListManager_ list properties.ico"))
-        export_icon = QIcon(os.path.join(icon_path, "export.ico"))
+        criteria_to_zone_icon = QIcon(os.path.join(icon_path, "SavePicks.ico"))
+        decision_tree_icon = QIcon(os.path.join(icon_path, "view_tree.ico"))
+        correlation_icon = QIcon(os.path.join(icon_path, "Trends.ico"))
+        export_icon = QIcon(os.path.join(icon_path, "Save to List_Icon_.ico"))
+        delete_zone_icon = QIcon(os.path.join(icon_path, "Delete.ico"))
         next_icon = QIcon(os.path.join(icon_path, "arrow_right.ico"))  # Replace with the path to your next icon
         prev_icon = QIcon(os.path.join(icon_path, "arrow_left.ico"))  # Replace with the path to your previous icon
 
@@ -54,8 +66,16 @@ class ZoneViewerDialog(QDialog):
         self.column_action.triggered.connect(self.open_column_selection_dialog)
         self.highlight_action = QAction(highlight_icon, "Highlight", self)
         self.highlight_action.triggered.connect(self.highlight)
+        self.criteria_to_zone_action = QAction(criteria_to_zone_icon, "Save To Zone", self)
+        self.criteria_to_zone_action.triggered.connect(self.open_criteria_to_zone_dialog)
+        self.decision_tree_action = QAction(decision_tree_icon, "Decision Tree", self)
+        self.decision_tree_action.triggered.connect(self.open_decision_tree_dialog)
+        self.correlation_action = QAction(correlation_icon, "Correlations", self)
+        self.correlation_action.triggered.connect(self.correlation_dialog)
         self.export_action = QAction(export_icon, "Export", self)
         self.export_action.triggered.connect(self.export_current_view)
+        self.delete_zone_action = QAction(delete_zone_icon, "Delete Zone", self)
+        self.delete_zone_action.triggered.connect(self.delete_zone)
         self.next_action = QAction(next_icon, "Next Page", self)
         self.next_action.triggered.connect(self.next_page)
         self.prev_action = QAction(prev_icon, "Previous Page", self)
@@ -78,7 +98,11 @@ class ZoneViewerDialog(QDialog):
         # Add actions to the toolbar
         self.toolbar.addAction(self.column_action)
         self.toolbar.addAction(self.highlight_action)
+        self.toolbar.addAction(self.criteria_to_zone_action)
+        self.toolbar.addAction(self.decision_tree_action)
+        self.toolbar.addAction(self.correlation_action)
         self.toolbar.addAction(self.export_action)
+        self.toolbar.addAction(self.delete_zone_action)
         self.toolbar.addWidget(self.page_label)
         self.toolbar.addAction(self.prev_action)
         self.toolbar.addAction(self.next_action)
@@ -234,15 +258,23 @@ class ZoneViewerDialog(QDialog):
         # Right layout for table view and pagination
         self.right_layout = QVBoxLayout()
         self.main_layout.addLayout(self.right_layout)
+        # Create and set up the table view
+
 
         self.table_view = QTableView(self)
-
+       
+    
+        
         # Set a smaller font for the table view
         font = QFont()
         font.setPointSize(8)  # Adjust the font size as needed
         self.table_view.setFont(font)
         self.table_view.setSortingEnabled(True)
 
+        # Connect the sort indicator changed signal to the custom handler
+        self.table_view.horizontalHeader().sortIndicatorChanged.connect(self.handle_sort_indicator_changed)
+
+        # Add the table view to the layout
         self.right_layout.addWidget(self.table_view)
 
 
@@ -260,6 +292,25 @@ class ZoneViewerDialog(QDialog):
         self.row_height_slider.valueChanged.connect(self.update_settings_dict)
         self.font_size_slider.valueChanged.connect(self.update_settings_dict)
 
+    
+        
+        
+    def handle_sort_indicator_changed(self, logicalIndex, order):
+        # Get the column name based on the logical index
+        sort_column = self.table_view.horizontalHeader().model().headerData(logicalIndex, Qt.Horizontal)
+
+        # Determine if the column is numeric and sort accordingly
+        if pd.api.types.is_numeric_dtype(self.filtered_df[sort_column]):
+            self.filtered_df.sort_values(by=sort_column, ascending=order == Qt.AscendingOrder, inplace=True, key=pd.to_numeric)
+        else:
+            self.filtered_df.sort_values(by=sort_column, ascending=order == Qt.AscendingOrder, inplace=True)
+
+        # Reset the current page and reload the data
+        self.current_page = 0
+        self.update_page_label()
+        self.load_data()
+        
+        
     def sort_data(self):
         sort_column = self.sort_dropdown.currentText()
     
@@ -270,6 +321,10 @@ class ZoneViewerDialog(QDialog):
                 df_to_sort = self.df
 
             df_to_sort.sort_values(by=sort_column, ascending=True, inplace=True)  # Sort the DataFrame
+
+
+            if pd.api.types.is_numeric_dtype(df_to_sort[sort_column]):
+                df_to_sort.sort_values(by=sort_column, ascending=True, inplace=True, key=pd.to_numeric)
 
             # If filtering was applied previously, update filtered_df, otherwise set it as the sorted DataFrame
             if not self.filtered_df.empty:
@@ -430,9 +485,9 @@ class ZoneViewerDialog(QDialog):
             columns_to_include = self.selected_columns + ['HighlightColor'] if 'HighlightColor' not in self.selected_columns else self.selected_columns
         else:
             columns_to_include = self.selected_columns
-
-        # Filter columns based on selection
-        filtered_df = self.filtered_df[columns_to_include]
+        # Filter columns based on selection and available columns in the filtered DataFrame
+        available_columns = [col for col in columns_to_include if col in self.filtered_df.columns]
+        filtered_df = self.filtered_df[available_columns]
 
         # Set headers (excluding 'HighlightColor' if it should not be displayed)
         model.setHorizontalHeaderLabels([col for col in filtered_df.columns if col != 'HighlightColor'])
@@ -441,7 +496,7 @@ class ZoneViewerDialog(QDialog):
         start_idx = self.current_page * self.page_size
         end_idx = min(start_idx + self.page_size, len(filtered_df))
         page_data = filtered_df.iloc[start_idx:end_idx]
-
+        page_data = page_data.applymap(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else x)
         # Add rows to the model
         for _, row in page_data.iterrows():
             items = [QStandardItem(str(field)) for field in row if field != row.get('HighlightColor')]
@@ -552,7 +607,7 @@ class ZoneViewerDialog(QDialog):
             
         # Combine the results of OR operations
         result_df = pd.concat([result_df, temp_df]).drop_duplicates()
-    
+        print(result_df)
         return result_df
 
 
@@ -586,16 +641,18 @@ class ZoneViewerDialog(QDialog):
             return
 
         # Ensure 'HighlightColor' column is reset or created
-        if 'HighlightColor' in self.filtered_df.columns:
-            self.filtered_df = self.filtered_df.drop(columns=['HighlightColor'])
         self.filtered_df['HighlightColor'] = None
 
-        # Iterate over each row of criteria in self.highlight_criteria
-        for _, criterion in self.highlight_criteria.iterrows():
+        # Start with a mask that is all True, then narrow it down
+        final_mask = pd.Series(True, index=self.filtered_df.index)
+
+        # Iterate over each criterion in the highlight criteria DataFrame
+        for i, criterion in self.highlight_criteria.iterrows():
             column = criterion['Column']
             operator = criterion['Operator']
             value = criterion['Value']
             color = criterion['Color']
+            logical_operator = criterion.get('Logical Operator', 'AND')
 
             # Apply the condition based on the operator
             if operator == '=':
@@ -610,27 +667,17 @@ class ZoneViewerDialog(QDialog):
                 mask = self.filtered_df[column] <= float(value)
             elif operator == '!=':
                 mask = self.filtered_df[column] != value
+            else:
+                mask = pd.Series(False, index=self.filtered_df.index)  # If unknown operator, default to False
 
-            # Apply the color based on the condition
-            self.filtered_df.loc[mask, 'HighlightColor'] = color
+            # Combine masks using the logical operator
+            if i == 0 or logical_operator == 'AND':
+                final_mask &= mask
+            elif logical_operator == 'OR':
+                final_mask |= mask
 
-        # Handle logical operators between criteria
-        if len(self.highlight_criteria) > 1:
-            final_mask = pd.Series([False] * len(self.filtered_df))
-
-            for idx, criterion in self.highlight_criteria.iterrows():
-                color = criterion['Color']
-                logical_operator = criterion.get('Logical Operator', 'AND')  # Default to AND if not specified
-
-                mask = self.filtered_df['HighlightColor'] == color
-
-                if logical_operator == 'AND':
-                    final_mask &= mask
-                elif logical_operator == 'OR':
-                    final_mask |= mask
-
-            # Apply the final combined mask
-            self.filtered_df.loc[final_mask, 'HighlightColor'] = color
+        # Apply the color to rows that match the final mask
+        self.filtered_df.loc[final_mask, 'HighlightColor'] = color
 
 
     def update_page_label(self):
@@ -719,6 +766,7 @@ class ZoneViewerDialog(QDialog):
             page_data.to_csv(file_path, index=False)
 
     def update_settings_dict(self):
+        self.current_config_name = self.column_filter_dropdown.currentText()
         """Update the settings dictionary with current values"""
         self.settings_dict = {
             "column_width": self.column_width_slider.value(),
@@ -731,7 +779,7 @@ class ZoneViewerDialog(QDialog):
             "zone_type_filter": self.zone_type_filter.currentText(),
             "filter_criteria": self.filter_criteria_dropdown.currentText(),  # Save current filter criteria selection
             "highlight_criteria": self.highlight_criteria_dropdown.currentText(),  # Save current highlight criteria selection
-            "current_column_filter": self.current_config_name
+            "current_column_filter": self.column_filter_dropdown.currentText()
         }
 
     def load_settings(self):
@@ -740,7 +788,7 @@ class ZoneViewerDialog(QDialog):
             return
 
         settings = self.settings_dict
-
+   
         # Block signals for sliders and dropdowns to prevent triggering their connected methods
         self.column_width_slider.blockSignals(True)
         self.row_height_slider.blockSignals(True)
@@ -762,6 +810,9 @@ class ZoneViewerDialog(QDialog):
             self.attribute_filter.setCurrentText(settings.get("attribute_filter", "All"))
             self.zone_name_filter.setCurrentText(settings.get("zone_name_filter", "All"))
             self.zone_type_filter.setCurrentText(settings.get("zone_type_filter", "All"))
+            self.column_filter_dropdown.setCurrentText(settings.get("current_column_filter", "All"))
+            self.current_config_name = self.column_filter_dropdown.currentText()
+
 
             # Clear existing items in the dropdowns
             self.filter_criteria_dropdown.clear()
@@ -806,8 +857,75 @@ class ZoneViewerDialog(QDialog):
         self.apply_filters()
         self.apply_column_dimensions()
 
+    def open_criteria_to_zone_dialog(self):
+        if self.df_criteria.empty:
+            QMessageBox.information(self, "No Criteria", "No criteria available to save. Please define criteria before proceeding.")
+            return
+
+        dialog = CriteriaToZoneDialog(self.df, self.df_criteria, self)
+        if dialog.exec_() == QDialog.Accepted:
+            self.df = dialog.df
+            # Emit the updated DataFrame and new attribute name
+            self.dataUpdated.emit(self.df)
+            self.newAttributeAdded.emit(dialog.attribute_name)
+
+            # Update the local view
+            self.apply_filters()
+
+    # Usage within your main application
+    # Usage within your main application
+    def open_decision_tree_dialog(self):
+        dialog = DecisionTreeDialog(self.df, self)
+        dialog.show()
 
 
+    def correlation_dialog(self):
+        dialog = CalculateCorrelations(self.df, self)
+        dialog.show()
+
+    def delete_zone(self):
+        # Launch the DeleteZone dialog, passing self as the parent
+        dialog = DeleteZone(self.df, self.zone_names, self)
+        dialog.show()
+
+        # Update the parent class attributes after the dialog has closed
+        self.zone_names = dialog.zone_names
+        self.df = dialog.df
+
+        # Optional: Trigger any additional UI updates or actions
+        self.update_after_deletion()
+
+    def update_after_deletion(self):
+        # Example: Updating a dropdown list with the new zone names
+        self.zone_dropdown.clear()
+        self.zone_dropdown.addItems(self.zone_names)
+
+        # Update other UI elements as needed
+
+    def update_after_deletion(self):
+        # Step 1: Update zone-related dropdowns and lists
+        self.zone_name_filter.clear()
+        self.zone_name_filter.addItem("All")
+        self.zone_name_filter.addItems(sorted(self.zone_names))
+
+        # Step 2: Reapply filters since the data has changed
+        self.apply_filters()
+
+        # Step 3: Reset pagination
+        self.current_page = 0
+        self.update_page_label()
+
+        # Step 4: Refresh the table view with updated data
+        self.load_data()
+
+        # Step 5: If there are other UI elements that depend on the zone list, update them here
+        # For example, updating a zone dropdown elsewhere in the UI
+        if hasattr(self, 'zone_dropdown'):
+            self.zone_dropdown.clear()
+            self.zone_dropdown.addItems(self.zone_names)
+
+        self.dataUpdated.emit(self.df)
+        self.zoneNamesUpdated.emit(self.zone_names)
 
     def closeEvent(self, event):
         self.update_settings_dict()

@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QListWidget, QPushButton, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, QListWidgetItem, QMessageBox, QAbstractItemView
+﻿from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QMessageBox, QComboBox, QListWidget, QPushButton,QCheckBox, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, QListWidgetItem, QMessageBox, QAbstractItemView
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 import numpy as np
 import pandas as pd
+
 
 class ZoneAttributesDialog(QDialog):
     def __init__(self, master_df, directional_surveys_df, grid_info_df, kd_tree_depth_grids, kd_tree_att_grids, zone_names, depth_grid_data_dict, attribute_grid_data_dict, parent=None):
@@ -74,6 +75,7 @@ class ZoneAttributesDialog(QDialog):
 
         self.selected_grids_list = QListWidget()
         self.selected_grids_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
         grid_list_layout.addWidget(self.selected_grids_list)
 
         layout.addLayout(grid_list_layout)
@@ -81,11 +83,12 @@ class ZoneAttributesDialog(QDialog):
         # Calculate Button
         self.calculate_button = QPushButton("Calculate", self)
         self.calculate_button.clicked.connect(self.calculate_zone_attributes)
+        self.calculate_button.clicked.connect(self.accept)  #
         layout.addWidget(self.calculate_button)
 
         # Close Button
         self.close_button = QPushButton("Close", self)
-        self.close_button.clicked.connect(self.accept)
+        self.close_button.clicked.connect(self.close)  
         layout.addWidget(self.close_button)
 
         self.setLayout(layout)
@@ -122,9 +125,7 @@ class ZoneAttributesDialog(QDialog):
             self.available_grids_list.addItem(item)
 
     def calculate_zone_attributes(self):
-        import numpy as np
-        import pandas as pd
-        from PyQt5.QtWidgets import QMessageBox
+
 
         zone_name = self.zone_name_combo.currentText()
         selected_grids = [item.text() for item in self.selected_grids_list.findItems("*", Qt.MatchWildcard)]
@@ -178,6 +179,7 @@ class ZoneAttributesDialog(QDialog):
                 top_md = zone['Top Depth']
                 base_md = zone['Base Depth']
                 uwi = zone['UWI']
+                print(uwi)
 
                 uwi_surveys = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
 
@@ -260,7 +262,7 @@ class StagesCalculationDialog(QDialog):
     def __init__(self, master_df, directional_surveys_df, zone_names, parent=None):
         super(StagesCalculationDialog, self).__init__(parent)
         self.setWindowTitle("Calculate Stages")
-        self.setMinimumSize(400, 250)
+        self.setMinimumSize(400, 300)
 
         self.master_df = master_df
         self.directional_surveys_df = directional_surveys_df
@@ -275,12 +277,19 @@ class StagesCalculationDialog(QDialog):
         layout.addWidget(self.avg_stage_length_input)
         
         # Zone Name Input
-        self.zone_name_label = QLabel("Zone Name (Default: Stages):", self)
+        self.zone_name_label = QLabel("Zone Name:", self)
         layout.addWidget(self.zone_name_label)
         
-        self.zone_name_input = QLineEdit(self)
-        self.zone_name_input.setPlaceholderText("Stages")
-        layout.addWidget(self.zone_name_input)
+        self.zone_name_dropdown = QComboBox(self)
+        self.zone_name_dropdown.setEditable(True)
+        self.zone_name_dropdown.addItems(self.zone_names)  # Add zone names to the dropdown
+        if self.zone_names:  # Check if zone_names is not empty
+            self.zone_name_dropdown.setCurrentIndex(0)  # Set to the first zone name
+        layout.addWidget(self.zone_name_dropdown)
+        
+        # Overwrite Existing Stages Checkbox
+        self.overwrite_checkbox = QCheckBox("Overwrite existing stages for this zone", self)
+        layout.addWidget(self.overwrite_checkbox)
         
         # Calculate Button
         self.calculate_button = QPushButton("Calculate", self)
@@ -296,18 +305,23 @@ class StagesCalculationDialog(QDialog):
     
     def calculate_stages(self):
         avg_stage_length = float(self.avg_stage_length_input.text())
-        zone_name = self.zone_name_input.text() or "Stages"  # Use "Stages" if no input
+        zone_name = self.zone_name_dropdown.currentText() or "Stages"  # Use the selected or default zone name
         
-        # Ensure the DataFrame contains the necessary columns
-        if 'MD' not in self.directional_surveys_df.columns or 'TVD' not in self.directional_surveys_df.columns or 'UWI' not in self.directional_surveys_df.columns:
-            QMessageBox.warning(self, "Warning", "Directional surveys data does not contain necessary columns.")
-            return
-
+        # Check if overwrite checkbox is checked
+        if self.overwrite_checkbox.isChecked():
+            # Remove existing data for the selected zone
+            self.master_df = self.master_df[self.master_df['Zone Name'] != zone_name]
+        
         stages_list = []
-
+        
+        # Filter directional surveys based on the selected zone
+        existing_uwis = set(self.master_df[self.master_df['Zone Name'] == zone_name]['UWI'])
+        
         # Group by UWI
         for uwi, group_df in self.directional_surveys_df.groupby('UWI'):
-            # Sort DataFrame by MD
+            if uwi in existing_uwis and not self.overwrite_checkbox.isChecked():
+                continue  # Skip wells that already have stages for this zone if not overwriting
+            
             group_df = group_df.sort_values(by='MD').reset_index(drop=True)
             group_df['Inclination'] = np.nan
         
@@ -315,26 +329,19 @@ class StagesCalculationDialog(QDialog):
             for i in range(1, len(group_df)):
                 current_row = group_df.iloc[i]
                 previous_row = group_df.iloc[i - 1]
-            
                 delta_md = current_row['MD'] - previous_row['MD']
                 delta_tvd = current_row['TVD'] - previous_row['TVD']
-            
                 if delta_md != 0:
                     inclination = np.degrees(np.arccos(delta_tvd / delta_md))
                     group_df.at[i, 'Inclination'] = inclination
-                  
         
             # Filter lateral points
-            lateral_df = group_df[group_df['Inclination'] < 92]
-           
+            lateral_df = group_df[group_df['Inclination'] < 91]
             if lateral_df.empty:
                 continue
         
             # Calculate total lateral length
             total_lateral = lateral_df['MD'].max() - lateral_df['MD'].min()
-
-        
-            # Calculate number of stages
             num_stages = int(round(total_lateral / avg_stage_length))
             perfect_avg_stage_length = total_lateral / num_stages
         
@@ -342,41 +349,126 @@ class StagesCalculationDialog(QDialog):
             for i in range(num_stages):
                 start_md = lateral_df['MD'].min() + i * perfect_avg_stage_length
                 end_md = start_md + perfect_avg_stage_length
-
-                if i == num_stages - 1:  # Ensure the very last stage's base depth is equal to the last MD value
+                if i == num_stages - 1:
                     end_md = lateral_df['MD'].max()
-                top_depth = round(start_md, 2)
-                bottom_depth = round(end_md, 2)
-
-            
                 stages_list.append({
                     'UWI': uwi,
-                    'Zone Name': zone_name,  # Use the provided or default stage name
-                    'Top Depth': top_depth,
-                    'Base Depth': bottom_depth,
+                    'Zone Name': zone_name,
+                    'Top Depth': round(start_md, 2),
+                    'Base Depth': round(end_md, 2),
                     'Attribute Type': 'Zone',
                     'Zone Type': 'Stage'
                 })
-    
+
+
         if not stages_list:
             QMessageBox.warning(self, "Warning", "No lateral points found with inclination greater than 85 degrees for any UWI.")
             return
     
         # Create DataFrame for stages
         stages_df = pd.DataFrame(stages_list)
-    
-        # Optionally, update master_df or save results
-        self.master_df = self.master_df.append(stages_df, ignore_index=True)
+       
+
+        # Initialize the columns for offsets and angles
+        stages_df['Top X Offset'] = None
+        stages_df['Top Y Offset'] = None
+        stages_df['Base X Offset'] = None
+        stages_df['Base Y Offset'] = None
+        stages_df['Angle Top'] = None
+        stages_df['Angle Base'] = None
+
+        for i, row in stages_df.iterrows():
+            uwi = row['UWI']
+            top_md = row['Top Depth']
+            base_md = row['Base Depth']
+            top_x, top_y, base_x, base_y = self.calculate_offsets(uwi, top_md, base_md)
+
+            stages_df.at[i, 'Top X Offset'] = top_x
+            stages_df.at[i, 'Top Y Offset'] = top_y
+            stages_df.at[i, 'Base X Offset'] = base_x
+            stages_df.at[i, 'Base Y Offset'] = base_y
         
-        # Update self.zone_names with the new zone name
         if zone_name not in self.zone_names:
             self.zone_names.append(zone_name)
     
+
+
+                    # Reorder columns
+        columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'] + \
+                  [col for col in stages_df.columns if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base']]
+        stages_df = stages_df[columns]
+        stages_df = self.calculate_angles(stages_df)
+
         QMessageBox.information(self, "Calculation Complete", f"Total Stages: {len(stages_list)}")
         self.accept()
 
+        self.master_df = self.master_df.append(stages_df, ignore_index=True)
 
 
+
+
+
+    def calculate_offsets(self, uwi, top_md, base_md):
+        well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+        if well_data.empty:
+            return None, None, None, None
+
+        # Interpolate for top and base MDs
+        top_x, top_y, _, _, _, _ = self.interpolate(top_md, well_data)
+        base_x, base_y, _, _, _, _ = self.interpolate(base_md, well_data)
+
+        return top_x, top_y, base_x, base_y
+
+    def interpolate(self, md, data):
+        # Find the two bracketing points
+        below = data[data['MD'] <= (md + .1)]
+        above = data[data['MD'] >= (md - .1)]
+        if below.empty or above.empty:
+            return None, None, None, None, None, None
+
+        below = below.iloc[-1]
+        above = above.iloc[0]
+
+        if below['MD'] == above['MD']:  # Exact match
+            return below['X Offset'], below['Y Offset'], below['X Offset'], below['Y Offset'], above['X Offset'], above['Y Offset']
+
+        # Linear interpolation
+        x = below['X Offset'] + (above['X Offset'] - below['X Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+        y = below['Y Offset'] + (above['Y Offset'] - below['Y Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+        return x, y, below['X Offset'], below['Y Offset'], above['X Offset'], above['Y Offset']
+
+    def calculate_angles(self, stages_df):
+        # Loop over each unique UWI in the valid_df
+        for uwi in stages_df['UWI'].unique():
+            uwi_data = stages_df[stages_df['UWI'] == uwi]
+
+            # Extract the first and last rows for the current UWI
+            first_row = uwi_data.iloc[0]
+            last_row = uwi_data.iloc[-1]
+
+            # Extract the corresponding X and Y offsets
+            x1, y1 = first_row['Top X Offset'], first_row['Top Y Offset']
+            x2, y2 = last_row['Base X Offset'], last_row['Base Y Offset']
+
+            # Calculate the angle in radians
+            dx, dy = x2 - x1, y1 - y2
+            angle = np.arctan2(dy, dx)
+
+            # Normalize the angle to [0, 2π)
+            if angle < 0:
+                angle += 2 * np.pi
+
+            # Define target angles for snapping
+            target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
+
+            # Round to the nearest target angle and rotate by 90 degrees
+            rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
+            rotated_angle = (rounded_angle + np.pi/2) % (2 * np.pi)
+
+            # Update the angle for all rows with the current UWI
+            stages_df.loc[stages_df['UWI'] == uwi, 'Angle Top'] = rotated_angle
+            stages_df.loc[stages_df['UWI'] == uwi, 'Angle Base'] = rotated_angle
+        return stages_df
 
 class WellAttributesDialog(QDialog):
     def __init__(self, parent=None):

@@ -1,6 +1,7 @@
-from genericpath import samefile
+﻿from genericpath import samefile
 import pandas as pd
-from PySide2.QtWidgets import QDialog, QFileDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
+import numpy as np
+from PySide2.QtWidgets import QDialog, QFileDialog, QProgressDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
 from PySide2.QtCore import Qt
 
 class DataLoadWellZonesDialog(QDialog):
@@ -64,6 +65,7 @@ class DataLoadWellZonesDialog(QDialog):
         self.headers_dropdowns = []
         self.uwi_list = uwi_list
         self.directional_surveys_df = directional_surveys_df
+
 
     def select_file(self):
         options = QFileDialog.Options()
@@ -137,108 +139,198 @@ class DataLoadWellZonesDialog(QDialog):
         any_checked = any(checkbox.isChecked() for checkbox in self.headers_checkboxes)
         self.import_button.setEnabled(any_checked)
 
-
     def accept_import(self):
         self.accept()
 
     def import_data(self):
         if not self.file_path:
             return
-
-        selected_headers = [checkbox.text() for checkbox in self.headers_checkboxes if checkbox.isChecked()]
-        if not selected_headers:
-            return
-
-        df = pd.read_csv(self.file_path, usecols=selected_headers)
-
-        attribute_type = self.attribute_type_combo.currentText()
-        zone_name = self.zone_name_input.text().strip()
-        zone_type = self.zone_type_combo.currentText()
-        unit = self.unit_combo.currentText()  # Assuming you have a unit dropdown for selecting Feet or Meters
-
-        uwi_header = self.get_special_header("UWI")
-        if not uwi_header:
-            QMessageBox.warning(self, "Warning", f"Please select a UWI header for {attribute_type} attributes.")
-            return
-
-        if attribute_type == "Zone":
-            top_depth_header = self.get_special_header("Top Depth")
-            base_depth_header = self.get_special_header("Base Depth")
-            if not (top_depth_header and base_depth_header):
-                QMessageBox.warning(self, "Warning", "Please select Top Depth and Base Depth headers for Zone attributes.")
-                return
-        else:
-            top_depth_header = base_depth_header = None
-
-        # Validate UWIs
-        df[uwi_header] = df[uwi_header].astype(str).str.strip()
-        self.uwi_list = [uwi.strip() for uwi in self.uwi_list]
-        valid_df = df[df[uwi_header].isin(self.uwi_list)]
-        invalid_uwis = df[~df[uwi_header].isin(self.uwi_list)]
-
-        if not invalid_uwis.empty:
-            QMessageBox.warning(self, "Warning", f"Some UWIs in the CSV do not exist in the project and will be skipped:\n{invalid_uwis[uwi_header].tolist()}")
-
-        if valid_df.empty:
-            QMessageBox.warning(self, "Warning", "No valid UWIs found in the CSV.")
-            return
-
-        # Add required columns to the DataFrame
-        valid_df['Attribute Type'] = attribute_type
-        valid_df['Zone Name'] = zone_name
-        valid_df['Zone Type'] = zone_type
-
-
-            # If the attribute type is 'Well', add X and Y offsets using directional surveys
-        if attribute_type == "Well":
-            valid_df['Top X Offset'] = valid_df['Base X Offset'] = valid_df[uwi_header].apply(
-                lambda uwi: self.get_first_xy_from_survey(uwi, 'X')
-            )
-            valid_df['Top Y Offset'] = valid_df['Base Y Offset'] = valid_df[uwi_header].apply(
-                lambda uwi: self.get_first_xy_from_survey(uwi, 'Y')
-            )
-
-
-        # Add Top Depth and Base Depth columns with NaN if they don't exist
-        if top_depth_header:
-            valid_df['Top Depth'] = valid_df[top_depth_header]
-        else:
-            valid_df['Top Depth'] = float('nan')
-
-        if base_depth_header:
-            valid_df['Base Depth'] = valid_df[base_depth_header]
-        else:
-            valid_df['Base Depth'] = float('nan')
-
-        # Rename UWI column
-        valid_df.rename(columns={uwi_header: 'UWI'}, inplace=True)
-
-        # Convert depths if necessary
-        if unit == "Feet":
-            if 'Top Depth' in valid_df.columns:
-                valid_df['Top Depth'] = (valid_df['Top Depth'] * 0.3048).round(2)  # Convert feet to meters and round to 2 decimals
-            if 'Base Depth' in valid_df.columns:
-                valid_df['Base Depth'] = (valid_df['Base Depth'] * 0.3048).round(2)  
-
-        # Reorder columns
-        columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth'] + \
-                  [col for col in valid_df.columns if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth']]
-        valid_df = valid_df[columns]
-        print(valid_df)
-
-
-
-
-
         
-        return valid_df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header
+        # Show the loading dialog
+        loading_dialog = QProgressDialog("Processing data, please wait...", None, 0, 0, self)
+        loading_dialog.setWindowTitle("Processing")
+        loading_dialog.setWindowModality(Qt.ApplicationModal)
+        loading_dialog.setCancelButton(None)
+        loading_dialog.show()
+
+        try:
+
+            selected_headers = [checkbox.text() for checkbox in self.headers_checkboxes if checkbox.isChecked()]
+            if not selected_headers:
+                return
+
+            df = pd.read_csv(self.file_path, usecols=selected_headers)
+
+            attribute_type = self.attribute_type_combo.currentText()
+            zone_name = self.zone_name_input.text().strip()
+            zone_type = self.zone_type_combo.currentText()
+            unit = self.unit_combo.currentText()
+
+            uwi_header = self.get_special_header("UWI")
+            if not uwi_header:
+                QMessageBox.warning(self, "Warning", f"Please select a UWI header for {attribute_type} attributes.")
+                return
+
+            if attribute_type == "Zone":
+                top_depth_header = self.get_special_header("Top Depth")
+                base_depth_header = self.get_special_header("Base Depth")
+                if not (top_depth_header and base_depth_header):
+                    QMessageBox.warning(self, "Warning", "Please select Top Depth and Base Depth headers for Zone attributes.")
+                    return
+            else:
+                top_depth_header = base_depth_header = None
+
+            # Validate UWIs
+            df[uwi_header] = df[uwi_header].astype(str).str.strip()
+            self.uwi_list = [uwi.strip() for uwi in self.uwi_list]
+            valid_df = df[df[uwi_header].isin(self.uwi_list)]
+            invalid_uwis = df[~df[uwi_header].isin(self.uwi_list)]
+
+            if not invalid_uwis.empty:
+                QMessageBox.warning(self, "Warning", f"Some UWIs in the CSV do not exist in the project and will be skipped:\n{invalid_uwis[uwi_header].tolist()}")
+
+            if valid_df.empty:
+                QMessageBox.warning(self, "Warning", "No valid UWIs found in the CSV.")
+                return
+
+            # Add required columns to the DataFrame
+            valid_df['Attribute Type'] = attribute_type
+            valid_df['Zone Name'] = zone_name
+            valid_df['Zone Type'] = zone_type
+        
+                # Add columns for angles
+           # Handle 'Zone' attribute-specific logic
+            if attribute_type == "Zone":
+          
+                # Add columns for angles
+
+                valid_df['Angle Top'] = None
+                valid_df['Angle Base'] = None
+
+                # Calculate offsets
+                for i, row in valid_df.iterrows():
+                    uwi = row['UWI']
+                    top_md = row[top_depth_header]
+                    base_md = row[base_depth_header]
+                    top_x, top_y, base_x, base_y = self.calculate_offsets(uwi, top_md, base_md)
+
+                    valid_df.at[i, 'Top X Offset'] = top_x
+                    valid_df.at[i, 'Top Y Offset'] = top_y
+                    valid_df.at[i, 'Base X Offset'] = base_x
+                    valid_df.at[i, 'Base Y Offset'] = base_y
+
+                # Reorder columns
+                #columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth', 
+                #           'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base']
+                #valid_df = valid_df[columns]
+
+                # Calculate angles
+                valid_df = self.calculate_angles(valid_df)
+
+            else:
+                # If attribute type is "Well", simply assign the first and last offsets from the directional survey data
+                valid_df.rename(columns={uwi_header: 'UWI'}, inplace=True)
+                for i, row in valid_df.iterrows():
+                    uwi = row['UWI']
+                    well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+
+                    if well_data.empty:
+                        continue
+
+                    # Get the first and last entries from the directional survey data
+                    first_entry = well_data.iloc[0]
+                    last_entry = well_data.iloc[-1]
+
+                    # Assign the first and last offsets directly
+                    valid_df.at[i, 'Top X Offset'] = first_entry['X Offset']
+                    valid_df.at[i, 'Top Y Offset'] = first_entry['Y Offset']
+                    valid_df.at[i, 'Base X Offset'] = last_entry['X Offset']
+                    valid_df.at[i, 'Base Y Offset'] = last_entry['Y Offset']
+
+  
+            # Convert depths if necessary
+            if unit == "Feet":
+                if 'Top Depth' in valid_df.columns:
+                    valid_df['Top Depth'] = (valid_df['Top Depth'] * 0.3048).round(2)  # Convert feet to meters and round to 2 decimals
+                if 'Base Depth' in valid_df.columns:
+                    valid_df['Base Depth'] = (valid_df['Base Depth'] * 0.3048).round(2)
+
+            # Rename UWI column
+            valid_df.rename(columns={uwi_header: 'UWI'}, inplace=True)
+
+
+
+            return valid_df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header
+        finally:
+            # Ensure the loading dialog is closed even if an error occurs
+            loading_dialog.close()
+    def calculate_offsets(self, uwi, top_md, base_md):
+        well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+        if well_data.empty:
+            return None, None, None, None
+
+        # Interpolate for top and base MDs
+        top_x, top_y, _, _, _, _ = self.interpolate(top_md, well_data)
+        base_x, base_y, _, _, _, _ = self.interpolate(base_md, well_data)
+
+        return top_x, top_y, base_x, base_y
+
+    def interpolate(self, md, data):
+        # Find the two bracketing points
+        below = data[data['MD'] <= (md + .1)]
+        above = data[data['MD'] >= (md - .1)]
+        if below.empty or above.empty:
+            return None, None, None, None, None, None
+
+        below = below.iloc[-1]
+        above = above.iloc[0]
+
+        if below['MD'] == above['MD']:  # Exact match
+            return below['X Offset'], below['Y Offset'], below['X Offset'], below['Y Offset'], above['X Offset'], above['Y Offset']
+
+        # Linear interpolation
+        x = below['X Offset'] + (above['X Offset'] - below['X Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+        y = below['Y Offset'] + (above['Y Offset'] - below['Y Offset']) * (md - below['MD']) / (above['MD'] - below['MD'])
+        return x, y, below['X Offset'], below['Y Offset'], above['X Offset'], above['Y Offset']
+
+    def calculate_angles(self, valid_df):
+        # Loop over each unique UWI in the valid_df
+        for uwi in valid_df['UWI'].unique():
+            uwi_data = valid_df[valid_df['UWI'] == uwi]
+
+            # Extract the first and last rows for the current UWI
+            first_row = uwi_data.iloc[0]
+            last_row = uwi_data.iloc[-1]
+
+            # Extract the corresponding X and Y offsets
+            x1, y1 = first_row['Top X Offset'], first_row['Top Y Offset']
+            x2, y2 = last_row['Base X Offset'], last_row['Base Y Offset']
+
+            # Calculate the angle in radians
+            dx, dy = x2 - x1, y1 - y2
+            angle = np.arctan2(dy, dx)
+
+            # Normalize the angle to [0, 2π)
+            if angle < 0:
+                angle += 2 * np.pi
+
+            # Define target angles for snapping
+            target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
+
+            # Round to the nearest target angle and rotate by 90 degrees
+            rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
+            rotated_angle = (rounded_angle + np.pi/2) % (2 * np.pi)
+
+            # Update the angle for all rows with the current UWI
+            valid_df.loc[valid_df['UWI'] == uwi, 'Angle Top'] = rotated_angle
+            valid_df.loc[valid_df['UWI'] == uwi, 'Angle Base'] = rotated_angle
+        return valid_df
 
     def get_special_header(self, special_type):
         for checkbox, dropdown in zip(self.headers_checkboxes, self.headers_dropdowns):
             if dropdown.currentText() == special_type and checkbox.isChecked():
                 return checkbox.text()
         return None
-
 
     def get_first_xy_from_survey(self, uwi, coord):
         """Helper function to get the first X or Y value from the directional surveys."""

@@ -17,7 +17,7 @@ from PySide2.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent, QBr
 from PySide2.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QPoint
 from shapely.geometry import LineString
 import SeisWare
-from Exporting import ExportDialog
+#from Exporting import ExportDialog
 from DataLoader import DataLoaderDialog
 from ZoneViewer import ZoneViewerDialog
 from SwPropertiesEdit import SWPropertiesEdit
@@ -37,6 +37,11 @@ from ProjectOpen import ProjectLoader# Import the DrawingArea class
 from UiSetup import Ui_MainWindow
 from Calculations import StagesCalculationDialog, ZoneAttributesDialog, WellAttributesDialog
 from InZone import InZoneDialog
+from CrossPlot import CrossPlot
+from DataLoadSegy import DataLoadSegy
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.spatial import KDTree
 
 
 
@@ -77,6 +82,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.attribute_grid_data_dict = {}
         self.kd_tree_depth_grids = None
         self.kd_tree_att_grids = None
+        self.seismic_kdtree = None
 
         self.drawing = False
         self.lastPoint = None
@@ -111,6 +117,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.zone_zone_names = []
         self.well_zone_names = []
         self.well_list = []  # List to store UWI
+        self.seismic_data = {}
+        self.bounding_box = None 
         
         self.connection = SeisWare.Connection()
         self.project_saver = None
@@ -159,6 +167,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.lineOpacitySlider.valueChanged.connect(self.change_line_opacity)
         self.plot_tool_action.triggered.connect(self.plot_data)
         self.gun_barrel_action.triggered.connect(self.toggleDrawing)
+        self.cross_plot_action.triggered.connect(self.crossPlot)
         self.color_editor_action.triggered.connect(self.open_color_editor)
         self.color_action.triggered.connect(self.open_color_editor)
         self.plot_action.triggered.connect(self.plot_data)
@@ -174,7 +183,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.calc_inzone_action.triggered.connect(self.inzone_dialog)
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
-    
+        self.dataload_segy_action.triggered.connect(self.dataload_segy)
 
       
 
@@ -257,21 +266,19 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Block signals while populating the dropdown
         self.gridDropdown.blockSignals(True)
-    
+
         # Clear the dropdown and add the default item
         self.gridDropdown.clear()
         self.gridDropdown.addItem("Select Grid")
 
-        # Get grid names from the grid_info_df and add them to the dropdown
-        grid_names = self.grid_info_df['Grid'].tolist()
+        # Get grid names from the grid_info_df, sort them alphabetically, and add them to the dropdown
+        grid_names = sorted(self.grid_info_df['Grid'].tolist())
         self.gridDropdown.addItems(grid_names)
-    
 
-    
         # Unblock signals after populating the dropdown
         self.gridDropdown.blockSignals(False)
 
-                # If a selected_grid is provided, set it as the current text
+        # If a selected_grid is provided, set it as the current text
         if selected_grid and selected_grid in grid_names:
             self.gridDropdown.setCurrentText(selected_grid)
 
@@ -283,8 +290,8 @@ class Map(QMainWindow, Ui_MainWindow):
             # Filter out any entries where 'Attribute Type' is 'Well'
             zone_df = self.master_df[self.master_df['Attribute Type'] == "Zone"]
 
-            # Get the unique zone names from the filtered DataFrame
-            self.zone_zone_names = zone_df['Zone Name'].unique().tolist()
+            # Get the unique zone names from the filtered DataFrame and sort them alphabetically
+            self.zone_zone_names = sorted(zone_df['Zone Name'].unique().tolist())
 
             # Block signals to prevent unwanted triggers during population
             self.zoneDropdown.blockSignals(True)
@@ -322,7 +329,6 @@ class Map(QMainWindow, Ui_MainWindow):
         # Filter master_df for the selected zone
         zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
 
-        
         # Drop fixed columns that are not relevant for selection
         columns_to_exclude = [
             'Zone Name', 'Zone Type', 'Attribute Type', 
@@ -338,9 +344,12 @@ class Map(QMainWindow, Ui_MainWindow):
         # Further filter to only include columns with at least one non-null value
         non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
 
-            # Ensure "Grid Name" is included if it has non-null values
+        # Ensure "Grid Name" is included if it has non-null values
         if 'Grid Name' in zone_df.columns and zone_df['Grid Name'].notnull().any():
             non_null_numeric_columns.append('Grid Name')
+
+        # Sort the list of columns alphabetically
+        non_null_numeric_columns = sorted(non_null_numeric_columns)
 
         # Clear the dropdown before populating
         self.zoneAttributeDropdown.blockSignals(True)
@@ -416,7 +425,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Load the color palette
         self.selected_color_palette = self.load_color_palette(file_path)
-        print(self.selected_color_palette)
+  
 
     def zone_selected(self):
         """Handles the selection of a zone from the dropdown."""
@@ -454,6 +463,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def zone_attribute_selected(self):
         self.drawingArea.clearUWILines()
         # Get the selected zone attribute from the dropdown
+        self.selected_zone = self.zoneDropdown.currentText()
         self.selected_zone_attribute = self.zoneAttributeDropdown.currentText()
 
         # Check if a zone and zone attribute are selected
@@ -510,7 +520,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
             # Add the top depth, base depth, and color as a tuple
             uwi_color_map[uwi].append(( top_depth, base_depth, qcolor))
-        print(uwi_color_map)
+  
 
         for _, zone in zone_df.iterrows():
             uwi = zone['UWI']
@@ -547,7 +557,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
             if uwi in uwi_color_map:
                 depth_color_list = uwi_color_map[uwi]
-                print(depth_color_list)
+               
 
                 # Iterate through the measured depths and assign colors
                 for md in mds:
@@ -558,7 +568,7 @@ class Map(QMainWindow, Ui_MainWindow):
                         # Ensure both UWI and depth range match
                         if top_depth <= md < base_depth:
                             assigned_color = color
-                            print(md, assigned_color)
+                       
                             break  # Exit once the first matching color is found
 
                     well_data['md_colors'].append(assigned_color)
@@ -733,7 +743,9 @@ class Map(QMainWindow, Ui_MainWindow):
         self.drawingArea.setGridPoints(points_with_values)
 
     def plot_zones(self, zone_name):
-      
+
+        if self.master_df.empty:
+            return  # Do nothing if the DataFrame is empty
         # Filter for the relevant zones
         zones = self.master_df[(self.master_df['Attribute Type'] == 'Zone') & (self.master_df['Zone Name'] == zone_name)]
 
@@ -843,7 +855,7 @@ class Map(QMainWindow, Ui_MainWindow):
                     self.master_df.loc[mask, 'Angle Base'] = rotated_angle
 
         # Save the updated master_df
-            self.project_saver.save_master_df(self.master_df)
+            self.save_master_df()
    
         # Plot all collected zones
         self.plot_all_zones()
@@ -891,7 +903,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def plot_all_zones(self):
         try:
             zone_ticks = []
-            print(self.zone_data_df)
+          
             for _, row in self.zone_data_df.iterrows():
                 top_x, top_y = row['Top X Offset'], row['Top Y Offset']
                 base_x, base_y = row['Base X Offset'], row['Base Y Offset']
@@ -916,7 +928,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def populate_well_zone_dropdown(self):
         """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
-    
+
         # Clear the dropdown and set a default option
         self.WellZoneDropdown.blockSignals(True)
         self.WellZoneDropdown.clear()
@@ -929,35 +941,41 @@ class Map(QMainWindow, Ui_MainWindow):
             # Get the unique zone names from the filtered DataFrame
             self.well_zone_names = well_df['Zone Name'].unique().tolist()
 
-            # Populate the dropdown with the filtered zone names
+            # Sort the zone names alphabetically
+            self.well_zone_names.sort()
+
+            # Populate the dropdown with the filtered and sorted zone names
             if self.well_zone_names:
                 self.WellZoneDropdown.addItems(self.well_zone_names)
-    
+
         self.WellZoneDropdown.blockSignals(False)
 
     def well_zone_selected(self):
         """Handles the selection of a zone from the dropdown."""
         self.selected_zone = self.WellZoneDropdown.currentText()
- 
-        if self.selected_zone == "Select Well Zone":
-            self.WellAttributeDropdown.setEnabled(False) 
-            # Clear the zones in the plotting area
 
-        else:
-            pass
-         
-      
-        
-        
         self.WellAttributeDropdown.blockSignals(True)
         self.WellAttributeDropdown.clear()
-        self.populate_well_attribute_dropdown()
-
+        self.drawingArea.clearWellAttributeBoxes()
+        self.WellAttributeDropdown.addItem("Select Well Attribute")
+        
         self.WellAttributeDropdown.blockSignals(False)
         self.WellAttributeDropdown.setEnabled(False)
 
-        self.WellAttributeDropdown.setEnabled(True) 
-        return
+         
+ 
+        if self.selected_zone == "Select Well Zone":
+            self.WellAttributeDropdown.setEnabled(False)
+
+             
+            # Clear the zones in the plotting area
+
+        else:
+            self.populate_well_attribute_dropdown()
+            self.WellAttributeDropdown.setEnabled(True)
+      
+        
+ 
 
     def populate_well_attribute_dropdown(self):
         """Populate the well attribute dropdown with numeric attributes for the selected well zone."""
@@ -980,7 +998,7 @@ class Map(QMainWindow, Ui_MainWindow):
             'Top Depth', 'Base Depth', 'UWI', 
             'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
         ]
-        remaining_df = well_zone_df.drop(columns=columns_to_exclude)
+        remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
 
         # Find columns with numeric data types
         numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
@@ -988,6 +1006,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Further filter to only include columns with at least one non-null value
         non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
+        non_null_numeric_columns.sort()
 
         # Clear the dropdown before populating
         self.WellAttributeDropdown.blockSignals(True)
@@ -1048,7 +1067,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Prepare data to send to the drawing area using the Top X and Top Y Offsets
         points_with_colors = [
-            (QPointF(row['Top X Offset'], row['Top Y Offset']), row['color'])
+            (QPointF(row['Top X Offset'], row['Top Y Offset']), row['color'] if pd.notnull(row['color']) else QColor(0, 0, 0))
             for _, row in well_zone_df.iterrows()
         ]
 
@@ -1094,7 +1113,11 @@ class Map(QMainWindow, Ui_MainWindow):
         normalized_value = (value - min_value) / (max_value - min_value)
     
         # Scale the normalized value to the length of the color palette
-        index = int(normalized_value * (len(color_palette) - 1))
+        if pd.isna(normalized_value):
+            index = 0  # Or any default value or behavior you want when encountering NaN
+        else:
+            # Scale the normalized value to the length of the color palette
+            index = int(normalized_value * (len(color_palette) - 1))
     
         # Clamp the index to be within the bounds of the color_palette list
         index = max(0, min(index, len(color_palette) - 1))
@@ -1231,8 +1254,43 @@ class Map(QMainWindow, Ui_MainWindow):
         self.drawingArea.updateLineOpacity(self.line_opacity)
 
 ########################################CREATE OPEN
+
+
+    def clear_current_project(self):
+        # Clear all the DataFrames
+        self.directional_surveys_df = pd.DataFrame()
+        self.depth_grid_data_df = pd.DataFrame()
+        self.attribute_grid_data_df = pd.DataFrame()
+        self.import_options_df = pd.DataFrame()
+        self.selected_uwis = []
+        self.grid_info_df = pd.DataFrame()
+        self.well_list = []
+        self.master_df = pd.DataFrame()
+
+        # Reset any other state variables
+        self.zone_names = []
+        self.line_width = 2
+        self.line_opacity = 0.8
+        self.uwi_width = 80
+        self.uwi_opacity = 1.0
+
+        # Reset KD-Trees and other computed structures
+        self.kd_tree_depth_grids = None
+        self.kd_tree_att_grids = None
+        self.depth_grid_data_dict = {}
+        self.attribute_grid_data_dict = {}
+
+
+
+
+
+
+
     def open_project(self):
+        self.clear_current_project()
         self.project_loader.open_from_file()
+        self.drawingArea.setScaledData(self.well_data)
+        self.drawingArea.fitSceneInView()
 
     def create_new_project(self):
         self.project_data = {
@@ -1343,7 +1401,7 @@ class Map(QMainWindow, Ui_MainWindow):
             result = dialog.import_data()
             if result:
                 df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header = result
-                print(df)                    # Append the new data to the existing DataFrame
+                           # Append the new data to the existing DataFrame
                 # Ensure zone_name is a list, even if it's a single item
                 if isinstance(zone_name, str):
                     zone_name = [zone_name]
@@ -1351,14 +1409,15 @@ class Map(QMainWindow, Ui_MainWindow):
                 # Append the new data to the existing DataFrame
                 if not self.master_df.empty:
                     self.master_df = pd.concat([self.master_df, df], ignore_index=True)
-                    print(self.master_df)
+               
                 else:
                     self.master_df = df
 
                 # Update zone names
                 self.zone_names.extend(zone_name)
                 self.zone_names = list(set(self.zone_names))  # Remove duplicates
-                print(self.zone_names)
+           
+                
                 # Ensure the project saver is initialized
                 if not hasattr(self, 'project_saver'):
                     self.project_saver = ProjectSaver(self.project_file_name)
@@ -1370,8 +1429,70 @@ class Map(QMainWindow, Ui_MainWindow):
                 print("Project data updated and saved")
                 self.populate_zone_dropdown()
                 self.populate_well_attribute_dropdown()
+                self.populate_well_zone_dropdown()
                 self.export_menu.setEnabled(True)
                 self.launch_menu.setEnabled(True)
+
+
+    def dataload_segy(self):
+        # Create and launch the DataLoadSegy dialog
+        dialog = DataLoadSegy(self)
+
+        if dialog.exec_() == QDialog.Accepted:
+            # Access the saved SEGY settings
+            self.seismic_data = dialog.get_seismic_data()
+            print(self.seismic_data)
+            self.bounding_box = dialog.get_bounding_box()
+
+            if self.seismic_data and 'x_coords' in self.seismic_data and 'y_coords' in self.seismic_data:
+                # Build the KDTree for seismic data
+                seismic_coords = np.column_stack((self.seismic_data['x_coords'], self.seismic_data['y_coords']))
+                self.seismic_kdtree = KDTree(seismic_coords)
+            
+                # Save the seismic data, bounding box, and KDTree
+                self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box, self.seismic_kdtree)
+
+            else:
+                print("Invalid seismic data: Missing 'x_coords' or 'y_coords'.")
+
+    
+
+
+        self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box)
+
+        self.display_seismic_data(10)
+
+    def display_seismic_data(self, inline_number):
+        trace_data = self.seismic_data['trace_data']
+        time_axis = self.seismic_data['time_axis']
+        inlines = self.seismic_data['inlines']
+
+        # Find all traces where inline == inline_number
+        trace_indices = np.where(inlines == inline_number)[0]
+
+        if len(trace_indices) == 0:
+            print(f"No traces found for inline {inline_number}.")
+            return
+
+        # Extract the traces corresponding to the selected inline
+        inline_traces = trace_data[trace_indices, :]
+
+        # Create a figure and axis
+        fig, ax = plt.subplots()
+
+        # Plot the seismic data as a color image with 'lower' origin to place time correctly
+        im = ax.imshow(inline_traces.T, cmap='seismic', aspect='auto',
+                       extent=[0, len(trace_indices), np.min(time_axis), np.max(time_axis)],
+                       origin='lower')  # Corrects the upside-down issue by setting origin to 'lower'
+
+        ax.set_title(f"Seismic Section for Inline {inline_number}")
+        ax.set_xlabel("Trace Number")
+        ax.set_ylabel("Time (ms)")
+        plt.colorbar(im, ax=ax, label="Amplitude")
+
+        # Display the plot
+        plt.show()
+
 
 ###############################################Zone DISPLAYS###################################
 
@@ -1495,7 +1616,7 @@ class Map(QMainWindow, Ui_MainWindow):
                                 points = []
 
                             for point in points:
-                                intersection_qpoint = self.data_to_map_coords(QPointF(point.x, point.y))
+                                intersection_qpoint = QPointF(point.x, point.y)
                                 self.originalIntersectionPoints.append(intersection_qpoint)
 
                                 # Find the two closest well points to the intersection
@@ -1507,7 +1628,12 @@ class Map(QMainWindow, Ui_MainWindow):
                                 x2, y2, tvd2 = p2
                                 tvd_value = self.calculate_interpolated_tvd(point, [(x1, y1, tvd1), (x2, y2, tvd2)])
 
-               
+                   # Ensure tvd_value is numeric and check for finiteness
+                                try:
+                                    tvd_value = float(tvd_value)
+                                except (TypeError, ValueError):
+                                    tvd_value = float('nan')
+
 
                                 if not np.isfinite(tvd_value):
                                     print(f"Warning: Non-finite TVD Value encountered for UWI: {uwi}, Point: ({point.x}, {point.y})")
@@ -1609,25 +1735,51 @@ class Map(QMainWindow, Ui_MainWindow):
 ######################################Launch####################################
     def launch_zone_viewer(self):
         # Create the dialog with settings if available
-        print(self.column_filters)
-        print(self.master_df)
-        dialog = ZoneViewerDialog(self.master_df, self.zone_names, self.selected_uwis, self.save_zone_viewer_settings, self.zone_criteria_df,self.column_filters, self)
+        self.zone_viewer_dialog = ZoneViewerDialog(
+            self.master_df, 
+            self.zone_names, 
+            self.selected_uwis, 
+            self.save_zone_viewer_settings, 
+            self.zone_criteria_df,
+            self.column_filters
+        )
 
         # Connect the signal for saving settings when the dialog is closed
-        dialog.settingsClosed.connect(self.save_zone_settings)
-        # Show the dialog
-        dialog.show()
+        self.zone_viewer_dialog.settingsClosed.connect(self.save_zone_settings)
+        self.zone_viewer_dialog.dataUpdated.connect(self.update_master_df)
+        self.zone_viewer_dialog.newAttributeAdded.connect(self.add_new_attribute_to_dropdowns)
+        self.zone_viewer_dialog.zoneNamesUpdated.connect(self.update_zone_names)
+
+        self.zone_viewer_dialog.show()
+
+    def update_master_df(self, updated_df):
+        self.master_df = updated_df
+        self.save_master_df()
+
+    def update_zone_names(self, updated_zone_names):
+        """Slot to update the zone names in the main application."""
+        self.zone_names = updated_zone_names
+        self.populate_zone_dropdown()
+        # Handle any additional logic required when the zone names are updated
+        print("Zone names updated in main application.")
+
+    def add_new_attribute_to_dropdowns(self, attribute_name):
+        # Add the new attribute to the dropdowns if not already present
+        if attribute_name not in [self.zoneAttributeDropdown.itemText(i) for i in range(self.zoneAttributeDropdown.count())]:
+            self.zoneAttributeDropdown.addItem(attribute_name)
+
+        if attribute_name not in [self.WellAttributeDropdown.itemText(i) for i in range(self.WellAttributeDropdown.count())]:
+            self.WellAttributeDropdown.addItem(attribute_name)
+
 
     def save_zone_settings(self, data):
         # Extract the settings, criteria DataFrame, and column filters from the data dictionary
         settings = data.get("settings")
         criteria_df = data.get("criteria")
         self.column_filters = data.get("columns")
+        self.save_master_df()
 
-        # Print statements for debugging purposes
-        print("Settings:", settings)
-        print("Criteria DataFrame:", criteria_df)
-        print("Column Filters:", self.column_filters)
+
 
         # Save the settings
         if settings is not None:
@@ -1644,7 +1796,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
 
     def plot_data(self, uwi=None):
-        print("UWIs available:", self.well_list)
+    
         if not self.directional_surveys_df.empty and not self.depth_grid_data_df.empty:
             try:
                 if uwi:
@@ -1654,12 +1806,12 @@ class Map(QMainWindow, Ui_MainWindow):
                 else:
                     # Select data for the first UWI in the list (assuming this is the "current" UWI)
                     current_uwi = self.well_list[0]
-                    current_uwi = self.well_list[0]
+                
 
                 if current_uwi not in self.well_list:
                     raise ValueError(f"UWI {current_uwi} not found in well list.")
                 
-                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, self.master_df, parent=self)
+                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, parent=self)
                 self.open_windows.append(navigator)
                 
                 navigator.show()
@@ -1686,7 +1838,10 @@ class Map(QMainWindow, Ui_MainWindow):
             new_line_coords, 
             self.kd_tree_depth_grids,
             self.depth_grid_data_dict,
-            self.intersections, 
+            self.intersections,
+            self.zone_names,
+            self.master_df,
+            self.seismic_data,
             main_app=self
         )
         # Add to the list of windows
@@ -1695,6 +1850,11 @@ class Map(QMainWindow, Ui_MainWindow):
         # Show the window
         self.plot_gb.show()
         self.plot_gb.closed.connect(lambda: self.plot_gb_windows.remove(self.plot_gb))
+
+    def crossPlot(self):
+        self.cross_plot_dialog = CrossPlot(self.master_df)
+        self.cross_plot_dialog.show()
+
 
     def update_plot_gb_windows(self):
         for window in self.plot_gb_windows:
@@ -1727,8 +1887,8 @@ class Map(QMainWindow, Ui_MainWindow):
             window.update_data(self.grid_info_df)
 
     def handle_hover_event(self, uwi):
-        self.drawingArea.hovered_uwi = uwi  
-        self.drawingArea.update()
+        print(uwi)
+        self.drawingArea.updateHoveredUWI(uwi)
 
             
 ##################################Map############################################
@@ -1752,7 +1912,8 @@ class Map(QMainWindow, Ui_MainWindow):
 
         self.populate_zone_dropdown()
 
-        save_dir = 'C:/Users/jerem/source/repos/Well Attribute Viewer'
+
+        save_dir = os.path.dirname(os.path.abspath(__file__))
         master_file_path = os.path.join(save_dir, 'master_data.csv')
 
 
@@ -1763,7 +1924,8 @@ class Map(QMainWindow, Ui_MainWindow):
         # Save the updated master_df to a CSV file
         self.master_df.to_csv(master_file_path, index=False)
         print(f"Master DataFrame saved to '{master_file_path}'")
-
+        if hasattr(self, 'selected_zone') and self.selected_zone:
+            self.zone_selected(self.selected_zone)
    
 
 
@@ -1780,12 +1942,10 @@ class Map(QMainWindow, Ui_MainWindow):
             self.attribute_grid_data_dict
         )
         dialog.exec_()
-        self.master_df = dialog.updated_master
-  
-
-
-        self.populate_zone_attributes()
-        self.project_saver.save_master_df(self.master_df)
+        if dialog.result() == QDialog.Accepted:
+            self.master_df = dialog.updated_master
+            self.populate_zone_attributes()
+            self.save_master_df()
 
     def open_well_attributes_dialog(self):
         dialog = WellAttributesDialog(self)
@@ -1801,7 +1961,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.zone_names,
             self.depth_grid_data_dict,
             self.attribute_grid_data_dict
-        )
+              )
         dialog.exec_()
 
         self.master_df = dialog.master_df
@@ -1810,14 +1970,35 @@ class Map(QMainWindow, Ui_MainWindow):
         self.populate_zone_dropdown()
      
         self.master_df.fillna(0)
-        self.project_saver.save_master_df(self.master_df)
+        self.save_master_df()
 
+    def save_master_df(self):
+        self.project_saver.save_master_df(self.master_df)
 
     def shutdown_and_save_all(self):
         selected_grid = self.gridDropdown.currentText()
+        gridColorBarDropdown = self.gridColorBarDropdown.currentText()
         selected_zone = self.zoneDropdown.currentText()
+        selected_zone_attribute = self.zoneAttributeDropdown.currentText()
+        zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
+        selected_well_zone = self.WellZoneDropdown.currentText()
+        selected_well_attribute = self.WellAttributeDropdown.currentText()
+        WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()
 
-        self.project_saver.shutdown(self.line_width, self.line_opacity, self.uwi_width, self.uwi_opacity, selected_grid, selected_zone)
+        self.project_saver.shutdown(
+        self.line_width, 
+        self.line_opacity, 
+        self.uwi_width, 
+        self.uwi_opacity, 
+        selected_grid, 
+        selected_zone,
+        selected_zone_attribute, 
+        selected_well_zone, 
+        selected_well_attribute, 
+        gridColorBarDropdown,
+        zoneAttributeColorBarDropdown,
+        WellAttributeColorBarDropdown
+    )
  
         
 ###########################################Export#############################################

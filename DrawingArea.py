@@ -69,6 +69,7 @@ class DrawingArea(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setDragMode(QGraphicsView.NoDrag)
         self.setTransform(QTransform().scale(1, -1))
+        self.setAutoFillBackground(True)
 
         self.map_instance = map_instance
         self.scaled_data = {}
@@ -90,10 +91,14 @@ class DrawingArea(QGraphicsView):
         self.well_attribute_boxes = {}
         self.line_items = {}
         self.view_adjusted = False
+        self.initial_fit_in_view_done = False 
 
         self.textPixmapCache = {}
         self.color_palette = self.load_color_palette('Palettes/Rainbow.pal')
         self.reset_boundaries()
+                # Set background color to very light grey
+        light_grey = QColor(240, 240, 240)
+        self.setBackgroundBrush(QBrush(light_grey))
 
     def reset_boundaries(self):
         self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = self.max_z = 0
@@ -117,12 +122,15 @@ class DrawingArea(QGraphicsView):
 
     def setScaledData(self, well_data, well_attribute_values=None):
         self.clearUWILines()
-        self.clearWellAttributeBoxes()
+        
 
         new_items = []
 
         all_x = [x for well in well_data.values() for x in well['x_offsets']]
         all_y = [y for well in well_data.values() for y in well['y_offsets']]
+
+
+
         self.min_x, self.max_x = min(all_x), max(all_x)
         self.min_y, self.max_y = min(all_y), max(all_y)
 
@@ -136,14 +144,26 @@ class DrawingArea(QGraphicsView):
                     start_point = points[i]
                     end_point = points[i + 1]
                     md = mds[i]
+                    # Calculate the direction of the line
+                    direction = (end_point - start_point)
+                    direction = direction / direction.manhattanLength()  # Normalize the direction vector
+
+                    # Dynamically calculate the offset based on the zoom level
+                    current_scale = self.transform().m11()  # Get the current scale factor from the QGraphicsView transform
+                    base_offset = 0.5  # Base offset to extend the line slightly
+                    adjusted_offset = base_offset / current_scale  # Adjust offset based on zoom level
+
+                    # Extend the start and end points slightly
+                    adjusted_start_point = start_point - direction * adjusted_offset
+                    adjusted_end_point = end_point + direction * adjusted_offset
 
                     color = md_colors[i] if i < len(md_colors) else QColor(Qt.black)
                     color.setAlphaF(self.uwi_opacity)
 
-                    line = QGraphicsLineItem(QLineF(start_point, end_point))
+                    line = QGraphicsLineItem(QLineF(adjusted_start_point, adjusted_end_point))
                     pen = QPen(color)
                     pen.setWidth(self.line_width)
-                    pen.setCapStyle(Qt.FlatCap)
+                    pen.setCapStyle(Qt.FlatCap)  # Keep the original cap style
                     line.setPen(pen)
                     line.setZValue(5)
                     line.setData(0, 'uwiline')
@@ -173,8 +193,11 @@ class DrawingArea(QGraphicsView):
         for item in new_items:
             self.scene.addItem(item)
 
-        self.calculate_scene_size()
-        self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+        
+        # Only run fitInView the first time
+        if not self.initial_fit_in_view_done:
+            self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+            self.initial_fit_in_view_done = True 
 
     def clearWellAttributeBoxes(self):
         for uwi, box in self.well_attribute_boxes.items():
@@ -231,6 +254,7 @@ class DrawingArea(QGraphicsView):
 
 
     def add_well_attribute_boxes(self, well_attribute_values):
+     
         """
         Adds well attribute boxes to the map based on the provided well_attribute_values list.
         """
@@ -333,27 +357,28 @@ class DrawingArea(QGraphicsView):
             for point in points[1:]:
                 path.lineTo(point)
 
-            pen = QPen(Qt.red, 1.0)
+            pen = QPen(Qt.red, 3)
             pen.setCosmetic(True)
             self.currentLine = self.scene.addPath(path, pen)
             self.currentLine.setZValue(10)
 
     def setIntersectionPoints(self, points):
+        size = 80  # Match the size of the click points
+        pen = QPen(Qt.red, 3)  # Match the pen style of the click points
+        pen.setCosmetic(True)
+        brush = QBrush(Qt.red)  # Match the brush style of the click points
+    
+        # Remove existing intersection points
         for point in self.intersectionPoints:
             self.scene.removeItem(point)
         self.intersectionPoints = []
+   
+    
+        # Add new intersection points
         for point in points:
-            item = self.scene.addEllipse(point.x() - 100, point.y() - 100, 200, 200, QPen(Qt.black), QBrush(Qt.black))
-            item.setZValue(0)
+            item = self.scene.addEllipse(point.x() - size / 2, point.y() - size / 2, size, size, pen, brush)
+            item.setZValue(10)  # Match the Z-value of the click points
             self.intersectionPoints.append(item)
-
-    def addRectangle(self, top_left, bottom_right):
-        for rect in self.rectangles:
-            self.scene.removeItem(rect)
-        self.rectangles = []
-        rect_item = self.scene.addRect(QRectF(top_left, bottom_right), QPen(Qt.blue, 2))
-        rect_item.setZValue(0)
-        self.rectangles.append(rect_item)
 
     def clearCurrentLineAndIntersections(self):
         if self.currentLine:
@@ -367,8 +392,8 @@ class DrawingArea(QGraphicsView):
         self.clickPoints = []
 
     def addClickPoint(self, point):
-        size = 10
-        pen = QPen(Qt.red, 1.0)
+        size = 80
+        pen = QPen(Qt.red, 3)
         pen.setCosmetic(True)
         brush = QBrush(Qt.red)
         item = self.scene.addEllipse(point.x() - size / 2, point.y() - size / 2, size, size, pen, brush)
@@ -486,40 +511,28 @@ class DrawingArea(QGraphicsView):
             self.scene.removeItem(self.gridGroup)
             self.gridGroup = None
         self.gridPoints = []
-        self.calculate_scene_size()
+  
 
     def clearZones(self):
-        print("Clearing all items from the scene except 'uwiline' and 'gridpoint' items.")
+        print("Clearing 'uwiline', tick data, and 'BulkZoneTicks' items from the scene.")
 
-        items_to_remove = []
-
-        for item in self.scene.items():
-            if item.data(0) not in ['uwiline', 'gridpoint']:
-                items_to_remove.append(item)
-
-        for item in items_to_remove:
+        # Remove 'uwiline' items
+        uwilines_to_remove = [item for item in self.scene.items() if item.data(0) == 'uwiline']
+        for item in uwilines_to_remove:
             if item.scene() is not None:
-                if isinstance(item, QGraphicsLineItem):
-                    self.returnLineItemToPool(item)
-                elif isinstance(item, QGraphicsPixmapItem):
-                    self.returnPixmapItemToPool(item)
-                elif isinstance(item, QGraphicsTextItem):
-                    self.returnTextItemToPool(item)
-                elif isinstance(item, QGraphicsPathItem):
-                    self.scene.removeItem(item)
-                else:
-                    self.scene.removeItem(item)
+                self.scene.removeItem(item)
 
-        remaining_items = [item for item in self.scene.items() if item.data(0) not in ['uwiline', 'gridpoint']]
-        if remaining_items:
-            print(f"Warning: {len(remaining_items)} items were not removed.")
+        # Remove tick data (assuming tick data is associated with BulkZoneTicks or similar)
+        ticks_to_remove = [item for item in self.scene.items() if isinstance(item, BulkZoneTicks)]
+        for item in ticks_to_remove:
+            if item.scene() is not None:
+                self.scene.removeItem(item)
 
+        # Clear related data structures
         self.zoneTicks.clear()
         self.zoneTickCache.clear()
-        self.textPixmapCache.clear()
 
-        self.scene.update()
-        self.viewport().update()
+
 
     def updateScene(self):
         self.scene.update()
@@ -529,26 +542,26 @@ class DrawingArea(QGraphicsView):
         self.processed_data = processed_data
         self.update_colored_segments()
 
-    def update_colored_segments(self):
-        for item in self.scene.items():
-            if isinstance(item, QGraphicsPathItem) and item.data(0) == 'colored_segment':
-                self.scene.removeItem(item)
+    #def update_colored_segments(self):
+    #    for item in self.scene.items():
+    #        if isinstance(item, QGraphicsPathItem) and item.data(0) == 'colored_segment':
+    #            self.scene.removeItem(item)
 
-        for uwi, points in self.processed_data.items():
-            if len(points) > 1:
-                for i in range(len(points) - 1):
-                    segment_path = QPainterPath()
-                    segment_path.moveTo(QPointF(points[i]['x'], points[i]['y']))
-                    segment_path.lineTo(QPointF(points[i + 1]['x'], points[i + 1]['y']))
+    #    for uwi, points in self.processed_data.items():
+    #        if len(points) > 1:
+    #            for i in range(len(points) - 1):
+    #                segment_path = QPainterPath()
+    #                segment_path.moveTo(QPointF(points[i]['x'], points[i]['y']))
+    #                segment_path.lineTo(QPointF(points[i + 1]['x'], points[i + 1]['y']))
 
-                    path_item = QGraphicsPathItem(segment_path)
-                    pen = QPen(points[i]['color'])
-                    pen.setWidth(self.line_width)
-                    path_item.setPen(pen)
-                    path_item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
-                    path_item.setData(0, 'colored_segment')
-                    path_item.setZValue(4)
-                    self.scene.addItem(path_item)
+    #                path_item = QGraphicsPathItem(segment_path)
+    #                pen = QPen(points[i]['color'])
+    #                pen.setWidth(self.line_width)
+    #                path_item.setPen(pen)
+    #                path_item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+    #                path_item.setData(0, 'colored_segment')
+    #                path_item.setZValue(4)
+    #                self.scene.addItem(path_item)
 
     def get_point_by_md(self, uwi, md):
         if uwi not in self.scaled_data:

@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
+from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
 from PySide2.QtGui import QColor, QPalette
 from PySide2.QtCore import Qt
 import pandas as pd
@@ -153,24 +153,31 @@ class HighlightCriteriaDialog(QDialog):
 
         for item in selected_items:
             # Extract the criterion text from the selected item
-            criterion_text = item.text()
-            parts = criterion_text.split(' ', 2)
-            if len(parts) != 3:
-                print(f"Invalid criterion format: {criterion_text}")
-                continue
+            criterion_text = item.text().strip()
         
-            column, operator, value = parts
-            value = value.strip()  # Remove leading/trailing whitespace
+            # Identify the operator (assuming operators are one of '=', '>', '<', '>=', '<=', '!=')
+            for operator in ['>=', '<=', '!=', '>', '<', '=']:
+                if operator in criterion_text:
+                    parts = criterion_text.split(operator, 1)
+                    if len(parts) == 2:
+                        column = parts[0].strip()
+                        value = parts[1].strip()
+                        break
+            else:
+                print(f"Operator not found in criterion: {criterion_text}")
+                continue
     
-            print(f"Attempting to delete - Column: '{column}', Operator: '{operator}', Value: '{value}'")
-            print(f"Current Name selection: '{self.criteria_name_dropdown.currentText()}'")
+            # Normalize values for comparison
+            column = column.lower()
+            value = value.lower()
+            current_name = self.criteria_name_dropdown.currentText().strip().lower()
         
             # Find the matching row in the criteria DataFrame and remove it
             matching_rows = self.criteria_df[
-                (self.criteria_df['Name'].astype(str).str.strip() == self.criteria_name_dropdown.currentText().strip()) &
-                (self.criteria_df['Column'].astype(str).str.strip() == column.strip()) &
-                (self.criteria_df['Operator'].astype(str).str.strip() == operator.strip()) &
-                (self.criteria_df['Value'].astype(str).str.strip() == value.strip())
+                (self.criteria_df['Name'].str.strip().str.lower() == current_name) &
+                (self.criteria_df['Column'].str.strip().str.lower() == column) &
+                (self.criteria_df['Operator'].str.strip() == operator) &
+                (self.criteria_df['Value'].str.strip().str.lower() == value)
             ]
     
             if not matching_rows.empty:
@@ -188,9 +195,11 @@ class HighlightCriteriaDialog(QDialog):
 
         # Reset the DataFrame index after dropping rows
         self.criteria_df.reset_index(drop=True, inplace=True)
-    
-        print("Updated criteria DataFrame:")
+        print("DataFrame after deletion:")
         print(self.criteria_df)
+
+        
+
 
     def choose_color(self):
         """Open a color dialog to select a highlight color."""
@@ -214,8 +223,16 @@ class HighlightCriteriaDialog(QDialog):
         self.color_preview.setPalette(palette)
 
     def save_criteria(self):
-        print (self.criteria_df)
+        # Get the criteria name from the dropdown
         self.criteria_name = self.criteria_name_dropdown.currentText().strip()
+
+        # Check if the criteria name is blank
+        if not self.criteria_name:
+            # Show an error message
+            QMessageBox.warning(self, "Error", "Criteria Name cannot be blank. Please enter a valid name.")
+            return  # Do not close the dialog
+
+        # If the name is valid, accept the dialog and close it
         self.accept()
     
 

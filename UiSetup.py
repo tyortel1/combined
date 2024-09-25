@@ -1,14 +1,14 @@
 import os
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout, QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton, QAction
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton, QAction
 from PySide2.QtCore import Qt, QMetaObject
-from PySide2.QtGui import QIcon
+from PySide2.QtGui import QIcon,  QPalette, QColor
 
 from DrawingArea import DrawingArea
 
 class Ui_MainWindow:
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1000, 1500)
+        MainWindow.resize(1500, 1500)
         MainWindow.centralWidget = QWidget(MainWindow)
         MainWindow.setCentralWidget(MainWindow.centralWidget)
 
@@ -193,6 +193,14 @@ class Ui_MainWindow:
         MainWindow.scrollArea.setWidgetResizable(True)
         MainWindow.drawingArea = DrawingArea(MainWindow)
         MainWindow.drawingArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+
+        # Set background color to very light grey
+        light_grey = QColor(240, 240, 240)  # Define a very light grey color
+        palette = MainWindow.drawingArea.palette()  # Get the current palette
+        palette.setColor(QPalette.Window, light_grey)  # Set the background color
+        MainWindow.drawingArea.setPalette(palette)
+        MainWindow.drawingArea.setAutoFillBackground(True) 
         MainWindow.scrollArea.setWidget(MainWindow.drawingArea)
         MainWindow.mainLayout.addWidget(MainWindow.scrollArea, 7)
         MainWindow.drawingArea.leftClicked.connect(MainWindow.handle_left_click)
@@ -226,8 +234,8 @@ class Ui_MainWindow:
         MainWindow.calculate_menu.addAction(MainWindow.calc_stage_action)
         MainWindow.calc_zone_attribute_action = QAction("Calculate Zone Attributes", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.calc_zone_attribute_action)
-        MainWindow.calc_well_attribute_action = QAction("Calculate Well Attributes", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_well_attribute_action)
+        #MainWindow.calc_well_attribute_action = QAction("Calculate Well Attributes", MainWindow)
+        #MainWindow.calculate_menu.addAction(MainWindow.calc_well_attribute_action)
         MainWindow.calc_inzone_action = QAction("Calculate in Zone", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
 
@@ -238,6 +246,8 @@ class Ui_MainWindow:
         MainWindow.import_menu.addAction(MainWindow.data_loader_menu_action)
         MainWindow.dataload_well_zones_action = QAction("CSV Well Zones and Attributes", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_well_zones_action)
+        MainWindow.dataload_segy_action = QAction("Import Segy", MainWindow)
+        MainWindow.import_menu.addAction(MainWindow.dataload_segy_action)
 
         MainWindow.export_menu = MainWindow.menu_bar.addMenu("Export")
         MainWindow.export_menu.setEnabled(False)
@@ -259,12 +269,16 @@ class Ui_MainWindow:
         MainWindow.zoom_out_icon = QIcon("icons/Zoom_out.ico")
         #MainWindow.exportSw_icon = QIcon("icons/export.ico")
         MainWindow.color_editor_icon = QIcon("icons/color_editor.ico")
+        MainWindow.cross_plot_icon = QIcon("icons/Cross-Plot-Data-Icon.ico")
 
         MainWindow.plot_tool_action = QAction(MainWindow.plot_icon, "QC Zones", MainWindow)
         MainWindow.toolbar.addAction(MainWindow.plot_tool_action)
 
         MainWindow.gun_barrel_action = QAction(MainWindow.gun_barrel_icon, "Create Gun Barrel", MainWindow)
         MainWindow.toolbar.addAction(MainWindow.gun_barrel_action)
+
+        MainWindow.cross_plot_action = QAction(MainWindow.cross_plot_icon, "Cross Plot", MainWindow)
+        MainWindow.toolbar.addAction(MainWindow.cross_plot_action)
 
         MainWindow.color_editor_action = QAction(MainWindow.color_editor_icon, "Edit Grid Colors", MainWindow)
         MainWindow.toolbar.addAction(MainWindow.color_editor_action)
@@ -297,7 +311,7 @@ class Ui_MainWindow:
 
     def populate_color_bar_dropdowns(self):
         """Populate the color bar dropdowns with file names from the Palettes directory."""
-        palettes_path = r'C:\Users\jerem\source\repos\Well Attribute Viewer\Palettes'
+        palettes_path = os.path.join(os.path.dirname(__file__), 'Palettes')
         color_bar_files = [f.split('.')[0] for f in os.listdir(palettes_path) if f.endswith('.pal')]
 
         self.zoneAttributeColorBarDropdown.addItems(color_bar_files)

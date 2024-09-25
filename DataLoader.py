@@ -6,6 +6,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon, QColor
 import numpy as np
 from scipy.spatial import KDTree
+from PySide2.QtWidgets import QProgressDialog
 
 
 class DataLoaderDialog(QDialog):
@@ -51,6 +52,21 @@ class DataLoaderDialog(QDialog):
         filter_layout.addWidget(self.filter_dropdown)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
+
+            # Add a dropdown for Feet vs Meters
+        grid_unit_layout = QHBoxLayout()
+        self.grid_unit_label = QLabel("Grid Unit:")
+        self.grid_unit_label.setFixedWidth(label_width)
+        self.grid_unit_dropdown = QComboBox()
+        self.grid_unit_dropdown.setFixedWidth(dropdown_width)
+        self.grid_unit_dropdown.addItems(["Feet", "Meters"])  # Add Feet and Meters options
+        grid_unit_layout.addWidget(self.grid_unit_label)
+        grid_unit_layout.addWidget(self.grid_unit_dropdown)
+        grid_unit_layout.addStretch()
+        layout.addLayout(grid_unit_layout)
+
+
+
 
 
         uwi_label = QLabel("Select UWI:")
@@ -401,28 +417,38 @@ class DataLoaderDialog(QDialog):
         return self.well_list
 
     def load_data(self):
-        self.selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
-        self.selected_depth_grids = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
+        # Show loading dialog
+        loading_dialog = QProgressDialog("Loading data, please wait...", None, 0, 0, self)
+        loading_dialog.setWindowTitle("Loading")
+        loading_dialog.setWindowModality(Qt.ApplicationModal)
+        loading_dialog.setCancelButton(None)
+        loading_dialog.show()
+    
+        try:
+            self.selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
+            self.selected_depth_grids = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
+            self.selected_attribute_grids = [self.selected_attribute_grid_listbox.item(i).text() for i in range(self.selected_attribute_grid_listbox.count())]
 
-        self.selected_attribute_grids = [self.selected_attribute_grid_listbox.item(i).text() for i in range(self.selected_attribute_grid_listbox.count())]
-        print(self.selected_attribute_grids)
-        print(self.selected_depth_grids)
+            if not self.selected_uwis:
+                self.show_info_message("Info", "No wells selected for export.")
+                return
 
-        if not self.selected_uwis:
-            self.show_info_message("Info", "No wells selected for export.")
-            return
+            if not self.selected_depth_grids and not self.selected_attribute_grids:
+                self.show_info_message("Info", "No grids selected for export.")
+                return
 
-        if not self.selected_depth_grids and not self.selected_attribute_grids:
-            self.show_info_message("Info", "No grids selected for export.")
-            return
+            self.store_directional_surveys()
+            self.store_depth_grid_data()
+            self.store_attribute_grid_data()
+            self.zone_color()
+            self.get_grid_names_and_store_info()
 
-        self.store_directional_surveys()
-        self.store_depth_grid_data()
-        self.store_attribute_grid_data()
-        self.zone_color()
-        self.get_grid_names_and_store_info()
+            self.accept()  # Ensure that the dialog is accepted and returns data
 
-        self.accept()  # This line ensures that the dialog is accepted and returns data
+        finally:
+            # Close the loading dialog when done
+            loading_dialog.close()
+
 
     def store_directional_surveys(self):
         self.uwis_and_offsets = []
@@ -466,6 +492,7 @@ class DataLoaderDialog(QDialog):
                         x_offset = surfaceX + point.xOffset.Value(depth_unit)
                         y_offset = surfaceY + point.yOffset.Value(depth_unit)
                         tvd = surfaceDatum - point.tvd.Value(depth_unit)
+                        
                         md = point.md.Value(depth_unit)
 
                         if i > 0:
@@ -503,6 +530,9 @@ class DataLoaderDialog(QDialog):
 
     def store_depth_grid_data(self):
         self.depth_grid_data = []
+        conversion_factor = 0.3048
+        is_feet_selected = self.grid_unit_dropdown.currentText() == "Feet"
+
         for grid_name in self.selected_depth_grids:
             selected_grid_object = None
             for grid, name in self.grid_objects_with_names:
@@ -523,7 +553,12 @@ class DataLoaderDialog(QDialog):
             for i in range(grid_values.Height()):
                 for j in range(grid_values.Width()):
                     z_value = grid_values_list[i * grid_values.Width() + j]
-        
+
+                    if is_feet_selected:
+                        z_value = z_value * conversion_factor
+
+
+
                     # Check if Z is within the desired range before appending
                     if -1000000 <= z_value <= 1000000:
                         self.depth_grid_data.append({
@@ -539,7 +574,7 @@ class DataLoaderDialog(QDialog):
 
         self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
         self.kd_tree_depth_grids = {grid: KDTree(self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.depth_grid_data_df['Grid'].unique()}
-        print(self.depth_grid_data_df)
+    
 
 
     def store_attribute_grid_data(self):
@@ -584,7 +619,7 @@ class DataLoaderDialog(QDialog):
         # Get the names of the depth grids from the list box
         depth_grid_names = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
  
-        print(depth_grid_names)
+
 
         # Generate colors for each depth grid
         num_grids = len(self.selected_depth_grids )
@@ -605,8 +640,7 @@ class DataLoaderDialog(QDialog):
 
         self.depth_grid_color_df = depth_grid_color_df
 
-        # Print the DataFrame for verification
-        print(self.depth_grid_color_df)
+ 
 
     def get_grid_names_and_store_info(self, output_file='grid_info.csv'):
         # Combine grid names from both depth and attribute grids

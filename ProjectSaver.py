@@ -2,6 +2,8 @@ import ujson as json
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import threading
+import pickle
+import numpy as np
 
 class ProjectSaver:
     def __init__(self, project_file_name):
@@ -113,13 +115,54 @@ class ProjectSaver:
         self.submit_save_task()
 
 
+
     def save_column_filters(self, column_filters ):
         with self.lock:  # Assuming self.lock is defined as a threading.Lock() elsewhere in your class
             self.project_data['column_filters'] = column_filters  # Store the filters in your project data
         self.submit_save_task()  # Assuming this handles the actual saving process asynchronously
 
-    def shutdown(self, line_width, line_opacity, uwi_width, uwi_opacity, selected_grid, selected_zone):
+    def save_seismic_data(self, seismic_data, bounding_box, seismic_kdtree=None):
         with self.lock:
+            # Convert seismic metadata (Inline, Crossline, X, Y) to DataFrame
+            seismic_df = pd.DataFrame({
+                'Inline': seismic_data['inlines'],
+                'Crossline': seismic_data['crosslines'],
+                'X': seismic_data['x_coords'],
+                'Y': seismic_data['y_coords']
+            })
+
+            # Get the time_axis and trace_data from seismic_data
+            time_data = seismic_data['time_axis']
+            trace_data = seismic_data['trace_data']
+
+            # Save seismic metadata as a dictionary
+            self.project_data['seismic_data_df'] = seismic_df.to_dict(orient='list')
+
+            # Save the time_axis and trace_data separately as lists
+            self.project_data['seismic_time_axis'] = time_data.tolist()
+            self.project_data['seismic_trace_data'] = trace_data.tolist()
+
+            # Save the bounding box if applicable
+            self.project_data['bounding_box'] = bounding_box
+
+            # Save the KDTree for seismic data if provided
+            if seismic_kdtree:
+                try:
+                    # Save the KDTree using pickle
+                    with open(self.project_file_name.replace('.json', '_kdtree.pkl'), 'wb') as kdtree_file:
+                        pickle.dump(seismic_kdtree, kdtree_file)
+                    print("Seismic KDTree saved successfully.")
+                except Exception as e:
+                    print(f"Error saving seismic KDTree: {e}")
+
+        # Submit the save task asynchronously
+        self.submit_save_task()
+
+
+
+    def shutdown(self, line_width, line_opacity, uwi_width, uwi_opacity, selected_grid, selected_zone, selected_zone_attribute, selected_well_zone, selected_well_attribute, gridColorBarDropdown, zoneAttributeColorBarDropdown, WellAttributeColorBarDropdown):
+        with self.lock:
+            # Store the existing parameters
             self.project_data['line_width'] = line_width
             self.project_data['line_opacity'] = line_opacity
             self.project_data['uwi_width'] = uwi_width
@@ -127,6 +170,14 @@ class ProjectSaver:
             self.project_data['selected_grid'] = selected_grid
             self.project_data['selected_zone'] = selected_zone
         
+            # Store the additional parameters
+            self.project_data['selected_zone_attribute'] = selected_zone_attribute
+            self.project_data['selected_well_zone'] = selected_well_zone
+            self.project_data['selected_well_attribute'] = selected_well_attribute
+            self.project_data['grid_color_bar_dropdown'] = gridColorBarDropdown
+            self.project_data['zone_attribute_color_bar_dropdown'] = zoneAttributeColorBarDropdown
+            self.project_data['well_attribute_color_bar_dropdown'] = WellAttributeColorBarDropdown
+
         print("Submitting final save task before shutdown.")
         future = self.submit_save_task()
         if future:
