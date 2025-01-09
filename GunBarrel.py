@@ -1,11 +1,11 @@
 import pandas as pd
 import os
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QDialog, QSlider, QVBoxLayout, QHBoxLayout, QSizePolicy, QLabel, QComboBox, QFormLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QDialog, QSlider, QVBoxLayout, QHBoxLayout, QSizePolicy, QLabel, QComboBox, QFormLayout, QSpacerItem, QSizePolicy
 import math
-from PySide2.QtCore import Qt, QPointF, Signal, Slot
-from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtWebChannel import QWebChannel
-from PySide2.QtGui import QIcon, QColor, QPainter, QPixmap, QBrush, QLinearGradient
+from PySide6.QtCore import Qt, QPointF, Signal, Slot
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebChannel import QWebChannel
+from PySide6.QtGui import QIcon, QColor, QPainter, QPixmap, QBrush, QLinearGradient
 import plotly.graph_objects as go
 import plotly.offline as py_offline
 import numpy as np
@@ -723,7 +723,7 @@ class PlotGB(QDialog):
 
 if __name__ == "__main__":
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     # Mock data for testing
     depth_grid_data = {

@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from PySide2.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsTextItem, QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem
-from PySide2.QtGui import QPainter, QColor, QPen, QFont, QPainterPath, QBrush, QTransform, QImage, QPixmap, QFontMetrics
-from PySide2.QtCore import Qt, QPointF, QRectF, Signal, QLineF
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsTextItem, QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem
+from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPainterPath, QBrush, QTransform, QImage, QPixmap, QFontMetrics
+from PySide6.QtCore import Qt, QPointF, QRectF, Signal, QLineF
 
 class BulkZoneTicks(QGraphicsItem):
     def __init__(self, zone_ticks, line_width=1):
@@ -62,7 +62,7 @@ class DrawingArea(QGraphicsView):
         self.setScene(self.scene)
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        self.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.setRenderHint(QPainter.Antialiasing) 
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -121,7 +121,10 @@ class DrawingArea(QGraphicsView):
         return color_palette
 
     def setScaledData(self, well_data, well_attribute_values=None):
+        print(well_attribute_values)
+        print(well_data)
         self.clearUWILines()
+        
         
 
         new_items = []
@@ -139,11 +142,27 @@ class DrawingArea(QGraphicsView):
             mds = well['mds']
             md_colors = well.get('md_colors', [QColor(Qt.black)] * len(mds))
 
+            # Debugging Prints
+            print(f"UWI: {uwi}")
+            print(f"  Points: {len(points)} -> {points}")
+            print(f"  MDS: {len(mds)} -> {mds}")
+            print(f"  MD Colors: {len(md_colors)} -> {md_colors}")
+
             if len(points) > 1:
                 for i in range(len(points) - 1):
                     start_point = points[i]
                     end_point = points[i + 1]
                     md = mds[i]
+
+                    # Debug for each segment
+                    print(f"  Segment {i}:")
+                    print(f"    Start Point: {start_point}")
+                    print(f"    End Point: {end_point}")
+                    print(f"    MD: {md}")
+                    print(f"    Color: {md_colors[i] if i < len(md_colors) else 'Default Black'}")
+
+                    # Existing segment calculation logic
+
                     # Calculate the direction of the line
                     direction = (end_point - start_point)
                     direction = direction / direction.manhattanLength()  # Normalize the direction vector
@@ -334,8 +353,10 @@ class DrawingArea(QGraphicsView):
             zoom_out_factor = 1 / zoom_in_factor
 
             zoom_factor = zoom_in_factor if event.angleDelta().y() > 0 else zoom_out_factor
-            self.zoom(zoom_factor, event.pos())
+            # Use event.position() instead of event.pos()
+            self.zoom(zoom_factor, event.position())
         else:
+            # Scroll vertically if no ControlModifier is pressed
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - event.angleDelta().y())
 
     def zoom(self, zoom_factor, center_point):
@@ -467,7 +488,7 @@ class DrawingArea(QGraphicsView):
         self.scene.update()
 
     def resizeEvent(self, event):
-        super().resizeEvent(event)
+
         self.calculate_scene_size()
 
     def clearAll(self):

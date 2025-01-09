@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QComboBox, QPushButton, QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QComboBox, QPushButton, QMessageBox
 
 class DeleteZone(QDialog):
     def __init__(self, df, zone_names, parent=None):

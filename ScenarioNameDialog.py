@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QCheckBox
+from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QCheckBox
 
 class ScenarioNameDialog(QDialog):
     def __init__(self, parent=None):

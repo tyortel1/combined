@@ -1,6 +1,6 @@
-﻿from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QMessageBox, QComboBox, QListWidget, QPushButton,QCheckBox, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, QListWidgetItem, QMessageBox, QAbstractItemView
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+﻿from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QMessageBox, QComboBox, QListWidget, QPushButton,QCheckBox, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, QListWidgetItem, QMessageBox, QAbstractItemView
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 import numpy as np
 import pandas as pd
 

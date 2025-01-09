@@ -1,20 +1,22 @@
 from select import select
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, 
-    QComboBox, QListWidget, QGridLayout, QMessageBox, QScrollBar, 
+    QComboBox, QListWidget, QGridLayout, QMessageBox, QScrollBar,
 )
 import numpy as np
-from PyQt5.QtCore import Qt, QSignalBlocker
+from PySide6.QtCore import Qt, QSignalBlocker
 import pandas as pd
 import sys
 import LoadProductions
+import datetime
 
 sys.path.append('C:\Program Files')
 import SeisWare
 
 class SeisWareConnectDialog(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+     
         
         # Set dialog properties
         self.setWindowTitle("SeisWare Connect")
@@ -231,8 +233,26 @@ class SeisWareConnectDialog(QDialog):
         failed_well_keys = SeisWare.IDSet()
         self.well_list = SeisWare.WellList()
         try:
+            # Get well keys for the selected filter
             self.login_instance.WellManager().GetKeysByFilter(self.filtered_well_filter[0], well_keys)
-            self.login_instance.WellManager().GetByKeys(well_keys, self.well_list, failed_well_keys)
+
+            # Retrieve well data (populating full objects if needed)
+            self.login_instance.WellManager().GetByKeys(well_keys, self.well_list, True)
+
+            if not self.well_list:
+                QMessageBox.warning(self, "No Wells Found", "No wells were found for the provided filter.")
+                return
+
+            # Log the retrieved wells for debugging
+            for well in self.well_list:
+                print(f"Well UWI: {well.UWI()}")  # Adjust attribute as needed
+        except SeisWare.MultiException as multi_ex:
+            print("Error for specific well keys:")
+            for key, error in multi_ex.errors.items():
+                print(f"Key: {key}, Error: {error}")
+        except RuntimeError as err:
+            QMessageBox.critical(self, "Runtime Error", f"Failed to retrieve wells: {err}")
+                
         except RuntimeError as err:
             QMessageBox.critical(self, "Failed to get all the wells from the project", str(err))
 
@@ -271,7 +291,7 @@ class SeisWareConnectDialog(QDialog):
         failed_production_keys = SeisWare.IDSet()
         productions = SeisWare.ProductionList()
         self.login_instance.ProductionManager().GetKeysByFilter(self.filtered_well_filter[0], production_keys)
-        self.login_instance.ProductionManager().GetByKeys(production_keys, productions, failed_production_keys)
+        self.login_instance.ProductionManager().GetByKeys(production_keys, productions, True)
   
         # Process and return or display your productions data as needed
         print(productions)  # Placeholder for actual data handling
@@ -302,31 +322,45 @@ class SeisWareConnectDialog(QDialog):
                 for well in production_wells:
                     well_key = well.WellID()
                     print("Well Key:", well_key)
-                    all_well_ids.add(well_key)  
-                
-                    well_keys = SeisWare.IDSet([well_key]) 
-                    failed_well_keys = SeisWare.IDSet()
-                    well_list = SeisWare.WellList()
-                    self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
-                    # Map UWIs to Well IDs
-                    uwi = {well.UWI() for well in well_list}
-                    uwi_str = uwi.pop()
-                           
-                    if uwi_str in uwi_list: 
-                        print(uwi_str)
-                        for volume in volume_list:
-                            volume_date = volume.VolumeDate()
-                            formatted_date = f"{volume_date.year}-{str(volume_date.month).zfill(2)}-{str(volume_date.day).zfill(2)}"
-                    
+                    all_well_ids.add(well_key)
 
-                            production_volume_data.append({
-                                "uwi": uwi_str,
-                                "date": formatted_date,
-                                "oil_volume": volume.OilVolume(),
-                                "gas_volume": volume.GasVolume()
-                            })
-                    else:    
-                        print(uwi_str , "is not in list")
+                    # Create a set of WellKey objects for the current well_key
+                    well_keys = SeisWare.IDSet([well_key])
+                    failed_well_keys = SeisWare.IDSet()
+
+                    # Create a WellList object to hold the results
+                    well_list = SeisWare.WellList()
+
+                    try:
+                        # Retrieve well objects based on the well_keys
+                        self.login_instance.WellManager().GetByKeys(well_keys, well_list, True)  # True to populate
+
+                        # Iterate through the retrieved wells
+                        for well in well_list:
+                            # Assuming UWI is a method of the Well class
+                            uwi_str = well.UWI()  
+                            print(f"UWI: {uwi_str}")  
+
+                            if uwi_str in uwi_list:
+                                print(f"UWI {uwi_str} found in list.")
+
+                                # Now, retrieve production volume data for this well
+                                for volume in volume_list:
+                                    # Format the volume date
+                                    volume_date = volume.VolumeDate()
+                                    formatted_date = f"{volume_date.year}-{str(volume_date.month).zfill(2)}-{str(volume_date.day).zfill(2)}"
+                    
+                                    # Append the production data to your list
+                                    production_volume_data.append({
+                                        "uwi": uwi_str,
+                                        "date": formatted_date,
+                                        "oil_volume": volume.OilVolume(),
+                                        "gas_volume": volume.GasVolume()
+                                    })
+                            else:
+                                print(f"{uwi_str} is not in the list.")
+                    except Exception as e:
+                        print(f"Failed to process production wells: {e}")
             
                 all_production_volume_data.extend(production_volume_data)
             except Exception as e:
@@ -336,6 +370,8 @@ class SeisWareConnectDialog(QDialog):
         self.directional_surveys()
         self.accept()
         print('swdone')
+        print(self.well_data_df)
+        print (self.production_data)
 
 
         
@@ -351,22 +387,54 @@ class SeisWareConnectDialog(QDialog):
             QMessageBox.information(self, "Info", "No wells selected for export.")
             return
 
+        self.directional_surveys = []  # Initialize list to store directional survey data
         survey_data = []
-        total_lat_data = []
+        total_lat_data = []  # To store total lateral lengths
+        self.uwis_and_offsets = []  # To store offsets
+        self.total_lat_data = []  # Initialize to store total lateral data
 
         for uwi in selected_uwis:
             well = self.uwi_to_well_dict.get(uwi)
             print(well)
             if well:
                 depth_unit = SeisWare.Unit.Meter
+                x_offsets = []
+                y_offsets = []
+                md_values = []
+                tvd_values = []
+                cumulative_distances = []
+
                 surfaceX = well.TopHole().x.Value(depth_unit)
                 surfaceY = well.TopHole().y.Value(depth_unit)
                 surfaceDatum = well.DatumElevation().Value(depth_unit)
+                print(f"Well ID: {well.ID()}")
+                print(f"Available methods: {dir(well)}")
+                
+                spud_date_struct = well.SpudDate()   # Populate it using the SpudDate method
+                print(f"Spud Date Struct - Year: {spud_date_struct.year}, Month: {spud_date_struct.month}, Day: {spud_date_struct.day}")
+
+                # Access and validate the attributes
+                spud_date_struct = well.SpudDate()  # Assuming SpudDate is the correct method
+
+                # Check if SpudDate is available and valid
+                if spud_date_struct.year and spud_date_struct.month and spud_date_struct.day:
+                    try:
+                        spud_date = datetime.date(
+                            spud_date_struct.year,
+                            spud_date_struct.month,
+                            spud_date_struct.day
+                        )
+                        print(f"Extracted Spud Date: {spud_date}")
+                    except ValueError as e:
+                        print(f"Error creating date from attributes: {e}")
+                        spud_date = None
+                else:
+                    print("Spud date is not available or incomplete.")
+                    spud_date = None
+
 
                 dirsrvylist = SeisWare.DirectionalSurveyList()
                 self.login_instance.DirectionalSurveyManager().GetAllForWell(well.ID(), dirsrvylist)
-
-                # Select the directional survey if it exists
                 dirsrvy = [i for i in dirsrvylist if i.OffsetNorthType() > 0]
 
                 if dirsrvy:
@@ -374,56 +442,65 @@ class SeisWareConnectDialog(QDialog):
                     srvypoints = SeisWare.DirectionalSurveyPointList()
                     dirsrvy[0].Values(srvypoints)
 
-                    previous_md = None
-                    previous_tvd = None
+                    cumulative_distance = 0
                     start_lat = None
 
-                    for i in srvypoints:
-                        well_uwi = well.UWI()
-                        x_offset = surfaceX + i.xOffset.Value(depth_unit)
-                        y_offset = surfaceY + i.yOffset.Value(depth_unit)
-                        tvd = surfaceDatum - i.tvd.Value(depth_unit)
-                        md = i.md.Value(depth_unit)
+                    for i, point in enumerate(srvypoints):
+                        x_offset = surfaceX + point.xOffset.Value(depth_unit)
+                        y_offset = surfaceY + point.yOffset.Value(depth_unit)
+                        tvd = surfaceDatum - point.tvd.Value(depth_unit)
+                        md = point.md.Value(depth_unit)
 
-                        if previous_md is not None and previous_tvd is not None:
-                            delta_md = md - previous_md
-                            delta_tvd = tvd - previous_tvd
-                            
-                          
-                            if delta_md != 0:
-                                ratio = delta_tvd/delta_md
-                                print(ratio)
-                                inclination = np.degrees(np.arccos(ratio))
-                            else:
-                                inclination = 0.0
-                        else:
-                            inclination = 0.0
+                        if i > 0:
+                            prev_x_offset = x_offsets[-1]
+                            prev_y_offset = y_offsets[-1]
+                            distance = np.sqrt((x_offset - prev_x_offset) ** 2 + (y_offset - prev_y_offset) ** 2)
+                            cumulative_distance += distance
 
-                        survey_data.append([well_uwi, x_offset, y_offset, md, tvd, inclination])
-                        previous_md = md
-                        previous_tvd = tvd
+                        x_offsets.append(x_offset)
+                        y_offsets.append(y_offset)
+                        md_values.append(md)
+                        tvd_values.append(tvd)
+                        cumulative_distances.append(cumulative_distance)
 
-                        if start_lat is None and inclination < 95:
+                        if start_lat is None:
                             start_lat = md
 
-                    end_lat = md
+                    end_lat = md  # Ensure end_lat is assigned
                     if start_lat is not None:
                         total_lat = end_lat - start_lat
-                        total_lat_data.append((well_uwi, total_lat, surfaceX, surfaceY))
+                        total_lat_data.append((uwi, total_lat, surfaceX, surfaceY, spud_date))
                     else:
-                        total_lat_data.append((well_uwi, None, surfaceX, surfaceY))
+                        total_lat_data.append((uwi, None, surfaceX, surfaceY, spud_date))
+
                     print(total_lat_data)
-                    self.well_data_df = pd.DataFrame(total_lat_data, columns=['uwi', 'lateral', 'surface_x', 'surface_y'])
+
+                    # Append the survey data into directional_surveys
+                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances))
+
+                    # Append data for total lateral distance and surface coordinates
+                    self.uwis_and_offsets.append((uwi, x_offsets, y_offsets))
                 else:
                     QMessageBox.warning(self, "Warning", f"No directional survey found for well {uwi}.")
 
-        # Convert the survey data to a DataFrame
-        self.directional_survey_values = pd.DataFrame(survey_data, columns=['uwi', 'x_offset', 'y_offset', 'md_depth', 'tvd_depth', 'inclination'])
+        # Convert the total lateral data to a DataFrame
+        self.well_data_df = pd.DataFrame(total_lat_data, columns=['UWI', 'Total Lateral', 'Surface X', 'Surface Y', 'Spud Date'])
+        print("Well Data DataFrame:")
+        self.well_data_df['Spud Date'] = self.well_data_df['Spud Date'].apply(lambda x: x if pd.notnull(x) else None)
+        print(self.well_data_df)
+
+        # Flatten the directional surveys into a DataFrame
+        data_list = []
+        for uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances in self.directional_surveys:
+            for i in range(len(md_values)):
+                data_list.append([uwi, md_values[i], tvd_values[i], x_offsets[i], y_offsets[i], cumulative_distances[i]])
+
+        columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance']
+        self.directional_survey_values = pd.DataFrame(data_list, columns=columns)
+        print("Directional Survey DataFrame:")
         print(self.directional_survey_values)
 
-        # Print the total lateral data with surface coordinates
-        for uwi, total_lat, surfaceX, surfaceY in total_lat_data:
-            print(f"UWI: {uwi}, Total Lateral: {total_lat}, Surface X: {surfaceX}, Surface Y: {surfaceY}")
+
 
 
         
@@ -464,7 +541,11 @@ class SeisWareConnectDialog(QDialog):
 # Main application logic
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    import sys
+    print("Starting application...")
+    app = QApplication.instance() or QApplication(sys.argv)
+    print("QApplication initialized:", QApplication.instance())
     dialog = SeisWareConnectDialog()
-    dialog.show()
+    dialog.exec_()
+    print("Dialog execution completed.")
     sys.exit(app.exec_())

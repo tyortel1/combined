@@ -1,7 +1,7 @@
 import pandas as pd
-from PySide2.QtWidgets import QDialog, QListWidget, QVBoxLayout,QTextEdit, QFormLayout, QPushButton, QSpacerItem, QSizePolicy, QLabel, QMessageBox, QHBoxLayout, QListWidgetItem, QComboBox, QLineEdit
-from PySide2.QtGui import QIcon
-from PySide2.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QListWidget, QVBoxLayout,QTextEdit, QFormLayout, QPushButton, QSpacerItem, QSizePolicy, QLabel, QMessageBox, QHBoxLayout, QListWidgetItem, QComboBox, QLineEdit
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 from sklearn import tree
@@ -12,9 +12,9 @@ import numpy as np
 from collections import defaultdict, Counter
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import train_test_split
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox, QColorDialog
-from PySide2.QtGui import QColor, QPalette
-from PySide2.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox, QColorDialog
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtCore import Qt
 
 class DecisionTreeDialog(QDialog):
     def __init__(self, master_df, parent=None):
@@ -396,7 +396,7 @@ class ResultDisplayDialog(QDialog):
 # Example usage
 if __name__ == "__main__":
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     # Example DataFrame
     data = {

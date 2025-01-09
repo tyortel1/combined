@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QHeaderView, QComboBox
+from PySide6.QtWidgets import QHeaderView, QComboBox
 
 class FilterHeaderView(QHeaderView):
     def __init__(self, orientation, parent=None):

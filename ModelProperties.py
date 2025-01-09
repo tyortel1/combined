@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-from PyQt5.QtCore import QDateTime
+from PySide6.QtCore import QDateTime
 from UiMain import UI_main
 
 

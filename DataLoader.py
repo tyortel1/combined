@@ -1,12 +1,12 @@
 import sys
 import SeisWare
 import pandas as pd
-from PySide2.QtWidgets import QApplication, QDialog, QLabel, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QIcon, QColor
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QColor
 import numpy as np
 from scipy.spatial import KDTree
-from PySide2.QtWidgets import QProgressDialog
+from PySide6.QtWidgets import QProgressDialog
 
 
 class DataLoaderDialog(QDialog):

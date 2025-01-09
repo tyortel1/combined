@@ -1,47 +1,13 @@
-from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox, QLineEdit
 import segyio
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import struct
-import os
+import tkinter as tk
+from tkinter import filedialog, simpledialog, messagebox
 
 
-class DataLoadSegy(QDialog):
+class DataLoadSegy:
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("SEGY Viewer")
-        self.setGeometry(200, 100, 1000, 800)
-
-        self.layout = QVBoxLayout(self)
-        self.file_label = QLabel("No SEGY file selected.")
-        self.layout.addWidget(self.file_label)
-
-        # Add a LineEdit for the datum input
-        self.datum_label = QLabel("Enter seismic datum (default 2000):")
-        self.layout.addWidget(self.datum_label)
-        self.datum_input = QLineEdit()
-        self.datum_input.setText("2000")  # Set a default value of 2000
-        self.layout.addWidget(self.datum_input)
-
-        self.load_button = QPushButton("Select SEGY File")
-        self.load_button.clicked.connect(self.load_segy_file)
-        self.layout.addWidget(self.load_button)
-
-        self.view_button = QPushButton("View SEGY Sample")
-        self.view_button.clicked.connect(self.view_segy_sample)
-        self.view_button.setEnabled(False)
-        self.layout.addWidget(self.view_button)
-
-        self.ok_button = QPushButton("OK")
-        self.ok_button.clicked.connect(self.confirm_and_return_data)
-        self.ok_button.setEnabled(False)
-        self.layout.addWidget(self.ok_button)
-
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.layout.addWidget(self.canvas)
-
         self.segy_file = None
         self.trace_data = None
         self.inlines = None
@@ -51,12 +17,16 @@ class DataLoadSegy(QDialog):
         self.time_axis = None
         self.bounding_box = None
 
+        # Tkinter root window (hidden, used only for dialogs)
+        self.root = tk.Tk()
+        self.root.withdraw()  # Hide the root window
+
     def load_segy_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select SEGY File", "", "SEGY Files (*.segy *.sgy)")
+        # Open file dialog to select SEGY file
+        file_path = filedialog.askopenfilename(title="Select SEGY File", filetypes=(("SEGY Files", "*.segy *.sgy"),))
         if file_path:
-            self.file_label.setText(file_path)
             self.segy_file = file_path
-            self.view_button.setEnabled(True)
+            self.view_segy_sample()
 
     def view_segy_sample(self):
         try:
@@ -75,7 +45,6 @@ class DataLoadSegy(QDialog):
                 self.x_coords = np.zeros(total_traces)
                 self.y_coords = np.zeros(total_traces)
 
-                # Manually read headers from the SEGY file to get X and Y values from specific byte positions
                 print("Reading headers for all traces:")
 
                 with open(self.segy_file, "rb") as f:
@@ -112,8 +81,8 @@ class DataLoadSegy(QDialog):
 
                 # Only plot the first 100 traces
                 num_traces_to_plot = min(100, total_traces)
-                self.figure.clear()
-                ax = self.figure.add_subplot(111)
+                plt.figure()
+                ax = plt.gca()
 
                 # Plot the first 100 traces as a seismic image
                 im = ax.imshow(self.trace_data[:num_traces_to_plot, :].T, cmap='seismic', aspect='auto',
@@ -123,32 +92,24 @@ class DataLoadSegy(QDialog):
                 ax.set_xlabel("Trace Number")
                 ax.set_ylabel("Time (ms)")
                 plt.colorbar(im, ax=ax, label="Amplitude")
-                self.canvas.draw()
-
-                self.ok_button.setEnabled(True)
+                plt.show()
 
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"An error occurred: {str(e)}")
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
             print(f"Exception occurred: {str(e)}")
 
     def apply_datum_shift(self):
         try:
-            # Get the datum value from the input field
-            datum_value = float(self.datum_input.text())
+            datum_value = simpledialog.askfloat("Datum Input", "Enter seismic datum (default 2000):", minvalue=0)
+            if datum_value is None:
+                datum_value = 2000  # Default value if user cancels
 
             # Shift the time axis to start from the datum value and decrease
             self.time_axis = datum_value - self.time_axis
 
             print(f"Time axis after datum shift: {self.time_axis}")
         except ValueError:
-            QMessageBox.warning(self, "Error", "Invalid datum value. Please enter a valid number.")
-
-    def confirm_and_return_data(self):
-        if self.trace_data is None:
-            QMessageBox.warning(self, "Error", "No seismic data loaded.")
-        else:
-            print("Returning seismic data and bounding box...")
-            self.accept()
+            messagebox.showerror("Error", "Invalid datum value. Please enter a valid number.")
 
     def calculate_bounding_box(self):
         min_x = np.min(self.x_coords)
@@ -172,13 +133,7 @@ class DataLoadSegy(QDialog):
 
 
 if __name__ == "__main__":
-    app = QApplication([])
-    dialog = DataLoadSegy()
-    if dialog.exec_() == QDialog.Accepted:
-        seismic_data = dialog.get_seismic_data()
-        bounding_box = dialog.get_bounding_box()
-
-        print("Seismic data shape (traces x samples):", seismic_data["trace_data"].shape)
-        print("Bounding Box:", bounding_box)
-
-    app.exec_()
+    data_loader = DataLoadSegy()
+    data_loader.load_segy_file()
+    seismic_data = data_loader.get_seismic_data()
+    bounding_box = data_loader.get_bounding_box()

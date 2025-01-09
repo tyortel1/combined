@@ -1,11 +1,11 @@
 import sys
 import numpy as np
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox, QApplication, QWidget, QFrame
-from PySide2.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox, QApplication, QWidget, QFrame
+from PySide6.QtCore import Qt
 import plotly.graph_objs as go
 import plotly.offline as py_offline
 import pandas as pd
-from PySide2.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebEngineWidgets import QWebEngineView
 from sklearn.linear_model import LinearRegression
 
 class CrossPlot(QDialog):

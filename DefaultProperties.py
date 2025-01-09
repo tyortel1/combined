@@ -1,8 +1,10 @@
-from PyQt5.QtWidgets import QDialog,QApplication,QDialogButtonBox, QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QComboBox, QLineEdit, QLabel, QDateTimeEdit, QSpinBox
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import QDateTime, QDate, QTime
-from PyQt5.QtGui import QDoubleValidator
+from PySide6.QtWidgets import (
+    QDialog, QApplication, QDialogButtonBox, QVBoxLayout, QHBoxLayout, QWidget, 
+    QTableWidget, QTableWidgetItem, QComboBox, QLineEdit, QLabel, QDateTimeEdit, QSpinBox
+)
+
+from PySide6.QtCore import QDateTime, QDate, QTime
+from PySide6.QtGui import QDoubleValidator
 import sys
 
 

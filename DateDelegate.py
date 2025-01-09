@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QStyledItemDelegate, QDateTimeEdit
-from PyQt5.QtCore import QDateTime, Qt
+from PySide6.QtWidgets import QStyledItemDelegate, QDateTimeEdit
+from PySide6.QtCore import QDateTime, Qt
 
 class DateDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):

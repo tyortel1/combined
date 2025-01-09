@@ -1,11 +1,11 @@
 import os
 import sys
 import pandas as pd
-from PySide2.QtWidgets import QApplication,QMessageBox, QLineEdit, QDialog, QVBoxLayout, QTableView, QFileDialog, QAbstractItemView, QHBoxLayout, QPushButton, QLabel, QComboBox, QToolBar, QAction, QSlider, QWidget, QListWidget, QFormLayout
-from PySide2.QtCore import QSize, Qt
-from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QColor
+from PySide6.QtWidgets import QApplication,QMessageBox, QLineEdit, QDialog, QVBoxLayout, QTableView, QFileDialog, QAbstractItemView, QHBoxLayout, QPushButton, QLabel, QComboBox, QToolBar, QSlider, QWidget, QListWidget, QFormLayout
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QColor, QAction
 from ColumnSelectDialog import ColumnSelectionDialog
-from PySide2.QtCore import Signal
+from PySide6.QtCore import Signal
 from HighlightCriteriaDialog import HighlightCriteriaDialog
 from CriteriaToZone import CriteriaToZoneDialog
 from DecisionTreeDialog import DecisionTreeDialog

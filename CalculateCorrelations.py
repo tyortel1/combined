@@ -1,7 +1,7 @@
-from PySide2.QtWidgets import (QDialog, QListWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+from PySide6.QtWidgets import (QDialog, QListWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                                QTableWidget, QTableWidgetItem, QMessageBox, QSpacerItem, QSizePolicy, QListWidgetItem, QComboBox, QCheckBox)
-from PySide2.QtGui import QIcon
-from PySide2.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QSize
 import pandas as pd
 import numpy as np
 
@@ -257,7 +257,7 @@ class CalculateCorrelations(QDialog):
 
 # Example usage
 if __name__ == "__main__":
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     # Example DataFrame
     data = {

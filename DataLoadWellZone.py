@@ -1,8 +1,8 @@
 ﻿from genericpath import samefile
 import pandas as pd
 import numpy as np
-from PySide2.QtWidgets import QDialog, QFileDialog, QProgressDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
-from PySide2.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QProgressDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
+from PySide6.QtCore import Qt
 
 class DataLoadWellZonesDialog(QDialog):
     def __init__(self, uwi_list=None, directional_surveys_df=None, parent=None):
@@ -344,7 +344,7 @@ class DataLoadWellZonesDialog(QDialog):
 
 if __name__ == "__main__":
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     dialog = DataLoadWellZonesDialog()

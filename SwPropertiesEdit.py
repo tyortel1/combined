@@ -4,7 +4,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import shutil
 import os
-from PySide2.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QMessageBox, QHeaderView, QFileDialog, QHBoxLayout, QLineEdit, QInputDialog
 )
 

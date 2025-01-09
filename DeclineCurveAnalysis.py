@@ -3,11 +3,9 @@ from pickle import FALSE
 import numpy as np
 import pandas as pd
 import math
-from PyQt5.QtCore import QDateTime
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QLabel, QApplication
+
 from scipy.optimize import curve_fit
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import Qt, QTimer
+
 
 import time
 
@@ -123,14 +121,22 @@ class DeclineCurveAnalysis:
                 if self.production_rates_data:  # Check if there is data to process
                     temp_df = pd.DataFrame(self.production_rates_data)
                     self.production_rates_temp = pd.concat([self.production_rates_temp, temp_df], ignore_index=True)
+            
+                if self.uwi_error is not None:
+                    print(self.uwi_error)
+                    if isinstance(self.uwi_error, pd.DataFrame) and not self.uwi_error.empty:
+                        self.sum_of_errors = pd.concat([self.sum_of_errors, self.uwi_error], ignore_index=True)
+                    elif isinstance(self.uwi_error, dict):
+                        error_df = pd.DataFrame([self.uwi_error])
+                        self.sum_of_errors = pd.concat([self.sum_of_errors, error_df], ignore_index=True)
 
-            self.sum_of_errors = self.sum_of_errors.append(self.uwi_error, ignore_index=True)
             total_uwis -= 1
             print(f"Finished processing uwi {uwi}. {total_uwis} uwis remaining.")
    
         self.prod_rates_all = self.production_rates_temp.copy()
 
-        self.sum_of_errors = pd.DataFrame(self.sum_of_errors)  
+        self.sum_of_errors = pd.DataFrame(self.sum_of_errors)
+        print(self.sum_of_errors)
         #print(self.model_data)
         model_data_df = pd.DataFrame(self.model_data)
         return self.prod_rates_all, self.sum_of_errors, model_data_df

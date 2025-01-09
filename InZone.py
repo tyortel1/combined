@@ -1,6 +1,6 @@
 ﻿from http.client import PARTIAL_CONTENT
-from PySide2.QtWidgets import QDialog, QLabel, QComboBox,QLineEdit, QMessageBox, QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
-from PySide2.QtGui import QIcon
+from PySide6.QtWidgets import QDialog, QLabel, QComboBox,QLineEdit, QMessageBox, QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtGui import QIcon
 import pandas as pd
 from shapely.geometry import LineString, Point, MultiPoint
 import numpy as np

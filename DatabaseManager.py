@@ -46,7 +46,8 @@ class DatabaseManager:
             surface_y REAL DEFAULT NULL,
             lateral REAL DEFAULT NULL,
             npv REAL DEFAULT NULL,
-            npv_discounted REAL DEFAULT NULL
+            npv_discounted REAL DEFAULT NULL,
+            spud_date TEXT DEFAULT NULL
         )
         """
         try:
@@ -59,42 +60,84 @@ class DatabaseManager:
             self.disconnect()
 
     def save_uwi_data(self, total_lat_data):
-        # Convert the total_lat_data to a DataFrame
-        df = pd.DataFrame(total_lat_data, columns=['uwi', 'lateral', 'surface_x', 'surface_y'])
+        import pandas as pd
+
+        # Ensure input data is a DataFrame
+        if not isinstance(total_lat_data, pd.DataFrame):
+            print("Input data must be a pandas DataFrame.")
+            return
+
+        # Strip leading and trailing whitespace from column names
+        total_lat_data.columns = total_lat_data.columns.str.strip()
+
+        # Rename columns to match the database schema
+        column_mapping = {
+            'UWI': 'uwi',
+            'Total Lateral': 'lateral',
+            'Surface X': 'surface_x',
+            'Surface Y': 'surface_y',
+            'Status': 'status',
+            'Spud Date': 'spud_date'
+        }
+        total_lat_data.rename(columns={key: value for key, value in column_mapping.items() if key in total_lat_data.columns}, inplace=True)
+
+        # Check if the DataFrame is empty
+        if total_lat_data.empty:
+            print("DataFrame is empty after processing. Please check the input data.")
+            return
 
         # Connect to the database
         self.connect()
         try:
-            # Create a temporary table for bulk insert
-            self.cursor.execute("DROP TABLE IF EXISTS temp_uwis")
-            self.cursor.execute("""
-            CREATE TEMPORARY TABLE temp_uwis (
-                uwi TEXT PRIMARY KEY,
-                surface_x REAL,
-                surface_y REAL,
-                lateral REAL
-            )
-            """)
-            self.connection.commit()
+            for _, row in total_lat_data.iterrows():
+                uwi = row['uwi']
 
-            # Insert the DataFrame into the temporary table
-            df.to_sql('temp_uwis', self.connection, if_exists='append', index=False)
+                # Ensure spud_date is in the correct format (YYYY-MM-DD)
+                spud_date = row.get('spud_date')
+                if pd.notnull(spud_date):  # Check if spud_date is not null
+                    try:
+                        spud_date = pd.to_datetime(spud_date).strftime('%Y-%m-%d')
+                    except Exception as e:
+                        print(f"Error formatting spud_date for UWI {uwi}: {e}")
+                        spud_date = None
 
-            # Update the existing uwis table with data from the temporary table
-            update_sql = """
-            UPDATE uwis
-            SET surface_x = COALESCE((SELECT surface_x FROM temp_uwis WHERE temp_uwis.uwi = uwis.uwi), uwis.surface_x),
-                surface_y = COALESCE((SELECT surface_y FROM temp_uwis WHERE temp_uwis.uwi = uwis.uwi), uwis.surface_y),
-                lateral = COALESCE((SELECT lateral FROM temp_uwis WHERE temp_uwis.uwi = uwis.uwi), uwis.lateral)
-            WHERE EXISTS (SELECT 1 FROM temp_uwis WHERE temp_uwis.uwi = uwis.uwi)
-            """
-            self.cursor.execute(update_sql)
+                # Prepare the dynamic SQL for updating columns
+                update_columns = [col for col in row.index if col != 'uwi']
+                set_clause = ", ".join([f"{col} = COALESCE(?, {col})" for col in update_columns])
+                sql_update = f"""
+                UPDATE uwis
+                SET {set_clause}
+                WHERE uwi = ?
+                """
+
+                # Collect values for the SQL parameters
+                update_values = [row[col] if col != 'spud_date' else spud_date for col in update_columns] + [uwi]
+
+                # Execute the update query
+                self.cursor.execute(sql_update, update_values)
+
+                # If no rows were updated, insert the record
+                if self.cursor.rowcount == 0:
+                    columns = ['uwi'] + update_columns
+                    placeholders = ", ".join(["?" for _ in columns])
+                    sql_insert = f"""
+                    INSERT INTO uwis ({', '.join(columns)})
+                    VALUES ({placeholders})
+                    """
+                    insert_values = [uwi] + [row[col] if col != 'spud_date' else spud_date for col in update_columns]
+                    self.cursor.execute(sql_insert, insert_values)
+
+            # Commit the transaction
             self.connection.commit()
             print("Total lat data updated successfully.")
-        except sqlite3.Error as e:
+        except Exception as e:
             print("Error updating total lat data:", e)
         finally:
             self.disconnect()
+
+
+
+
 
     def update_uwi_revenue(self, uwi, npv, npv_discounted):
         self.connect()
@@ -518,6 +561,27 @@ class DatabaseManager:
 
         finally:
             self.disconnect()
+
+    def get_all_uwis(self):
+        import pandas as pd
+        try:
+            self.connect()
+            self.cursor.execute("SELECT * FROM uwis")  # Fetch all rows and columns
+            rows = self.cursor.fetchall()
+
+            # Extract column names
+            column_names = [description[0] for description in self.cursor.description]
+
+            # Create and return a DataFrame
+            return pd.DataFrame(rows, columns=column_names)
+
+        except sqlite3.Error as e:
+            print("Error retrieving all uwis:", e)
+            return pd.DataFrame()  # Return an empty DataFrame on error
+
+        finally:
+            self.disconnect()
+
 
     def get_uwis(self):
         try:
@@ -1571,14 +1635,13 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS directional_surveys (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             uwi TEXT NOT NULL,
-            x_offset REAL NOT NULL,
-            y_offset REAL NOT NULL,
-            md_depth REAL NOT NULL,
-            tvd_depth REAL NOT NULL,
-            inclination REAL NOT NULL
-            ,
+            md REAL NOT NULL,  -- Measured Depth
+            tvd REAL NOT NULL,  -- True Vertical Depth
+            "X Offset" REAL NOT NULL,
+            "Y Offset" REAL NOT NULL,
+            "Cumulative Distance" REAL NOT NULL,
             FOREIGN KEY (uwi) REFERENCES uwis(uwi)
-        )
+        );
         """
         try:
             self.cursor.execute(create_table_sql)
@@ -1610,12 +1673,19 @@ class DatabaseManager:
         try:
             self.cursor.execute(query_sql)
             rows = self.cursor.fetchall()
+        
+            # Print rows for debugging purposes
             for row in rows:
                 print(row)
+        
+            # Return the rows to be used later
+            return rows
         except sqlite3.Error as e:
             print("Error querying directional surveys:", e)
+            return None  # Return None if there's an error
         finally:
             self.disconnect()
+
 
     def insert_survey_dataframe_into_db(self, df):
         self.connect()

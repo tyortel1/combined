@@ -1,14 +1,18 @@
 import json
 import pandas as pd
-from PySide2.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QMessageBox
 from scipy.spatial import KDTree
 import os
 import pickle
 import numpy as np
+from DatabaseManager import DatabaseManager
+from PySide6.QtWidgets import QTableWidgetItem, QMessageBox
 
 class ProjectLoader:
     def __init__(self, parent):
         self.parent = parent
+        self.db_path = None
 
     def open_from_file(self):
         self.parent.open = True
@@ -21,7 +25,6 @@ class ProjectLoader:
                 data_loaded = json.load(file)
 
             # Load DataFrames from JSON if they exist
-            self.parent.directional_surveys_df = pd.DataFrame(data_loaded.get('directional_surveys', {}))
             self.parent.depth_grid_data_df = pd.DataFrame(data_loaded.get('depth_grid_data', {}))
             self.parent.attribute_grid_data_df = pd.DataFrame(data_loaded.get('attribute_grid_data', {}))
             self.parent.import_options_df = pd.DataFrame(data_loaded.get('import_options', {}))
@@ -180,8 +183,8 @@ class ProjectLoader:
 
             
 
-            self.parent.setData()
-
+            db_file_path = file_name.replace('.json', '.db')
+            self.load_db_file(db_file_path)
             # Populate dropdowns
             self.parent.populate_well_zone_dropdown()
             self.parent.populate_grid_dropdown(grid_selected)
@@ -203,6 +206,10 @@ class ProjectLoader:
             file_basename = os.path.basename(file_name)
             self.parent.setWindowTitle(f"Zone Analyzer - {file_basename}")
 
+
+            
+            
+
     def load_zone_criteria_df(self, data_loaded):
         """Load the zone criteria DataFrame from the project data."""
         # Load the data into a DataFrame
@@ -215,3 +222,50 @@ class ProjectLoader:
     
         self.parent.zone_criteria_df = zone_criteria_df
     
+    def load_db_file(self, db_file_path):
+        if os.path.exists(db_file_path):
+            try:
+
+                self.parent.db_manager = DatabaseManager(db_file_path)
+                self.parent.db_manager.connect()
+                self.parent.db_path = db_file_path 
+                print(f"Database loaded successfully from: {db_file_path}")
+                self.load_directional_surveys_from_db()
+                self.parent.selected_uwis = self.parent.db_manager.get_uwis()
+                self.parent.well_data_df = self.parent.db_manager.get_all_uwis()
+
+            except Exception as e:
+                QMessageBox.critical(
+                    self.parent,
+                    "Database Load Error",
+                    f"Failed to load database: {str(e)}",
+                    QMessageBox.Ok
+                )
+        else:
+            QMessageBox.warning(self.parent, "Database Not Found", "No corresponding database file found at: {db_file_path}", QMessageBox.Ok)
+
+
+
+    def load_directional_surveys_from_db(self):
+        try:
+            # Query the database for directional surveys
+            directional_surveys_data = self.parent.db_manager.get_directional_surveys()
+
+            # Check if data is returned
+            if directional_surveys_data:
+                # Convert the result into a DataFrame and drop the first column
+                self.parent.directional_surveys_df = pd.DataFrame(directional_surveys_data).iloc[:, 1:]
+            
+                # Rename the columns to match your expected structure
+                self.parent.directional_surveys_df.columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance']
+            
+                print(f"Directional surveys data loaded: {self.parent.directional_surveys_df}")
+            else:
+                print("No directional surveys data found in the database.")
+                self.parent.directional_surveys_df = pd.DataFrame()  # Ensure it's initialized as an empty DataFrame
+
+        except Exception as e:
+            # Handle errors gracefully
+            print(f"Error occurred while loading directional surveys: {str(e)}")
+            QMessageBox.critical(self.parent, "Error", f"Failed to load directional surveys from DB: {str(e)}")
+

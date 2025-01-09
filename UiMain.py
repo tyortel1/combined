@@ -1,12 +1,30 @@
-﻿from PyQt5.QtWidgets import QApplication, QMainWindow, QSpacerItem, QCheckBox, QSizePolicy, QMenuBar, QAction, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QTableWidget, QTableWidgetItem, QComboBox, QLineEdit, QLabel, QDateTimeEdit, QToolBar, QTabWidget, QLayout
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
-from PyQt5.QtCore import QDateTime, QDate, QSize, Qt
-from PyQt5.QtGui import QIcon, QDoubleValidator
-import sys
+﻿import sys
 import os
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QLabel,
+    QMenuBar,
+    QTabWidget,
+    QComboBox,
+    QToolBar,
+    QLineEdit,
+    QDateTimeEdit,
+    QTableWidget,
+    QCheckBox, QSpacerItem, QSizePolicy, QLayout
+   
+)
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtGui import QIcon, QDoubleValidator, QAction
+from PySide6.QtCore import Qt, QDate, QDateTime, QSize
+from PySide6.QtWebEngineCore import QWebEngineSettings
 
-class UI_main(object):
 
+class UI_main:
     def __init__(self):
         self.recent_projects_file = os.path.join(os.path.expanduser('~'), 'recent_projects.txt')
         self.script_dir = None
@@ -15,48 +33,30 @@ class UI_main(object):
         self.cash_flow_parameters_widgets = []
         self.well_dropdown = None
 
-
     def setupUI(self, MainWindow):
+        # Set main window properties
         MainWindow.setWindowTitle("Qt Dialog with Plotly Graph")
-        MainWindow.setGeometry(100, 100, 1400, 1000)  # Adjust size as needed
+        MainWindow.setGeometry(100, 100, 1400, 1000)
 
+        # Initialize script directory for resources
         self.script_dir = os.path.dirname(os.path.realpath(__file__))
 
-        # Setup the menu bar
-        menu_bar = QMenuBar(MainWindow)
-        file_menu = menu_bar.addMenu("&File")
-        import_menu = menu_bar.addMenu("&Import")
-        self.connect_action = QAction("&Connect to SeisWare", MainWindow)
-        self.connect_action.triggered.connect(MainWindow.connectToSeisWare)
-        import_menu.addAction(self.connect_action)
-        self.import_action = QAction("&Import Excel", MainWindow)
-        self.import_action.triggered.connect(MainWindow.import_excel)
-        import_menu.addAction(self.import_action)
-        self.import_action.setEnabled(False)
-        self.connect_action.setEnabled(False)
+        # Set up the menu bar
+        menu_bar = MainWindow.menuBar()
 
+        # Add Help menu
         help_menu = menu_bar.addMenu("&Help")
         help_action = QAction("&About Plotly Graph", MainWindow)
-        help_action.triggered.connect(MainWindow.show_help)
+        help_action.triggered.connect(MainWindow.show_help)  # Connect to MainWindow's method
         help_menu.addAction(help_action)
 
-        project_create_action = QAction("&Create Project", MainWindow)
-        project_create_action.triggered.connect(MainWindow.create_project)
-
-        open_action = QAction("&Open Project", MainWindow)
-        open_action.triggered.connect(MainWindow.open_project)
-
-        # Add actions to File menu
-        file_menu.addAction(project_create_action)
-        file_menu.addAction(open_action)
-
-        MainWindow.setMenuBar(menu_bar)
-
+        # Set central widget
         central_widget = QWidget(MainWindow)
         MainWindow.setCentralWidget(central_widget)
 
-        # Main layout for organizing the widgets
+        # Set layout for central widget
         main_layout = QVBoxLayout(central_widget)
+
 
         # Create tab widget
         self.tab_widget = QTabWidget()
@@ -522,10 +522,9 @@ class UI_main(object):
         self.gas_model.setEnabled(False)
         self.oil_model.setEnabled(False)
         self.delete_well.setEnabled(False)
-        self.import_action.setEnabled(False)
         self.launch_combined_cashflow.setEnabled(False)
         self.scenario_dropdown1.setEnabled(False)
-        self.save_dc.setEnabled(False)
+        self.save_dc.setEnabled(True)
 
 
         graph_toolbar.addAction(self.back_button)
@@ -739,8 +738,8 @@ class UI_main(object):
         self.gas_model.setEnabled(True)
         self.oil_model.setEnabled(True)
         self.delete_well.setEnabled(True)
-        self.import_action.setEnabled(True)
-        self.connect_action.setEnabled(True)
+    
+
    
         self.launch_combined_cashflow.setEnabled(True)
         self.well_type_dropdown.setEnabled(True)

@@ -1,8 +1,8 @@
 import os
 import pandas as pd
-from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox
-from PySide2.QtCore import Qt
-from PySide2.QtCore import Signal
+from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox
+from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal
 import numpy as np
 
 

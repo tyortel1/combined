@@ -2,17 +2,19 @@ import sys
 import os
 import plotly.graph_objs as go
 import json
-from PySide2.QtGui import QIcon, QIntValidator
+from PySide6.QtGui import QIcon, QIntValidator
 import plotly.offline as py_offline
-from PySide2.QtGui import QIcon, QColor, QPainter, QBrush, QPixmap, QLinearGradient
-from PySide2.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout,  QPushButton, QSlider,QSpinBox,  QLineEdit, QComboBox, QDialog, QSizePolicy, QLabel, QFrame, QDesktopWidget, QLabel ,QMessageBox
-from PySide2.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings,QWebEnginePage
+from PySide6.QtGui import QIcon, QColor, QPainter, QBrush, QPixmap, QLinearGradient,QGuiApplication
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout,  QPushButton, QSlider,QSpinBox,  QLineEdit, QComboBox, QDialog, QSizePolicy, QLabel, QFrame, QLabel ,QMessageBox
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
+
 import pandas as pd
 import numpy as np
 from scipy.spatial import KDTree
-from PySide2.QtCore import Signal, QtMsgType, Qt
+from PySide6.QtCore import Signal, QtMsgType, Qt
 from scipy import interpolate
-from PySide2.QtCore import QUrl
+from PySide6.QtCore import QUrl
 from scipy.ndimage import gaussian_filter
 
 
@@ -61,10 +63,17 @@ class Plot(QDialog):
         # Set initial size and position
         self.resize(1200, 800)  # Set initial size (width, height)
 
-        # Move to second screen if available
-        if QDesktopWidget().screenCount() > 1:
-            screen = QDesktopWidget().screenGeometry(1)  # Get geometry of screen 2
-            self.move(screen.left(), screen.top())  
+        # Check if there are multiple screens
+        app = QGuiApplication.instance() or QGuiApplication([])
+        screens = app.screens()
+
+        if len(screens) > 1:
+            # Get the geometry of the second screen
+            screen = screens[1]  # Screen index 1 corresponds to the second screen
+            screen_geometry = screen.geometry()
+
+            # Move the window to the top-left corner of the second screen
+            self.move(screen_geometry.left(), screen_geometry.top())
 
     def closeEvent(self, event):
         self.closed.emit()
@@ -461,6 +470,7 @@ class Plot(QDialog):
 
 
     def plot_current_well(self):
+        fig = go.Figure()
         try:
             # Extract data for the selected well
             self.current_well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == self.current_uwi]

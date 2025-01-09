@@ -1,14 +1,14 @@
 
 import sys
-
-import pandas as pd
-from PyQt5.QtWidgets import QApplication, QDialog, QHBoxLayout, QVBoxLayout, QPushButton, QMenuBar, QMessageBox, QMainWindow, QTableWidgetItem, QFileDialog, QWidget, QTableWidgetItem, QInputDialog
-from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
-from PyQt5.QtGui import QFont
+import subprocess
 import os
-from PyQt5.QtCore import QDateTime, QDate, QTime
-from PyQt5.QtGui import QIcon, QDoubleValidator
-from PyQt5.QtCore import QObject, QEvent, Qt
+import pandas as pd
+from PySide6.QtWidgets import (
+    QApplication, QDialog, QHBoxLayout, QVBoxLayout, QPushButton, QMenuBar, 
+    QMessageBox, QMainWindow, QTableWidgetItem, QFileDialog, QWidget, QInputDialog
+)
+from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import QDateTime, QDate, QTime, QObject, QEvent, Qt
 
 
 from UiMain import UI_main
@@ -41,10 +41,9 @@ import os
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
         self.ui = UI_main()
         self.ui.setupUI(self)
-
 
         self.dca = None
         self.last_sorted_column = 0
@@ -130,78 +129,6 @@ class MainWindow(QMainWindow):
         return super().eventFilter(obj, event)
 
 
-    def create_project(self):
-        # Create an instance of the custom dialog
-        dialog = ProjectDialog()
-
-        # Get the last used directory from the file
-        default_dir = self.get_last_directory()  # Ensure this method reads the path from the file
-        if not default_dir:
-            default_dir = ""  # Fallback to the empty string if no directory is retu
-        if default_dir:
-            dialog.directory_input.setText(default_dir)  # Assuming directory_input is a QLineEdit
-
-        if dialog.exec_():
-            # Retrieve the project name and directory from the dialog
-            project_name = dialog.project_name_input.text()
-            directory = dialog.directory_input.text()
-
-            # Construct the full path for the database file
-            self.db_path = os.path.join(directory, f"{project_name}.db")
-
-            # Create the SQLite database file
-            self.create_database()
-
-            # Save the used directory as the last directory
-            self.save_last_directory(directory)
-
-
-    def create_database(self):
-        # Check if the database path is valid
-        if self.db_path:
-            try:
-                # Create or connect to the SQLite database
-                self.db_manager = DatabaseManager(self.db_path)
-                self.db_manager.connect()
-
-            # Create the uwis table
-                self.db_manager.create_uwi_table()
-                self.db_manager.create_prod_rates_all_table()
-                self.db_manager.create_well_pads_table()
-                self.db_manager.create_saved_dca_table()
-                self.db_manager.create_model_properties_table()
-                self.db_manager.create_sum_of_errors_table()
-                self.db_manager.create_scenario_names_table()
-                self.db_manager.create_scenarios_table()
-                self.db_manager.create_directional_surveys_table()
-                
-                # Additional database initialization if needed
-                # For example, creating tables or setting up initial data
-
-                # Show a message indicating successful database creation
-                QMessageBox.information(self, "Database Created", f"The database '{os.path.basename(self.db_path)}' has been created successfully.", QMessageBox.Ok)
-                self.ui.activate_icons()
-            except Exception as e:
-                # Show an error message if database creation fails
-                QMessageBox.critical(self, "Error", f"Failed to create database: {str(e)}", QMessageBox.Ok)
-        else:
-            # Show an error message if the database path is not specified
-            QMessageBox.critical(self, "Error", "Database path is not specified.", QMessageBox.Ok)
-
-            # Import Data
-    def connectToSeisWare(self):
-        dialog = SeisWareConnectDialog()
-        if dialog.exec_() == QDialog.Accepted:
-            production_data, directional_survey_values, well_data_df = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df
-            self.prepare_and_update(production_data, directional_survey_values, well_data_df)
-
-
-
-    def import_excel(self):
-        dialog = ImportExcelDialog()
-        if dialog.exec_() == QDialog.Accepted:
-            production_data = dialog.production_data
-            self.prepare_and_update(production_data)
 
     def open_project(self):
         self.open = True
@@ -232,23 +159,7 @@ class MainWindow(QMainWindow):
             print("Error: No database file selected.")
 
 
-    def get_last_directory(self):
-        last_directory_path = os.path.join(os.path.expanduser('~'), 'last_directory.txt')
-        try:
-            if os.path.exists(last_directory_path):
-                with open(last_directory_path, 'r') as file:
-                    return file.readline().strip()  # Read the first line containing the path
-        except Exception as e:
-            print(f"Error reading last directory: {str(e)}")
-        return None  # Return None if no path is stored or in case of an error
 
-    def save_last_directory(self, directory):
-        last_directory_path = os.path.join(os.path.expanduser('~'), 'last_directory.txt')
-        try:
-            with open(last_directory_path, 'w') as file:
-                file.write(directory)
-        except Exception as e:
-            print(f"Failed to save last directory: {str(e)}")
        
     def retrieve_data(self):
         if self.db_manager:
@@ -1318,6 +1229,7 @@ class MainWindow(QMainWindow):
        #printself.uwi_model_data)
 
         self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, self.scenario_id)
+        print(self.current_error_row)
  
 
         initial_gas_prod_rate = float(self.uwi_model_data['max_gas_production'])
@@ -1376,18 +1288,51 @@ class MainWindow(QMainWindow):
  
         
         try:
-            sum_error_oil_value = self.current_error_row['sum_error_oil'].values[0]
-        except (IndexError, KeyError, TypeError):
-            sum_error_oil_value = 0  # Default to 0 if the value does not exist
+            if self.current_error_row is None or self.current_error_row.empty:
+                print("Error: current_error_row is None or empty.")
+                self.ui.error_oil.setText("N/A")  # Optional: Set a default value
+                return
 
- 
-        sum_error_oil_value = round(sum_error_oil_value[0], 2) if sum_error_oil_value and isinstance(sum_error_oil_value, (list, tuple)) else 0.0
-        self.ui.error_oil.setText(str(sum_error_oil_value))
+            if 'sum_error_oil' not in self.current_error_row:
+                print("Error: 'sum_error_oil' column not found in current_error_row.")
+                self.ui.error_oil.setText("N/A")  # Optional: Set a default value
+                return
 
-        current_error_gas_values = self.current_error_row['sum_error_gas'].values
-        current_error_gas = round(current_error_gas_values[0], 2)
-        self.ui.error_gas.setText(str(current_error_gas))
-       #print"error")
+            sum_error_oil_values = self.current_error_row['sum_error_oil'].values
+            if len(sum_error_oil_values) == 0:
+                print("Error: 'sum_error_oil' has no values.")
+                self.ui.error_oil.setText("N/A")  # Optional: Set a default value
+                return
+
+            sum_error_oil_value = round(sum_error_oil_values[0], 2)
+            self.ui.error_oil.setText(str(sum_error_oil_value))
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            self.ui.error_gas.setText("Error")  # Optional: Set an error indicator
+
+        try:
+            if self.current_error_row is None or self.current_error_row.empty:
+                print("Error: current_error_row is None or empty.")
+                self.ui.error_gas.setText("N/A")  # Optional: Set a default value
+                return
+
+            if 'sum_error_gas' not in self.current_error_row:
+                print("Error: 'sum_error_gas' column not found in current_error_row.")
+                self.ui.error_gas.setText("N/A")  # Optional: Set a default value
+                return
+
+            current_error_gas_values = self.current_error_row['sum_error_gas'].values
+            if len(current_error_gas_values) == 0:
+                print("Error: 'sum_error_gas' has no values.")
+                self.ui.error_gas.setText("N/A")  # Optional: Set a default value
+                return
+
+            current_error_gas = round(current_error_gas_values[0], 2)
+            self.ui.error_gas.setText(str(current_error_gas))
+            # print("Error calculated successfully.")  # Uncomment for debugging
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            self.ui.error_gas.setText("Error")  # Optional: Set an error indicator
 
 
         if self.open:

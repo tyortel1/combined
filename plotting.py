@@ -1,12 +1,13 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject
+from PySide6.QtCore import Signal
 import plotly.offline as py_offline
 import plotly.graph_objs as go
-from PyQt5.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 import pandas as pd
 
 class Plotting(QObject):
 
-    rightClicked = pyqtSignal(dict, dict)
+    rightClicked = Signal(dict, dict)
 
     def __init__(self):
         super().__init__()

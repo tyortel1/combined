@@ -1,7 +1,7 @@
 import os
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton, QAction
-from PySide2.QtCore import Qt, QMetaObject
-from PySide2.QtGui import QIcon,  QPalette, QColor
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton
+from PySide6.QtCore import Qt, QMetaObject
+from PySide6.QtGui import QIcon,  QPalette, QColor, QAction
 
 from DrawingArea import DrawingArea
 
@@ -240,6 +240,10 @@ class Ui_MainWindow:
         MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
 
 
+
+
+
+
         MainWindow.import_menu = MainWindow.menu_bar.addMenu("Import")
         MainWindow.import_menu.setEnabled(False)
         MainWindow.data_loader_menu_action = QAction("SeisWare Grid and Wells", MainWindow)
@@ -248,6 +252,14 @@ class Ui_MainWindow:
         MainWindow.import_menu.addAction(MainWindow.dataload_well_zones_action)
         MainWindow.dataload_segy_action = QAction("Import Segy", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_segy_action)
+        # Add new actions
+        MainWindow.connect_action = QAction("SeisWare Production", MainWindow)
+        MainWindow.connect_action.triggered.connect(MainWindow.connectToSeisWare)
+        MainWindow.import_menu.addAction(MainWindow.connect_action)
+
+        MainWindow.import_action = QAction("CSV Production", MainWindow)
+        MainWindow.import_action.triggered.connect(MainWindow.import_excel)
+        MainWindow.import_menu.addAction(MainWindow.import_action)
 
         MainWindow.export_menu = MainWindow.menu_bar.addMenu("Export")
         MainWindow.export_menu.setEnabled(False)
@@ -259,6 +271,13 @@ class Ui_MainWindow:
         MainWindow.zone_to_sw = QAction("Send Zones to SeisWare", MainWindow)
         MainWindow.export_menu.addAction(MainWindow.zone_to_sw)
 
+        MainWindow.properties_menu = MainWindow.menu_bar.addMenu("Properties")
+        MainWindow.properties_menu.setEnabled(True)
+
+        MainWindow.well_properties_action = QAction("Well", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.well_properties_action)
+        
+        
         MainWindow.toolbar = QToolBar("Main Toolbar", MainWindow)
         MainWindow.addToolBar(MainWindow.toolbar)
 
@@ -290,6 +309,15 @@ class Ui_MainWindow:
         MainWindow.zoomIn = QAction(MainWindow.zoom_in_icon, "Zoom In", MainWindow)
         MainWindow.toolbar.addAction(MainWindow.zoomIn)
 
+        MainWindow.color_editor_action = QAction(MainWindow.color_editor_icon, "Edit Grid Colors", MainWindow)
+        MainWindow.toolbar.addAction(MainWindow.color_editor_action)
+
+        MainWindow.launch_icon = QIcon("icons/Decline.ico")
+        MainWindow.launch_action = QAction(MainWindow.launch_icon, "Launch Decline Curve Analysis", MainWindow)
+        MainWindow.toolbar.addAction(MainWindow.launch_action)
+
+# Connect the action to the method that launches the secondary window
+        MainWindow.launch_action.triggered.connect(MainWindow.launch_secondary_window)
         #MainWindow.exportSw = QAction(MainWindow.exportSw_icon, "Send to SeisWare", MainWindow)
         #MainWindow.toolbar.addAction(MainWindow.exportSw)
 

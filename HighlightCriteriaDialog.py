@@ -1,6 +1,6 @@
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
-from PySide2.QtGui import QColor, QPalette
-from PySide2.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtCore import Qt
 import pandas as pd
 
 class HighlightCriteriaDialog(QDialog):

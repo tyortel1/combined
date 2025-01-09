@@ -2,11 +2,11 @@
 import numpy as np
 import pandas as pd
 import math
-from PyQt5.QtCore import QDateTime
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QLabel, QApplication
+from PySide6.QtCore import QDateTime
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QLabel, QApplication
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 import time
 

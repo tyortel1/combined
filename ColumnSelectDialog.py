@@ -1,6 +1,6 @@
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QListWidget, QPushButton, QListWidgetItem, QLabel, QSpacerItem, QSizePolicy, QAbstractItemView, QComboBox, QLineEdit, QMessageBox
-from PySide2.QtGui import QIcon
-from PySide2.QtCore import QSize
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QListWidget, QPushButton, QListWidgetItem, QLabel, QSpacerItem, QSizePolicy, QAbstractItemView, QComboBox, QLineEdit, QMessageBox
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize
 
 class ColumnSelectionDialog(QDialog):
     def __init__(self, all_columns, selected_columns, column_filters=None, current_config_name=None, parent=None):

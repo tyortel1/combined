@@ -33,7 +33,7 @@ a = Analysis(
         'numpy',
         'pandas',
         'scipy',
-        'PySide2',
+        'PySide6',
         'shapely',
         'pystray',
         'matplotlib',

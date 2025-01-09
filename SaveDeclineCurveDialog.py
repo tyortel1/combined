@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout, QComboBox, QListWidget, QListWidgetItem, QFormLayout
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout, QComboBox, QListWidget, QListWidgetItem, QFormLayout
+from PySide6.QtCore import Qt
 
 class SaveDeclineCurveDialog(QDialog):
     def __init__(self, parent=None, uwis=None):

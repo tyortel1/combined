@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import (QApplication, QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, 
+from PySide6.QtWidgets import (QApplication, QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, 
                              QFileDialog, QWidget, QTableWidget, QTableWidgetItem, QSizePolicy, QSpacerItem)
 import pandas as pd
-from PyQt5.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 
 import sys

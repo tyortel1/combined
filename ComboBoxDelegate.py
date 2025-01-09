@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QComboBox, QItemDelegate
+from PySide6.QtWidgets import QComboBox, QItemDelegate
 
 class ComboBoxDelegate(QItemDelegate):
     def __init__(self, parent=None):

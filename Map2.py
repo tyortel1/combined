@@ -1,22 +1,35 @@
 ﻿# main.pydef well
 from email.policy import default
+import subprocess
 import sys
 import os
+import subprocess
 from itertools import groupby
 import json
-from numpy.typing import _96Bit
+import numpy
+#from numpy.typing import _96Bit
 import pandas as pd
 import math
 import numpy as np
 from pandas.core.base import NoNewAttributesMixin
 from scipy.spatial import KDTree
-from PySide2.QtWidgets import QGraphicsView, QApplication, QFileDialog, QToolButton, QMainWindow, QSpinBox, QSpacerItem, QToolBar, QCheckBox, QSlider, QLabel
-from PySide2.QtWidgets import QSizePolicy, QAction, QMessageBox, QErrorMessage, QDialog, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
+from PySide6.QtWidgets import QGraphicsView, QApplication, QFileDialog, QToolButton, QMainWindow, QSpinBox, QSpacerItem, QToolBar, QCheckBox, QSlider, QLabel
+from PySide6.QtWidgets import QSizePolicy, QMessageBox, QErrorMessage, QDialog, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
 import atexit
-from PySide2.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent, QBrush, QPixmap, QLinearGradient
-from PySide2.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QPoint
+from PySide6.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent, QBrush, QPixmap, QLinearGradient, QAction
+from PySide6.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QPoint
+
 from shapely.geometry import LineString
+from PySide6.QtCore import QDateTime, QDate, QTime
+from datetime import datetime, timedelta
+import platform
+print(platform.python_version_tuple())
+seisware_path = r"C:\Program Files\SeisWare SDK\11.0 BETA\py3\SeisWare"
+if seisware_path not in sys.path:
+    sys.path.append(seisware_path)
 import SeisWare
+print(SeisWare.__file__)
+
 #from Exporting import ExportDialog
 from DataLoader import DataLoaderDialog
 from ZoneViewer import ZoneViewerDialog
@@ -42,7 +55,16 @@ from DataLoadSegy import DataLoadSegy
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import KDTree
-
+from ProjectDialog import ProjectDialog
+from DatabaseManager import DatabaseManager
+from SeisWareConnect import SeisWareConnectDialog 
+from ImportExcel import ImportExcelDialog
+from LoadProductions import LoadProductions
+from DefaultProperties import DefaultProperties
+from ModelProperties import ModelProperties
+from DeclineCurveAnalysis import DeclineCurveAnalysis
+from Main import MainWindow
+from WellProperties import WellPropertiesDialog
 
 
 
@@ -50,6 +72,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(Map, self).__init__()
         self.setupUi(self)
+        self.open = False
         self.grid_well_data = []
         self.grid_well_data_df = pd.DataFrame()
         self.depth_grid_color_df = pd.DataFrame()
@@ -132,6 +155,17 @@ class Map(QMainWindow, Ui_MainWindow):
         self.selected_color_palette = None 
         self.selected_color_bar = None
 
+        self.default_properties = None
+
+        self.scenario_id = None
+        self.scenario_name = None
+        self.scenario_names = []
+        self.sum_of_errors = None
+        self.db_manager = DatabaseManager(None)
+        self.db_path = None
+        self.well_data_df = pd.DataFrame()
+
+
  
         self.set_interactive_elements_enabled(False)
         self.project_loader = ProjectLoader(self)
@@ -140,7 +174,6 @@ class Map(QMainWindow, Ui_MainWindow):
         # Connect signals to slots
         
      
-
 
         
 
@@ -184,6 +217,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
         self.dataload_segy_action.triggered.connect(self.dataload_segy)
+        self.well_properties_action.triggered.connect(self.well_properties)
+        
 
       
 
@@ -1175,7 +1210,7 @@ class Map(QMainWindow, Ui_MainWindow):
     
             # Draw value
             text = f"{value}"
-            text_width = painter.fontMetrics().width(text)
+            text_width = painter.fontMetrics().horizontalAdvance(text)
     
             # Adjust text position for edge values
             if i == 0:  # Leftmost value
@@ -1287,34 +1322,97 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def open_project(self):
+
+        self.open = True
+        self.set_interactive_elements_enabled(True)
         self.clear_current_project()
+        
         self.project_loader.open_from_file()
+        print(self.directional_surveys_df)
+        self.setData()
+        
         self.drawingArea.setScaledData(self.well_data)
+        print(self.well_data)
         self.drawingArea.fitSceneInView()
 
-    def create_new_project(self):
-        self.project_data = {
-            'project_name': '',
-            'filter_name': '',
-            'selected_uwis': [],
-            'top_grid': '',
-            'bottom_grid': '',
-            'number_of_zones': 0,
-            'export_options': {}
-        }
 
-        options = QFileDialog.Options()
-        self.file_name, _ = QFileDialog.getSaveFileName(self, "Create New Project", "", "JSON Files (*.json);;All Files (*)", options=options)
-        if self.file_name:
+
+
+
+    def get_last_directory(self):
+        last_directory_path = os.path.join(os.path.expanduser('~'), 'last_directory.txt')
+        try:
+            if os.path.exists(last_directory_path):
+                with open(last_directory_path, 'r') as file:
+                    return file.readline().strip()  # Read the first line containing the path
+        except Exception as e:
+            print(f"Error reading last directory: {str(e)}")
+        return None  # Return None if no path is stored or in case of an error
+
+    def save_last_directory(self, directory):
+        last_directory_path = os.path.join(os.path.expanduser('~'), 'last_directory.txt')
+        try:
+            with open(last_directory_path, 'w') as file:
+                file.write(directory)
+        except Exception as e:
+            print(f"Failed to save last directory: {str(e)}")
+
+
+    def create_new_project(self):
+        # Create an instance of the custom dialog
+        dialog = ProjectDialog()
+
+        # Get the last used directory from the file
+        default_dir = self.get_last_directory()
+        if not default_dir:
+            default_dir = ""  # Fallback if no directory is returned
+        if default_dir:
+            dialog.directory_input.setText(default_dir)  # Assuming `directory_input` is a QLineEdit in the dialog
+
+        # Show the dialog and proceed only if the user confirms
+        if dialog.exec_():
+            # Retrieve the project name and directory from the dialog
+            project_name = dialog.project_name_input.text()
+            directory = dialog.directory_input.text()
+
+            # Validate inputs
+            if not project_name or not directory:
+                QMessageBox.warning(self, "Error", "Project name and directory are required.")
+                return
+
+            # Construct the full path for the project file and SQLite database
+            self.file_name = os.path.join(directory, f"{project_name}.json")
+            self.db_path = os.path.join(directory, f"{project_name}.db")
+
+            # Initialize project data
+            self.project_data = {
+                'project_name': project_name,
+                'filter_name': '',
+                'selected_uwis': [],
+                'top_grid': '',
+                'bottom_grid': '',
+                'number_of_zones': 0,
+                'export_options': {}
+            }
+
+            # Save project data to JSON
             self.project_file_name = self.file_name
             self.project_saver = ProjectSaver(self.file_name)
             self.project_saver.project_data = self.project_data
             self.project_saver.save_project_data()
 
+            # Create the SQLite database
+            self.create_database()
+
+            # Save the directory as the last used directory
+            self.save_last_directory(directory)
+
+            # Update UI and internal states
             self.set_interactive_elements_enabled(False)
             self.import_menu.setEnabled(True)
             self.data_loader_menu_action.setEnabled(True)
 
+            # Reset DataFrames
             self.grid_well_data_df = pd.DataFrame()
             self.well_info_df = pd.DataFrame()
             self.zonein_info_df = pd.DataFrame()
@@ -1323,14 +1421,49 @@ class Map(QMainWindow, Ui_MainWindow):
             self.total_zone_number = 0
             self.export_options = pd.DataFrame()
             self.zone_color_df = pd.DataFrame()
-        
-        file_basename = os.path.basename(self.file_name)
-        self.setWindowTitle(QCoreApplication.translate("MainWindow", f"Zone Analyzer - {file_basename}", None))
+
+            # Update window title
+            self.setWindowTitle(QCoreApplication.translate("MainWindow", f"Zone Analyzer - {project_name}", None))
+        else:
+            QMessageBox.information(self, "Info", "Project creation canceled.")
+
+    def create_database(self):
+        # Check if the database path is valid
+        if self.db_path:
+            try:
+                # Create or connect to the SQLite database
+                self.db_manager = DatabaseManager(self.db_path)
+                self.db_manager.connect()
+
+            # Create the uwis table
+                self.db_manager.create_uwi_table()
+                self.db_manager.create_prod_rates_all_table()
+                self.db_manager.create_well_pads_table()
+                self.db_manager.create_saved_dca_table()
+                self.db_manager.create_model_properties_table()
+                self.db_manager.create_sum_of_errors_table()
+                self.db_manager.create_scenario_names_table()
+                self.db_manager.create_scenarios_table()
+                self.db_manager.create_directional_surveys_table()
+                
+                # Additional database initialization if needed
+                # For example, creating tables or setting up initial data
+
+                # Show a message indicating successful database creation
+                QMessageBox.information(self, "Database Created", f"The database '{os.path.basename(self.db_path)}' has been created successfully.", QMessageBox.Ok)
+                
+            except Exception as e:
+                # Show an error message if database creation fails
+                QMessageBox.critical(self, "Error", f"Failed to create database: {str(e)}", QMessageBox.Ok)
+        else:
+            # Show an error message if the database path is not specified
+            QMessageBox.critical(self, "Error", "Database path is not specified.", QMessageBox.Ok)
 
     def dataloader(self):
         dialog = DataLoaderDialog(self.import_options_df)
         if dialog.exec_() == QDialog.Accepted:
             self.directional_surveys_df = dialog.directional_surveys_df
+            print(self.directional_surveys_df)
          
        
             self.depth_grid_data_df = dialog.depth_grid_data_df
@@ -1389,14 +1522,76 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.launch_menu.setEnabled(True)
                 self.calculate_menu.setEnabled(True)
 
+    def connectToSeisWare(self):
+
+        dialog = SeisWareConnectDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            production_data, directional_survey_values, well_data_df = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df
+            self.prepare_and_update(production_data, directional_survey_values, well_data_df)
+
+    def import_excel(self):
+        dialog = ImportExcelDialog()
+        if dialog.exec_() == QDialog.Accepted:
+            production_data = dialog.production_data
+            self.prepare_and_update(production_data)
+
+    def prepare_and_update(self, production_data, directional_survey_values=None, well_data_df=None):
+ 
+                # Ensure directional_survey_values is not None
+        if directional_survey_values is None:
+            directional_survey_values = pd.DataFrame()
+
+
+
+        print('Data Prepared')
+        self.production_data = sorted(production_data, key=lambda x: (x['uwi'], x['date']))
+        print(self.production_data)
+        if production_data:
+            load_productions = LoadProductions()
+            self.combined_df, self.uwi_list = load_productions.prepare_data(production_data,self.db_path) 
+            #print(self.combined_df)
+            self.handle_default_parameters()
+            self.decline_analysis()
+            self.set_interactive_elements_enabled(True)
+            print('gafag',well_data_df)
+            if not directional_survey_values.empty:
+
+                self.db_manager.insert_survey_dataframe_into_db(directional_survey_values, )
+                self.directional_surveys_df = directional_survey_values
+                self.setData()
+                print(directional_survey_values)
+                self.db_manager.save_uwi_data(well_data_df)
+            else:
+                print("No directional survey data to insert.")
+        
+
+    def handle_default_parameters(self):
+        self.default_properties_dialog = DefaultProperties()
+
+        self.default_properties_dialog.exec_()
+        self.default_properties = self.default_properties_dialog.properties
+        print(self.default_properties)
+    
+
+
+        # Calculate net revenue
+        working_interest = self.default_properties.get("working_interest", 0)
+        royalty = self.default_properties.get("royalty", 0)
+        net_revenue = (working_interest/100) * (1 - (royalty/100))
+
+
+        self.iterate_di = self.default_properties.get("iterate_di", "")
+        self.iterate_bfactor = self.default_properties.get("iterate_bfactor", "")
+   
 
     def dataload_well_zones(self):
-
+        
         if not self.selected_uwis:
             # Show error message if no UWI is selected
             QMessageBox.warning(self, "Error", "Load Wells First")
             return
         dialog = DataLoadWellZonesDialog(self.selected_uwis, self.directional_surveys_df)
+        print(self.directional_surveys_df)
         if dialog.exec_() == QDialog.Accepted:
             result = dialog.import_data()
             if result:
@@ -1433,13 +1628,15 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.export_menu.setEnabled(True)
                 self.launch_menu.setEnabled(True)
 
-
     def dataload_segy(self):
         # Create and launch the DataLoadSegy dialog
         dialog = DataLoadSegy(self)
 
-        if dialog.exec_() == QDialog.Accepted:
-            # Access the saved SEGY settings
+        # Instead of using exec_(), use Tkinter's way of interacting with dialogs.
+        dialog.load_segy_file()  # Opens file dialog and loads the SEGY file
+
+        # Now, assuming the file is loaded and SEGY data is available
+        if dialog.segy_file:
             self.seismic_data = dialog.get_seismic_data()
             print(self.seismic_data)
             self.bounding_box = dialog.get_bounding_box()
@@ -1448,19 +1645,18 @@ class Map(QMainWindow, Ui_MainWindow):
                 # Build the KDTree for seismic data
                 seismic_coords = np.column_stack((self.seismic_data['x_coords'], self.seismic_data['y_coords']))
                 self.seismic_kdtree = KDTree(seismic_coords)
-            
+
                 # Save the seismic data, bounding box, and KDTree
                 self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box, self.seismic_kdtree)
-
             else:
                 print("Invalid seismic data: Missing 'x_coords' or 'y_coords'.")
 
-    
-
-
+        # Save the seismic data and bounding box, even if the user canceled
         self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box)
 
+        # Display seismic data (assuming 10 is the page or trace limit)
         self.display_seismic_data(10)
+
 
     def display_seismic_data(self, inline_number):
         trace_data = self.seismic_data['trace_data']
@@ -1492,6 +1688,68 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Display the plot
         plt.show()
+
+###############################################Zone DISPLAYS###################################
+
+    def decline_analysis(self):
+ 
+        model_properties = ModelProperties(self.combined_df)
+        self.decline_curves = model_properties.dca_model_properties(self.default_properties)
+        self.model_data = model_properties.model_data
+        self.model_data_df = pd.DataFrame(self.model_data)
+
+         
+        self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.uwi_list)
+        self.prod_rates_all, self.sum_of_errors, self.model_data = self.dca.calculate_production_rates()
+        self.model_data_df = pd.DataFrame(self.model_data)
+       #printself.model_data)
+ 
+
+     
+        self.sum_of_errors.iloc[:, 1:] = self.sum_of_errors.iloc[:, 1:].round(2)
+        print(self.sum_of_errors)
+        
+        # Ensure database manager is initialized and connected
+        if self.db_manager:
+            self.db_manager.connect()  # Ensure connection is open
+            self.scenario_id = self.db_manager.insert_scenario_name(self.scenario_name, True)
+            self.scenario_id = self.db_manager.get_scenario_id(self.scenario_name)
+            self.scenario_names = self.db_manager.get_all_scenario_names()
+            print(self.scenario_id, self.scenario_name)  # Corrected print statement
+
+
+            self.db_manager.prod_rates_all(self.prod_rates_all, 'prod_rates_all', self.scenario_id)
+            self.db_manager.store_model_data(self.model_data_df, self.scenario_id)
+            self.db_manager.store_sum_of_errors_dataframe(self.sum_of_errors, self.scenario_id)
+            print(self.sum_of_errors)
+            
+                # Close the connection after the operation
+
+        self.calculate_npv()
+
+    def calculate_npv(self):
+        self.db_manager = DatabaseManager(self.db_path)
+        self.prod_rates_all = self.db_manager.retrieve_prod_rates_all()
+        
+        # Get today's date
+        today = datetime.today().strftime('%Y-%m-%d')
+        
+        # Filter the DataFrame for dates >= today's date
+        filtered_df = self.prod_rates_all[self.prod_rates_all['date'] >= today]
+        
+        # Group by UWI and calculate the sums
+        revenue_sums = filtered_df.groupby('uwi').agg(
+            npv=('total_revenue', 'sum'),
+            npv_discounted=('discounted_revenue', 'sum')
+        ).reset_index()
+        
+        # Insert the results for each UWI into the database
+        for _, row in revenue_sums.iterrows():
+            uwi = row['uwi']
+            npv = row['npv']
+            npv_discounted = row['npv_discounted']
+           #printf"uwi: {uwi}, NPV: {npv}, NPV Discounted: {npv_discounted}")
+            self.db_manager.update_uwi_revenue(uwi, npv, npv_discounted)
 
 
 ###############################################Zone DISPLAYS###################################
@@ -1752,6 +2010,17 @@ class Map(QMainWindow, Ui_MainWindow):
 
         self.zone_viewer_dialog.show()
 
+
+    def launch_secondary_window(self):
+        # Initialize an instance of MainWindow, not the class itself
+        self.secondary_window = MainWindow()  # Ensure MainWindow is instantiated properly
+        self.secondary_window.db_manager = self.db_manager
+        self.secondary_window.db_path = self.db_path
+        self.secondary_window.open = True
+        self.secondary_window.retrieve_data()
+        self.secondary_window.show()
+        
+        
     def update_master_df(self, updated_df):
         self.master_df = updated_df
         self.save_master_df()
@@ -1972,6 +2241,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.master_df.fillna(0)
         self.save_master_df()
 
+
+
     def save_master_df(self):
         self.project_saver.save_master_df(self.master_df)
 
@@ -2142,6 +2413,22 @@ class Map(QMainWindow, Ui_MainWindow):
 
         #return 0
 
+###########################################Properties#############################################
+
+    def well_properties(self):
+        """Launch the Well Properties dialog."""
+        print(self.well_data_df)
+        dialog = WellPropertiesDialog(self.well_data_df)
+        if dialog.exec_() == QDialog.Accepted:
+            # Update well_data_df with edited data
+            updated_data = dialog.get_updated_data()
+            self.well_data_df = pd.DataFrame(
+                updated_data, columns=self.well_data_df.columns
+            )
+
+            # Save the updated data to the database
+            self.db_manager.save_uwi_data(self.well_data_df)
+            print("Well data saved to the database.")
 
 
 
@@ -2151,7 +2438,7 @@ class Map(QMainWindow, Ui_MainWindow):
         msg_box.setIcon(QMessageBox.Critical)
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
-        msg_box.exec_()
+        msg_box.exec()
 
     def show_info_message(self, title, message):
         msg_box = QMessageBox(self)
@@ -2162,10 +2449,10 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    
     app = QApplication(sys.argv)
     window = Map()
     window.show()
 
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

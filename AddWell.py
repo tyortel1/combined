@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QSpinBox, QDateTimeEdit, QDoubleSpinBox, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import QDate
+from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QSpinBox, QDateTimeEdit, QDoubleSpinBox, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox
+from PySide6.QtCore import QDate
 
 class AddWell(QDialog):
     def __init__(self, parent=None, decline_curves=[], scenarios=[]):

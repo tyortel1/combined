@@ -2,9 +2,9 @@ import sys
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as py_offline
-from PyQt5.QtWidgets import QApplication, QVBoxLayout,QCalendarWidget, QDialog, QGridLayout, QComboBox, QCheckBox, QLabel, QLineEdit, QPushButton, QHBoxLayout, QSizePolicy, QWidget
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QSignalBlocker, QDate
+from PySide6.QtWidgets import QApplication, QVBoxLayout,QCalendarWidget, QDialog, QGridLayout, QComboBox, QCheckBox, QLabel, QLineEdit, QPushButton, QHBoxLayout, QSizePolicy, QWidget
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtCore import QSignalBlocker, QDate
 
 class LaunchCombinedCashflow(QDialog):
     def __init__(self, parent=None):

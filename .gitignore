@@ -16,12 +16,14 @@ env/
 *.json
 *.csv
 *.xlsx
+*.db
 
 # Ignore large data files
 *.zip
 *.tar.gz
 *.iso
 *.jar
+
 
 # Ignore build directories created by PyInstaller
 dist/

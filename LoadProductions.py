@@ -38,16 +38,20 @@ class LoadProductions:
                 'oil_volume': oil_volume,
                 'gas_volume': gas_volume
             })
-
-        # Convert combined_data list to a DataFrame
         self.combined_df = pd.DataFrame(combined_data)
         self.combined_df = self.combined_df.sort_values(by=['uwi', 'date'])
         self.uwi_list = self.combined_df['uwi'].unique().tolist()
 
-        # Iterate over combined_df for each uwi and calculate cumulative days, oil, and gas volumes
-# Use groupby to handle data by uwi in a vectorized manner
-        grouped = self.combined_df.groupby('uwi')
-        self.combined_df['cumulative_days'] = grouped['date'].transform(lambda x: (x - x.iloc[0]).dt.days / 365)
+        # Ensure 'date' is in datetime format
+        self.combined_df['date'] = pd.to_datetime(self.combined_df['date'], errors='coerce')
+
+        # Calculate cumulative days grouped by 'uwi'
+        self.combined_df['cumulative_days'] = (
+            self.combined_df.groupby('uwi')['date']
+            .transform(lambda x: (x - x.min()).dt.days / 365))
+
+
+
         try:
             production_data['oil_volume'] = pd.to_numeric(production_data['oil_volume'], errors='coerce')
             self.combined_df['cumulative_oil_volume'] = production_data.groupby('some_grouping_column')['oil_volume'].cumsum()
