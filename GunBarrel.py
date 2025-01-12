@@ -15,7 +15,7 @@ class PlotGB(QDialog):
     hoverEvent = Signal(str)
     closed = Signal()
 
-    def __init__(self, depth_grid_data_df, grid_info_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections=None, zone_names=None, master_df=None, main_app=None, parent=None):
+    def __init__(self, depth_grid_data_df, grid_info_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections=None, zone_names=None, master_df=None, seismic_data=None, parent=None, main_app=None):
         super(PlotGB, self).__init__(parent)
         self.main_app = main_app
         self.depth_grid_data_df = depth_grid_data_df
@@ -26,17 +26,17 @@ class PlotGB(QDialog):
         self.selected_zone = None
         self.selected_attribute = None
         self.kd_tree_depth_grids = kd_tree_depth_grids
-        self.depth_grid_data_dict = depth_grid_data_dict  # Depth grid dictionary
+        self.depth_grid_data_dict = depth_grid_data_dict
         self.intersections = intersections or []
+        self.seismic_data = seismic_data
         self.setWindowTitle("Gun Barrel Plot")
         self.setGeometry(100, 100, 1500, 800)
-        self.default_dot_size = 16  # Set a default size
+        self.default_dot_size = 16
         self.current_dot_size = self.default_dot_size
-        # Ensure standard window decorations (minimize, maximize, close)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
-
         self.current_figure = go.Figure()
         self.setupUi()
+
 
     def closeEvent(self, event):
         self.closed.emit()
@@ -702,7 +702,7 @@ class PlotGB(QDialog):
             painter.drawLine(x, color_bar_y - dash_height, x, color_bar_y)
 
             text = f"{value}"
-            text_width = painter.fontMetrics().width(text)
+            text_width = painter.fontMetrics().horizontalAdvance(text)
 
             if i == 0:
                 text_x = edge_padding

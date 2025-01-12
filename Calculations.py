@@ -11,12 +11,17 @@ class ZoneAttributesDialog(QDialog):
         self.setWindowTitle("Calculate Zone Attributes")
         self.setMinimumSize(400, 400)
 
-        self.master_df = master_df.copy()  # Make a copy to modify
+        if master_df.empty:
+            # Initialize with predefined columns if master_df is empty
+            self.master_df = pd.DataFrame(columns=['UWI', 'Zone Name', 'Top Depth', 'Base Depth', 'Attribute Type', 'Zone Type'])
+        else:
+            self.master_df = master_df.copy()  # Make a copy to modify  # Make a copy to modify
         self.directional_surveys_df = directional_surveys_df  # Directional surveys data
         self.grid_info_df = grid_info_df  # Store grid info
         self.kd_tree_depth_grids = kd_tree_depth_grids  # KDTree for depth grids
         self.kd_tree_att_grids = kd_tree_att_grids  # KDTree for attribute grids
-        self.zone_names = zone_names  # List of zone names
+        self.zone_names = zone_names
+        
         self.depth_grid_data_dict = depth_grid_data_dict  # Depth grid data dictionary
         self.attribute_grid_data_dict = attribute_grid_data_dict
         self.updated_master = pd.DataFrame()# Attribute grid data dictionary
@@ -83,7 +88,7 @@ class ZoneAttributesDialog(QDialog):
         # Calculate Button
         self.calculate_button = QPushButton("Calculate", self)
         self.calculate_button.clicked.connect(self.calculate_zone_attributes)
-        self.calculate_button.clicked.connect(self.accept)  #
+        
         layout.addWidget(self.calculate_button)
 
         # Close Button
@@ -130,6 +135,16 @@ class ZoneAttributesDialog(QDialog):
         zone_name = self.zone_name_combo.currentText()
         selected_grids = [item.text() for item in self.selected_grids_list.findItems("*", Qt.MatchWildcard)]
         grid_type = self.grid_type_combo.currentText()
+
+            # Validate zone name
+        if not zone_name:
+            QMessageBox.warning(self, "No Zone Name Selected", "Please select a valid zone name before proceeding.")
+            return
+
+        # Validate grids
+        if not selected_grids:
+            QMessageBox.warning(self, "No Grids Selected", "Please select at least one grid to calculate attributes.")
+            return
 
         # Ensure the DataFrame contains the necessary columns
         required_columns = ['Zone Name', 'Top Depth', 'Base Depth', 'UWI']
@@ -193,10 +208,10 @@ class ZoneAttributesDialog(QDialog):
                 top_x, top_y, _, _, _, _ = self.interpolate_offsets(uwi_surveys, top_md)
                 base_x, base_y, _, _, _, _ = self.interpolate_offsets(uwi_surveys, base_md)
 
-                well_data = well_data.append({'MD': top_md, 'X Offset': top_x, 'Y Offset': top_y}, ignore_index=True)
+                well_data = well_data.pd.concat({'MD': top_md, 'X Offset': top_x, 'Y Offset': top_y}, ignore_index=True)
                 uwi_surveys_offsets = uwi_surveys[(uwi_surveys['MD'] > top_md) & (uwi_surveys['MD'] < base_md)]
-                well_data = well_data.append(uwi_surveys_offsets[['MD', 'X Offset', 'Y Offset']])
-                well_data = well_data.append({'MD': base_md, 'X Offset': base_x, 'Y Offset': base_y}, ignore_index=True)
+                well_data = well_data.pd.concat(uwi_surveys_offsets[['MD', 'X Offset', 'Y Offset']])
+                well_data = well_data.pd.concat({'MD': base_md, 'X Offset': base_x, 'Y Offset': base_y}, ignore_index=True)
 
                 well_data_points = well_data[['X Offset', 'Y Offset']].values
                 distances, indices = kd_tree.query(well_data_points)
@@ -283,7 +298,10 @@ class StagesCalculationDialog(QDialog):
         self.zone_name_dropdown = QComboBox(self)
         self.zone_name_dropdown.setEditable(True)
         self.zone_name_dropdown.addItems(self.zone_names)  # Add zone names to the dropdown
-        if self.zone_names:  # Check if zone_names is not empty
+        if not self.zone_names:
+            self.zone_name_dropdown.addItem("Select Zone")
+        else:
+            self.zone_name_dropdown.addItems(self.zone_names)
             self.zone_name_dropdown.setCurrentIndex(0)  # Set to the first zone name
         layout.addWidget(self.zone_name_dropdown)
         
@@ -304,8 +322,22 @@ class StagesCalculationDialog(QDialog):
         self.setLayout(layout)
     
     def calculate_stages(self):
-        avg_stage_length = float(self.avg_stage_length_input.text())
-        zone_name = self.zone_name_dropdown.currentText() or "Stages"  # Use the selected or default zone name
+        # Validate average stage length input
+        try:
+            avg_stage_length = float(self.avg_stage_length_input.text())
+            if avg_stage_length <= 0:
+                raise ValueError
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter a valid positive number for average stage length.")
+            return
+
+        # Get the zone name
+        zone_name = self.zone_name_dropdown.currentText().strip()
+
+        # Validate the zone name
+        if not zone_name:
+            QMessageBox.warning(self, "No Zone Name", "Please enter or select a valid zone name.")
+            return
         
         # Check if overwrite checkbox is checked
         if self.overwrite_checkbox.isChecked():
@@ -315,8 +347,16 @@ class StagesCalculationDialog(QDialog):
         stages_list = []
         
         # Filter directional surveys based on the selected zone
-        existing_uwis = set(self.master_df[self.master_df['Zone Name'] == zone_name]['UWI'])
+        if 'Zone Name' in self.master_df.columns:
+            existing_uwis = set(self.master_df[self.master_df['Zone Name'] == zone_name]['UWI'])
+        else:
+            existing_uwis = set()  # If 'Zone Name' doesn't exist, assume no existing UWIs
         
+        # If the zone name is new, add it to self.parent.zone_names
+        if zone_name not in self.zone_names:
+            self.zone_names.append(zone_name)
+       
+
         # Group by UWI
         for uwi, group_df in self.directional_surveys_df.groupby('UWI'):
             if uwi in existing_uwis and not self.overwrite_checkbox.isChecked():
@@ -397,13 +437,26 @@ class StagesCalculationDialog(QDialog):
         columns = ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'] + \
                   [col for col in stages_df.columns if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Zone Type', 'Top Depth', 'Base Depth', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base']]
         stages_df = stages_df[columns]
+        print(type(stages_df))
         stages_df = self.calculate_angles(stages_df)
+        
 
+
+                # If master_df is empty, assign stages_df directly
+        if self.master_df.empty:
+            self.master_df = stages_df
+            print(type(self.master_df))
+        else:
+            # Concatenate to master_df
+            self.master_df = pd.concat([self.master_df, stages_df], ignore_index=True)
+        
+        print(self.master_df)
+        print(type(self.master_df))
         QMessageBox.information(self, "Calculation Complete", f"Total Stages: {len(stages_list)}")
         self.accept()
 
-        self.master_df = self.master_df.append(stages_df, ignore_index=True)
 
+        return self.zone_names
 
 
 
@@ -468,6 +521,7 @@ class StagesCalculationDialog(QDialog):
             # Update the angle for all rows with the current UWI
             stages_df.loc[stages_df['UWI'] == uwi, 'Angle Top'] = rotated_angle
             stages_df.loc[stages_df['UWI'] == uwi, 'Angle Base'] = rotated_angle
+        print(type(stages_df))
         return stages_df
 
 class WellAttributesDialog(QDialog):

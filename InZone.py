@@ -21,13 +21,10 @@ class InZoneDialog(QDialog):
         self.total_laterals = []
 
 
-        # Create widgets
-        self.zone_name_label = QLabel("New Zone Name (In-Zone):", self)
-        self.zone_name_edit = QLineEdit(self)
-
-        self.existing_zone_name_label = QLabel("Select Zone Name (Percentages):", self)
-        self.existing_zone_name_combo = QComboBox(self)
-        self.existing_zone_name_combo.addItems(self.zone_names) 
+        self.zone_name_label = QLabel("Zone Name:", self)
+        self.zone_name_combo = QComboBox(self)
+        self.zone_name_combo.setEditable(True)  # Allow typing new names
+        self.zone_name_combo.addItems(self.zone_names)
 
 
         # Two-list selector layout for grids
@@ -70,9 +67,7 @@ class InZoneDialog(QDialog):
         # Set layout
         layout = QVBoxLayout()
         layout.addWidget(self.zone_name_label)
-        layout.addWidget(self.zone_name_edit)
-        layout.addWidget(self.existing_zone_name_label)
-        layout.addWidget(self.existing_zone_name_combo)
+        layout.addWidget(self.zone_name_combo)
         layout.addLayout(grid_list_layout)
 
         # Calculate Button
@@ -128,7 +123,7 @@ class InZoneDialog(QDialog):
     def create_grid_dataframe(self):
 
         #Grab the name they want to call this
-        zone_name = self.zone_name_edit.text().strip()
+        zone_name = self.zone_name_combo.text().strip()
 
         if not zone_name:
             QMessageBox.warning(self, "Error", "Zone name cannot be empty. Please enter a valid zone name.")
@@ -402,7 +397,7 @@ class InZoneDialog(QDialog):
         df_intersections = pd.DataFrame(intersections_list)
 
         # Add 'Zone Type', 'Attribute Type', and 'Zone Name' columns
-        zone_name = self.zone_name_edit.text()
+        zone_name = self.zone_name_combo.text()
         df_intersections['Zone Type'] = 'Intersections'
         df_intersections['Attribute Type'] = 'Zone'
         df_intersections['Zone Name'] = zone_name
@@ -431,7 +426,7 @@ class InZoneDialog(QDialog):
         if 'Total Lateral Length' not in self.master_df.columns:
             self.master_df['Total Lateral Length'] = 0.0
 
-        zone_name = self.existing_zone_name_combo.currentText().strip()
+        zone_name = self.zone_name_combo.currentText().strip()
 
         # Iterate through the unique UWIs in the df_intersections
         for uwi in df_intersections['UWI'].unique():
@@ -594,7 +589,9 @@ class InZoneDialog(QDialog):
                     'Angle Top': angle_top,
                     'Angle Base': angle_base
                 }
-                self.master_df = self.master_df.append(new_row, ignore_index=True)
+                # Use this (current approach):
+                new_row_df = pd.DataFrame([new_row])  # Convert new_row (a dictionary or series) into a DataFrame
+                self.master_df = pd.concat([self.master_df, new_row_df], ignore_index=True)
 
         print('done')
 

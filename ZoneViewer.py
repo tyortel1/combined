@@ -496,7 +496,7 @@ class ZoneViewerDialog(QDialog):
         start_idx = self.current_page * self.page_size
         end_idx = min(start_idx + self.page_size, len(filtered_df))
         page_data = filtered_df.iloc[start_idx:end_idx]
-        page_data = page_data.applymap(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else x)
+        page_data = page_data.map(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else x)
         # Add rows to the model
         for _, row in page_data.iterrows():
             items = [QStandardItem(str(field)) for field in row if field != row.get('HighlightColor')]

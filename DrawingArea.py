@@ -1,4 +1,5 @@
 import os
+import csv
 import numpy as np
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsTextItem, QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPainterPath, QBrush, QTransform, QImage, QPixmap, QFontMetrics
@@ -92,6 +93,8 @@ class DrawingArea(QGraphicsView):
         self.line_items = {}
         self.view_adjusted = False
         self.initial_fit_in_view_done = False 
+        self.show_uwis = True
+        self.show_ticks = True
 
         self.textPixmapCache = {}
         self.color_palette = self.load_color_palette('Palettes/Rainbow.pal')
@@ -121,18 +124,15 @@ class DrawingArea(QGraphicsView):
         return color_palette
 
     def setScaledData(self, well_data, well_attribute_values=None):
-        print(well_attribute_values)
-        print(well_data)
+        # Clear existing UWI lines
         self.clearUWILines()
-        
-        
+        print(well_data)
 
         new_items = []
 
+        # Flatten x and y offsets to calculate min/max values
         all_x = [x for well in well_data.values() for x in well['x_offsets']]
         all_y = [y for well in well_data.values() for y in well['y_offsets']]
-
-
 
         self.min_x, self.max_x = min(all_x), max(all_x)
         self.min_y, self.max_y = min(all_y), max(all_y)
@@ -140,13 +140,7 @@ class DrawingArea(QGraphicsView):
         for uwi, well in well_data.items():
             points = well['points']
             mds = well['mds']
-            md_colors = well.get('md_colors', [QColor(Qt.black)] * len(mds))
-
-            # Debugging Prints
-            print(f"UWI: {uwi}")
-            print(f"  Points: {len(points)} -> {points}")
-            print(f"  MDS: {len(mds)} -> {mds}")
-            print(f"  MD Colors: {len(md_colors)} -> {md_colors}")
+            md_colors = well.get('md_colors', [QColor(Qt.black)] * (len(points) - 1))
 
             if len(points) > 1:
                 for i in range(len(points) - 1):
@@ -154,47 +148,45 @@ class DrawingArea(QGraphicsView):
                     end_point = points[i + 1]
                     md = mds[i]
 
-                    # Debug for each segment
-                    print(f"  Segment {i}:")
-                    print(f"    Start Point: {start_point}")
-                    print(f"    End Point: {end_point}")
-                    print(f"    MD: {md}")
-                    print(f"    Color: {md_colors[i] if i < len(md_colors) else 'Default Black'}")
-
-                    # Existing segment calculation logic
-
                     # Calculate the direction of the line
                     direction = (end_point - start_point)
-                    direction = direction / direction.manhattanLength()  # Normalize the direction vector
+                    if direction.manhattanLength() == 0:
+                        continue  # Skip if direction length is zero
+                    direction = direction / direction.manhattanLength()  # Normalize direction
 
                     # Dynamically calculate the offset based on the zoom level
-                    current_scale = self.transform().m11()  # Get the current scale factor from the QGraphicsView transform
-                    base_offset = 0.5  # Base offset to extend the line slightly
-                    adjusted_offset = base_offset / current_scale  # Adjust offset based on zoom level
+                    current_scale = self.transform().m11()  # Get the current scale factor from QGraphicsView transform
+                    base_offset = 0.5  # Base offset for extending the line
+                    adjusted_offset = base_offset / max(current_scale, 1e-6)  # Avoid division by zero
 
-                    # Extend the start and end points slightly
+                    # Extend the start and end points
                     adjusted_start_point = start_point - direction * adjusted_offset
                     adjusted_end_point = end_point + direction * adjusted_offset
 
+                    # Get line color
                     color = md_colors[i] if i < len(md_colors) else QColor(Qt.black)
                     color.setAlphaF(self.uwi_opacity)
 
+                    # Create a QGraphicsLineItem
                     line = QGraphicsLineItem(QLineF(adjusted_start_point, adjusted_end_point))
                     pen = QPen(color)
-                    pen.setWidth(self.line_width)
-                    pen.setCapStyle(Qt.FlatCap)  # Keep the original cap style
+                    pen.setWidthF(self.line_width)
+                    pen.setCapStyle(Qt.FlatCap)
                     line.setPen(pen)
                     line.setZValue(5)
                     line.setData(0, 'uwiline')
                     new_items.append(line)
 
+                    # Store the line item by UWI and MD
                     if uwi not in self.line_items:
                         self.line_items[uwi] = {}
                     self.line_items[uwi][md] = line
 
+                # Add UWI text label if enabled
                 if self.show_uwis:
                     self.add_text_item(uwi, points[0])
 
+            # Handle well attribute values if provided
             if well_attribute_values and uwi in well_attribute_values:
                 color = well_attribute_values[uwi]['color']
                 box_position = points[0] + QPointF(0, 20)
@@ -209,15 +201,73 @@ class DrawingArea(QGraphicsView):
 
                 new_items.append(self.well_attribute_boxes[uwi])
 
+        # Add new items to the scene
         for item in new_items:
             self.scene.addItem(item)
 
+        # Only run fitInView the first time
+        if not hasattr(self, 'initial_fit_in_view_done') or not self.initial_fit_in_view_done:
+            self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+            self.initial_fit_in_view_done = True
+
+        # Explicitly trigger updates to ensure changes are displayed
+        self.scene.update()
+        self.viewport().update()
+        #self.export_well_data_to_csv(well_data)
         
         # Only run fitInView the first time
         if not self.initial_fit_in_view_done:
             self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
             self.initial_fit_in_view_done = True 
 
+    def export_well_data_to_csv(self, well_data, output_file="well_data_export.csv"):
+        if not isinstance(well_data, dict):
+            print("Invalid well_data format. Expected a dictionary.")
+            return
+
+        if not well_data:
+            print("No data to export!")
+            return
+
+        flattened_data = []
+
+        for uwi, data in well_data.items():
+            # Debugging: Ensure data is valid
+            if not isinstance(data, dict):
+                print(f"Invalid data for UWI {uwi}. Skipping.")
+                continue
+
+            print(f"Processing UWI: {uwi}")
+
+            # Extract data, handling missing keys gracefully
+            mds = data.get('mds', [])
+            points = data.get('points', [])
+            x_offsets = data.get('x_offsets', [])
+            y_offsets = data.get('y_offsets', [])
+            md_colors = data.get('md_colors', [])
+
+            for i in range(len(mds)):
+                row = {
+                    "UWI": uwi,
+                    "MD": mds[i] if i < len(mds) else None,
+                    "X Offset": x_offsets[i] if i < len(x_offsets) else None,
+                    "Y Offset": y_offsets[i] if i < len(y_offsets) else None,
+                    "Point X": points[i].x() if i < len(points) else None,
+                    "Point Y": points[i].y() if i < len(points) else None,
+                    "Color (RGB)": str(md_colors[i].getRgb()) if i < len(md_colors) else None,
+                }
+                flattened_data.append(row)
+
+        # Write to CSV
+        output_file_path = os.path.abspath(output_file)
+        with open(output_file_path, mode="w", newline="") as csvfile:
+            fieldnames = ["UWI", "MD", "X Offset", "Y Offset", "Point X", "Point Y", "Color (RGB)"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            writer.writerows(flattened_data)
+
+        print(f"Well data exported successfully to {output_file_path}")
     def clearWellAttributeBoxes(self):
         for uwi, box in self.well_attribute_boxes.items():
             self.scene.removeItem(box)
@@ -237,8 +287,12 @@ class DrawingArea(QGraphicsView):
 
             text_item.setZValue(2)
             text_item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+                    # Add a tag or metadata
+            text_item.setData(0, "uwi_label")  # Key 0 with value "uwi_label"
+            text_item.setData(1, uwi_times)   # Key 1 with UWI identifier
             self.scene.addItem(text_item)
             self.uwi_items[uwi_times] = text_item
+
         except Exception as e:
             print(f"Error adding text item for UWI {uwi_times}: {e}")
 
@@ -295,24 +349,30 @@ class DrawingArea(QGraphicsView):
             self.scene.removeItem(item)
 
     def setZoneTicks(self, zone_ticks):
-        if not zone_ticks:
-            print("No zone ticks provided.")
-            return
+        if self.show_ticks:
+            if not zone_ticks:
+                print("No zone ticks provided.")
+                return
 
-        self.clearZones()
-        self.zoneTicks = zone_ticks
+            self.clearZones()
+            self.zoneTicks = zone_ticks
 
-        for item in self.scene.items():
-            if isinstance(item, BulkZoneTicks):
-                self.scene.removeItem(item)
+            for item in self.scene.items():
+                if isinstance(item, BulkZoneTicks):
+                    self.scene.removeItem(item)
 
-        bulk_ticks = BulkZoneTicks(zone_ticks, line_width=self.line_width)
-        bulk_ticks.setData(0, 'bulkzoneticks')
-        bulk_ticks.setZValue(6)
-        self.scene.addItem(bulk_ticks)
+            # Create BulkZoneTicks object
+            bulk_ticks = BulkZoneTicks(zone_ticks, line_width=self.line_width)
+            bulk_ticks.setData(0, 'bulkzoneticks')
+            bulk_ticks.setZValue(6)
 
-        self.scene.update()
-        self.viewport().update()
+            # Set opacity for the ticks (value between 0.0 and 1.0)
+            bulk_ticks.setOpacity(.5)  # Example: 50% opacity
+
+            self.scene.addItem(bulk_ticks)
+
+            self.scene.update()
+            self.viewport().update()
 
     def setGridPoints(self, points_with_values, min_x, max_x, min_y, max_y, min_z, max_z, bin_size_x, bin_size_y):
         self.min_x, self.max_x, self.min_y, self.max_y = min_x, max_x, min_y, max_y
@@ -352,22 +412,36 @@ class DrawingArea(QGraphicsView):
             zoom_in_factor = 1.25
             zoom_out_factor = 1 / zoom_in_factor
 
+            # Determine zoom factor based on scroll direction
             zoom_factor = zoom_in_factor if event.angleDelta().y() > 0 else zoom_out_factor
-            # Use event.position() instead of event.pos()
-            self.zoom(zoom_factor, event.position())
+
+            # Convert event.position() to QPoint
+            center_point = event.position().toPoint()
+
+            # Pass the QPoint to the zoom method
+            self.zoom(zoom_factor, center_point)
         else:
             # Scroll vertically if no ControlModifier is pressed
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - event.angleDelta().y())
 
     def zoom(self, zoom_factor, center_point):
+        # Map the QPoint to scene coordinates
         old_pos = self.mapToScene(center_point)
+
+        # Apply the scaling transformation
         self.scale(zoom_factor, zoom_factor)
         self.scale_factor *= zoom_factor
+
+        # Map the center point after scaling
         new_pos = self.mapToScene(center_point)
+
+        # Translate the view to maintain the focus
         delta = new_pos - old_pos
         self.translate(delta.x(), delta.y())
-        self.map_instance.updateScrollBars()
 
+        # Update scroll bars or any other UI elements
+        if hasattr(self.map_instance, 'updateScrollBars'):
+            self.map_instance.updateScrollBars()
     def setCurrentLine(self, points):
         if self.currentLine:
             self.scene.removeItem(self.currentLine)
@@ -456,13 +530,7 @@ class DrawingArea(QGraphicsView):
                 item.setFont(font)
         self.scene.update()
 
-    def setUWIOpacity(self, opacity):
-        self.uwi_opacity = opacity
-        for text_item in self.uwi_items.values():
-            color = text_item.defaultTextColor()
-            color.setAlphaF(opacity)
-            text_item.setDefaultTextColor(color)
-        self.scene.update()
+
 
     def updateLineWidth(self, width):
         self.line_width = width
@@ -583,6 +651,79 @@ class DrawingArea(QGraphicsView):
     #                path_item.setData(0, 'colored_segment')
     #                path_item.setZValue(4)
     #                self.scene.addItem(path_item)
+
+
+    def toggleTextItemsVisibility(self, visible):
+        print(visible)
+        try:
+            # Iterate through all text items in the scene with the tag "uwi_label"
+            text_items = [item for item in self.scene.items() if item.data(0) == "uwi_label"]
+
+            if visible == 0:
+                # Hide text items by setting opacity to 0
+                for item in text_items:
+                    item.setOpacity(0.0)
+            else:
+                # Show text items with the desired opacity
+                for item in text_items:
+                    item.setOpacity(self.uwi_opacity)  # Use the configured opacity value (0.0 to 1.0)
+
+            # Optionally update the scene and viewport
+            self.scene.update()
+            self.viewport().update()
+
+        except Exception as e:
+            print(f"Error toggling text item visibility: {e}")
+   
+    def setUWIOpacity(self, opacity):
+        # Ensure opacity is within valid bounds (0.0 to 1.0)
+        print(opacity)
+        if not (0.0 <= opacity <= 1.0):
+            print("Invalid opacity value. Must be between 0.0 and 1.0.")
+            return
+        text_items = [item for item in self.scene.items() if item.data(0) == "uwi_label"]
+        # Store the new opacity value
+        self.uwi_opacity = opacity
+        for item in text_items:
+            item.setOpacity(opacity)
+
+  
+
+        # Update the scene to reflect changes
+        self.scene.update()
+
+    #def toggleticksVisibility(self, visible, zone_ticks=None):
+        
+
+    #    if visible == 0:
+    #        self.show_ticks = False
+    #        # Clear tick lines
+    #        tick_items = [item for item in self.scene.items() if item.data(0) == 'bulkzoneticks']
+    #        for item in tick_items:
+    #            if item.scene() is not None:
+    #                self.scene.removeItem(item)
+    #    else:
+    #        self.show_ticks = True
+    #        self.setZoneTicks(zone_ticks)
+
+    def toggleticksVisibility(self, visible):
+        tick_items = [item for item in self.scene.items() if item.data(0) == 'bulkzoneticks']
+        
+        if visible == 0:
+            # Hide ticks by setting opacity to 0
+            for item in tick_items:
+                item.setOpacity(0.0)
+            self.show_ticks = False
+        else:
+            # Show ticks by setting opacity to 1
+            for item in tick_items:
+                item.setOpacity(0.5)  # Adjust this value for desired opacity
+            self.show_ticks = True
+
+        # Update the scene and viewport to reflect the changes
+        self.scene.update()
+        self.viewport().update()
+
 
     def get_point_by_md(self, uwi, md):
         if uwi not in self.scaled_data:

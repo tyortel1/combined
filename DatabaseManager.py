@@ -136,20 +136,34 @@ class DatabaseManager:
             self.disconnect()
 
 
+    def get_uwis_with_surface_xy(self):
+        """Fetches all UWIs along with their surface X and Y coordinates from the database."""
+        try:
+            self.connect()
+            self.cursor.execute("SELECT uwi, surface_x, surface_y FROM uwis")
+            results = self.cursor.fetchall()
+            return [{"uwi": str(row[0]), "surface_x": row[1], "surface_y": row[2]} for row in results]
+        except sqlite3.Error as e:
+            print("Error retrieving UWIs with surface XY coordinates:", e)
+            return []
+        finally:
+            self.disconnect()
 
 
-
-    def update_uwi_revenue(self, uwi, npv, npv_discounted):
+    def update_uwi_revenue(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
         self.connect()
         update_sql = """
-        UPDATE uwis
-        SET npv = ?, npv_discounted = ?
-        WHERE uwi = ?
+        UPDATE model_properties
+        SET npv = ?, npv_discounted = ?, EFR_oil = ?, EFR_gas = ?, EUR_oil_remaining = ?, EUR_gas_remaining = ?
+        WHERE uwi = ? AND scenario_id = ?
         """
         try:
-            self.cursor.execute(update_sql, (npv, npv_discounted, uwi))
+            # Execute the update query with the new parameters
+            self.cursor.execute(update_sql, (npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, uwi, scenario_id))
             self.connection.commit()
-            print(f"UWI '{uwi}' updated with NPV '{npv}', and NPV Discounted '{npv_discounted}' successfully.")
+            print(f"UWI '{uwi}' (Scenario {scenario_id}) updated with NPV '{npv}', NPV Discounted '{npv_discounted}', "
+                  f"EFR Oil '{EFR_oil}', EFR Gas '{EFR_gas}', EUR Oil Remaining '{EUR_oil_remaining}', "
+                  f"EUR Gas Remaining '{EUR_gas_remaining}' successfully.")
         except sqlite3.Error as e:
             print("Error updating UWI revenue:", e)
         finally:
@@ -346,52 +360,85 @@ class DatabaseManager:
     def create_model_properties_table(self):
         self.connect()
         create_table_sql = """
-     CREATE TABLE IF NOT EXISTS model_properties (
-        scenario_id INTEGER NOT NULL,
-        uwi TEXT NOT NULL,
-        max_oil_production REAL DEFAULT NULL,
-        max_gas_production REAL DEFAULT NULL,
-        max_oil_production_date TEXT DEFAULT NULL,
-        max_gas_production_date TEXT DEFAULT NULL,
-        one_year_oil_production REAL DEFAULT NULL,
-        one_year_gas_production REAL DEFAULT NULL,
-        di_oil REAL DEFAULT NULL,
-        di_gas REAL DEFAULT NULL,
-        oil_b_factor REAL DEFAULT NULL,
-        gas_b_factor REAL DEFAULT NULL,
-        min_dec_oil REAL DEFAULT NULL,
-        min_dec_gas REAL DEFAULT NULL,
-        model_oil TEXT DEFAULT NULL,
-        model_gas TEXT DEFAULT NULL,
-        economic_limit_type TEXT DEFAULT NULL,
-        economic_limit_date TEXT DEFAULT NULL,
-        oil_price REAL DEFAULT NULL,
-        gas_price REAL DEFAULT NULL,
-        oil_price_dif REAL DEFAULT NULL,
-        gas_price_dif REAL DEFAULT NULL,
-        discount_rate REAL DEFAULT NULL,
-        working_interest REAL DEFAULT NULL,
-        royalty REAL DEFAULT NULL,
-        tax_rate REAL DEFAULT NULL,
-        capital_expenditures REAL DEFAULT NULL,
-        operating_expenditures REAL DEFAULT NULL,
-        net_price_oil REAL DEFAULT NULL,
-        net_price_gas REAL DEFAULT NULL,
-        gas_model_status TEXT DEFAULT NULL,
-        oil_model_status TEXT DEFAULT NULL,
-        PRIMARY KEY (scenario_id, uwi)
-    )
-
-
+        CREATE TABLE IF NOT EXISTS model_properties (
+            scenario_id INTEGER NOT NULL,
+            uwi TEXT NOT NULL,
+            max_oil_production REAL DEFAULT NULL,
+            max_gas_production REAL DEFAULT NULL,
+            max_oil_production_date TEXT DEFAULT NULL,
+            max_gas_production_date TEXT DEFAULT NULL,
+            one_year_oil_production REAL DEFAULT NULL,
+            one_year_gas_production REAL DEFAULT NULL,
+            di_oil REAL DEFAULT NULL,
+            di_gas REAL DEFAULT NULL,
+            oil_b_factor REAL DEFAULT NULL,
+            gas_b_factor REAL DEFAULT NULL,
+            min_dec_oil REAL DEFAULT NULL,
+            min_dec_gas REAL DEFAULT NULL,
+            model_oil TEXT DEFAULT NULL,
+            model_gas TEXT DEFAULT NULL,
+            economic_limit_type TEXT DEFAULT NULL,
+            economic_limit_date TEXT DEFAULT NULL,
+            oil_price REAL DEFAULT NULL,
+            gas_price REAL DEFAULT NULL,
+            oil_price_dif REAL DEFAULT NULL,
+            gas_price_dif REAL DEFAULT NULL,
+            discount_rate REAL DEFAULT NULL,
+            working_interest REAL DEFAULT NULL,
+            royalty REAL DEFAULT NULL,
+            tax_rate REAL DEFAULT NULL,
+            capital_expenditures REAL DEFAULT NULL,
+            operating_expenditures REAL DEFAULT NULL,
+            net_price_oil REAL DEFAULT NULL,
+            net_price_gas REAL DEFAULT NULL,
+            gas_model_status TEXT DEFAULT NULL,
+            oil_model_status TEXT DEFAULT NULL,
+            q_oil_eur REAL DEFAULT NULL, 
+            q_gas_eur REAL DEFAULT NULL,
+            q_oil_eru REAL DEFAULT NULL,  
+            q_gas_eru REAL DEFAULT NULL,  
+            EFR_oil REAL DEFAULT NULL,    
+            EFR_gas REAL DEFAULT NULL,    
+            EUR_oil_remaining REAL DEFAULT NULL,  
+            EUR_gas_remaining REAL DEFAULT NULL,  
+            npv REAL DEFAULT NULL,           
+            npv_discounted REAL DEFAULT NULL,  
+            PRIMARY KEY (scenario_id, uwi)
+        )
         """
         try:
             self.cursor.execute(create_table_sql)
             self.connection.commit()
-            print("Model properties table created successfully.")
+            print("Model properties table created or updated successfully.")
         except sqlite3.Error as e:
             print("Error creating model properties table:", e)
         finally:
             self.disconnect()
+
+    def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, scenario_id=1):
+        """
+        Update the EUR values in the model_properties table for the given UWI and scenario_id.
+        """
+        self.connect()  # Ensure the database connection is established
+
+        # SQL query to update EUR values
+        query = """
+        UPDATE model_properties
+        SET 
+            q_oil_eur = ?, 
+            q_gas_eur = ?
+        WHERE 
+            scenario_id = ? AND uwi = ?;
+        """
+
+        try:
+            self.cursor.execute(query, (q_oil_eur, q_gas_eur, scenario_id, uwi))
+            if self.cursor.rowcount == 0:
+                print(f"No matching row found for UWI: {uwi} and Scenario ID: {scenario_id}.")
+            self.connection.commit()  # Commit the changes
+        except Exception as e:
+            print(f"Error updating EUR values for UWI {uwi}: {e}")
+
 
     def retrieve_model_properties(self, current_uwi, scenario_id):
         """

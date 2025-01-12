@@ -2,12 +2,15 @@ import sys
 import os
 import plotly.graph_objs as go
 import json
-from PySide6.QtGui import QIcon, QIntValidator
+
 import plotly.offline as py_offline
-from PySide6.QtGui import QIcon, QColor, QPainter, QBrush, QPixmap, QLinearGradient,QGuiApplication
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QHBoxLayout,  QPushButton, QSlider,QSpinBox,  QLineEdit, QComboBox, QDialog, QSizePolicy, QLabel, QFrame, QLabel ,QMessageBox
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
+from PySide6.QtGui import QIcon, QIntValidator, QColor, QPainter, QBrush, QPixmap, QLinearGradient, QGuiApplication
+from PySide6.QtWidgets import (
+    QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, 
+    QLineEdit, QComboBox, QDialog, QSizePolicy, QLabel, QFrame, QMessageBox
+)
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
 
 import pandas as pd
 import numpy as np
@@ -453,7 +456,7 @@ class Plot(QDialog):
         
             # Draw value
             text = f"{value:.2f}"
-            text_width = painter.fontMetrics().width(text)
+            text_width = painter.fontMetrics().horizontalAdvance(text)
         
             # Adjust text position for edge values
             if i == 0:  # Leftmost value
@@ -740,7 +743,8 @@ class Plot(QDialog):
 
             # Filter the master_df for the current UWI and selected zone
             zone_data = self.master_df[(self.master_df['UWI'] == self.current_uwi) & 
-3                                       (self.master_df['Zone Name'] == self.selected_zone)]
+                                       (self.master_df['Zone Name'] == self.selected_zone)]
+            print(zone_data)
 
             if zone_data.empty:
                 print(f"No data found for UWI {self.current_uwi} and zone {self.selected_zone}")

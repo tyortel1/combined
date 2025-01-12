@@ -180,15 +180,20 @@ class DataLoadWellZonesDialog(QDialog):
             else:
                 top_depth_header = base_depth_header = None
 
+
             # Validate UWIs
             df[uwi_header] = df[uwi_header].astype(str).str.strip()
             self.uwi_list = [uwi.strip() for uwi in self.uwi_list]
             valid_df = df[df[uwi_header].isin(self.uwi_list)]
-            invalid_uwis = df[~df[uwi_header].isin(self.uwi_list)]
 
-            if not invalid_uwis.empty:
-                QMessageBox.warning(self, "Warning", f"Some UWIs in the CSV do not exist in the project and will be skipped:\n{invalid_uwis[uwi_header].tolist()}")
+           
+            invalid_uwis = df[~df[uwi_header].isin(self.uwi_list)][uwi_header].unique()
+            # Convert to a list for better readability
+            invalid_uwis = invalid_uwis.tolist()
 
+            # Notify the user about the invalid UWIs
+            if invalid_uwis:
+                QMessageBox.warning(self, "Warning", f"Some UWIs in the CSV do not exist in the project and will be skipped:\n{invalid_uwis}")
             if valid_df.empty:
                 QMessageBox.warning(self, "Warning", "No valid UWIs found in the CSV.")
                 return
@@ -200,6 +205,16 @@ class DataLoadWellZonesDialog(QDialog):
         
                 # Add columns for angles
            # Handle 'Zone' attribute-specific logic
+            rename_map = {}
+            if uwi_header:
+                rename_map[uwi_header] = "UWI"
+            if top_depth_header:
+                rename_map[top_depth_header] = "Top Depth"
+            if base_depth_header:
+                rename_map[base_depth_header] = "Base Depth"
+
+            valid_df.rename(columns=rename_map, inplace=True)
+            print(valid_df.columns.tolist())
             if attribute_type == "Zone":
           
                 # Add columns for angles
@@ -210,8 +225,8 @@ class DataLoadWellZonesDialog(QDialog):
                 # Calculate offsets
                 for i, row in valid_df.iterrows():
                     uwi = row['UWI']
-                    top_md = row[top_depth_header]
-                    base_md = row[base_depth_header]
+                    top_md = row["Top Depth"]
+                    base_md = row["Base Depth"]
                     top_x, top_y, base_x, base_y = self.calculate_offsets(uwi, top_md, base_md)
 
                     valid_df.at[i, 'Top X Offset'] = top_x
@@ -230,6 +245,9 @@ class DataLoadWellZonesDialog(QDialog):
             else:
                 # If attribute type is "Well", simply assign the first and last offsets from the directional survey data
                 valid_df.rename(columns={uwi_header: 'UWI'}, inplace=True)
+
+
+
                 for i, row in valid_df.iterrows():
                     uwi = row['UWI']
                     well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]

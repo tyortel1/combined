@@ -10,7 +10,7 @@ import sys
 import LoadProductions
 import datetime
 
-sys.path.append('C:\Program Files')
+sys.path.append('C:\\Program Files')
 import SeisWare
 
 class SeisWareConnectDialog(QDialog):
@@ -52,6 +52,7 @@ class SeisWareConnectDialog(QDialog):
         self.uwi_list = []
         self.filter_selection = None
         self.project_selection = None
+        self.selected_uwis = None
   
 
 
@@ -366,7 +367,20 @@ class SeisWareConnectDialog(QDialog):
             except Exception as e:
                 print(f"Failed to process production wells: {e}")
       
-        self.production_data = all_production_volume_data
+        
+        sorted_data = sorted(
+            all_production_volume_data,
+            key=lambda x: (x["uwi"], x["date"], x["oil_volume"] + x["gas_volume"]),
+            reverse=True
+)
+# Create a dictionary to store the best row for each (uwi, date)
+        seen = {}
+        for row in sorted_data:
+            key = (row["uwi"], row["date"])
+            if key not in seen:
+                seen[key] = row  # Keep the first occurrence (highest volumes due to sorting)
+
+        self.production_data = list(seen.values())
         self.directional_surveys()
         self.accept()
         print('swdone')
@@ -375,13 +389,14 @@ class SeisWareConnectDialog(QDialog):
 
 
         
-        return self.production_data, self.directional_survey_values, self.well_data_df
+        return self.production_data, self.directional_survey_values, self.well_data_df, self.selected_uwis
 
 
 
     def directional_surveys(self):
         selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]  # Get selected UWIs from the listbox
         print(selected_uwis)
+        self.selected_uwis = selected_uwis
 
         if not selected_uwis:
             QMessageBox.information(self, "Info", "No wells selected for export.")

@@ -13,6 +13,7 @@ class ProjectLoader:
     def __init__(self, parent):
         self.parent = parent
         self.db_path = None
+        self.scenario_id = 1
 
     def open_from_file(self):
         self.parent.open = True
@@ -74,6 +75,7 @@ class ProjectLoader:
 
             # Load zone names
             self.parent.zone_names = data_loaded.get('zone_names', [])
+            print(self.parent.zone_names)
 
             self.parent.line_width = data_loaded.get('line_width', 2)
             self.parent.line_opacity = data_loaded.get('line_opacity', 0.8)
@@ -185,6 +187,7 @@ class ProjectLoader:
 
             db_file_path = file_name.replace('.json', '.db')
             self.load_db_file(db_file_path)
+          
             # Populate dropdowns
             self.parent.populate_well_zone_dropdown()
             self.parent.populate_grid_dropdown(grid_selected)
@@ -221,6 +224,8 @@ class ProjectLoader:
             zone_criteria_df = zone_criteria_df[column_order]
     
         self.parent.zone_criteria_df = zone_criteria_df
+
+        
     
     def load_db_file(self, db_file_path):
         if os.path.exists(db_file_path):
@@ -233,6 +238,10 @@ class ProjectLoader:
                 self.load_directional_surveys_from_db()
                 self.parent.selected_uwis = self.parent.db_manager.get_uwis()
                 self.parent.well_data_df = self.parent.db_manager.get_all_uwis()
+                print(self.parent.well_data_df)
+                self.parent.well_list = self.parent.well_data_df['uwi'].tolist()
+                self.scneario_id = 1
+                self.parent.model_data = self.parent.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
 
             except Exception as e:
                 QMessageBox.critical(
@@ -262,7 +271,8 @@ class ProjectLoader:
                 print(f"Directional surveys data loaded: {self.parent.directional_surveys_df}")
             else:
                 print("No directional surveys data found in the database.")
-                self.parent.directional_surveys_df = pd.DataFrame()  # Ensure it's initialized as an empty DataFrame
+                self.parent.directional_surveys_df = pd.DataFrame()
+              # Ensure it's initialized as an empty DataFrame
 
         except Exception as e:
             # Handle errors gracefully

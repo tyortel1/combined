@@ -140,6 +140,11 @@ class Ui_MainWindow:
         MainWindow.uwiCheckbox.setChecked(True)
         MainWindow.optionsLayout.addWidget(MainWindow.uwiCheckbox)
 
+                # Checkbox to show/hide UWI labels
+        MainWindow.ticksCheckbox = QCheckBox("Show Ticks", MainWindow)
+        MainWindow.ticksCheckbox.setChecked(True)
+        MainWindow.optionsLayout.addWidget(MainWindow.ticksCheckbox)
+
         MainWindow.uwiWidthLabel = QLabel("UWI Size:", MainWindow)
         MainWindow.optionsLayout.addWidget(MainWindow.uwiWidthLabel)
 
@@ -246,20 +251,22 @@ class Ui_MainWindow:
 
         MainWindow.import_menu = MainWindow.menu_bar.addMenu("Import")
         MainWindow.import_menu.setEnabled(False)
-        MainWindow.data_loader_menu_action = QAction("SeisWare Grid and Wells", MainWindow)
+        MainWindow.connect_action = QAction("SeisWare Wells and Production", MainWindow)
+        MainWindow.connect_action.triggered.connect(MainWindow.connectToSeisWare)
+        MainWindow.import_menu.addAction(MainWindow.connect_action)
+        MainWindow.data_loader_menu_action = QAction("SeisWare Grids ", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.data_loader_menu_action)
+        MainWindow.import_action = QAction("CSV Production", MainWindow)
+        MainWindow.import_action.triggered.connect(MainWindow.import_excel)
+        MainWindow.import_menu.addAction(MainWindow.import_action)
         MainWindow.dataload_well_zones_action = QAction("CSV Well Zones and Attributes", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_well_zones_action)
         MainWindow.dataload_segy_action = QAction("Import Segy", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_segy_action)
         # Add new actions
-        MainWindow.connect_action = QAction("SeisWare Production", MainWindow)
-        MainWindow.connect_action.triggered.connect(MainWindow.connectToSeisWare)
-        MainWindow.import_menu.addAction(MainWindow.connect_action)
 
-        MainWindow.import_action = QAction("CSV Production", MainWindow)
-        MainWindow.import_action.triggered.connect(MainWindow.import_excel)
-        MainWindow.import_menu.addAction(MainWindow.import_action)
+
+
 
         MainWindow.export_menu = MainWindow.menu_bar.addMenu("Export")
         MainWindow.export_menu.setEnabled(False)

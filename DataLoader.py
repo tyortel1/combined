@@ -17,7 +17,6 @@ class DataLoaderDialog(QDialog):
         self.setupUi()
         self.connect_to_seisware()
         self.import_options_df = import_options_df
-        self.directional_surveys_df = pd.DataFrame()
         self.depth_grid_data_df = pd.DataFrame()
         self.attribute_grid_data_df = pd.DataFrame()
         self.kd_tree_depth_grids = None
@@ -42,16 +41,7 @@ class DataLoaderDialog(QDialog):
         project_layout.addStretch()
         layout.addLayout(project_layout)
 
-        # Well Filter
-        filter_layout = QHBoxLayout()
-        self.filter_label = QLabel("Well Filter:")
-        self.filter_label.setFixedWidth(label_width)
-        self.filter_dropdown = QComboBox()
-        self.filter_dropdown.setFixedWidth(dropdown_width)
-        filter_layout.addWidget(self.filter_label)
-        filter_layout.addWidget(self.filter_dropdown)
-        filter_layout.addStretch()
-        layout.addLayout(filter_layout)
+
 
             # Add a dropdown for Feet vs Meters
         grid_unit_layout = QHBoxLayout()
@@ -68,46 +58,6 @@ class DataLoaderDialog(QDialog):
 
 
 
-
-        uwi_label = QLabel("Select UWI:")
-        layout.addWidget(uwi_label)  
-        # Layout for UWI list boxes and arrows
-        well_list_layout = QHBoxLayout()
-        self.uwi_listbox = QListWidget()
-        self.uwi_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        well_list_layout.addWidget(self.uwi_listbox)
-
-        well_arrow_layout = QVBoxLayout()
-        well_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        self.move_all_wells_right_button = QPushButton()
-        self.move_all_wells_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
-        self.move_all_wells_right_button.clicked.connect(self.move_all_wells_right)
-        well_arrow_layout.addWidget(self.move_all_wells_right_button)
-
-        self.move_wells_right_button = QPushButton()
-        self.move_wells_right_button.setIcon(QIcon("icons/arrow_right.ico"))
-        self.move_wells_right_button.clicked.connect(self.move_selected_wells_right)
-        well_arrow_layout.addWidget(self.move_wells_right_button)
-
-        self.move_wells_left_button = QPushButton()
-        self.move_wells_left_button.setIcon(QIcon("icons/arrow_left.ico"))
-        self.move_wells_left_button.clicked.connect(self.move_selected_wells_left)
-        well_arrow_layout.addWidget(self.move_wells_left_button)
-
-        self.move_all_wells_left_button = QPushButton()
-        self.move_all_wells_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
-        self.move_all_wells_left_button.clicked.connect(self.move_all_wells_left)
-        well_arrow_layout.addWidget(self.move_all_wells_left_button)
-
-        well_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        well_list_layout.addLayout(well_arrow_layout)
-
-        self.selected_uwi_listbox = QListWidget()
-        self.selected_uwi_listbox.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        well_list_layout.addWidget(self.selected_uwi_listbox)
-
-        layout.addLayout(well_list_layout)
 
 
         depth_grids_label = QLabel("Select Depth Grids:")
@@ -201,36 +151,24 @@ class DataLoaderDialog(QDialog):
         self.connection = None
 
         self.project_list = []
-        self.well_list = []
-        self.uwi_to_well_dict = {}
-        self.selected_uwis = []
         self.depth_grid_list = []
         self.attribute_grid_list = []
         self.grid_objects_with_names = []
         self.selected_depth_grids = []
         self.selected_attribute_grids = []
         self.import_options_df = pd.DataFrame()
-        self.uwis_and_offsets = []
-        self.directional_surveys = []
-        self.directional_surveys_df = pd.DataFrame()
+
         self.grid_info_df = pd.DataFrame()
-        self.total_lat_data = []
+   
         self.grid_names = []
 
     def set_import_parameters(self, import_options_df):
         if not import_options_df.empty:
             self.project_dropdown.setCurrentText(import_options_df.get('Project', [''])[0])
-            self.filter_dropdown.setCurrentText(import_options_df.get('Well Filter', [''])[0])
-            selected_uwis = import_options_df.get('selected_uwis', [[]])[0]
+
             selected_depth_grids = import_options_df.get('selected_depth_grids', [[]])[0]
             selected_attribute_grids = import_options_df.get('selected_attribute_grids', [[]])[0]
 
-            for i in range(self.uwi_listbox.count() - 1, -1, -1):
-                if self.uwi_listbox.item(i).text() in selected_uwis:
-                    self.uwi_listbox.takeItem(i)
-            if isinstance(selected_uwis, list):
-                self.selected_uwi_listbox.clear()
-                self.selected_uwi_listbox.addItems(selected_uwis)
 
             for i in range(self.depth_grid_listbox.count() - 1, -1, -1):
                 if self.depth_grid_listbox.item(i).text() in selected_depth_grids:
@@ -246,71 +184,119 @@ class DataLoaderDialog(QDialog):
                 self.selected_attribute_grid_listbox.clear()
                 self.selected_attribute_grid_listbox.addItems(selected_attribute_grids)
 
-    def move_selected_wells_right(self):
-        selected_items = self.uwi_listbox.selectedItems()
-        for item in selected_items:
-            self.selected_uwi_listbox.addItem(item.text())
-            self.uwi_listbox.takeItem(self.uwi_listbox.row(item))
 
-    def move_selected_wells_left(self):
-        selected_items = self.selected_uwi_listbox.selectedItems()
-        for item in selected_items:
-            self.uwi_listbox.addItem(item.text())
-            self.selected_uwi_listbox.takeItem(self.selected_uwi_listbox.row(item))
-
-    def move_all_wells_right(self):
-        while self.uwi_listbox.count() > 0:
-            item = self.uwi_listbox.takeItem(0)
-            self.selected_uwi_listbox.addItem(item)
-
-    def move_all_wells_left(self):
-        while self.selected_uwi_listbox.count() > 0:
-            item = self.selected_uwi_listbox.takeItem(0)
-            self.uwi_listbox.addItem(item)
 
     def move_selected_depth_grids_right(self):
         selected_items = self.depth_grid_listbox.selectedItems()
         for item in selected_items:
-            self.selected_depth_grid_listbox.addItem(item.text())
-            self.depth_grid_listbox.takeItem(self.depth_grid_listbox.row(item))
+            text = item.text()
+            self.selected_depth_grid_listbox.addItem(text)
+            # Remove from both left lists
+            self.remove_from_listbox(self.depth_grid_listbox, text)
+            self.remove_from_listbox(self.attribute_grid_listbox, text)
+            # Sort the selected list
+            self.sort_listbox(self.selected_depth_grid_listbox)
 
     def move_selected_depth_grids_left(self):
         selected_items = self.selected_depth_grid_listbox.selectedItems()
         for item in selected_items:
-            self.depth_grid_listbox.addItem(item.text())
+            text = item.text()
+            # Add back to both left lists
+            self.depth_grid_listbox.addItem(text)
+            self.attribute_grid_listbox.addItem(text)
             self.selected_depth_grid_listbox.takeItem(self.selected_depth_grid_listbox.row(item))
-
-    def move_all_depth_grids_right(self):
-        while self.depth_grid_listbox.count() > 0:
-            item = self.depth_grid_listbox.takeItem(0)
-            self.selected_depth_grid_listbox.addItem(item)
-
-    def move_all_depth_grids_left(self):
-        while self.selected_depth_grid_listbox.count() > 0:
-            item = self.selected_depth_grid_listbox.takeItem(0)
-            self.depth_grid_listbox.addItem(item)
+            # Sort both left lists
+            self.sort_listbox(self.depth_grid_listbox)
+            self.sort_listbox(self.attribute_grid_listbox)
 
     def move_selected_attribute_grids_right(self):
         selected_items = self.attribute_grid_listbox.selectedItems()
         for item in selected_items:
-            self.selected_attribute_grid_listbox.addItem(item.text())
-            self.attribute_grid_listbox.takeItem(self.attribute_grid_listbox.row(item))
+            text = item.text()
+            self.selected_attribute_grid_listbox.addItem(text)
+            # Remove from both left lists
+            self.remove_from_listbox(self.depth_grid_listbox, text)
+            self.remove_from_listbox(self.attribute_grid_listbox, text)
+            # Sort the selected list
+            self.sort_listbox(self.selected_attribute_grid_listbox)
 
     def move_selected_attribute_grids_left(self):
         selected_items = self.selected_attribute_grid_listbox.selectedItems()
         for item in selected_items:
-            self.attribute_grid_listbox.addItem(item.text())
+            text = item.text()
+            # Add back to both left lists
+            self.depth_grid_listbox.addItem(text)
+            self.attribute_grid_listbox.addItem(text)
             self.selected_attribute_grid_listbox.takeItem(self.selected_attribute_grid_listbox.row(item))
+            # Sort both left lists
+            self.sort_listbox(self.depth_grid_listbox)
+            self.sort_listbox(self.attribute_grid_listbox)
+
+    # Helper functions
+    def sort_listbox(self, listbox):
+        items = [listbox.item(i).text() for i in range(listbox.count())]
+        items.sort()
+        listbox.clear()
+        listbox.addItems(items)
+
+    def remove_from_listbox(self, listbox, text):
+        for i in range(listbox.count()):
+            if listbox.item(i).text() == text:
+                listbox.takeItem(i)
+                break
+
+    # Also modify your on_project_select to sort initially:
+    def on_project_select(self, index):
+        # ... existing code ...
+    
+        # Add all grids to both Depth Grids and Attribute Grids lists
+        for grid_name in sorted(self.grids):  # Sort the grids before adding
+            self.depth_grid_listbox.addItem(grid_name)
+            self.attribute_grid_listbox.addItem(grid_name)
+
+    def move_all_depth_grids_right(self):
+        items = [self.depth_grid_listbox.item(i).text() for i in range(self.depth_grid_listbox.count())]
+        # Add all items to selected list
+        self.selected_depth_grid_listbox.addItems(sorted(items))
+        # Clear both left lists
+        self.depth_grid_listbox.clear()
+        self.attribute_grid_listbox.clear()
+
+    def move_all_depth_grids_left(self):
+        items = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
+        # Clear selected list
+        self.selected_depth_grid_listbox.clear()
+        # Add items back to both left lists in sorted order
+        self.depth_grid_listbox.addItems(sorted(items))
+        self.attribute_grid_listbox.addItems(sorted(items))
 
     def move_all_attribute_grids_right(self):
-        while self.attribute_grid_listbox.count() > 0:
-            item = self.attribute_grid_listbox.takeItem(0)
-            self.selected_attribute_grid_listbox.addItem(item)
+        items = [self.attribute_grid_listbox.item(i).text() for i in range(self.attribute_grid_listbox.count())]
+        # Add all items to selected list
+        self.selected_attribute_grid_listbox.addItems(sorted(items))
+        # Clear both left lists
+        self.depth_grid_listbox.clear()
+        self.attribute_grid_listbox.clear()
 
     def move_all_attribute_grids_left(self):
-        while self.selected_attribute_grid_listbox.count() > 0:
-            item = self.selected_attribute_grid_listbox.takeItem(0)
-            self.attribute_grid_listbox.addItem(item)
+        items = [self.selected_attribute_grid_listbox.item(i).text() for i in range(self.selected_attribute_grid_listbox.count())]
+        # Clear selected list
+        self.selected_attribute_grid_listbox.clear()
+        # Add items back to both left lists in sorted order
+        self.depth_grid_listbox.addItems(sorted(items))
+        self.attribute_grid_listbox.addItems(sorted(items))
+
+    def sort_listbox(self, listbox):
+        items = [listbox.item(i).text() for i in range(listbox.count())]
+        items.sort()
+        listbox.clear()
+        listbox.addItems(items)
+
+    def remove_from_listbox(self, listbox, text):
+        for i in range(listbox.count()):
+            if listbox.item(i).text() == text:
+                listbox.takeItem(i)
+                break
 
     def connect_to_seisware(self):
         self.connection = SeisWare.Connection()
@@ -349,26 +335,8 @@ class DataLoaderDialog(QDialog):
             self.show_error_message("Error", "Failed to connect to the project: " + str(err))
             return
 
-        self.well_filter = SeisWare.FilterList()
-        try:
-            self.login_instance.FilterManager().GetAll(self.well_filter)
-        except RuntimeError as err:
-            self.show_error_message("Error", f"Failed to get filters: {err}")
-            return
 
-        filter_list = []
-        for filter in self.well_filter:
-            filter_type = filter.FilterType()
-            if filter_type == 2:
-                filter_name = filter.Name()
-                filter_list.append(filter_name)
 
-        self.filter_dropdown.clear()
-        self.filter_dropdown.addItems(filter_list)
-        self.filter_dropdown.blockSignals(True)
-        self.filter_dropdown.setCurrentIndex(-1)
-        self.filter_dropdown.blockSignals(False)
-        self.filter_dropdown.currentIndexChanged.connect(self.on_filter_select)
 
         self.grid_list = SeisWare.GridList()
         try:
@@ -382,39 +350,11 @@ class DataLoaderDialog(QDialog):
         self.depth_grid_listbox.clear()
         self.attribute_grid_listbox.clear()
 
-        # Add all grids to both Depth Grids and Attribute Grids lists
-        for grid_name in self.grids:
+        for grid_name in sorted(self.grids):  # Sort the grids before adding
             self.depth_grid_listbox.addItem(grid_name)
             self.attribute_grid_listbox.addItem(grid_name)
 
-    def on_filter_select(self, index):
-        self.uwi_listbox.clear()
-        self.selected_uwi_listbox.clear()
 
-        selected_filter = self.filter_dropdown.currentText()
-        well_filter = SeisWare.FilterList()
-        self.login_instance.FilterManager().GetAll(well_filter)
-        well_filter = [i for i in well_filter if i.Name() == selected_filter]
-
-        keys = SeisWare.IDSet()
-        failed_keys = SeisWare.IDSet()
-        well_list = SeisWare.WellList()
-
-        try:
-            self.login_instance.WellManager().GetKeysByFilter(well_filter[0], keys)
-            self.login_instance.WellManager().GetByKeys(keys, well_list, failed_keys)
-        except RuntimeError as err:
-            self.show_error_message("Failed to get all the wells from the project", err)
-            return
-
-        self.well_list = [well.UWI() for well in well_list]
-        self.uwi_to_well_dict = {well.UWI(): well for well in well_list}
-        self.load_uwi_list()
-
-    def load_uwi_list(self):
-        sorted_uwi_list = sorted(self.well_list, reverse=False)
-        self.uwi_listbox.addItems(sorted_uwi_list)
-        return self.well_list
 
     def load_data(self):
         # Show loading dialog
@@ -425,19 +365,16 @@ class DataLoaderDialog(QDialog):
         loading_dialog.show()
     
         try:
-            self.selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
+            
             self.selected_depth_grids = [self.selected_depth_grid_listbox.item(i).text() for i in range(self.selected_depth_grid_listbox.count())]
             self.selected_attribute_grids = [self.selected_attribute_grid_listbox.item(i).text() for i in range(self.selected_attribute_grid_listbox.count())]
 
-            if not self.selected_uwis:
-                self.show_info_message("Info", "No wells selected for export.")
-                return
 
             if not self.selected_depth_grids and not self.selected_attribute_grids:
                 self.show_info_message("Info", "No grids selected for export.")
                 return
 
-            self.store_directional_surveys()
+ 
             self.store_depth_grid_data()
             self.store_attribute_grid_data()
             self.zone_color()
@@ -448,84 +385,6 @@ class DataLoaderDialog(QDialog):
         finally:
             # Close the loading dialog when done
             loading_dialog.close()
-
-
-    def store_directional_surveys(self):
-        self.uwis_and_offsets = []
-        self.directional_surveys = []
-        self.total_lat_data = []
-
-        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
-        if not selected_uwis:
-            self.show_info_message("Info", "No wells selected for export.")
-            return
-
-        for uwi in selected_uwis:
-            well = self.uwi_to_well_dict.get(uwi)
-            if well:
-                depth_unit = SeisWare.Unit.Meter
-                x_offsets = []
-                y_offsets = []
-                y_offsets = []
-                md_values = []
-                tvd_values = []
-                cumulative_distances = []
-
-                surfaceX = well.TopHole().x.Value(depth_unit)
-                surfaceY = well.TopHole().y.Value(depth_unit)
-                surfaceDatum = well.DatumElevation().Value(depth_unit)
-
-                dirsrvylist = SeisWare.DirectionalSurveyList()
-                self.login_instance.DirectionalSurveyManager().GetAllForWell(well.ID(), dirsrvylist)
-                dirsrvy = [i for i in dirsrvylist if i.OffsetNorthType() > 0]
-
-                if dirsrvy:
-                    self.login_instance.DirectionalSurveyManager().PopulateValues(dirsrvy[0])
-                    srvypoints = SeisWare.DirectionalSurveyPointList()
-                    dirsrvy[0].Values(srvypoints)
-
-                    cumulative_distance = 0
-                    start_lat = None
-                    total_lat = 0
-
-                    for i, point in enumerate(srvypoints):
-                        x_offset = surfaceX + point.xOffset.Value(depth_unit)
-                        y_offset = surfaceY + point.yOffset.Value(depth_unit)
-                        tvd = surfaceDatum - point.tvd.Value(depth_unit)
-                        
-                        md = point.md.Value(depth_unit)
-
-                        if i > 0:
-                            prev_x_offset = x_offsets[-1]
-                            prev_y_offset = y_offsets[-1]
-                            distance = np.sqrt((x_offset - prev_x_offset) ** 2 + (y_offset - prev_y_offset) ** 2)
-                            cumulative_distance += distance
-
-                        x_offsets.append(x_offset)
-                        y_offsets.append(y_offset)
-                        md_values.append(md)
-                        tvd_values.append(tvd)
-                        cumulative_distances.append(cumulative_distance)
-
-                        if start_lat is None:
-                            start_lat = md
-
-                    end_lat = md
-                    if start_lat is not None:
-                        total_lat = end_lat - start_lat
-
-                    self.uwis_and_offsets.append((uwi, x_offsets, y_offsets))
-                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances))
-                    self.total_lat_data.append((uwi, total_lat, surfaceX, surfaceY))
-
-        # Flatten the directional surveys into a DataFrame
-        data_list = []
-        for uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances in self.directional_surveys:
-            for i in range(len(md_values)):
-                data_list.append([uwi, md_values[i], tvd_values[i], x_offsets[i], y_offsets[i], cumulative_distances[i]])
-
-        columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance']
-        self.directional_surveys_df = pd.DataFrame(data_list, columns=columns)
 
 
     def store_depth_grid_data(self):
@@ -713,9 +572,6 @@ class DataLoaderDialog(QDialog):
         hex_color = hex_color.lstrip('#')
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-    def hex_to_rgb(self, hex_color):
-        hex_color = hex_color.lstrip('#')
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 
 
@@ -735,24 +591,17 @@ class DataLoaderDialog(QDialog):
         msg_box.exec_()
 
     def reset_ui_and_data(self):
-        self.filter_dropdown.blockSignals(True)
-        self.filter_dropdown.clear()
-        self.filter_dropdown.blockSignals(False)
 
-        self.uwi_listbox.clear()
-        self.selected_uwi_listbox.clear()
+
         self.depth_grid_listbox.clear()
         self.selected_depth_grid_listbox.clear()
         self.attribute_grid_listbox.clear()
         self.selected_attribute_grid_listbox.clear()
-
-        self.well_list.clear()
         self.depth_grid_list.clear()
         self.attribute_grid_list.clear()
-        self.uwi_to_well_dict.clear()
-        self.selected_uwis.clear()
 
-        self.directional_surveys_df = pd.DataFrame()
+
+
         self.depth_grid_data_df = pd.DataFrame()
         self.attribute_grid_data_df = pd.DataFrame()
 
