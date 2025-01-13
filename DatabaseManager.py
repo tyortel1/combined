@@ -150,7 +150,7 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def update_uwi_revenue(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
+    def update_uwi_revenue_and_efr(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
         self.connect()
         update_sql = """
         UPDATE model_properties

@@ -22,12 +22,13 @@ class ProjectDialog(QDialog):
         self.directory_button.clicked.connect(self.select_directory)
 
         self.ok_button.clicked.connect(self.accept)
+        self.ok_button.setDefault(True)
 
         self.setLayout(layout)
 
     def select_directory(self):
         dialog = QFileDialog(self, 'Select Directory')
-        dialog.setFileMode(QFileDialog.DirectoryOnly)
+        dialog.setFileMode(QFileDialog.Directory)
         dialog.setGeometry(100, 100, 300, 200)  # You can try setting the geometry directly
         if dialog.exec_() == QDialog.Accepted:
             directory = dialog.selectedFiles()[0]
