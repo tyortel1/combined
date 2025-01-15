@@ -13,7 +13,7 @@ class EurNpv:
         # Retrieve production rates from the database
        
         self.prod_rates_all = self.db_manager.retrieve_prod_rates_all()
-
+        print()
         # Group by UWI and sum the production columns
         eur_df = self.prod_rates_all.groupby('uwi').agg(
             q_oil_eur=('q_oil', 'sum'),  # Sum of oil production
@@ -58,13 +58,13 @@ class EurNpv:
             EFR_oil = row['EFR_oil']
             EFR_gas = row['EFR_gas']
 
-            # Grab q_oil_eru and q_gas_eur from self.model_data for the UWI
-            q_oil_eru = model_data_df.loc[model_data_df['uwi'] == uwi, 'q_oil_eur'].values[0]
+            # Grab q_oil_eur and q_gas_eur from self.model_data for the UWI
+            q_oil_eur = model_data_df.loc[model_data_df['uwi'] == uwi, 'q_oil_eur'].values[0]
             q_gas_eur = model_data_df.loc[model_data_df['uwi'] == uwi, 'q_gas_eur'].values[0]
 
             # Subtract the EUR values from EFR values and calculate percentage remaining
-            EUR_oil_remaining = (q_oil_eru - EFR_oil) / q_oil_eru if q_oil_eru != 0 else 0
-            EUR_gas_remaining = (q_gas_eur - EFR_gas) / q_gas_eur if q_gas_eur != 0 else 0
+            EUR_oil_remaining = (1 - (q_oil_eur - EFR_oil) / q_oil_eur) if q_oil_eur != 0 else 0
+            EUR_gas_remaining = (1- (q_gas_eur - EFR_gas) / q_gas_eur) if q_gas_eur != 0 else 0
 
             print(f"UWI: {uwi}, NPV: {npv}, NPV Discounted: {npv_discounted}, EFR Oil: {EFR_oil}, EFR Gas: {EFR_gas}")
             print(f"EUR Oil Remaining: {EUR_oil_remaining*100:.2f}%, EUR Gas Remaining: {EUR_gas_remaining*100:.2f}%")

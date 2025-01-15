@@ -1,0 +1,1793 @@
+2025-01-14 12:25:56,310 - root - DEBUG - Toolbar setup completed
+2025-01-14 12:25:56,318 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 12:25:56,321 - root - DEBUG - Table setup completed
+2025-01-14 12:25:56,321 - root - DEBUG - UI setup completed successfully
+2025-01-14 12:25:56,321 - root - DEBUG - Signal connections established
+2025-01-14 12:25:56,323 - root - INFO - Scenario changed to: Active_Wells
+2025-01-14 12:25:56,325 - root - DEBUG - UI updated for scenario: Active_Wells
+2025-01-14 12:25:56,327 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 12:25:57,881 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 12:25:59,405 - root - INFO - Initial data loaded successfully
+2025-01-14 12:25:59,405 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 12:26:14,745 - root - INFO - Scenario changed to: test
+2025-01-14 12:26:14,746 - root - DEBUG - UI updated for scenario: test
+2025-01-14 12:26:14,755 - root - DEBUG - Row 0 populated successfully
+2025-01-14 12:26:14,755 - root - INFO - Well pads table populated successfully
+2025-01-14 12:26:20,971 - root - INFO - Starting add_well process
+2025-01-14 12:26:23,007 - root - DEBUG - Add well dialog cancelled
+2025-01-14 12:26:25,888 - root - INFO - Scenario changed to: Active_Wells
+2025-01-14 12:26:25,889 - root - DEBUG - UI updated for scenario: Active_Wells
+2025-01-14 12:26:25,890 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 12:32:59,074 - root - DEBUG - Toolbar setup completed
+2025-01-14 12:32:59,075 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 12:32:59,077 - root - DEBUG - Table setup completed
+2025-01-14 12:32:59,077 - root - DEBUG - UI setup completed successfully
+2025-01-14 12:32:59,077 - root - DEBUG - Signal connections established
+2025-01-14 12:32:59,079 - root - INFO - Scenario changed to: test
+2025-01-14 12:32:59,080 - root - DEBUG - UI updated for scenario: test
+2025-01-14 12:32:59,082 - root - DEBUG - Row 0 populated successfully
+2025-01-14 12:32:59,082 - root - INFO - Well pads table populated successfully
+2025-01-14 12:32:59,084 - root - DEBUG - Row 0 populated successfully
+2025-01-14 12:32:59,084 - root - INFO - Well pads table populated successfully
+2025-01-14 12:32:59,084 - root - INFO - Initial data loaded successfully
+2025-01-14 12:32:59,085 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 12:33:11,809 - root - INFO - Starting add_well process
+2025-01-14 12:33:13,867 - root - DEBUG - Add well dialog cancelled
+2025-01-14 13:00:11,029 - root - INFO - Starting add_well process
+2025-01-14 13:00:14,374 - root - DEBUG - Add well dialog cancelled
+2025-01-14 13:00:15,760 - root - INFO - Dialog closed successfully
+2025-01-14 14:09:34,583 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:09:34,584 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:09:34,593 - root - DEBUG - Table setup completed
+2025-01-14 14:09:34,593 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:09:34,593 - root - DEBUG - Signal connections established
+2025-01-14 14:09:34,595 - root - INFO - Scenario changed to: test
+2025-01-14 14:09:34,597 - root - ERROR - Error updating UI for scenario: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:09:34,597 - root - ERROR - Error in on_scenario_changed: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:09:36,903 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:09:36,903 - root - INFO - Well pads table populated successfully
+2025-01-14 14:09:36,903 - root - INFO - Initial data loaded successfully
+2025-01-14 14:09:36,904 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:14:48,296 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:14:48,297 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:14:48,299 - root - DEBUG - Table setup completed
+2025-01-14 14:14:48,300 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:14:48,300 - root - DEBUG - Signal connections established
+2025-01-14 14:14:48,302 - root - INFO - Scenario changed to: test
+2025-01-14 14:14:48,303 - root - ERROR - Error updating UI for scenario: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:14:48,303 - root - ERROR - Error in on_scenario_changed: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:14:49,625 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:14:49,625 - root - INFO - Well pads table populated successfully
+2025-01-14 14:14:49,626 - root - INFO - Initial data loaded successfully
+2025-01-14 14:14:49,626 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:17:46,696 - root - WARNING - Icon not found: C:\Users\jerem\source\repos\Combined\Icons\Icons/Add Scenario
+2025-01-14 14:17:46,698 - root - WARNING - Icon not found: C:\Users\jerem\source\repos\Combined\Icons\Icons/Update Curve
+2025-01-14 14:17:46,698 - root - WARNING - Icon not found: C:\Users\jerem\source\repos\Combined\Icons\Icons/delete
+2025-01-14 14:17:46,698 - root - WARNING - Icon not found: C:\Users\jerem\source\repos\Combined\Icons\Icons/add
+2025-01-14 14:17:46,698 - root - WARNING - Icon not found: C:\Users\jerem\source\repos\Combined\Icons\Icons/Launch Graph
+2025-01-14 14:17:46,699 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:17:46,699 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:17:46,701 - root - DEBUG - Table setup completed
+2025-01-14 14:17:46,701 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:17:46,702 - root - DEBUG - Signal connections established
+2025-01-14 14:17:46,703 - root - INFO - Scenario changed to: test
+2025-01-14 14:17:46,704 - root - ERROR - Error updating UI for scenario: 'PUDPropertiesDialog' object has no attribute 'add_scenario4'
+2025-01-14 14:17:46,704 - root - ERROR - Error in on_scenario_changed: 'PUDPropertiesDialog' object has no attribute 'add_scenario4'
+2025-01-14 14:17:48,156 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:17:48,156 - root - INFO - Well pads table populated successfully
+2025-01-14 14:17:48,156 - root - INFO - Initial data loaded successfully
+2025-01-14 14:17:48,156 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:19:15,652 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 14:32:00,956 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:32:00,959 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:32:00,961 - root - DEBUG - Table setup completed
+2025-01-14 14:32:00,961 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:32:00,961 - root - DEBUG - Signal connections established
+2025-01-14 14:32:00,963 - root - INFO - Scenario changed to: test
+2025-01-14 14:32:00,964 - root - ERROR - Error updating UI for scenario: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:32:00,964 - root - ERROR - Error in on_scenario_changed: 'PUDPropertiesDialog' object has no attribute 'add_well4'
+2025-01-14 14:32:02,199 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:32:02,200 - root - INFO - Well pads table populated successfully
+2025-01-14 14:32:02,200 - root - INFO - Initial data loaded successfully
+2025-01-14 14:32:02,200 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:32:46,829 - root - INFO - Launching combined cashflow for scenario: test
+2025-01-14 14:34:37,123 - root - INFO - Running scenario: test
+2025-01-14 14:35:40,373 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:35:40,374 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:35:40,376 - root - DEBUG - Table setup completed
+2025-01-14 14:35:40,376 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:35:40,377 - root - DEBUG - Signal connections established
+2025-01-14 14:35:40,379 - root - INFO - Scenario changed to: test
+2025-01-14 14:35:40,380 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:35:40,382 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:35:40,382 - root - INFO - Well pads table populated successfully
+2025-01-14 14:35:40,383 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:35:40,384 - root - INFO - Well pads table populated successfully
+2025-01-14 14:35:40,384 - root - INFO - Initial data loaded successfully
+2025-01-14 14:35:40,384 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:36:10,708 - root - ERROR - Error saving wells to scenario: 'DatabaseManager' object has no attribute 'get_wells_in_scenario'
+2025-01-14 14:38:06,019 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:38:06,020 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:38:06,022 - root - DEBUG - Table setup completed
+2025-01-14 14:38:06,023 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:38:06,023 - root - DEBUG - Signal connections established
+2025-01-14 14:38:06,025 - root - INFO - Scenario changed to: test
+2025-01-14 14:38:06,026 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:38:06,029 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:38:06,029 - root - INFO - Well pads table populated successfully
+2025-01-14 14:38:06,031 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:38:06,032 - root - INFO - Well pads table populated successfully
+2025-01-14 14:38:06,032 - root - INFO - Initial data loaded successfully
+2025-01-14 14:38:06,032 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:38:13,615 - root - ERROR - Error updating scenario details: 'DatabaseManager' object has no attribute 'update_scenario_details'
+2025-01-14 14:40:22,694 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:40:22,695 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:40:22,698 - root - DEBUG - Table setup completed
+2025-01-14 14:40:22,698 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:40:22,698 - root - DEBUG - Signal connections established
+2025-01-14 14:40:22,700 - root - INFO - Scenario changed to: test
+2025-01-14 14:40:22,701 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:40:22,703 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:40:22,703 - root - INFO - Well pads table populated successfully
+2025-01-14 14:40:22,705 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:40:22,706 - root - INFO - Well pads table populated successfully
+2025-01-14 14:40:22,706 - root - INFO - Initial data loaded successfully
+2025-01-14 14:40:22,706 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:40:30,479 - root - ERROR - Error updating scenario details: 'DatabaseManager' object has no attribute 'update_scenario_details'
+2025-01-14 14:41:26,774 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:41:26,775 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:41:26,777 - root - DEBUG - Table setup completed
+2025-01-14 14:41:26,777 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:41:26,778 - root - DEBUG - Signal connections established
+2025-01-14 14:41:26,780 - root - INFO - Scenario changed to: test
+2025-01-14 14:41:26,781 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:41:26,783 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:41:26,783 - root - INFO - Well pads table populated successfully
+2025-01-14 14:41:26,785 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:41:26,785 - root - INFO - Well pads table populated successfully
+2025-01-14 14:41:26,785 - root - INFO - Initial data loaded successfully
+2025-01-14 14:41:26,786 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:48:51,659 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:48:51,660 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:48:51,662 - root - DEBUG - Table setup completed
+2025-01-14 14:48:51,662 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:48:51,663 - root - DEBUG - Signal connections established
+2025-01-14 14:48:51,666 - root - INFO - Scenario changed to: test
+2025-01-14 14:48:51,667 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:48:51,670 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:48:51,671 - root - INFO - Well pads table populated successfully
+2025-01-14 14:48:51,673 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:48:51,673 - root - INFO - Well pads table populated successfully
+2025-01-14 14:48:51,674 - root - INFO - Initial data loaded successfully
+2025-01-14 14:48:51,674 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:49:01,100 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:49:01,100 - root - INFO - Well pads table populated successfully
+2025-01-14 14:49:40,557 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:49:40,559 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:49:40,561 - root - DEBUG - Table setup completed
+2025-01-14 14:49:40,561 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:49:40,562 - root - DEBUG - Signal connections established
+2025-01-14 14:49:40,564 - root - INFO - Scenario changed to: test
+2025-01-14 14:49:40,565 - root - DEBUG - UI updated for scenario: test
+2025-01-14 14:49:40,568 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:49:40,568 - root - INFO - Well pads table populated successfully
+2025-01-14 14:49:40,570 - root - DEBUG - Row 0 populated successfully
+2025-01-14 14:49:40,570 - root - INFO - Well pads table populated successfully
+2025-01-14 14:49:40,570 - root - INFO - Initial data loaded successfully
+2025-01-14 14:49:40,570 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:49:43,455 - root - INFO - Dialog closed successfully
+2025-01-14 14:51:38,608 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:51:38,610 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:51:38,612 - root - DEBUG - Table setup completed
+2025-01-14 14:51:38,613 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:51:38,613 - root - DEBUG - Signal connections established
+2025-01-14 14:51:38,616 - root - INFO - No scenarios to load
+2025-01-14 14:51:38,616 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:51:53,528 - root - INFO - Dialog closed successfully
+2025-01-14 14:57:11,695 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:57:11,695 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:57:11,697 - root - DEBUG - Table setup completed
+2025-01-14 14:57:11,697 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:57:11,697 - root - DEBUG - Signal connections established
+2025-01-14 14:57:11,699 - root - INFO - No scenarios to load
+2025-01-14 14:57:11,699 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:57:48,988 - root - INFO - Dialog closed successfully
+2025-01-14 15:01:14,852 - root - DEBUG - Toolbar setup completed
+2025-01-14 15:01:14,854 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 15:01:14,856 - root - DEBUG - Table setup completed
+2025-01-14 15:01:14,856 - root - DEBUG - UI setup completed successfully
+2025-01-14 15:01:14,856 - root - DEBUG - Signal connections established
+2025-01-14 15:01:14,859 - root - INFO - No scenarios to load
+2025-01-14 15:01:14,859 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 15:03:23,059 - root - DEBUG - Toolbar setup completed
+2025-01-14 15:03:23,060 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 15:03:23,063 - root - DEBUG - Table setup completed
+2025-01-14 15:03:23,063 - root - DEBUG - UI setup completed successfully
+2025-01-14 15:03:23,063 - root - DEBUG - Signal connections established
+2025-01-14 15:03:23,065 - root - INFO - No scenarios to load
+2025-01-14 15:03:23,065 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 15:03:34,830 - root - ERROR - Error saving wells to scenario: DatabaseManager.insert_scenario_name() missing 1 required positional argument: 'is_active'
+2025-01-14 15:07:57,337 - root - DEBUG - Toolbar setup completed
+2025-01-14 15:07:57,339 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 15:07:57,340 - root - DEBUG - Table setup completed
+2025-01-14 15:07:57,341 - root - DEBUG - UI setup completed successfully
+2025-01-14 15:07:57,341 - root - DEBUG - Signal connections established
+2025-01-14 15:07:57,342 - root - INFO - No scenarios to load
+2025-01-14 15:07:57,342 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 15:09:25,247 - root - INFO - Well pads table populated successfully
+2025-01-14 15:36:58,361 - root - DEBUG - Toolbar setup completed
+2025-01-14 15:36:58,363 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 15:36:58,374 - root - DEBUG - Table setup completed
+2025-01-14 15:36:58,375 - root - DEBUG - UI setup completed successfully
+2025-01-14 15:36:58,375 - root - DEBUG - Signal connections established
+2025-01-14 15:36:58,377 - root - INFO - Scenario changed to: first
+2025-01-14 15:36:58,379 - root - DEBUG - UI updated for scenario: first
+2025-01-14 15:36:58,383 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 15:37:00,890 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 15:37:05,062 - root - INFO - Initial data loaded successfully
+2025-01-14 15:37:05,063 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:26:50,533 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:26:50,535 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:26:50,541 - root - DEBUG - Table setup completed
+2025-01-14 16:26:50,542 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:26:50,542 - root - DEBUG - Signal connections established
+2025-01-14 16:26:50,545 - root - INFO - No scenarios to load
+2025-01-14 16:26:50,545 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:26:55,372 - root - INFO - Dialog closed successfully
+2025-01-14 16:27:21,095 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:27:21,095 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:27:21,098 - root - DEBUG - Table setup completed
+2025-01-14 16:27:21,098 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:27:21,098 - root - DEBUG - Signal connections established
+2025-01-14 16:27:21,099 - root - INFO - No scenarios to load
+2025-01-14 16:27:21,100 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:32:28,587 - root - ERROR - Error saving wells to database: 'pad_name'
+2025-01-14 16:32:31,388 - root - INFO - Well pads table populated successfully
+2025-01-14 16:41:03,704 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:41:03,705 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:41:03,707 - root - DEBUG - Table setup completed
+2025-01-14 16:41:03,707 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:41:03,708 - root - DEBUG - Signal connections established
+2025-01-14 16:41:03,710 - root - INFO - No scenarios to load
+2025-01-14 16:41:03,710 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:41:05,243 - root - INFO - Dialog closed successfully
+2025-01-14 16:41:16,856 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:41:16,857 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:41:16,858 - root - DEBUG - Table setup completed
+2025-01-14 16:41:16,858 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:41:16,858 - root - DEBUG - Signal connections established
+2025-01-14 16:41:16,860 - root - INFO - No scenarios to load
+2025-01-14 16:41:16,860 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:41:59,578 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-14 16:41:59,580 - root - INFO - Well pads table populated successfully
+2025-01-14 16:44:26,466 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:44:26,467 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:44:26,469 - root - DEBUG - Table setup completed
+2025-01-14 16:44:26,469 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:44:26,470 - root - DEBUG - Signal connections established
+2025-01-14 16:44:26,471 - root - INFO - Scenario changed to: gga
+2025-01-14 16:44:26,472 - root - DEBUG - UI updated for scenario: gga
+2025-01-14 16:44:26,473 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:44:28,095 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:44:28,765 - root - INFO - Initial data loaded successfully
+2025-01-14 16:44:28,765 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:44:33,953 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-14 16:44:33,953 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:52:49,644 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:52:49,645 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:52:49,646 - root - DEBUG - Table setup completed
+2025-01-14 16:52:49,648 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:52:49,648 - root - DEBUG - Signal connections established
+2025-01-14 16:52:49,649 - root - INFO - Scenario changed to: gga
+2025-01-14 16:52:49,650 - root - DEBUG - UI updated for scenario: gga
+2025-01-14 16:52:49,652 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:52:51,078 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:52:53,160 - root - INFO - Initial data loaded successfully
+2025-01-14 16:52:53,160 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:53:11,432 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-14 16:53:11,433 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:54:12,317 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:54:12,318 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:54:12,320 - root - DEBUG - Table setup completed
+2025-01-14 16:54:12,321 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:54:12,322 - root - DEBUG - Signal connections established
+2025-01-14 16:54:12,323 - root - INFO - Scenario changed to: gga
+2025-01-14 16:54:12,324 - root - DEBUG - UI updated for scenario: gga
+2025-01-14 16:54:12,325 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:54:13,740 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:54:14,170 - root - INFO - Initial data loaded successfully
+2025-01-14 16:54:14,170 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:54:15,505 - root - INFO - Launching combined cashflow for scenario: gga
+2025-01-14 16:54:20,800 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 16:55:53,228 - root - DEBUG - Toolbar setup completed
+2025-01-14 16:55:53,229 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 16:55:53,231 - root - DEBUG - Table setup completed
+2025-01-14 16:55:53,231 - root - DEBUG - UI setup completed successfully
+2025-01-14 16:55:53,232 - root - DEBUG - Signal connections established
+2025-01-14 16:55:53,233 - root - INFO - Scenario changed to: gga
+2025-01-14 16:55:53,234 - root - DEBUG - UI updated for scenario: gga
+2025-01-14 16:55:53,236 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:55:55,207 - root - ERROR - Error populating well pads table: 'NoneType' object is not iterable
+2025-01-14 16:55:55,493 - root - INFO - Initial data loaded successfully
+2025-01-14 16:55:55,493 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 16:55:59,516 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 17:00:42,914 - root - DEBUG - Toolbar setup completed
+2025-01-14 17:00:42,915 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 17:00:42,918 - root - DEBUG - Table setup completed
+2025-01-14 17:00:42,918 - root - DEBUG - UI setup completed successfully
+2025-01-14 17:00:42,918 - root - DEBUG - Signal connections established
+2025-01-14 17:00:42,921 - root - INFO - No scenarios to load
+2025-01-14 17:00:42,921 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 17:00:49,259 - root - INFO - Dialog closed successfully
+2025-01-14 17:00:50,643 - root - DEBUG - Toolbar setup completed
+2025-01-14 17:00:50,643 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 17:00:50,645 - root - DEBUG - Table setup completed
+2025-01-14 17:00:50,645 - root - DEBUG - UI setup completed successfully
+2025-01-14 17:00:50,645 - root - DEBUG - Signal connections established
+2025-01-14 17:00:50,646 - root - INFO - No scenarios to load
+2025-01-14 17:00:50,646 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 17:00:52,688 - root - INFO - Dialog closed successfully
+2025-01-14 17:01:00,174 - root - DEBUG - Toolbar setup completed
+2025-01-14 17:01:00,175 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 17:01:00,176 - root - DEBUG - Table setup completed
+2025-01-14 17:01:00,176 - root - DEBUG - UI setup completed successfully
+2025-01-14 17:01:00,176 - root - DEBUG - Signal connections established
+2025-01-14 17:01:00,178 - root - INFO - No scenarios to load
+2025-01-14 17:01:00,179 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 17:01:06,536 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 17:02:15,343 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-14 17:02:17,647 - root - INFO - Well pads table populated successfully
+2025-01-14 17:10:02,169 - root - DEBUG - Toolbar setup completed
+2025-01-14 17:10:02,170 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 17:10:02,172 - root - DEBUG - Table setup completed
+2025-01-14 17:10:02,172 - root - DEBUG - UI setup completed successfully
+2025-01-14 17:10:02,172 - root - DEBUG - Signal connections established
+2025-01-14 17:10:02,174 - root - INFO - Scenario changed to: aser
+2025-01-14 17:10:02,175 - root - DEBUG - UI updated for scenario: aser
+2025-01-14 17:10:02,185 - root - INFO - Well pads table populated successfully.
+2025-01-14 17:10:02,188 - root - INFO - Well pads table populated successfully.
+2025-01-14 17:10:02,188 - root - INFO - Initial data loaded successfully
+2025-01-14 17:10:02,188 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 17:59:01,690 - root - DEBUG - Table item changed - Row: 3, Column: 1, Value: 2000-01-11
+2025-01-14 17:59:01,691 - root - ERROR - Error updating scenario: 'DatabaseManager' object has no attribute 'update_scenario_data'
+2025-01-14 17:59:05,548 - root - DEBUG - Table item changed - Row: 4, Column: 1, Value: 2000-01-01
+2025-01-14 17:59:05,548 - root - ERROR - Error updating scenario: 'DatabaseManager' object has no attribute 'update_scenario_data'
+2025-01-14 18:17:48,382 - root - DEBUG - Table item changed - Row: 2, Column: 1, Value: 2000-01-01
+2025-01-14 18:17:48,384 - root - ERROR - Error updating scenario: 'DatabaseManager' object has no attribute 'update_scenario_data'
+2025-01-14 19:26:45,617 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:26:45,619 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:26:45,620 - root - DEBUG - Table setup completed
+2025-01-14 19:26:45,621 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:26:45,621 - root - DEBUG - Signal connections established
+2025-01-14 19:26:45,623 - root - INFO - No scenarios to load
+2025-01-14 19:26:45,623 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:26:50,637 - root - INFO - Dialog closed successfully
+2025-01-14 19:26:52,457 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:26:52,457 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:26:52,458 - root - DEBUG - Table setup completed
+2025-01-14 19:26:52,459 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:26:52,459 - root - DEBUG - Signal connections established
+2025-01-14 19:26:52,460 - root - INFO - No scenarios to load
+2025-01-14 19:26:52,460 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:26:55,975 - root - INFO - Dialog closed successfully
+2025-01-14 19:27:03,026 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:27:03,026 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:27:03,027 - root - DEBUG - Table setup completed
+2025-01-14 19:27:03,027 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:27:03,028 - root - DEBUG - Signal connections established
+2025-01-14 19:27:03,028 - root - INFO - No scenarios to load
+2025-01-14 19:27:03,028 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:29:30,652 - root - INFO - Dialog closed successfully
+2025-01-14 19:29:45,170 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:29:45,170 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:29:45,172 - root - DEBUG - Table setup completed
+2025-01-14 19:29:45,172 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:29:45,172 - root - DEBUG - Signal connections established
+2025-01-14 19:29:45,173 - root - INFO - No scenarios to load
+2025-01-14 19:29:45,173 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:29:47,054 - root - INFO - Dialog closed successfully
+2025-01-14 19:31:30,492 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:31:30,493 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:31:30,495 - root - DEBUG - Table setup completed
+2025-01-14 19:31:30,497 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:31:30,497 - root - DEBUG - Signal connections established
+2025-01-14 19:31:30,498 - root - INFO - No scenarios to load
+2025-01-14 19:31:30,498 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:31:31,880 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 19:34:08,581 - root - ERROR - Error saving wells to database: name 'selfscenario_id' is not defined
+2025-01-14 19:34:46,258 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:34:46,259 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:34:46,262 - root - DEBUG - Table setup completed
+2025-01-14 19:34:46,262 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:34:46,262 - root - DEBUG - Signal connections established
+2025-01-14 19:34:46,264 - root - INFO - Scenario changed to: Test
+2025-01-14 19:34:46,265 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:34:46,266 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:34:46,267 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:34:46,267 - root - INFO - Initial data loaded successfully
+2025-01-14 19:34:46,267 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:34:49,355 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 19:35:28,109 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-14 19:35:39,097 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:42:04,625 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:42:04,627 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:42:04,629 - root - DEBUG - Table setup completed
+2025-01-14 19:42:04,629 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:42:04,629 - root - DEBUG - Signal connections established
+2025-01-14 19:42:04,630 - root - INFO - Scenario changed to: Test
+2025-01-14 19:42:04,631 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:42:04,640 - root - ERROR - Unexpected error while populating row 0: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,640 - root - ERROR - Unexpected error while populating row 1: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,641 - root - ERROR - Unexpected error while populating row 2: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,641 - root - ERROR - Unexpected error while populating row 3: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,641 - root - ERROR - Unexpected error while populating row 4: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,642 - root - ERROR - Unexpected error while populating row 5: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,642 - root - ERROR - Unexpected error while populating row 6: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,643 - root - ERROR - Unexpected error while populating row 7: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,643 - root - ERROR - Unexpected error while populating row 8: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,644 - root - ERROR - Unexpected error while populating row 9: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,644 - root - ERROR - Unexpected error while populating row 10: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,644 - root - ERROR - Unexpected error while populating row 11: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,645 - root - ERROR - Unexpected error while populating row 12: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,645 - root - ERROR - Unexpected error while populating row 13: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,645 - root - ERROR - Unexpected error while populating row 14: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,646 - root - ERROR - Unexpected error while populating row 15: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,646 - root - ERROR - Unexpected error while populating row 16: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,646 - root - ERROR - Unexpected error while populating row 17: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,647 - root - ERROR - Unexpected error while populating row 18: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,647 - root - ERROR - Unexpected error while populating row 19: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,647 - root - ERROR - Unexpected error while populating row 20: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,648 - root - ERROR - Unexpected error while populating row 21: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,648 - root - ERROR - Unexpected error while populating row 22: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,649 - root - ERROR - Unexpected error while populating row 23: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,649 - root - ERROR - Unexpected error while populating row 24: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,649 - root - ERROR - Unexpected error while populating row 25: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,650 - root - ERROR - Unexpected error while populating row 26: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,650 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:42:04,652 - root - ERROR - Unexpected error while populating row 0: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,652 - root - ERROR - Unexpected error while populating row 1: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,654 - root - ERROR - Unexpected error while populating row 2: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,654 - root - ERROR - Unexpected error while populating row 3: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,654 - root - ERROR - Unexpected error while populating row 4: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,654 - root - ERROR - Unexpected error while populating row 5: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,655 - root - ERROR - Unexpected error while populating row 6: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,655 - root - ERROR - Unexpected error while populating row 7: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,656 - root - ERROR - Unexpected error while populating row 8: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,656 - root - ERROR - Unexpected error while populating row 9: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,657 - root - ERROR - Unexpected error while populating row 10: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,657 - root - ERROR - Unexpected error while populating row 11: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,657 - root - ERROR - Unexpected error while populating row 12: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,658 - root - ERROR - Unexpected error while populating row 13: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,658 - root - ERROR - Unexpected error while populating row 14: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,659 - root - ERROR - Unexpected error while populating row 15: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,660 - root - ERROR - Unexpected error while populating row 16: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,660 - root - ERROR - Unexpected error while populating row 17: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,660 - root - ERROR - Unexpected error while populating row 18: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,661 - root - ERROR - Unexpected error while populating row 19: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,661 - root - ERROR - Unexpected error while populating row 20: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,662 - root - ERROR - Unexpected error while populating row 21: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,662 - root - ERROR - Unexpected error while populating row 22: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,662 - root - ERROR - Unexpected error while populating row 23: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,663 - root - ERROR - Unexpected error while populating row 24: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,663 - root - ERROR - Unexpected error while populating row 25: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,664 - root - ERROR - Unexpected error while populating row 26: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:42:04,664 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:42:04,664 - root - INFO - Initial data loaded successfully
+2025-01-14 19:42:04,664 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:51:52,257 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:51:52,258 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:51:52,260 - root - DEBUG - Table setup completed
+2025-01-14 19:51:52,260 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:51:52,261 - root - DEBUG - Signal connections established
+2025-01-14 19:51:52,262 - root - INFO - Scenario changed to: Test
+2025-01-14 19:51:52,263 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:51:52,265 - root - ERROR - Unexpected error while populating row 0: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,265 - root - ERROR - Unexpected error while populating row 1: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,266 - root - ERROR - Unexpected error while populating row 2: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,266 - root - ERROR - Unexpected error while populating row 3: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,267 - root - ERROR - Unexpected error while populating row 4: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,267 - root - ERROR - Unexpected error while populating row 5: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,268 - root - ERROR - Unexpected error while populating row 6: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,268 - root - ERROR - Unexpected error while populating row 7: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,269 - root - ERROR - Unexpected error while populating row 8: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,269 - root - ERROR - Unexpected error while populating row 9: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,270 - root - ERROR - Unexpected error while populating row 10: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,270 - root - ERROR - Unexpected error while populating row 11: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,270 - root - ERROR - Unexpected error while populating row 12: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,271 - root - ERROR - Unexpected error while populating row 13: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,271 - root - ERROR - Unexpected error while populating row 14: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,272 - root - ERROR - Unexpected error while populating row 15: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,272 - root - ERROR - Unexpected error while populating row 16: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,273 - root - ERROR - Unexpected error while populating row 17: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,273 - root - ERROR - Unexpected error while populating row 18: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,274 - root - ERROR - Unexpected error while populating row 19: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,274 - root - ERROR - Unexpected error while populating row 20: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,274 - root - ERROR - Unexpected error while populating row 21: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,275 - root - ERROR - Unexpected error while populating row 22: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,275 - root - ERROR - Unexpected error while populating row 23: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,275 - root - ERROR - Unexpected error while populating row 24: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,276 - root - ERROR - Unexpected error while populating row 25: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,276 - root - ERROR - Unexpected error while populating row 26: 'PUDPropertiesDialog' object has no attribute 'decline_curvenames'
+2025-01-14 19:51:52,276 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:51:52,284 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:51:52,284 - root - INFO - Initial data loaded successfully
+2025-01-14 19:51:52,284 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:52:58,842 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:52:58,843 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:52:58,845 - root - DEBUG - Table setup completed
+2025-01-14 19:52:58,845 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:52:58,846 - root - DEBUG - Signal connections established
+2025-01-14 19:52:58,848 - root - INFO - Scenario changed to: Test
+2025-01-14 19:52:58,849 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:52:58,852 - root - ERROR - Unexpected error while populating row 0: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,853 - root - ERROR - Unexpected error while populating row 1: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,853 - root - ERROR - Unexpected error while populating row 2: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,854 - root - ERROR - Unexpected error while populating row 3: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,855 - root - ERROR - Unexpected error while populating row 4: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,855 - root - ERROR - Unexpected error while populating row 5: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,856 - root - ERROR - Unexpected error while populating row 6: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,856 - root - ERROR - Unexpected error while populating row 7: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,857 - root - ERROR - Unexpected error while populating row 8: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,857 - root - ERROR - Unexpected error while populating row 9: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,858 - root - ERROR - Unexpected error while populating row 10: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,858 - root - ERROR - Unexpected error while populating row 11: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,859 - root - ERROR - Unexpected error while populating row 12: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,859 - root - ERROR - Unexpected error while populating row 13: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,860 - root - ERROR - Unexpected error while populating row 14: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,860 - root - ERROR - Unexpected error while populating row 15: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,861 - root - ERROR - Unexpected error while populating row 16: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,862 - root - ERROR - Unexpected error while populating row 17: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,862 - root - ERROR - Unexpected error while populating row 18: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,863 - root - ERROR - Unexpected error while populating row 19: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,863 - root - ERROR - Unexpected error while populating row 20: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,864 - root - ERROR - Unexpected error while populating row 21: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,864 - root - ERROR - Unexpected error while populating row 22: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,865 - root - ERROR - Unexpected error while populating row 23: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,866 - root - ERROR - Unexpected error while populating row 24: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,866 - root - ERROR - Unexpected error while populating row 25: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,867 - root - ERROR - Unexpected error while populating row 26: 'PUDPropertiesDialog' object has no attribute 'decline_curve_names'
+2025-01-14 19:52:58,867 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:52:58,869 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:52:58,869 - root - INFO - Initial data loaded successfully
+2025-01-14 19:52:58,870 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:54:38,904 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:54:38,905 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:54:38,907 - root - DEBUG - Table setup completed
+2025-01-14 19:54:38,907 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:54:38,908 - root - DEBUG - Signal connections established
+2025-01-14 19:54:38,909 - root - INFO - Scenario changed to: Test
+2025-01-14 19:54:38,910 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:54:38,912 - root - ERROR - Unexpected error while populating row 0: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,913 - root - ERROR - Unexpected error while populating row 1: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,913 - root - ERROR - Unexpected error while populating row 2: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,914 - root - ERROR - Unexpected error while populating row 3: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,914 - root - ERROR - Unexpected error while populating row 4: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,915 - root - ERROR - Unexpected error while populating row 5: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,915 - root - ERROR - Unexpected error while populating row 6: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,916 - root - ERROR - Unexpected error while populating row 7: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,916 - root - ERROR - Unexpected error while populating row 8: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,917 - root - ERROR - Unexpected error while populating row 9: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,917 - root - ERROR - Unexpected error while populating row 10: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,918 - root - ERROR - Unexpected error while populating row 11: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,918 - root - ERROR - Unexpected error while populating row 12: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,919 - root - ERROR - Unexpected error while populating row 13: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,919 - root - ERROR - Unexpected error while populating row 14: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,919 - root - ERROR - Unexpected error while populating row 15: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,920 - root - ERROR - Unexpected error while populating row 16: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,920 - root - ERROR - Unexpected error while populating row 17: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,920 - root - ERROR - Unexpected error while populating row 18: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,921 - root - ERROR - Unexpected error while populating row 19: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,921 - root - ERROR - Unexpected error while populating row 20: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,922 - root - ERROR - Unexpected error while populating row 21: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,922 - root - ERROR - Unexpected error while populating row 22: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,923 - root - ERROR - Unexpected error while populating row 23: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,923 - root - ERROR - Unexpected error while populating row 24: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,923 - root - ERROR - Unexpected error while populating row 25: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,924 - root - ERROR - Unexpected error while populating row 26: 'PUDPropertiesDialog' object has no attribute 'decline_curves'
+2025-01-14 19:54:38,924 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:54:38,925 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:54:38,926 - root - INFO - Initial data loaded successfully
+2025-01-14 19:54:38,926 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 19:57:15,518 - root - DEBUG - Toolbar setup completed
+2025-01-14 19:57:15,519 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 19:57:15,521 - root - DEBUG - Table setup completed
+2025-01-14 19:57:15,521 - root - DEBUG - UI setup completed successfully
+2025-01-14 19:57:15,521 - root - DEBUG - Signal connections established
+2025-01-14 19:57:15,524 - root - INFO - Scenario changed to: Test
+2025-01-14 19:57:15,525 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 19:57:15,534 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:57:15,535 - root - INFO - Well pads table populated successfully.
+2025-01-14 19:57:15,536 - root - INFO - Initial data loaded successfully
+2025-01-14 19:57:15,536 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 20:07:13,810 - root - DEBUG - Toolbar setup completed
+2025-01-14 20:07:13,812 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 20:07:13,814 - root - DEBUG - Table setup completed
+2025-01-14 20:07:13,814 - root - DEBUG - UI setup completed successfully
+2025-01-14 20:07:13,814 - root - DEBUG - Signal connections established
+2025-01-14 20:07:13,817 - root - ERROR - Error loading initial data: 'PUDPropertiesDialog' object has no attribute 'db_manager_get_active_scenario_name'
+2025-01-14 20:07:15,121 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 20:07:52,941 - root - DEBUG - Toolbar setup completed
+2025-01-14 20:07:52,942 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 20:07:52,944 - root - DEBUG - Table setup completed
+2025-01-14 20:07:52,944 - root - DEBUG - UI setup completed successfully
+2025-01-14 20:07:52,945 - root - DEBUG - Signal connections established
+2025-01-14 20:07:52,948 - root - WARNING - No active scenario found.
+2025-01-14 20:07:55,401 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 20:11:48,378 - root - DEBUG - Toolbar setup completed
+2025-01-14 20:11:48,379 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 20:11:48,382 - root - DEBUG - Table setup completed
+2025-01-14 20:11:48,382 - root - DEBUG - UI setup completed successfully
+2025-01-14 20:11:48,383 - root - DEBUG - Signal connections established
+2025-01-14 20:11:48,386 - root - WARNING - No active scenario found.
+2025-01-14 20:11:49,783 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 20:11:55,620 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 20:11:57,947 - root - DEBUG - Value of is_active before insertion: True
+2025-01-14 21:10:22,533 - root - INFO - Scenario 3 updated with 27 wells.
+2025-01-14 21:10:22,551 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:11:02,590 - root - ERROR - Error deleting pad: 'DatabaseManager' object has no attribute 'delete_pad'
+2025-01-14 21:11:13,174 - root - INFO - Adding new scenario
+2025-01-14 21:11:14,675 - root - INFO - Adding new scenario
+2025-01-14 21:12:48,336 - root - ERROR - Error deleting pad: 'DatabaseManager' object has no attribute 'delete_pad'
+2025-01-14 21:24:13,541 - root - DEBUG - Toolbar setup completed
+2025-01-14 21:24:13,542 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 21:24:13,544 - root - DEBUG - Table setup completed
+2025-01-14 21:24:13,544 - root - DEBUG - UI setup completed successfully
+2025-01-14 21:24:13,545 - root - DEBUG - Signal connections established
+2025-01-14 21:24:13,549 - root - INFO - Scenario changed to: Test112
+2025-01-14 21:24:13,549 - root - DEBUG - UI updated for scenario: Test112
+2025-01-14 21:24:13,557 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:13,565 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:13,565 - root - INFO - Initial data loaded successfully.
+2025-01-14 21:24:13,566 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 21:24:20,372 - root - INFO - Scenario 'Test2' added successfully with ID 4. Active: 0
+2025-01-14 21:24:20,375 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:24:20,379 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-14 21:24:20,385 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-14 21:24:20,391 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-14 21:24:20,395 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-14 21:24:20,400 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-14 21:24:20,405 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-14 21:24:20,410 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-14 21:24:20,416 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-14 21:24:20,420 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-14 21:24:20,426 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-14 21:24:20,432 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-14 21:24:20,437 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-14 21:24:20,443 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-14 21:24:20,449 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-14 21:24:20,455 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-14 21:24:20,460 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-14 21:24:20,467 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-14 21:24:20,472 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-14 21:24:20,477 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-14 21:24:20,484 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-14 21:24:20,489 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-14 21:24:20,494 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-14 21:24:20,500 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-14 21:24:20,505 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-14 21:24:20,510 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-14 21:24:20,516 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-14 21:24:21,998 - root - INFO - Scenario 4 updated with 27 wells.
+2025-01-14 21:24:22,009 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:26,226 - root - INFO - Scenario changed to: Test
+2025-01-14 21:24:26,227 - root - DEBUG - UI updated for scenario: Test
+2025-01-14 21:24:26,237 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:26,902 - root - INFO - Scenario changed to: Test112
+2025-01-14 21:24:26,903 - root - DEBUG - UI updated for scenario: Test112
+2025-01-14 21:24:26,913 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:35,111 - root - INFO - Updating well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:24:35,111 - root - ERROR - Error saving wells to database: DatabaseManager.get_well_pad_id() takes 2 positional arguments but 3 were given
+2025-01-14 21:24:38,142 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:24:53,734 - root - INFO - Scenario 'Test4' added successfully with ID 5. Active: 0
+2025-01-14 21:24:53,737 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:24:53,740 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-14 21:24:53,745 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-14 21:24:53,749 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-14 21:24:53,754 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-14 21:24:53,759 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-14 21:24:53,765 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-14 21:24:53,771 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-14 21:24:53,776 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-14 21:24:53,782 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-14 21:24:53,788 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-14 21:24:53,792 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-14 21:24:53,798 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-14 21:24:53,803 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-14 21:24:53,809 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-14 21:24:53,814 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-14 21:24:53,819 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-14 21:24:53,824 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-14 21:24:53,830 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-14 21:24:53,835 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-14 21:24:53,840 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-14 21:24:53,846 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-14 21:24:53,853 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-14 21:24:53,859 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-14 21:24:53,864 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-14 21:24:53,870 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-14 21:24:53,875 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-14 21:24:55,294 - root - INFO - Scenario 5 updated with 27 wells.
+2025-01-14 21:24:55,306 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:25:07,891 - root - INFO - Scenario 'Test5' added successfully with ID 6. Active: 0
+2025-01-14 21:25:07,893 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:25:07,897 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-14 21:25:07,904 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-14 21:25:07,909 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-14 21:25:07,915 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-14 21:25:07,920 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-14 21:25:07,925 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-14 21:25:07,930 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-14 21:25:07,935 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-14 21:25:07,940 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-14 21:25:07,946 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-14 21:25:07,951 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-14 21:25:07,957 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-14 21:25:07,962 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-14 21:25:07,968 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-14 21:25:07,974 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-14 21:25:07,979 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-14 21:25:07,985 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-14 21:25:07,990 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-14 21:25:07,996 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-14 21:25:08,002 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-14 21:25:08,007 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-14 21:25:08,013 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-14 21:25:08,019 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-14 21:25:08,024 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-14 21:25:08,030 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-14 21:25:08,036 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-14 21:25:09,240 - root - INFO - Scenario 6 updated with 27 wells.
+2025-01-14 21:25:09,255 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:28:18,091 - root - INFO - Updating well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:28:18,092 - root - ERROR - Error saving wells to database: DatabaseManager.get_well_pad_id() takes 2 positional arguments but 3 were given
+2025-01-14 21:28:24,481 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:29:05,412 - root - DEBUG - Toolbar setup completed
+2025-01-14 21:29:05,413 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 21:29:05,416 - root - DEBUG - Table setup completed
+2025-01-14 21:29:05,416 - root - DEBUG - UI setup completed successfully
+2025-01-14 21:29:05,416 - root - DEBUG - Signal connections established
+2025-01-14 21:29:05,419 - root - INFO - Scenario changed to: Test112
+2025-01-14 21:29:05,420 - root - DEBUG - UI updated for scenario: Test112
+2025-01-14 21:29:05,427 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:29:05,437 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:29:05,437 - root - INFO - Initial data loaded successfully.
+2025-01-14 21:29:05,437 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 21:29:07,547 - root - INFO - Scenario changed to: Test4
+2025-01-14 21:29:07,548 - root - DEBUG - UI updated for scenario: Test4
+2025-01-14 21:29:07,557 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:29:10,720 - root - INFO - Scenario changed to: Test5
+2025-01-14 21:29:10,721 - root - DEBUG - UI updated for scenario: Test5
+2025-01-14 21:29:10,729 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:29:23,650 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg2
+2025-01-14 21:29:23,665 - root - ERROR - Error saving wells to database: 'num_wells'
+2025-01-14 21:29:26,760 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:44:50,347 - root - DEBUG - Toolbar setup completed
+2025-01-14 21:44:50,348 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 21:44:50,351 - root - DEBUG - Table setup completed
+2025-01-14 21:44:50,351 - root - DEBUG - UI setup completed successfully
+2025-01-14 21:44:50,351 - root - DEBUG - Signal connections established
+2025-01-14 21:44:50,353 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 21:53:03,316 - root - DEBUG - Toolbar setup completed
+2025-01-14 21:53:03,318 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 21:53:03,320 - root - DEBUG - Table setup completed
+2025-01-14 21:53:03,320 - root - DEBUG - UI setup completed successfully
+2025-01-14 21:53:03,320 - root - DEBUG - Signal connections established
+2025-01-14 21:53:03,323 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 21:53:07,320 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:53:07,320 - root - INFO - Initial data loaded successfully.
+2025-01-14 21:53:08,277 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 21:53:20,922 - root - INFO - Scenario 'tes2' added successfully with ID 3. Active: 0
+2025-01-14 21:53:20,936 - root - INFO - Scenario changed to: tes2
+2025-01-14 21:53:20,937 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 21:53:20,940 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:53:20,942 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-14 21:53:20,947 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-14 21:53:20,951 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-14 21:53:20,957 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-14 21:53:20,963 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-14 21:53:20,969 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-14 21:53:20,974 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-14 21:53:20,980 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-14 21:53:20,986 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-14 21:53:20,992 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-14 21:53:20,999 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-14 21:53:21,006 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-14 21:53:21,012 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-14 21:53:21,018 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-14 21:53:21,025 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-14 21:53:21,030 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-14 21:53:21,037 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-14 21:53:21,044 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-14 21:53:21,050 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-14 21:53:21,056 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-14 21:53:21,063 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-14 21:53:21,069 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-14 21:53:21,075 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-14 21:53:21,082 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-14 21:53:21,088 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-14 21:53:21,095 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-14 21:53:21,100 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-14 21:53:22,445 - root - INFO - Scenario 3 updated with 27 wells.
+2025-01-14 21:53:22,457 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:56:50,224 - root - DEBUG - Toolbar setup completed
+2025-01-14 21:56:50,225 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 21:56:50,228 - root - DEBUG - Table setup completed
+2025-01-14 21:56:50,228 - root - DEBUG - UI setup completed successfully
+2025-01-14 21:56:50,228 - root - DEBUG - Signal connections established
+2025-01-14 21:56:50,231 - root - INFO - Scenario changed to: tes2
+2025-01-14 21:56:50,231 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 21:56:50,245 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:56:50,255 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:56:50,255 - root - INFO - Initial data loaded successfully.
+2025-01-14 21:56:50,255 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 21:56:53,415 - root - INFO - Scenario changed to: tes1
+2025-01-14 21:56:53,416 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 21:56:53,426 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:57:15,448 - root - INFO - Scenario 'tes3' added successfully with ID 4. Active: 0
+2025-01-14 21:57:15,461 - root - INFO - Scenario changed to: tes3
+2025-01-14 21:57:15,462 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 21:57:15,463 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:57:15,464 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-14 21:57:15,468 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-14 21:57:15,473 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-14 21:57:15,478 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-14 21:57:15,483 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-14 21:57:15,489 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-14 21:57:15,495 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-14 21:57:16,690 - root - INFO - Scenario 4 updated with 7 wells.
+2025-01-14 21:57:16,695 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:57:19,490 - root - INFO - Scenario changed to: tes2
+2025-01-14 21:57:19,491 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 21:57:19,500 - root - INFO - Well pads table populated successfully.
+2025-01-14 21:57:20,901 - root - INFO - Scenario changed to: tes1
+2025-01-14 21:57:20,902 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 21:57:20,912 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:03:20,156 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:03:20,157 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:03:20,160 - root - DEBUG - Table setup completed
+2025-01-14 22:03:20,160 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:03:20,161 - root - DEBUG - Signal connections established
+2025-01-14 22:03:20,164 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:03:20,164 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:03:20,168 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:03:20,172 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:03:20,172 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:03:20,172 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:03:24,905 - root - ERROR - Error deleting pad: 'NoneType' object has no attribute 'text'
+2025-01-14 22:06:01,722 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:06:01,723 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:06:01,726 - root - DEBUG - Table setup completed
+2025-01-14 22:06:01,727 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:06:01,727 - root - DEBUG - Signal connections established
+2025-01-14 22:06:01,730 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:06:01,731 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:06:01,735 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:06:01,738 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:06:01,738 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:06:01,738 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:06:03,859 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 22:07:33,749 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:07:33,750 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:07:33,753 - root - DEBUG - Table setup completed
+2025-01-14 22:07:33,753 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:07:33,753 - root - DEBUG - Signal connections established
+2025-01-14 22:07:33,757 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:07:33,758 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:07:33,762 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:07:33,765 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:07:33,765 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:07:33,765 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:07:36,156 - root - DEBUG - Selected item: WP1L1Side1Leg2
+2025-01-14 22:07:36,158 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 22:08:12,711 - root - ERROR - Error deleting pad: 'NoneType' object has no attribute 'text'
+2025-01-14 22:10:21,410 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:10:21,411 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:10:21,414 - root - DEBUG - Table setup completed
+2025-01-14 22:10:21,414 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:10:21,414 - root - DEBUG - Signal connections established
+2025-01-14 22:10:21,418 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:10:21,418 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:10:21,423 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:10:21,426 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:10:21,426 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:10:21,426 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:10:23,140 - root - DEBUG - Selected row: 0
+2025-01-14 22:10:23,140 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 22:10:57,239 - root - DEBUG - UWI: WP1L1Side1Leg2
+2025-01-14 22:11:17,851 - root - ERROR - Error deleting pad: 'PUDPropertiesDialog' object has no attribute 'current_scenario_id'
+2025-01-14 22:13:11,750 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:13:11,752 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:13:11,754 - root - DEBUG - Table setup completed
+2025-01-14 22:13:11,754 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:13:11,754 - root - DEBUG - Signal connections established
+2025-01-14 22:13:11,757 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:13:11,758 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:13:11,761 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:13:11,765 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:13:11,766 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:13:11,766 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:13:14,252 - root - DEBUG - Selected row: 0
+2025-01-14 22:13:14,252 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 22:13:19,653 - root - DEBUG - UWI: WP1L1Side1Leg2
+2025-01-14 22:13:47,035 - root - ERROR - Error deleting pad: 'PUDPropertiesDialog' object has no attribute 'current_scenario_id'
+2025-01-14 22:14:48,965 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:14:48,965 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:14:48,968 - root - DEBUG - Table setup completed
+2025-01-14 22:14:48,968 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:14:48,969 - root - DEBUG - Signal connections established
+2025-01-14 22:14:48,972 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:14:48,973 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:14:48,977 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:14:48,980 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:14:48,980 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:14:48,980 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:14:52,488 - root - DEBUG - Selected row: 0
+2025-01-14 22:14:52,489 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-14 22:15:05,723 - root - DEBUG - UWI: WP1L1Side1Leg2
+2025-01-14 22:15:29,413 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP1L1Side1Leg2
+2025-01-14 22:15:34,583 - root - INFO - Pad deleted: UWI=WP1L1Side1Leg2, Scenario ID=4
+2025-01-14 22:16:24,725 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:16:24,733 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:16:24,744 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:16:29,410 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:16:29,411 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:16:29,416 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:16:57,116 - root - DEBUG - Selected row: 1
+2025-01-14 22:16:59,652 - root - DEBUG - UWI: WP8L1Side1Leg3
+2025-01-14 22:17:00,825 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP8L1Side1Leg3
+2025-01-14 22:17:00,826 - root - INFO - Pad deleted: UWI=WP8L1Side1Leg3, Scenario ID=4
+2025-01-14 22:17:13,857 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:17:13,865 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:17:13,875 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:17:15,077 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:17:15,078 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:17:15,081 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:17:32,338 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:17:32,347 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:17:32,348 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:17:32,350 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:17:32,352 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:17:32,353 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:17:32,355 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:17:32,356 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:17:32,357 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:17:32,359 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:17:32,359 - root - ERROR - Error saving wells to database: 'DatabaseManager' object has no attribute 'remove_well_from_scenario'
+2025-01-14 22:18:29,051 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:18:29,052 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:18:29,055 - root - DEBUG - Table setup completed
+2025-01-14 22:18:29,055 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:18:29,056 - root - DEBUG - Signal connections established
+2025-01-14 22:18:29,060 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:18:29,062 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:18:29,065 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:18:29,067 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:18:29,068 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:18:29,068 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:18:37,251 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:18:37,253 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:18:37,254 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:18:37,255 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:18:37,256 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:18:37,258 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:18:37,259 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:18:37,261 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:18:37,263 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:18:37,264 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:18:37,265 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:18:37,265 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,266 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:18:37,267 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:18:37,267 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:18:37,267 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,268 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:18:37,268 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,269 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:18:37,269 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:18:37,269 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:18:37,270 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:18:37,270 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:18:37,271 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:18:37,271 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:18:37,272 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,272 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:18:37,273 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,273 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:18:37,274 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,274 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:18:37,275 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,276 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:18:37,276 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,277 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:18:37,277 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,277 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:18:37,278 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,278 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:18:37,279 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:18:37,280 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:18:37,280 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,281 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:18:37,281 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:18:37,282 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:18:37,282 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:18:38,588 - root - INFO - Scenario 2 updated with 8 wells.
+2025-01-14 22:18:38,598 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:18:45,981 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:18:45,983 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:18:45,984 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,984 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:18:45,985 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:18:45,985 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:18:45,986 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:18:45,986 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:18:45,987 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:18:45,987 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:18:45,988 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:18:45,988 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:18:45,988 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,989 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:18:45,989 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:18:45,990 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:18:45,991 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:18:45,991 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:18:45,992 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:18:45,992 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:18:45,993 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:18:45,993 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:18:45,994 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,994 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:18:45,995 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,995 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:18:45,995 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,996 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:18:45,996 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,997 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:18:45,997 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:18:45,997 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:18:45,998 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:18:45,998 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:18:45,999 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:18:45,999 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:18:46,000 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:18:46,000 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:18:46,001 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:18:46,001 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:18:46,002 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:18:46,002 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:18:46,003 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:18:46,003 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:18:46,004 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:18:46,004 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:18:46,005 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:18:46,005 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:18:46,006 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:18:46,006 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:18:46,007 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:18:46,007 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:18:46,008 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:18:46,994 - root - INFO - Scenario 2 updated with 1 wells.
+2025-01-14 22:18:47,009 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:18:59,333 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:18:59,334 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:18:59,348 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:19:00,484 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:19:00,485 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:19:00,488 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:19:02,337 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:19:02,338 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:19:02,348 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:19:04,259 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:19:04,260 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:19:04,264 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:19:11,168 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:19:11,169 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:19:11,171 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:19:11,172 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:19:11,173 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:19:11,174 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:19:11,176 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:19:11,177 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:19:11,179 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:19:11,180 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:19:11,182 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:19:11,183 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:19:11,184 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:19:11,185 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:19:11,186 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:19:11,186 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:19:11,187 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,187 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:19:11,188 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:19:11,188 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:19:11,188 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,189 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:19:11,190 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:19:11,190 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:19:11,191 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:19:11,191 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:19:11,192 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,192 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:19:11,192 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,193 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:19:11,193 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:19:11,193 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:19:11,194 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,194 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:19:11,195 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:19:11,195 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:19:11,196 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:19:11,196 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:19:11,196 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:19:11,196 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:19:11,197 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:19:12,352 - root - INFO - Scenario 2 updated with 13 wells.
+2025-01-14 22:19:12,362 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:19:21,391 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:19:21,392 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:19:21,393 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:19:21,394 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:19:21,395 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:19:21,396 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:19:21,397 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:19:21,399 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:19:21,400 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:19:21,401 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:19:21,402 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:19:21,404 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:19:21,404 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:19:21,405 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:19:21,405 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,406 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:19:21,407 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:19:21,407 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:19:21,408 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:19:21,408 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:19:21,409 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:19:21,409 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:19:21,410 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,410 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:19:21,411 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:19:21,411 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:19:21,411 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:19:21,412 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:19:21,412 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,412 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:19:21,413 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,413 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:19:21,414 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:19:21,414 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:19:21,415 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,415 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:19:21,416 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:19:21,416 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:19:21,416 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:19:21,417 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:19:21,417 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:19:21,418 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:19:21,418 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:19:22,569 - root - INFO - Scenario 2 updated with 11 wells.
+2025-01-14 22:19:22,581 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:20:28,669 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:20:28,670 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:20:28,672 - root - DEBUG - Table setup completed
+2025-01-14 22:20:28,673 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:20:28,673 - root - DEBUG - Signal connections established
+2025-01-14 22:20:28,677 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:20:28,678 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:20:28,682 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:20:28,684 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:20:28,684 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:20:28,685 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:20:36,882 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:20:36,884 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:20:36,886 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:20:36,887 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:20:36,888 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:20:36,890 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:20:36,891 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:20:36,892 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:20:36,895 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:20:36,897 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:20:36,898 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,898 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:20:36,899 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,899 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:20:36,900 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,900 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:20:36,901 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,901 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:20:36,902 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,902 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:20:36,903 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,903 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:20:36,904 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,904 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:20:36,905 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,905 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:20:36,906 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:20:36,906 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:20:36,907 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:20:36,907 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:20:36,908 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,908 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:20:36,909 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,909 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:20:36,910 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:20:36,910 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:20:36,910 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,911 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:20:36,911 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:20:36,911 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:20:36,912 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:20:36,912 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:20:36,913 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:20:36,913 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:20:36,914 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:20:36,924 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:20:38,158 - root - INFO - Scenario 2 updated with 9 wells.
+2025-01-14 22:20:38,175 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:20:59,397 - root - DEBUG - Table item changed - Row: 11, Column: 0, Value: c
+2025-01-14 22:20:59,398 - root - ERROR - Error updating scenario: 'DatabaseManager' object has no attribute 'update_scenario_data'
+2025-01-14 22:22:42,658 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:22:42,659 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:22:42,661 - root - DEBUG - Table setup completed
+2025-01-14 22:22:42,661 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:22:42,662 - root - DEBUG - Signal connections established
+2025-01-14 22:22:42,665 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:22:42,666 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:22:42,669 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:22:42,672 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:22:42,672 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:22:42,672 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:22:44,167 - root - INFO - Adding new scenario
+2025-01-14 22:22:49,892 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:22:49,894 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:22:49,895 - root - INFO - Updating well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:22:49,896 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:22:49,897 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:22:49,898 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:22:49,899 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:22:49,901 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:22:49,902 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:22:49,903 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:22:49,904 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,904 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:22:49,905 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,906 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:22:49,906 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,907 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:22:49,907 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,908 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:22:49,908 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,909 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:22:49,909 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,909 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:22:49,910 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:22:49,910 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:22:49,911 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,911 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:22:49,911 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:22:49,912 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:22:49,912 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:22:49,912 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:22:49,913 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,913 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:22:49,914 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,914 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:22:49,915 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:22:49,915 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:22:49,915 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,916 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:22:49,916 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:22:49,917 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:22:49,918 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:22:49,918 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:22:49,919 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:22:49,919 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:22:49,920 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:22:51,230 - root - INFO - Scenario 2 updated with 9 wells.
+2025-01-14 22:22:51,241 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:10,195 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:23:10,196 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:23:10,197 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,197 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:23:10,198 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,198 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:23:10,198 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,199 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:23:10,199 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,200 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:23:10,200 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,200 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:23:10,201 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,201 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:23:10,202 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,202 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:23:10,203 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,203 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:23:10,204 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,204 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:23:10,205 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,205 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:23:10,206 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,206 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:23:10,206 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,207 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:23:10,207 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,207 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:23:10,208 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,208 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:23:10,209 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:23:10,209 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:23:10,211 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,211 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:23:10,212 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,212 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:23:10,213 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,213 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:23:10,214 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,214 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:23:10,215 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,215 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:23:10,216 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,216 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:23:10,217 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,217 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:23:10,217 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:23:10,218 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:23:10,218 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,218 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:23:10,219 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:23:10,219 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:23:10,220 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:23:11,392 - root - INFO - Scenario 2 updated with 1 wells.
+2025-01-14 22:23:11,403 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:24,686 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:23:24,687 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:23:24,697 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:27,499 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:23:27,500 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:23:27,510 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:28,954 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:23:28,955 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:23:28,968 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:30,431 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:23:30,432 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:23:30,435 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:23:32,355 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:23:32,355 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:23:32,366 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:24:06,864 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:24:06,865 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:24:06,867 - root - DEBUG - Table setup completed
+2025-01-14 22:24:06,867 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:24:06,867 - root - DEBUG - Signal connections established
+2025-01-14 22:24:06,871 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:24:06,872 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:24:06,876 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:24:06,878 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:24:06,878 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:24:06,878 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:24:09,294 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:24:09,295 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:24:09,306 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:25:27,308 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:25:27,309 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:25:27,312 - root - DEBUG - Table setup completed
+2025-01-14 22:25:27,312 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:25:27,313 - root - DEBUG - Signal connections established
+2025-01-14 22:25:27,316 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:25:27,318 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:25:27,322 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:25:27,324 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:25:27,324 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:25:27,325 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:25:28,451 - root - INFO - Adding new scenario
+2025-01-14 22:25:33,229 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:25:33,230 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:25:33,231 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,231 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:25:33,232 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,232 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:25:33,232 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,233 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:25:33,233 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,233 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:25:33,234 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,234 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:25:33,235 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,235 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:25:33,235 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,236 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:25:33,237 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,237 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:25:33,238 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,238 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:25:33,239 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,239 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:25:33,240 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,240 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:25:33,240 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,240 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:25:33,241 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,241 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:25:33,242 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,242 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:25:33,243 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:25:33,244 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:25:33,244 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,245 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:25:33,245 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,246 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:25:33,246 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,246 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:25:33,247 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,247 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:25:33,248 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,248 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:25:33,248 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,249 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:25:33,249 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,249 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:25:33,250 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:25:33,250 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:25:33,251 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,251 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:25:33,252 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:25:33,252 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:25:33,253 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:25:34,424 - root - INFO - Scenario 2 updated with 1 wells.
+2025-01-14 22:25:34,425 - root - ERROR - Error in scenario_pud_select: PUDPropertiesDialog.on_scenario_changed() missing 1 required positional argument: 'scenario_name'
+2025-01-14 22:27:50,094 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:27:50,095 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:27:50,098 - root - DEBUG - Table setup completed
+2025-01-14 22:27:50,098 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:27:50,099 - root - DEBUG - Signal connections established
+2025-01-14 22:27:50,103 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:27:50,104 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:27:50,107 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:27:50,110 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:27:50,110 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:27:50,110 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:27:58,024 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:27:58,026 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:27:58,027 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,027 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:27:58,028 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,028 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:27:58,029 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,030 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:27:58,031 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,031 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:27:58,032 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,032 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:27:58,033 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,033 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:27:58,034 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,034 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:27:58,036 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,036 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:27:58,037 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,037 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:27:58,038 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,038 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:27:58,039 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,039 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:27:58,039 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,039 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:27:58,040 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,040 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:27:58,041 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,041 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:27:58,041 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:27:58,042 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:27:58,042 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,043 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:27:58,043 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,043 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:27:58,045 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,045 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:27:58,045 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,045 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:27:58,046 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,046 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:27:58,047 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,047 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:27:58,048 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,048 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:27:58,048 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:27:58,049 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:27:58,049 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,049 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:27:58,050 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:27:58,050 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:27:58,051 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:27:59,172 - root - INFO - Scenario 2 updated with 1 wells.
+2025-01-14 22:27:59,172 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:27:59,173 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:27:59,177 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:27:59,183 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:04,714 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:28:04,715 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:28:04,725 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:06,077 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:28:06,078 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:28:06,082 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:14,236 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:28:14,237 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:28:14,238 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:28:14,239 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:28:14,241 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:28:14,242 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:28:14,244 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:28:14,245 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,245 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:28:14,246 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,246 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:28:14,247 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,247 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:28:14,247 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,248 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:28:14,249 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,249 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:28:14,251 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,251 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:28:14,252 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,253 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:28:14,253 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,254 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:28:14,255 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,255 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:28:14,256 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:28:14,256 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:28:14,258 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,258 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:28:14,259 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,260 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:28:14,261 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,261 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:28:14,262 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,262 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:28:14,263 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,263 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:28:14,264 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,264 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:28:14,265 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,265 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:28:14,266 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:28:14,267 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:28:14,267 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,268 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:28:14,268 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:28:14,269 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:28:14,270 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:28:15,437 - root - INFO - Scenario 2 updated with 6 wells.
+2025-01-14 22:28:15,437 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:28:15,438 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:28:15,441 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:15,445 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:17,798 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:28:17,799 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:28:17,808 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:27,808 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:28:27,809 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:28:27,810 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,810 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:28:27,811 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,811 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:28:27,812 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,812 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:28:27,813 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,813 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:28:27,814 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,814 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:28:27,814 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,815 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:28:27,815 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,816 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:28:27,816 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,816 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:28:27,817 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,818 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:28:27,819 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,819 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:28:27,820 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,820 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:28:27,821 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,821 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:28:27,822 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,822 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:28:27,823 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,823 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:28:27,824 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:28:27,824 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:28:27,825 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,825 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:28:27,826 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,826 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:28:27,827 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,827 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:28:27,827 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,828 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:28:27,828 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,828 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:28:27,829 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,829 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:28:27,830 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,830 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:28:27,830 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:28:27,830 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:28:27,831 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,831 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:28:27,832 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:28:27,832 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:28:27,833 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:28:29,062 - root - INFO - Scenario 2 updated with 1 wells.
+2025-01-14 22:28:29,062 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:28:29,063 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:28:29,067 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:29,070 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:35,321 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:28:35,322 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:28:35,335 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:36,511 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:28:36,512 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:28:36,522 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:38,407 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:28:38,408 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:28:38,411 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:28:47,605 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:28:47,606 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:28:47,617 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:29:30,108 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:29:30,109 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:29:30,110 - root - INFO - Updating well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:29:30,111 - root - INFO - Updating well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:29:30,113 - root - INFO - Updating well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:29:30,114 - root - INFO - Updating well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:29:30,115 - root - INFO - Updating well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:29:30,117 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:29:30,117 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,118 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:29:30,118 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,119 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:29:30,119 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,119 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:29:30,120 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,120 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:29:30,121 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,121 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:29:30,122 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,122 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:29:30,123 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,123 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:29:30,124 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,124 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:29:30,125 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:29:30,126 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:29:30,127 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,127 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:29:30,128 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,128 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:29:30,129 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,129 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:29:30,130 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,130 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:29:30,131 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,131 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:29:30,132 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,132 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:29:30,133 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,133 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:29:30,134 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:29:30,134 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:29:30,135 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,135 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:29:30,136 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:29:30,136 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:29:30,137 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:29:31,391 - root - INFO - Scenario 2 updated with 7 wells.
+2025-01-14 22:29:31,391 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:29:31,392 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:29:31,395 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:29:31,398 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:29:39,097 - root - INFO - Scenario changed to: tes2
+2025-01-14 22:29:39,098 - root - DEBUG - UI updated for scenario: tes2
+2025-01-14 22:29:39,108 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:29:53,278 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:29:53,279 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:29:53,283 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:29:55,586 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:29:55,587 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:29:55,600 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:30:37,755 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:30:37,756 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:30:37,758 - root - DEBUG - Table setup completed
+2025-01-14 22:30:37,758 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:30:37,758 - root - DEBUG - Signal connections established
+2025-01-14 22:30:37,762 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:30:37,763 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:30:37,766 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:30:37,769 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:30:37,769 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:30:37,769 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:30:39,969 - root - INFO - Scenario changed to: tes1
+2025-01-14 22:30:39,970 - root - DEBUG - UI updated for scenario: tes1
+2025-01-14 22:30:39,979 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:30:55,695 - root - INFO - Updating well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:30:55,696 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg1
+2025-01-14 22:30:55,697 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,697 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg1
+2025-01-14 22:30:55,698 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,698 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg2
+2025-01-14 22:30:55,699 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,699 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:30:55,700 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,700 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:30:55,700 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,701 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:30:55,701 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,701 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg3
+2025-01-14 22:30:55,702 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,702 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:30:55,703 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,704 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg2
+2025-01-14 22:30:55,704 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,705 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:30:55,706 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,706 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg1
+2025-01-14 22:30:55,707 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,707 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg1
+2025-01-14 22:30:55,708 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,708 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg1
+2025-01-14 22:30:55,709 - root - INFO - Deleted pad: Scenario ID=WP9L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,709 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg1
+2025-01-14 22:30:55,710 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,710 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg1
+2025-01-14 22:30:55,711 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg1, UWI=2
+2025-01-14 22:30:55,711 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg2
+2025-01-14 22:30:55,711 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,712 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg3
+2025-01-14 22:30:55,712 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,712 - root - INFO - Removing well pad for UWI: WP6L1Side1Leg3
+2025-01-14 22:30:55,713 - root - INFO - Deleted pad: Scenario ID=WP6L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,713 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg2
+2025-01-14 22:30:55,714 - root - INFO - Deleted pad: Scenario ID=WP7L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,714 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg2
+2025-01-14 22:30:55,715 - root - INFO - Deleted pad: Scenario ID=WP2L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,715 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg3
+2025-01-14 22:30:55,715 - root - INFO - Deleted pad: Scenario ID=WP4L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,716 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg2
+2025-01-14 22:30:55,716 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,716 - root - INFO - Removing well pad for UWI: WP8L1Side1Leg2
+2025-01-14 22:30:55,717 - root - INFO - Deleted pad: Scenario ID=WP8L1Side1Leg2, UWI=2
+2025-01-14 22:30:55,717 - root - INFO - Removing well pad for UWI: WP3L1Side1Leg3
+2025-01-14 22:30:55,718 - root - INFO - Deleted pad: Scenario ID=WP3L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,718 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg3
+2025-01-14 22:30:55,719 - root - INFO - Deleted pad: Scenario ID=WP1L1Side1Leg3, UWI=2
+2025-01-14 22:30:55,719 - root - INFO - Removing well pad for UWI: WP5L1Side1Leg1
+2025-01-14 22:30:55,719 - root - INFO - Deleted pad: Scenario ID=WP5L1Side1Leg1, UWI=2
+2025-01-14 22:32:15,915 - root - DEBUG - Toolbar setup completed
+2025-01-14 22:32:15,916 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 22:32:15,918 - root - DEBUG - Table setup completed
+2025-01-14 22:32:15,919 - root - DEBUG - UI setup completed successfully
+2025-01-14 22:32:15,919 - root - DEBUG - Signal connections established
+2025-01-14 22:32:15,924 - root - INFO - Scenario changed to: tes3
+2025-01-14 22:32:15,925 - root - DEBUG - UI updated for scenario: tes3
+2025-01-14 22:32:15,930 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:32:15,933 - root - INFO - Well pads table populated successfully.
+2025-01-14 22:32:15,933 - root - INFO - Initial data loaded successfully.
+2025-01-14 22:32:15,933 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 22:32:24,410 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-14 22:32:24,422 - root - INFO - Removing well pad for UWI: WP7L1Side1Leg3
+2025-01-14 22:32:24,428 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP7L1Side1Leg3
+2025-01-14 22:32:24,428 - root - INFO - Removing well pad for UWI: WP2L1Side1Leg3
+2025-01-14 22:32:24,432 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP2L1Side1Leg3
+2025-01-14 22:32:24,433 - root - INFO - Removing well pad for UWI: WP1L1Side1Leg1
+2025-01-14 22:32:24,437 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP1L1Side1Leg1
+2025-01-14 22:32:24,438 - root - INFO - Removing well pad for UWI: WP4L1Side1Leg2
+2025-01-14 22:32:24,443 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP4L1Side1Leg2
+2025-01-14 22:32:24,443 - root - INFO - Removing well pad for UWI: WP9L1Side1Leg3
+2025-01-14 22:32:24,448 - root - INFO - Deleted pad: Scenario ID=4, UWI=WP9L1Side1Leg3
+2025-01-14 22:32:25,744 - root - INFO - Scenario 4 updated with 1 wells.
+2025-01-14 22:32:25,747 - root - INFO - Well pads table populated successfully.

@@ -1,0 +1,56 @@
+2025-01-14 12:22:24,448 - root - DEBUG - Toolbar setup completed
+2025-01-14 12:22:24,448 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 12:22:24,458 - root - DEBUG - Table setup completed
+2025-01-14 12:22:24,458 - root - DEBUG - UI setup completed successfully
+2025-01-14 12:22:24,459 - root - DEBUG - Signal connections established
+2025-01-14 12:22:24,459 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 12:22:24,460 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 12:25:10,383 - root - DEBUG - Toolbar setup completed
+2025-01-14 12:25:10,384 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 12:25:10,395 - root - DEBUG - Table setup completed
+2025-01-14 12:25:10,395 - root - DEBUG - UI setup completed successfully
+2025-01-14 12:25:10,396 - root - DEBUG - Signal connections established
+2025-01-14 12:25:10,396 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 12:25:10,397 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 12:25:12,806 - root - ERROR - Error populating well pads table: 'MockDBManager' object has no attribute 'get_well_pads'
+2025-01-14 12:25:14,981 - root - INFO - Initial data loaded successfully
+2025-01-14 12:25:14,982 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 12:25:17,065 - root - INFO - Starting add_well process
+2025-01-14 12:25:21,585 - root - DEBUG - Add well dialog cancelled
+2025-01-14 12:25:23,922 - root - INFO - Scenario changed to: Scenario 2
+2025-01-14 12:25:23,922 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 14:18:48,812 - root - ERROR - Error in setup_toolbar: name 'os' is not defined
+2025-01-14 14:18:48,813 - root - ERROR - Error in setup_ui: name 'os' is not defined
+2025-01-14 14:18:48,813 - root - CRITICAL - Application failed to start: name 'os' is not defined
+2025-01-14 14:19:32,729 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:19:32,730 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:19:32,737 - root - DEBUG - Table setup completed
+2025-01-14 14:19:32,738 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:19:32,738 - root - DEBUG - Signal connections established
+2025-01-14 14:19:32,739 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 14:19:32,739 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 14:19:38,677 - root - ERROR - Error populating well pads table: 'MockDBManager' object has no attribute 'get_well_pads'
+2025-01-14 14:19:40,025 - root - INFO - Initial data loaded successfully
+2025-01-14 14:19:40,025 - root - INFO - PUDPropertiesDialog initialized
+2025-01-14 14:29:17,281 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:29:17,449 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:29:17,460 - root - DEBUG - Table setup completed
+2025-01-14 14:29:17,460 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:29:17,649 - root - DEBUG - Signal connections established
+2025-01-14 14:29:17,649 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 14:29:17,651 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 14:29:46,967 - root - INFO - Launching combined cashflow for scenario: Scenario 1
+2025-01-14 14:30:58,671 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:30:58,848 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:30:58,855 - root - DEBUG - Table setup completed
+2025-01-14 14:30:58,855 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:30:59,021 - root - DEBUG - Signal connections established
+2025-01-14 14:30:59,022 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 14:30:59,023 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'
+2025-01-14 14:31:27,932 - root - DEBUG - Toolbar setup completed
+2025-01-14 14:31:30,358 - root - DEBUG - Scenario dropdown setup completed
+2025-01-14 14:31:30,366 - root - DEBUG - Table setup completed
+2025-01-14 14:31:30,367 - root - DEBUG - UI setup completed successfully
+2025-01-14 14:31:30,554 - root - DEBUG - Signal connections established
+2025-01-14 14:31:30,555 - root - INFO - Scenario changed to: Scenario 1
+2025-01-14 14:31:30,556 - root - ERROR - Error in on_scenario_changed: 'MockDBManager' object has no attribute 'get_scenario_id'

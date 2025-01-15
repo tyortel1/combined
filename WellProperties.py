@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon, QAction
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 import pandas as pd
+from DatabaseManager import DatabaseManager
 
 
 class StatusDelegate(QStyledItemDelegate):

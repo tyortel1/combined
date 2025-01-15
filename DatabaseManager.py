@@ -11,6 +11,7 @@ class DatabaseManager:
 
     def connect(self):
         self.connection = sqlite3.connect(self.db_path)
+
         self.cursor = self.connection.cursor()
 
     def disconnect(self):
@@ -394,9 +395,7 @@ class DatabaseManager:
             gas_model_status TEXT DEFAULT NULL,
             oil_model_status TEXT DEFAULT NULL,
             q_oil_eur REAL DEFAULT NULL, 
-            q_gas_eur REAL DEFAULT NULL,
-            q_oil_eru REAL DEFAULT NULL,  
-            q_gas_eru REAL DEFAULT NULL,  
+            q_gas_eur REAL DEFAULT NULL,  
             EFR_oil REAL DEFAULT NULL,    
             EFR_gas REAL DEFAULT NULL,    
             EUR_oil_remaining REAL DEFAULT NULL,  
@@ -640,6 +639,24 @@ class DatabaseManager:
             print("Error retrieving uwis:", e)
             return []
 
+        finally:
+            self.disconnect()
+
+
+    def get_planned_wells(self):
+        """Get all wells with 'Planned' status"""
+        try:
+            self.connect()
+            query = """
+            SELECT uwi 
+            FROM uwis 
+            WHERE status = 'Planned'
+            """
+            self.cursor.execute(query)
+            return [row[0] for row in self.cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error getting planned wells: {e}")
+            return []
         finally:
             self.disconnect()
 
@@ -1182,11 +1199,14 @@ class DatabaseManager:
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS well_pads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            original_name VARCHAR(255) UNIQUE,
+            pad_name VARCHAR(255) UNIQUE,
+            uwi VARCHAR(255),
+            scenario_id INTEGER,
+            start_date DATE,
+            decline_curve VARCHAR(255),
             total_lateral DECIMAL(10, 2),
             total_capex_cost DECIMAL(15, 2),
             total_opex_cost DECIMAL(15, 2),
-            num_wells INTEGER,
             drill_time INTEGER,
             prod_type VARCHAR(50),
             oil_model_status BOOLEAN,
@@ -1195,7 +1215,9 @@ class DatabaseManager:
             exploration_cost DECIMAL(15, 2),
             cost_per_foot DECIMAL(10, 2),
             distance_to_pipe DECIMAL(10, 2),
-            cost_per_foot_to_pipe DECIMAL(10, 2)
+            cost_per_foot_to_pipe DECIMAL(10, 2),
+            FOREIGN KEY (uwi) REFERENCES uwis (uwi),
+            FOREIGN KEY (scenario_id) REFERENCES scenario_names (id)
         )
         """
         try:
@@ -1207,37 +1229,216 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def delete_pad(self, scenario_id, uwi):
+        """Delete a pad from the database based on scenario ID and UWI."""
+        query = """
+        DELETE FROM well_pads
+        WHERE scenario_id = ? AND uwi = ?
+        """
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            cursor.execute(query, (scenario_id, uwi))
+            self.connection.commit()
+            logging.info(f"Deleted pad: Scenario ID={scenario_id}, UWI={uwi}")
+        except sqlite3.Error as e:
+            logging.error(f"Error deleting pad: {e}")
+            self.connection.rollback()
+            raise
+        finally:
+            cursor.close()
+            self.disconnect()
+
+
+    def get_scenario_wells(self, scenario_id):
+        """Get list of UWIs currently in a specific scenario"""
+        try:
+            self.connect()
+            query = """
+            SELECT uwi 
+            FROM well_pads 
+            WHERE scenario_id = ?
+            """
+            self.cursor.execute(query, (scenario_id,))
+            return [row[0] for row in self.cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error getting scenario wells: {e}")
+            return []
+
+
+        finally:
+            self.disconnect()
+
+    def remove_well_pad_for_scenario(self, uwi, scenario_id):
+        """
+        Remove a well pad from the well_pads table for the given UWI and scenario_id.
+
+        :param uwi: The unique well identifier (UWI) to remove.
+        :param scenario_id: The scenario ID associated with the well pad to remove.
+        """
+        query = """
+        DELETE FROM well_pads
+        WHERE uwi = ? AND scenario_id = ?
+        """
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            cursor.execute(query, (uwi, scenario_id))
+            self.connection.commit()
+            print(f"Well pad with UWI '{uwi}' removed from scenario ID {scenario_id}.")
+        except sqlite3.Error as e:
+            print(f"Error removing well pad for UWI '{uwi}' and scenario ID {scenario_id}:", e)
+            self.connection.rollback()
+        finally:
+            cursor.close()
+            self.disconnect()
+
+
 
     def insert_well_pad(self, well_pad_data):
-        """Insert or update well pad data into the well_pads table."""
+        """
+        Insert a new well pad into the well_pads table.
+
+        :param well_pad_data: A dictionary containing well pad data.
+        """
+        # Validate required keys
+        if 'uwi' not in well_pad_data or 'scenario_id' not in well_pad_data:
+            raise ValueError("Both 'uwi' and 'scenario_id' are required fields.")
+
         query = """
-        INSERT OR REPLACE INTO well_pads (
-            original_name, total_lateral, total_capex_cost, total_opex_cost, 
-            num_wells, drill_time, prod_type, oil_model_status, gas_model_status,
-            pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
+        INSERT INTO well_pads (
+            uwi,
+            scenario_id,
+            total_lateral,
+            total_capex_cost,
+            total_opex_cost,
+            drill_time,
+            prod_type,
+            oil_model_status,
+            gas_model_status,
+            pad_cost,
+            exploration_cost,
+            cost_per_foot,
+            distance_to_pipe,
+            cost_per_foot_to_pipe,
+            decline_curve,
+            start_date
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+
+            # Use .get() for optional fields to provide default value (None) if they are missing
+            cursor.execute(query, (
+                well_pad_data['uwi'],                           # Required
+                well_pad_data['scenario_id'],                  # Required
+                well_pad_data.get('total_lateral'),            # Optional
+                well_pad_data.get('total_capex_cost'),         # Optional
+                well_pad_data.get('total_opex_cost'),          # Optional
+                well_pad_data.get('drill_time'),               # Optional
+                well_pad_data.get('prod_type'),                # Optional
+                well_pad_data.get('oil_model_status'),         # Optional
+                well_pad_data.get('gas_model_status'),         # Optional
+                well_pad_data.get('pad_cost'),                 # Optional
+                well_pad_data.get('exploration_cost'),         # Optional
+                well_pad_data.get('cost_per_foot'),            # Optional
+                well_pad_data.get('distance_to_pipe'),         # Optional
+                well_pad_data.get('cost_per_foot_to_pipe'),    # Optional
+                well_pad_data.get('decline_curve'),            # Optional
+                well_pad_data.get('start_date')               # Optional
+            ))
+
+            self.connection.commit()
+            print("Well pad inserted successfully.")
+            return cursor.lastrowid  # Return the ID of the inserted row
+        except sqlite3.Error as e:
+            print("Error inserting well pad into well_pads table:", e)
+            self.connection.rollback()
+            return None
+        finally:
+            cursor.close()
+            self.disconnect()
+
+
+    def update_well_pad(self, well_pad_id, well_pad_data):
+        """
+        Update well pad data in the well_pads table.
+
+        :param well_pad_id: The ID of the well pad to update.
+        :param well_pad_data: A dictionary containing updated well pad data.
+        """
+        query = """
+        UPDATE well_pads
+        SET 
+            total_lateral = ?,
+            total_capex_cost = ?,
+            total_opex_cost = ?,
+            drill_time = ?,
+            prod_type = ?,
+            oil_model_status = ?,
+            gas_model_status = ?,
+            pad_cost = ?,
+            exploration_cost = ?,
+            cost_per_foot = ?,
+            distance_to_pipe = ?,
+            cost_per_foot_to_pipe = ?,
+            decline_curve = ?,
+            start_date = ?
+        WHERE
+            id = ?
         """
         try:
             self.connect()
             cursor = self.connection.cursor()
             cursor.execute(query, (
-                well_pad_data['original_name'], well_pad_data['total_lateral'],
-                well_pad_data['total_capex_cost'], well_pad_data['total_opex_cost'], well_pad_data['num_wells'],
-                well_pad_data['drill_time'], well_pad_data['prod_type'],
-                well_pad_data['oil_model_status'], well_pad_data['gas_model_status'],
-                well_pad_data['pad_cost'], well_pad_data['exploration_cost'],
-                well_pad_data['cost_per_foot'], well_pad_data['distance_to_pipe'],
-                well_pad_data['cost_per_foot_to_pipe']
+                well_pad_data['total_lateral'],
+                well_pad_data['total_capex_cost'],
+                well_pad_data['total_opex_cost'],
+                well_pad_data['drill_time'],
+                well_pad_data['prod_type'],
+                well_pad_data['oil_model_status'],
+                well_pad_data['gas_model_status'],
+                well_pad_data['pad_cost'],
+                well_pad_data['exploration_cost'],
+                well_pad_data['cost_per_foot'],
+                well_pad_data['distance_to_pipe'],
+                well_pad_data['cost_per_foot_to_pipe'],
+                well_pad_data['decline_curve'],
+                well_pad_data['start_date'],  # Added start_date
+                well_pad_id
             ))
             self.connection.commit()
-            print(f"Successfully inserted or updated well pad: {well_pad_data['original_name']}")
+            print(f"Well pad with ID {well_pad_id} updated successfully.")
         except sqlite3.Error as e:
-            print("Error inserting into well_pads table:", e)
+            print("Error updating well pad in well_pads table:", e)
             self.connection.rollback()
         finally:
             cursor.close()
+            self.disconnect()
+
+    def add_well_to_scenario(self, well_scenario_data):
+        """Add or update a well in a scenario with more detailed data"""
+        try:
+            self.connect()
+            query = """
+            INSERT OR REPLACE INTO well_pads (
+                uwi, scenario_id, start_date, decline_curve
+            ) VALUES (?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                well_scenario_data['uwi'], 
+                well_scenario_data['scenario_id'], 
+                well_scenario_data['start_date'], 
+                well_scenario_data['decline_curve']
+            ))
+            self.connection.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error adding well to scenario: {e}")
+            self.connection.rollback()
+            return False
+        finally:
             self.disconnect()
 
 
@@ -1283,7 +1484,6 @@ class DatabaseManager:
             total_lateral = ?,
             total_capex_cost = ?,
             total_opex_cost = ?,
-            num_wells = ?,
             drill_time = ?,
             prod_type = ?,
             oil_model_status = ?,
@@ -1292,7 +1492,8 @@ class DatabaseManager:
             exploration_cost = ?,
             cost_per_foot = ?,
             distance_to_pipe = ?,
-            cost_per_foot_to_pipe = ?
+            cost_per_foot_to_pipe = ?,
+            start_date = ?
         WHERE
             id = ?
         """
@@ -1303,7 +1504,6 @@ class DatabaseManager:
                 well_pad_data['total_lateral'],
                 well_pad_data['total_capex_cost'],
                 well_pad_data['total_opex_cost'],
-                well_pad_data['num_wells'],
                 well_pad_data['drill_time'],
                 well_pad_data['prod_type'],
                 well_pad_data['oil_model_status'],
@@ -1313,6 +1513,7 @@ class DatabaseManager:
                 well_pad_data['cost_per_foot'],
                 well_pad_data['distance_to_pipe'],
                 well_pad_data['cost_per_foot_to_pipe'],
+                well_pad_data['start_date'],  # Add start_date here
                 well_pad_id
             ))
             self.connection.commit()
@@ -1323,7 +1524,6 @@ class DatabaseManager:
         finally:
             cursor.close()
             self.disconnect()
-
 
     def get_scenario_names(self):
         self.connect()
@@ -1354,28 +1554,29 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def get_well_pads(self):
+    def get_well_pads(self, scenario_id):
         query = """
-        SELECT id, original_name, total_lateral, total_capex_cost, total_opex_cost,
-               num_wells, drill_time, prod_type, oil_model_status, gas_model_status,
-               pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe
+        SELECT id, uwi, total_lateral, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
+               pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe, start_date
         FROM well_pads
+        WHERE scenario_id = ?
         """
         try:
             self.connect()
             cursor = self.connection.cursor()
-            cursor.execute(query)
+            cursor.execute(query, (scenario_id,))
             rows = cursor.fetchall()
             # Get the column names
             columns = [column[0] for column in cursor.description]
             well_pads = [dict(zip(columns, row)) for row in rows]
             return well_pads
         except sqlite3.Error as e:
-            print("Error fetching well pads:", e)
+            print(f"Error fetching well pads for scenario_id {scenario_id}:", e)
             return []
         finally:
             cursor.close()
             self.disconnect()
+
 
     def create_scenario_names_table(self):
         self.connect()
@@ -1395,22 +1596,37 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def insert_scenario_name(self, scenario_name, is_active):
+    def insert_scenario_name(self, scenario_name):
+        """
+        Insert a new scenario into the scenario_names table with active = 0 by default.
+
+        :param scenario_name: Name of the scenario to insert.
+        :return: The ID of the newly inserted scenario, or None if an error occurs.
+        """
         try:
             self.connect()
-            if is_active:
-                self.deactivate_all_scenarios(False)
 
+            # Insert scenario with active = 0 by default
             insert_sql = """
             INSERT INTO scenario_names (scenario_name, active)
-            VALUES (?, ?)
+            VALUES (?, 0)
             """
-            self.cursor.execute(insert_sql, (scenario_name, is_active))
+            self.cursor.execute(insert_sql, (scenario_name,))
             self.connection.commit()
-            print(f"Scenario '{scenario_name}' added successfully. Active: {is_active}")
+
+            inserted_id = self.cursor.lastrowid
+            logging.info(f"Scenario '{scenario_name}' added successfully with ID {inserted_id}. Active: 0")
+            return inserted_id
+
+        except sqlite3.IntegrityError:
+            logging.warning(f"Scenario '{scenario_name}' already exists.")
+            return None
+
         except sqlite3.Error as e:
-            print("Error adding scenario:", e)
+            logging.error(f"Error adding scenario '{scenario_name}': {e}")
             self.connection.rollback()
+            return None
+
         finally:
             self.disconnect()
 
@@ -1453,6 +1669,20 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def get_uiws_for_scenario(self, scenario_id):
+        """Retrieve all UIWs associated with a specific scenario."""
+        try:
+            self.connect()
+            query = "SELECT uwi FROM well_pads WHERE scenario_id = ?"
+            self.cursor.execute(query, (scenario_id,))
+            rows = self.cursor.fetchall()
+            return [row[0] for row in rows]  # Extract UIWs
+        except sqlite3.Error as e:
+            logging.error(f"Error retrieving UIWs for scenario {scenario_id}: {e}")
+            return []
+        finally:
+            self.disconnect()
+
     def deactivate_all_scenarios(self, disconnect_after=True):
         update_sql = "UPDATE scenario_names SET active = 0"
         self.connect()
@@ -1482,25 +1712,7 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def create_scenarios_table(self):
-        self.connect()
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS scenarios (
-            scenario_id INTEGER,
-            well_pad_id INTEGER,
-            start_date DATE,
-            decline_curve_id INTEGER,
-            PRIMARY KEY (scenario_id, well_pad_id)  -- Define composite primary key
-        )
-        """
-        try:
-            self.cursor.execute(create_table_sql)
-            self.connection.commit()
-            print("Scenarios table created successfully.")
-        except sqlite3.Error as e:
-            print("Error creating scenarios table:", e)
-        finally:
-            self.disconnect()
+
 
     def add_or_update_scenario(self, scenario_data):
         self.connect()
@@ -1519,7 +1731,6 @@ class DatabaseManager:
                 WHERE scenario_id = ? AND well_pad_id = ?
                 """
                 self.cursor.execute(update_sql, (
-                    scenario_data['start_date'],
                     scenario_data['decline_curve_id'],
                     scenario_data['scenario_id'],
                     scenario_data['well_pad_id']
@@ -1539,7 +1750,6 @@ class DatabaseManager:
                 self.cursor.execute(insert_sql, (
                     scenario_data['scenario_id'],
                     scenario_data['well_pad_id'],
-                    scenario_data['start_date'],
                     scenario_data['decline_curve_id']
                 ))
                 print("Scenario inserted successfully.")
@@ -1599,7 +1809,7 @@ class DatabaseManager:
         self.connect()
         query = """
         SELECT well_pad_id, start_date, decline_curve_id
-        FROM scenarios 
+        FROM well_pads 
         WHERE scenario_id = ?
         """
         try:
@@ -1635,26 +1845,29 @@ class DatabaseManager:
             print("Error fetching scenario ID:", e)
             return None
 
+    def get_well_pad_id(self, uwi, scenario_id):
+        """
+        Retrieve the well pad ID for a given UWI and scenario ID.
 
-
-    def get_well_pad_id(self, original_name):
-        self.connect()
-        query_sql = """
-        SELECT id FROM well_pads WHERE original_name = ?
+        :param uwi: The unique well identifier (UWI).
+        :param scenario_id: The scenario ID associated with the well pad.
+        :return: The well pad ID if found, otherwise None.
+        """
+        query = """
+        SELECT id
+        FROM well_pads
+        WHERE uwi = ? AND scenario_id = ?
         """
         try:
-            self.cursor.execute(query_sql, (original_name,))
+            self.connect()
+            self.cursor.execute(query, (uwi, scenario_id))
             result = self.cursor.fetchone()
-            if result:
-                return result[0]
-            else:
-                return None
+            return result[0] if result else None
         except sqlite3.Error as e:
-            print(f"Error fetching well_pad_id for {original_name}: {e}")
+            print(f"Error retrieving well pad ID: {e}")
             return None
         finally:
             self.disconnect()
-
 
 
     # Method to get decline curve ID by name

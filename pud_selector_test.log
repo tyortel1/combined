@@ -1,0 +1,36 @@
+2025-01-14 13:03:43,589 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 174, in <module>
+    dialog = PUDWellSelector(
+             ^^^^^^^^^^^^^^^
+NameError: name 'PUDWellSelector' is not defined
+2025-01-14 13:04:27,154 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 174, in <module>
+    dialog = PUDWellSelector(
+             ^^^^^^^^^^^^^^^
+NameError: name 'PUDWellSelector' is not defined. Did you mean: 'PudWellSelector'?
+2025-01-14 13:05:04,026 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 174, in <module>
+    dialog = PUDWellSelector(
+             ^^^^^^^^^^^^^^^
+NameError: name 'PUDWellSelector' is not defined. Did you mean: 'PudWellSelector'?
+2025-01-14 13:18:44,963 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 220, in <module>
+    dialog = PudWellSelector(
+             ^^^^^^^^^^^^^^^
+NameError: name 'PudWellSelector' is not defined. Did you mean: 'PUDWellSelector'?
+2025-01-14 13:20:37,088 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 240, in <module>
+    dialog = PudWellSelector(
+             ^^^^^^^^^^^^^^^
+NameError: name 'PudWellSelector' is not defined. Did you mean: 'PUDWellSelector'?
+2025-01-14 13:49:26,156 - ERROR - Test failed
+Traceback (most recent call last):
+  File "C:\Users\jerem\source\repos\Combined\PudWellSelector.py", line 264, in <module>
+    print(f"Selected wells: {dialog.get_selected_wells()}")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'PUDWellSelector' object has no attribute 'get_selected_wells'. Did you mean: 'selected_wells'?

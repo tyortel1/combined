@@ -283,6 +283,12 @@ class Ui_MainWindow:
 
         MainWindow.well_properties_action = QAction("Well", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.well_properties_action)
+
+        MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
+
+        MainWindow.pud_properties_action = QAction("PUD Wells", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.pud_properties_action)
         
         
         MainWindow.toolbar = QToolBar("Main Toolbar", MainWindow)

@@ -67,6 +67,7 @@ from DeclineCurveAnalysis import DeclineCurveAnalysis
 from Main import MainWindow
 from WellProperties import WellPropertiesDialog
 from EurNpv import EurNpv
+from PUDProperties import PUDPropertiesDialog
 
 
 
@@ -226,6 +227,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
         self.dataload_segy_action.triggered.connect(self.dataload_segy)
         self.well_properties_action.triggered.connect(self.well_properties)
+        self.pud_properties_action.triggered.connect(self.pud_properties)
         
 
       
@@ -1607,7 +1609,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.create_model_properties_table()
                 self.db_manager.create_sum_of_errors_table()
                 self.db_manager.create_scenario_names_table()
-                self.db_manager.create_scenarios_table()
+                
                 self.db_manager.create_directional_surveys_table()
                 
                 # Additional database initialization if needed
@@ -1689,6 +1691,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
             self.well_list = well_data_df['uwi'].tolist()
             print(self.well_list)
+            self.well_data_df = well_data_df
 
     def import_excel(self):
         dialog = ImportExcelDialog()
@@ -1879,7 +1882,8 @@ class Map(QMainWindow, Ui_MainWindow):
         if self.db_manager:
             self.db_manager.connect()
             self.scenario_name = "Active_Wells"# Ensure connection is open
-            self.scenario_id = self.db_manager.insert_scenario_name(self.scenario_name, True)
+            self.scenario_id = self.db_manager.insert_scenario_name(self.scenario_name)
+            self.db_manager.set_active_scenario(self.scenario_id)
             self.scenario_id = self.db_manager.get_scenario_id(self.scenario_name)
             self.scenario_names = self.db_manager.get_all_scenario_names()
             print(self.scenario_id, self.scenario_name)  # Corrected print statement
@@ -2568,7 +2572,9 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def well_properties(self):
         """Launch the Well Properties dialog."""
-        print(self.well_data_df)
+        self.well_data_df = self.db_manager.get_all_uwis()
+
+
         dialog = WellPropertiesDialog(self.well_data_df)
         if dialog.exec() == QDialog.Accepted:
             # Update well_data_df with edited data
@@ -2580,6 +2586,12 @@ class Map(QMainWindow, Ui_MainWindow):
             # Save the updated data to the database
             self.db_manager.save_uwi_data(self.well_data_df)
             print("Well data saved to the database.")
+
+    def pud_properties(self):
+        # Assuming self.db_manager exists in the parent class
+        dialog = PUDPropertiesDialog(self.db_manager, parent=self)
+        dialog.exec_()
+
 
 
 

@@ -30,7 +30,7 @@ from ScenarioNameDialog import ScenarioNameDialog
 from DateDelegate import DateDelegate
 from ComboBoxDelegate import ComboBoxDelegate
 from PlotTotals import plot_totals
-from AddWell import AddWell
+#from AddWell import AddWell
 from EurNpv import EurNpv
 
 
@@ -767,7 +767,7 @@ class MainWindow(QMainWindow):
                 # Set the rest of the values in the appropriate columns
                 col_idx = 3
                 for key in [
-                    'total_lateral', 'total_capex_cost', 'total_opex_cost', 'num_wells', 'drill_time',
+                    'total_lateral', 'total_capex_cost', 'total_opex_cost', 'drill_time',
                     'prod_type', 'oil_model_status', 'gas_model_status', 'pad_cost', 'exploration_cost',
                     'cost_per_foot', 'distance_to_pipe', 'cost_per_foot_to_pipe'
                 ]:
@@ -934,7 +934,6 @@ class MainWindow(QMainWindow):
                     'total_lateral': well_pad_data.get('Total Lateral', ''),
                     'total_capex_cost': well_pad_data.get('Total Capex Cost', ''),
                     'total_opex_cost': well_pad_data.get('Total Opex Cost', ''),
-                    'num_wells': well_pad_data.get('Num Wells', ''),
                     'drill_time': well_pad_data.get('Drill Time', ''),
                     'prod_type': well_pad_data.get('Prod Type', ''),
                     'oil_model_status': well_pad_data.get('Oil Model Status', ''),
@@ -988,7 +987,7 @@ class MainWindow(QMainWindow):
             decline_curve_data = self.db_manager.get_decline_curve_data(decline_curve_name)
 
             # Determine other parameters needed for handle_scenario
-            num_wells = int(well_pad_data.get('Num Wells', 0))
+
             base_uwi = original_name_item.text()
             drill_time = int(well_pad_data.get('Drill Time', 0))
             total_capex_cost = float(well_pad_data.get('Total Capex Cost', 0))
@@ -1104,16 +1103,16 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Warning", "Scenario name cannot be empty.")
         
         
-    def handle_scenario(self, scenario_id, start_date, num_wells, base_uwi, decline_curve_data, drill_time, total_capex_cost, total_opex_cost, prod_type, oil_model_status, gas_model_status):
+    def handle_scenario(self, scenario_id, start_date,  base_uwi, decline_curve_data, drill_time, total_capex_cost, total_opex_cost, prod_type, oil_model_status, gas_model_status):
         #print(scenario_id)
         if decline_curve_data is None:
             print("Skipping scenario handling due to missing decline curve data.")
             return
         # Divide total CAPEX and OPEX costs by the number of wells
-        capex_cost_per_well = total_capex_cost / num_wells
-        opex_cost_per_well = total_opex_cost / num_wells
+        capex_cost_per_well = total_capex_cost / 1
+        opex_cost_per_well = total_opex_cost / 1
 
-        for i in range(num_wells):
+        for i in range(1):
             uwi = f"{base_uwi}_{i+1}"
             well_start_date = start_date.addMonths(i * drill_time).toString("yyyy-MM-dd")
 
