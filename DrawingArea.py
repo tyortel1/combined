@@ -2,7 +2,7 @@ import os
 import csv
 import numpy as np
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsTextItem, QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem
-from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPainterPath, QBrush, QTransform, QImage, QPixmap, QFontMetrics
+from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPainterPath, QBrush, QTransform, QImage, QPixmap, QFontMetrics, QRadialGradient, QLinearGradient
 from PySide6.QtCore import Qt, QPointF, QRectF, Signal, QLineF
 
 class BulkZoneTicks(QGraphicsItem):
@@ -95,6 +95,7 @@ class DrawingArea(QGraphicsView):
         self.initial_fit_in_view_done = False 
         self.show_uwis = True
         self.show_ticks = True
+        self.drainage_size = 400
 
         self.textPixmapCache = {}
         self.color_palette = self.load_color_palette('Palettes/Rainbow.pal')
@@ -126,7 +127,6 @@ class DrawingArea(QGraphicsView):
     def setScaledData(self, well_data, well_attribute_values=None):
         # Clear existing UWI lines
         self.clearUWILines()
-        print(well_data)
 
         new_items = []
 
@@ -138,6 +138,69 @@ class DrawingArea(QGraphicsView):
         self.min_y, self.max_y = min(all_y), max(all_y)
 
         for uwi, well in well_data.items():
+            # Check for heel and toe coordinates
+            if 'heel_x' in well and 'heel_y' in well and 'toe_x' in well and 'toe_y' in well and \
+               well['heel_x'] is not None and well['toe_x'] is not None:
+    
+                # Skip if coordinates are empty or invalid
+                if not well.get('heel_x') or not well.get('toe_x'):
+                    continue
+
+                # Ensure numeric conversion
+                try:
+                    heel_x = float(well['heel_x'])
+                    heel_y = float(well['heel_y'])
+                    toe_x = float(well['toe_x'])
+                    toe_y = float(well['toe_y'])
+                except (ValueError, TypeError):
+                    print(f"Skipping UWI {uwi} due to invalid coordinates")
+                    continue
+
+                # Calculate angle between heel and toe
+                dx = toe_x - heel_x
+                dy = toe_y - heel_y
+                angle = np.arctan2(dy, dx) * 180 / np.pi
+
+                # Use drainage size from well data, with fallback to default
+                width = well.get('drainage_size', self.drainage_size)
+                print(width)
+   
+                length = np.sqrt(dx*dx + dy*dy)
+
+                # Create the ellipse centered on the heel-toe midpoint
+                center_x = (heel_x + toe_x) / 2
+                center_y = (heel_y + toe_y) / 2
+
+                ellipse = QGraphicsEllipseItem(
+                    center_x - length/2,  # x position
+                    center_y - width/2,   # y position
+                    length,               # width
+                    width                 # height
+                )
+
+                # Create a linear gradient along the length of the well
+                gradient = QLinearGradient(
+                    QPointF(center_x, center_y - width/2),  # Top edge
+                    QPointF(center_x, center_y + width/2)   # Bottom edge
+                )
+                gradient.setColorAt(0.1, QColor(135, 206, 235, 150))   # Light blue at the edges
+                gradient.setColorAt(0.5, QColor(0, 0, 100, 100))       # Dark blue in the middle
+                gradient.setColorAt(0.9, QColor(135, 206, 235, 150))   # Light blue at the other edge
+
+                # Apply rotation and position transform
+                transform = QTransform()
+                transform.translate(center_x, center_y)
+                transform.rotate(angle)
+                transform.translate(-center_x, -center_y)
+                ellipse.setTransform(transform)
+
+                ellipse.setBrush(QBrush(gradient))
+                ellipse.setPen(QPen(Qt.NoPen))
+                ellipse.setZValue(1)
+                ellipse.setData(0, 'drainage')
+                new_items.append(ellipse)
+
+            # Existing well line drawing code
             points = well['points']
             mds = well['mds']
             md_colors = well.get('md_colors', [QColor(Qt.black)] * (len(points) - 1))
@@ -674,6 +737,30 @@ class DrawingArea(QGraphicsView):
 
         except Exception as e:
             print(f"Error toggling text item visibility: {e}")
+
+    def togglegradientVisibility(self, visible):
+        print(visible)
+        try:
+            # Iterate through all text items in the scene with the tag "uwi_label"
+            text_items = [item for item in self.scene.items() if item.data(0) == "drainage"]
+
+            if visible == 0:
+                # Hide text items by setting opacity to 0
+                for item in text_items:
+                    item.setOpacity(0.0)
+            else:
+                # Show text items with the desired opacity
+                for item in text_items:
+                    item.setOpacity(self.uwi_opacity)  # Use the configured opacity value (0.0 to 1.0)
+
+            # Optionally update the scene and viewport
+            self.scene.update()
+            self.viewport().update()
+
+        except Exception as e:
+            print(f"Error toggling text item visibility: {e}")
+   
+
    
     def setUWIOpacity(self, opacity):
         # Ensure opacity is within valid bounds (0.0 to 1.0)
@@ -732,6 +819,13 @@ class DrawingArea(QGraphicsView):
             if point_md >= md:
                 return point
         return None
+
+    def clearDrainageItems(self):
+        for item in self.scene.items():
+            if item.data(0) == 'drainage':  # Check if the item's data(0) is 'drainage'
+                self.scene.removeItem(item)
+
+
 
     def clearUWILines(self):
         for item in self.scene.items():

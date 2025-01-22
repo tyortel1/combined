@@ -1,5 +1,5 @@
 import os
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton
+from PySide6.QtWidgets import QWidget, QHBoxLayout,QSpinBox, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton
 from PySide6.QtCore import Qt, QMetaObject
 from PySide6.QtGui import QIcon,  QPalette, QColor, QAction
 
@@ -145,6 +145,30 @@ class Ui_MainWindow:
         MainWindow.ticksCheckbox.setChecked(True)
         MainWindow.optionsLayout.addWidget(MainWindow.ticksCheckbox)
 
+        MainWindow.gradientCheckbox = QCheckBox("Show Drainage", MainWindow)
+        MainWindow.gradientCheckbox.setChecked(True)
+
+        # Spin box for gradient size
+        MainWindow.gradientSizeSpinBox = QSpinBox(MainWindow)
+        MainWindow.gradientSizeSpinBox.setMinimum(1)    # Minimum size
+        MainWindow.gradientSizeSpinBox.setMaximum(1000) # Maximum size
+        MainWindow.gradientSizeSpinBox.setValue(400)    # Default value
+        MainWindow.gradientSizeSpinBox.setSingleStep(10) # Step size for increment/decrement
+        MainWindow.gradientSizeSpinBox.setToolTip("Set the size of the drainage gradient")
+        
+
+
+        # Horizontal layout to put checkbox and spinbox together
+        gradientLayout = QHBoxLayout()
+        gradientLayout.addWidget(MainWindow.gradientCheckbox)
+        gradientLayout.addWidget(QLabel("Size:"))
+        gradientLayout.addWidget(MainWindow.gradientSizeSpinBox)
+        gradientLayout.addStretch()  # Add stretching to prevent cramping
+
+        # Add the horizontal layout to the options layout
+        MainWindow.optionsLayout.addLayout(gradientLayout)
+
+
         MainWindow.uwiWidthLabel = QLabel("UWI Size:", MainWindow)
         MainWindow.optionsLayout.addWidget(MainWindow.uwiWidthLabel)
 
@@ -243,6 +267,8 @@ class Ui_MainWindow:
         #MainWindow.calculate_menu.addAction(MainWindow.calc_well_attribute_action)
         MainWindow.calc_inzone_action = QAction("Calculate in Zone", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
+        MainWindow.pc_dialog_action = QAction("Calculate Parent Child", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.pc_dialog_action)
 
 
 
@@ -333,14 +359,16 @@ class Ui_MainWindow:
         MainWindow.launch_action.triggered.connect(MainWindow.launch_secondary_window)
         #MainWindow.exportSw = QAction(MainWindow.exportSw_icon, "Send to SeisWare", MainWindow)
         #MainWindow.toolbar.addAction(MainWindow.exportSw)
-
-        # Toggle button for draw/pan mode
-        MainWindow.toggle_button = QToolButton(MainWindow)
-        MainWindow.toggle_button.setCheckable(True)
-        MainWindow.toggle_button.setIcon(QIcon('icons/pan_icon.png'))  # Default to pan mode icon
-        MainWindow.toggle_button.setToolTip("Toggle Draw Mode")
-        MainWindow.toggle_button.setChecked(False)  # Default to off
-        MainWindow.toolbar.addWidget(MainWindow.toggle_button)
+        # Add scenario dropdown to toolbar
+        MainWindow.toolbar.addSeparator()
+        
+        # Add scenario dropdown to toolbar
+        MainWindow.scenarioLabel = QLabel("Active Scenario:", MainWindow)
+        MainWindow.toolbar.addWidget(MainWindow.scenarioLabel)
+        MainWindow.scenarioDropdown = QComboBox(MainWindow)
+        # Will be populated later with populate_scenario_dropdown
+        MainWindow.scenarioDropdown.setFixedWidth(150)  # Set a reasonable width
+        MainWindow.toolbar.addWidget(MainWindow.scenarioDropdown)
 
         self.populate_color_bar_dropdowns()
 

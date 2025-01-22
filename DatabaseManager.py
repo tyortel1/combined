@@ -48,6 +48,14 @@ class DatabaseManager:
             lateral REAL DEFAULT NULL,
             npv REAL DEFAULT NULL,
             npv_discounted REAL DEFAULT NULL,
+            heel_x REAL DEFAULT NULL,
+            heel_y REAL DEFAULT NULL,
+            toe_x REAL DEFAULT NULL,
+            toe_y REAL DEFAULT NULL,
+            heel_md REAL DEFAULT NULL,
+            toe_md REAL DEFAULT NULL,
+            average_tvd REAL DEFAULT NULL,
+            total_length REAL DEFAULT NULL,
             spud_date TEXT DEFAULT NULL
         )
         """
@@ -61,81 +69,66 @@ class DatabaseManager:
             self.disconnect()
 
     def save_uwi_data(self, total_lat_data):
-        import pandas as pd
-
         # Ensure input data is a DataFrame
         if not isinstance(total_lat_data, pd.DataFrame):
             print("Input data must be a pandas DataFrame.")
             return
 
-        # Strip leading and trailing whitespace from column names
-        total_lat_data.columns = total_lat_data.columns.str.strip()
-
-        # Rename columns to match the database schema
-        column_mapping = {
-            'UWI': 'uwi',
-            'Total Lateral': 'lateral',
-            'Surface X': 'surface_x',
-            'Surface Y': 'surface_y',
-            'Status': 'status',
-            'Spud Date': 'spud_date'
-        }
-        total_lat_data.rename(columns={key: value for key, value in column_mapping.items() if key in total_lat_data.columns}, inplace=True)
-
         # Check if the DataFrame is empty
         if total_lat_data.empty:
-            print("DataFrame is empty after processing. Please check the input data.")
+            print("The DataFrame is empty. Nothing to save.")
             return
 
         # Connect to the database
         self.connect()
+
         try:
             for _, row in total_lat_data.iterrows():
                 uwi = row['uwi']
 
-                # Ensure spud_date is in the correct format (YYYY-MM-DD)
+                # No special handling for spud_date if it's already valid or None
                 spud_date = row.get('spud_date')
-                if pd.notnull(spud_date):  # Check if spud_date is not null
-                    try:
-                        spud_date = pd.to_datetime(spud_date).strftime('%Y-%m-%d')
-                    except Exception as e:
-                        print(f"Error formatting spud_date for UWI {uwi}: {e}")
-                        spud_date = None
 
                 # Prepare the dynamic SQL for updating columns
                 update_columns = [col for col in row.index if col != 'uwi']
                 set_clause = ", ".join([f"{col} = COALESCE(?, {col})" for col in update_columns])
+
                 sql_update = f"""
                 UPDATE uwis
                 SET {set_clause}
                 WHERE uwi = ?
                 """
 
-                # Collect values for the SQL parameters
-                update_values = [row[col] if col != 'spud_date' else spud_date for col in update_columns] + [uwi]
+                # Prepare update values
+                update_values = [row[col] for col in update_columns]
+                update_values.append(uwi)
 
-                # Execute the update query
+                # Execute update
                 self.cursor.execute(sql_update, update_values)
 
-                # If no rows were updated, insert the record
+                # If no rows were updated, insert a new record
                 if self.cursor.rowcount == 0:
                     columns = ['uwi'] + update_columns
                     placeholders = ", ".join(["?" for _ in columns])
+
                     sql_insert = f"""
                     INSERT INTO uwis ({', '.join(columns)})
                     VALUES ({placeholders})
                     """
-                    insert_values = [uwi] + [row[col] if col != 'spud_date' else spud_date for col in update_columns]
+
+                    insert_values = [uwi] + update_values
                     self.cursor.execute(sql_insert, insert_values)
 
             # Commit the transaction
             self.connection.commit()
-            print("Total lat data updated successfully.")
+            print("Well data updated successfully.")
+
         except Exception as e:
-            print("Error updating total lat data:", e)
+            print(f"Error updating well data: {e}")
+            self.connection.rollback()
+
         finally:
             self.disconnect()
-
 
     def get_uwis_with_surface_xy(self):
         """Fetches all UWIs along with their surface X and Y coordinates from the database."""
@@ -150,7 +143,49 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-
+    def get_uwis_with_heel_toe(self):
+        try:
+            self.connect()
+        
+            query = """
+            SELECT 
+                uwi, 
+                CAST(heel_x AS FLOAT) AS heel_x, 
+                CAST(heel_y AS FLOAT) AS heel_y, 
+                CAST(toe_x AS FLOAT) AS toe_x, 
+                CAST(toe_y AS FLOAT) AS toe_y
+            FROM uwis
+            WHERE 
+                (heel_x IS NOT NULL AND heel_y IS NOT NULL AND 
+                toe_x IS NOT NULL AND toe_y IS NOT NULL)
+            """
+        
+            self.cursor.execute(query)
+        
+            # Fetch all rows
+            heel_toe_data = self.cursor.fetchall()
+        
+            # Convert rows into dictionaries and cast values as float
+            result = [
+                {
+                    "uwi": row[0],
+                    "heel_x": float(row[1]) if row[1] is not None else None,
+                    "heel_y": float(row[2]) if row[2] is not None else None,
+                    "toe_x": float(row[3]) if row[3] is not None else None,
+                    "toe_y": float(row[4]) if row[4] is not None else None
+                }
+                for row in heel_toe_data
+            ]
+        
+            print(f"Retrieved {len(result)} wells with heel and toe coordinates.")
+            return result
+    
+        except sqlite3.Error as e:
+            print(f"Error retrieving heel and toe coordinates: {e}")
+            return []
+    
+        finally:
+            self.disconnect()
     def update_uwi_revenue_and_efr(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
         self.connect()
         update_sql = """
@@ -402,6 +437,8 @@ class DatabaseManager:
             EUR_gas_remaining REAL DEFAULT NULL,  
             npv REAL DEFAULT NULL,           
             npv_discounted REAL DEFAULT NULL,  
+            payback_months REAL DEFAULT NULL,  ,
+            parrent_well REAL DEFAULT NULL,  
             PRIMARY KEY (scenario_id, uwi)
         )
         """
@@ -413,7 +450,27 @@ class DatabaseManager:
             print("Error creating model properties table:", e)
         finally:
             self.disconnect()
+    def delete_model_properties_for_scenario(self, scenario_id):
+        """Delete model properties associated with a specific scenario."""
+        query = "DELETE FROM model_properties WHERE scenario_id = ?"
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (scenario_id,))
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting model properties for scenario {scenario_id}: {e}")
 
+    def delete_production_rates_for_scenario(self, scenario_id):
+        """Delete production rates associated with a specific scenario."""
+        query = "DELETE FROM prod_rates_all WHERE scenario_id = ?"
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (scenario_id,))
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting production rates for scenario {scenario_id}: {e}")
     def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, scenario_id=1):
         """
         Update the EUR values in the model_properties table for the given UWI and scenario_id.
@@ -439,7 +496,7 @@ class DatabaseManager:
             print(f"Error updating EUR values for UWI {uwi}: {e}")
 
 
-    def retrieve_model_properties(self, current_uwi, scenario_id):
+    def retrieve_model_data_by_scenario_and_uwi(self,  scenario_id, current_uwi):
         """
         Retrieve model properties for the specified UWI and scenario_id.
         """
@@ -537,6 +594,88 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def retrieve_all_model_properties(self, scenario_id):
+        """
+        Retrieve model properties for all UWIs for the specified scenario_id.
+    
+        Args:
+            scenario_id (int): The scenario ID to retrieve properties for
+    
+        Returns:
+            pandas.DataFrame: A DataFrame containing model properties for all UWIs in the scenario
+            or None if no data is found
+        """
+        print(f"Retrieving model properties for Scenario ID: {scenario_id}")
+        try:
+            self.connect()
+            query = "SELECT * FROM model_properties WHERE scenario_id = ?"
+            self.cursor.execute(query, (scenario_id,))
+        
+            # Fetch all rows
+            data = self.cursor.fetchall()
+        
+            if data:
+                # Extract column names from the cursor description
+                columns = [description[0] for description in self.cursor.description]
+            
+                # Convert fetched data to a DataFrame
+                df = pd.DataFrame(data, columns=columns)
+                return df
+            else:
+                print(f"No model properties found for scenario {scenario_id}")
+                return None
+        except sqlite3.Error as e:
+            print(f"Error retrieving model properties for scenario {scenario_id}: {e}")
+            return None
+        finally:
+            self.disconnect()
+
+
+    def retrieve_model_data_by_scenorio(self, scenario_id):
+        """
+        Retrieve model data for a specific scenario from the database.
+        Returns list of dictionaries with model properties data, replacing NULL with 0.
+        """
+        try:
+            self.connect()
+            self.cursor.execute("SELECT * FROM model_properties WHERE scenario_id = ?", (scenario_id,))
+            rows = self.cursor.fetchall()
+        
+            model_data = []
+            column_names = [description[0] for description in self.cursor.description]
+            for row in rows:
+                # Replace None values with 0 when creating dictionary
+                row_dict = {col: (0 if val is None else val) 
+                           for col, val in zip(column_names, row)}
+                model_data.append(row_dict)
+            return model_data
+        
+        except sqlite3.Error as e:
+            print("Error retrieving model data:", e)
+            return []
+        finally:
+            self.disconnect()
+
+    def get_model_properties(self, scenario):
+        try:
+            self.connect()
+            query = "SELECT * FROM model_properties WHERE scenario_id = ?"
+            self.cursor.execute(query, (scenario,))
+        
+            # Fetch column names
+            columns = [column[0] for column in self.cursor.description]
+        
+            # Fetch all rows
+            data = self.cursor.fetchall()
+        
+            # Convert to DataFrame
+            return pd.DataFrame(data, columns=columns)
+    
+        except sqlite3.Error as e:
+            print(f"Error retrieving model properties: {e}")
+            return pd.DataFrame()  # Return empty DataFrame
+        finally:
+            self.disconnect()
     def retrieve_model_data_by_scenario_and_uwi(self, scenario_id, uwi):
         try:
             self.connect()
@@ -680,6 +819,22 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print("Error retrieving data from database:", e)
             return None
+        finally:
+            self.disconnect()
+
+    def get_active_uwis_with_properties(self):
+        try:
+            self.connect()
+            query = """
+            SELECT DISTINCT u.uwi 
+            FROM uwis u 
+            JOIN model_properties mp ON u.uwi = mp.uwi 
+            WHERE u.status = 'Active'
+            """
+    
+            self.cursor.execute(query)
+            results = self.cursor.fetchall()
+            return [row[0] for row in results]
         finally:
             self.disconnect()
 
@@ -1141,6 +1296,7 @@ class DatabaseManager:
             return None
         finally:
             self.disconnect()
+
     def get_decline_curve_data(self, curve_name):
         try:
             self.connect()
@@ -1204,7 +1360,7 @@ class DatabaseManager:
             scenario_id INTEGER,
             start_date DATE,
             decline_curve VARCHAR(255),
-            total_lateral DECIMAL(10, 2),
+            total_depth DECIMAL(10, 2),
             total_capex_cost DECIMAL(15, 2),
             total_opex_cost DECIMAL(15, 2),
             drill_time INTEGER,
@@ -1250,22 +1406,30 @@ class DatabaseManager:
             self.disconnect()
 
 
+
     def get_scenario_wells(self, scenario_id):
-        """Get list of UWIs currently in a specific scenario"""
+        """Get all well data currently in a specific scenario"""
         try:
             self.connect()
             query = """
-            SELECT uwi 
+            SELECT * 
             FROM well_pads 
             WHERE scenario_id = ?
             """
-            self.cursor.execute(query, (scenario_id,))
-            return [row[0] for row in self.cursor.fetchall()]
+        
+            # Read directly into DataFrame using pandas
+            scenario_wells_df = pd.read_sql_query(query, self.connection, params=(scenario_id,))
+        
+            print("DataFrame retrieved from database:")
+            print(scenario_wells_df)
+            print("\nColumns:", scenario_wells_df.columns.tolist())
+        
+            return scenario_wells_df
+        
         except sqlite3.Error as e:
             print(f"Error getting scenario wells: {e}")
-            return []
-
-
+            logging.error(f"Database error: {e}")
+            return pd.DataFrame()  # Return empty DataFrame on error
         finally:
             self.disconnect()
 
@@ -1309,7 +1473,7 @@ class DatabaseManager:
         INSERT INTO well_pads (
             uwi,
             scenario_id,
-            total_lateral,
+            total_depth,
             total_capex_cost,
             total_opex_cost,
             drill_time,
@@ -1322,8 +1486,9 @@ class DatabaseManager:
             distance_to_pipe,
             cost_per_foot_to_pipe,
             decline_curve,
+            decline_curve_type,
             start_date
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         try:
             self.connect()
@@ -1333,7 +1498,7 @@ class DatabaseManager:
             cursor.execute(query, (
                 well_pad_data['uwi'],                           # Required
                 well_pad_data['scenario_id'],                  # Required
-                well_pad_data.get('total_lateral'),            # Optional
+                well_pad_data.get('total_depth'),            # Optional
                 well_pad_data.get('total_capex_cost'),         # Optional
                 well_pad_data.get('total_opex_cost'),          # Optional
                 well_pad_data.get('drill_time'),               # Optional
@@ -1345,7 +1510,8 @@ class DatabaseManager:
                 well_pad_data.get('cost_per_foot'),            # Optional
                 well_pad_data.get('distance_to_pipe'),         # Optional
                 well_pad_data.get('cost_per_foot_to_pipe'),    # Optional
-                well_pad_data.get('decline_curve'),            # Optional
+                well_pad_data.get('decline_curve'),   
+                well_pad_data.get('decline_curve_type'),# Optional
                 well_pad_data.get('start_date')               # Optional
             ))
 
@@ -1371,7 +1537,7 @@ class DatabaseManager:
         query = """
         UPDATE well_pads
         SET 
-            total_lateral = ?,
+            total_depth = ?,
             total_capex_cost = ?,
             total_opex_cost = ?,
             drill_time = ?,
@@ -1384,6 +1550,7 @@ class DatabaseManager:
             distance_to_pipe = ?,
             cost_per_foot_to_pipe = ?,
             decline_curve = ?,
+            decline_curve_type = ?,
             start_date = ?
         WHERE
             id = ?
@@ -1392,7 +1559,7 @@ class DatabaseManager:
             self.connect()
             cursor = self.connection.cursor()
             cursor.execute(query, (
-                well_pad_data['total_lateral'],
+                well_pad_data['total_depth'],
                 well_pad_data['total_capex_cost'],
                 well_pad_data['total_opex_cost'],
                 well_pad_data['drill_time'],
@@ -1405,6 +1572,7 @@ class DatabaseManager:
                 well_pad_data['distance_to_pipe'],
                 well_pad_data['cost_per_foot_to_pipe'],
                 well_pad_data['decline_curve'],
+                well_pad_data['decline_curve_type'],
                 well_pad_data['start_date'],  # Added start_date
                 well_pad_id
             ))
@@ -1481,7 +1649,7 @@ class DatabaseManager:
         query = """
         UPDATE well_pads
         SET 
-            total_lateral = ?,
+            total_depth = ?,
             total_capex_cost = ?,
             total_opex_cost = ?,
             drill_time = ?,
@@ -1501,7 +1669,7 @@ class DatabaseManager:
             self.connect()
             cursor = self.connection.cursor()
             cursor.execute(query, (
-                well_pad_data['total_lateral'],
+                well_pad_data['total_depth'],
                 well_pad_data['total_capex_cost'],
                 well_pad_data['total_opex_cost'],
                 well_pad_data['drill_time'],
@@ -1524,6 +1692,48 @@ class DatabaseManager:
         finally:
             cursor.close()
             self.disconnect()
+
+    def get_total_lengths(self):
+        """
+        Fetches the UWI and total length from the database.
+        """
+        try:
+            self.connect()  # Ensure your database connection method is functional
+            self.cursor.execute("SELECT uwi, total_length FROM uwis")
+            results = self.cursor.fetchall()  # Fetch all results
+            return [{"uwi": str(row[0]), "total_length": row[1]} for row in results]
+        except sqlite3.Error as e:
+            print("Error retrieving UWIs and total lengths:", e)
+            return []
+        finally:
+            self.disconnect()  # Ensure the connection is properly closed
+
+    def get_scenario_id(self, scenario_name):
+        """
+        Fetches the scenario_id based on the provided scenario_name.
+
+        Args:
+            scenario_name (str): The name of the scenario to look up.
+
+        Returns:
+            int: The scenario_id associated with the given scenario_name.
+            None: If the scenario_name does not exist or an error occurs.
+        """
+        self.connect()
+        select_sql = "SELECT scenario_id FROM scenario_names WHERE scenario_name = ?"
+        try:
+            self.cursor.execute(select_sql, (scenario_name,))
+            scenario_id = self.cursor.fetchone()
+            if scenario_id:
+                return scenario_id[0]  # Return the scenario ID as an integer
+            else:
+                return None  # Return None if scenario_name is not found
+        except sqlite3.Error as e:
+            print("Error fetching scenario ID:", e)
+            return None
+        finally:
+            self.disconnect()
+
 
     def get_scenario_names(self):
         self.connect()
@@ -1556,7 +1766,7 @@ class DatabaseManager:
 
     def get_well_pads(self, scenario_id):
         query = """
-        SELECT id, uwi, total_lateral, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
+        SELECT id, uwi, total_depth, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
                pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe, start_date
         FROM well_pads
         WHERE scenario_id = ?
@@ -1946,6 +2156,31 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def update_parent_well_counts(self, uwi_counts, scenario_id):
+        """
+        Update parent_wells in model_properties for matching UWI and scenario_id
+        Takes a list of counts
+        """
+        try:
+            self.connect()
+        
+            # Direct update for each count in the list
+            for entry in uwi_counts:  # Now iterating over list
+                uwi = entry[0]  # First item is UWI
+                count = entry[1]  # Second item is count
+                self.cursor.execute("""
+                    UPDATE model_properties 
+                    SET parent_wells = ?
+                    WHERE uwi = ? AND scenario_id = ?
+                """, (count, uwi, scenario_id))
+            
+            self.connection.commit()
+        
+        except Exception as e:
+            print(f"Error updating parent wells: {e}")
+            raise
+        finally:
+            self.disconnect()
 
     def insert_survey_dataframe_into_db(self, df):
         self.connect()

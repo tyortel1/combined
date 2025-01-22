@@ -12,11 +12,14 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QDate
 
 
+
+
 class PUDWellSelector(QDialog):
-    def __init__(self, parent=None, decline_curves=[], scenarios=[], existing_wells=[]):
+    def __init__(self, parent=None, decline_curves=[], scenarios=[], existing_wells=[], db_manager=None):
         super().__init__(parent)
         self.setWindowTitle("PUD Scenarios")
         self.setGeometry(100, 100, 600, 600)
+        self.db_manager = db_manager 
 
         main_layout = QVBoxLayout()
 
@@ -98,7 +101,16 @@ class PUDWellSelector(QDialog):
         main_layout.addLayout(scenario_layout)
 
 
-        # Decline Curve
+        decline_type_layout = QHBoxLayout()
+        self.decline_type_label = QLabel("Decline Curve Type:")
+        self.decline_type_input = QComboBox()
+        self.decline_type_input.addItems(["UWI", "Saved DC"])
+        decline_type_layout.addWidget(self.decline_type_label)
+        decline_type_layout.addWidget(self.decline_type_input)
+        main_layout.addLayout(decline_type_layout)
+
+
+        # Initialize Decline Curve Input first
         decline_curve_layout = QHBoxLayout()
         self.decline_curve_label = QLabel("Type Curve:")
         self.decline_curve_input = QComboBox()
@@ -106,6 +118,10 @@ class PUDWellSelector(QDialog):
         decline_curve_layout.addWidget(self.decline_curve_label)
         decline_curve_layout.addWidget(self.decline_curve_input)
         main_layout.addLayout(decline_curve_layout)
+
+        # Connect signals after initialization
+        self.decline_type_input.currentTextChanged.connect(self.update_decline_curve_options)
+        self.update_decline_curve_options(self.decline_type_input.currentText())
 
         # Buttons
         buttons_layout = QHBoxLayout()
@@ -125,15 +141,25 @@ class PUDWellSelector(QDialog):
         """Helper function to create CAPEX and cost inputs."""
         cost_layout = QVBoxLayout()
 
+        # Appx Total Depth
+        total_depth_layout = QHBoxLayout()
+        self.total_depth_label = QLabel("Appx Total Depth (feet):")
+        self.total_depth_input = QDoubleSpinBox()
+        self.total_depth_input.setRange(0.0, 50_000.0)
+        self.total_depth_input.setDecimals(2)
+        total_depth_layout.addWidget(self.total_depth_label)
+        total_depth_layout.addWidget(self.total_depth_input)
+        cost_layout.addLayout(total_depth_layout)
+
         self.exploration_cost_input = self.create_double_input("Exploration Cost:", cost_layout)
         self.pad_cost_input = self.create_double_input("Pad Cost:", cost_layout)
-        self.total_lateral_input = self.create_double_input("Total Lateral (feet):", cost_layout)
         self.cost_per_foot_input = self.create_double_input("Cost per Foot:", cost_layout)
         self.distance_to_pipe_input = self.create_double_input("Distance to Pipe (feet):", cost_layout)
         self.cost_per_foot_to_pipe_input = self.create_double_input("Cost per Foot to Pipe:", cost_layout)
 
+        # Approx. CAPEX Cost
         capex_layout = QHBoxLayout()
-        self.capex_cost_label = QLabel("Total CAPEX Cost:")
+        self.capex_cost_label = QLabel("Appx CAPEX Cost:")
         self.capex_cost_output = QLabel("$0.00")
         capex_layout.addWidget(self.capex_cost_label)
         capex_layout.addWidget(self.capex_cost_output)
@@ -141,12 +167,12 @@ class PUDWellSelector(QDialog):
 
         main_layout.addLayout(cost_layout)
 
-            # Separate OPEX input
+        # Separate OPEX input
         opex_layout = QHBoxLayout()
         self.opex_label = QLabel("Expected OPEX Cost (per well):")
         self.opex_input = QDoubleSpinBox()
         self.opex_input.setMinimum(0.0)
-        self.opex_input.setMaximum(1000000.0)
+        self.opex_input.setMaximum(1_000_000.0)
         self.opex_input.setDecimals(2)
         opex_layout.addWidget(self.opex_label)
         opex_layout.addWidget(self.opex_input)
@@ -170,27 +196,30 @@ class PUDWellSelector(QDialog):
         self.add_all_button.clicked.connect(self.add_all)
         self.remove_all_button.clicked.connect(self.remove_all)
 
-        self.exploration_cost_input.valueChanged.connect(self.calculate_capex)
-        self.pad_cost_input.valueChanged.connect(self.calculate_capex)
-        self.total_lateral_input.valueChanged.connect(self.calculate_capex)
-        self.cost_per_foot_input.valueChanged.connect(self.calculate_capex)
-        self.distance_to_pipe_input.valueChanged.connect(self.calculate_capex)
-        self.cost_per_foot_to_pipe_input.valueChanged.connect(self.calculate_capex)
+        self.exploration_cost_input.valueChanged.connect(self.calculate_appx_capex)
+        self.pad_cost_input.valueChanged.connect(self.calculate_appx_capex)
+        self.total_depth_input.valueChanged.connect(self.calculate_appx_capex)
+        self.cost_per_foot_input.valueChanged.connect(self.calculate_appx_capex)
+        self.distance_to_pipe_input.valueChanged.connect(self.calculate_appx_capex)
+        self.cost_per_foot_to_pipe_input.valueChanged.connect(self.calculate_appx_capex)
 
-    def calculate_capex(self):
+    def calculate_appx_capex(self):
+        """Update the calculation to include Appx Total Depth."""
         exploration_cost = self.exploration_cost_input.value()
+
+
         pad_cost = self.pad_cost_input.value()
-        total_lateral = self.total_lateral_input.value()
+        total_depth = self.total_depth_input.value()  # Updated variable name
         cost_per_foot = self.cost_per_foot_input.value()
         distance_to_pipe = self.distance_to_pipe_input.value()
         cost_per_foot_to_pipe = self.cost_per_foot_to_pipe_input.value()
 
         capex_cost = (
             exploration_cost + pad_cost +
-            total_lateral * cost_per_foot +
+            total_depth * cost_per_foot +
             distance_to_pipe * cost_per_foot_to_pipe
         )
-        self.capex_cost_output.setText(f"${capex_cost:.2f}")
+        self.capex_cost_output.setText(f"${capex_cost:.2f}")    
 
     def add_selected(self):
         for item in self.available_wells.selectedItems():
@@ -217,44 +246,76 @@ class PUDWellSelector(QDialog):
         if self.selected_wells.count() == 0:
             QMessageBox.warning(self, "Warning", "Please select at least one well")
             return
-            
         if not self.scenario_input.currentText():
             QMessageBox.warning(self, "Warning", "Please select a scenario")
             return
-            
-
         
+        # Fetch total lengths for the selected wells
+        selected_well_names = self.get_selected_wells()
+        all_wells_with_lengths = self.db_manager.get_total_lengths()  # Fetch all wells with total lengths
+        selected_wells_data = [
+            well for well in all_wells_with_lengths if well["uwi"] in selected_well_names
+        ]
+    
+        # Create list to store data for each well
+        well_data_list = []
+    
+        for well in selected_wells_data:
+            total_length = well["total_length"]
+            exploration_cost = self.exploration_cost_input.value()
+            pad_cost = self.pad_cost_input.value()
+            cost_per_foot = self.cost_per_foot_input.value()
+            distance_to_pipe = self.distance_to_pipe_input.value()
+            cost_per_foot_to_pipe = self.cost_per_foot_to_pipe_input.value()
+    
+            well_capex = (
+                exploration_cost + pad_cost +
+                total_length * cost_per_foot +
+                distance_to_pipe * cost_per_foot_to_pipe
+            )
+    
+            # Create a row for each well with all the data
+            well_row = {
+                "uwi": well["uwi"],
+                "total_depth": total_length,
+                "total_capex_cost": well_capex,
+                "scenario": self.scenario_input.currentText(),
+                "decline_curve": self.decline_curve_input.currentText(),
+                "prod_type": self.prod_type_input.currentText(),
+                "drill_time": self.drill_time_input.value(),
+                "exploration_cost": exploration_cost,
+                "pad_cost": pad_cost,
+                "cost_per_foot": cost_per_foot,
+                "distance_to_pipe": distance_to_pipe,
+                "cost_per_foot_to_pipe": cost_per_foot_to_pipe,
+                "opex_cost": self.opex_input.value(),
+                "decline_curve_type": self.decline_type_input.currentText(),
+                "start_date": self.start_date_input.date().toString("yyyy-MM-dd")
+            }
+            well_data_list.append(well_row)
 
-    # Collect all the data
-        well_data = {
-            'selected_wells': self.get_selected_wells(),
-            'scenario': self.scenario_input.currentText(),
-            'decline_curve': self.decline_curve_input.currentText(),
-            'prod_type': self.prod_type_input.currentText(),
-            'drill_time': self.drill_time_input.value(),
-
-            # CAPEX and Cost Details
-            'exploration_cost': self.exploration_cost_input.value(),
-            'pad_cost': self.pad_cost_input.value(),
-            'total_lateral': self.total_lateral_input.value(),
-            'cost_per_foot': self.cost_per_foot_input.value(),
-            'distance_to_pipe': self.distance_to_pipe_input.value(),
-            'cost_per_foot_to_pipe': self.cost_per_foot_to_pipe_input.value(),
-            'total_capex_cost': float(self.capex_cost_output.text().replace('$', '')),
-            'opex_cost': self.opex_input.value(),
-
-            # Start Date
-            'start_date': self.start_date_input.date().toString("yyyy-MM-dd")
-        }
-
-        # Store the collected data as an attribute
-        self.well_data = well_data
-
+        # Convert to DataFrame
+        import pandas as pd
+        self.well_data = pd.DataFrame(well_data_list)
+    
         # Call the parent class's accept method to close the dialog
         super().accept()
     def get_selected_wells(self):
         """Return a list of selected well names"""
         return [self.selected_wells.item(i).text() for i in range(self.selected_wells.count())]
+
+    def update_decline_curve_options(self, selected_type):
+        self.decline_curve_input.clear()
+    
+        if selected_type == "UWI":
+            # Get active UWIs that have model properties
+            active_uwis = self.db_manager.get_active_uwis_with_properties()
+            self.decline_curve_input.addItems(active_uwis)
+        else:  # "Saved DC"
+            # Use the original decline curves list
+            decline_curve_names = self.db_manager.get_decline_curve_names()
+            self.decline_curve_input.addItems(decline_curve_names)
+
 
 
 if __name__ == "__main__":
@@ -289,6 +350,7 @@ if __name__ == "__main__":
             decline_curves=test_curves,
             scenarios=test_scenarios,
             existing_wells=test_wells
+
         )
         
         result = dialog.exec_()
@@ -307,4 +369,4 @@ if __name__ == "__main__":
         print(f"Error during testing: {str(e)}")
         logger.exception("Test failed")
     finally:
-        sys.exit(app.exec_())
+        sys.exit(app.exec_()) 

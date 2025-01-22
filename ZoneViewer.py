@@ -414,7 +414,7 @@ class ZoneViewerDialog(QDialog):
 
         # Apply UWI filter if not "All"
         if uwi_filter_text != "all":
-            uwi_filter_condition = self.df['UWI'].astype(str).str.lower().str.contains(uwi_filter_text)
+            uwi_filter_condition = self.df['uwi'].astype(str).str.lower().str.contains(uwi_filter_text)
 
         # Apply Attribute filter if not "All"
         if attribute_filter_text != "all":
@@ -516,7 +516,16 @@ class ZoneViewerDialog(QDialog):
         self.apply_column_dimensions()
 
 
-
+    def open_decision_tree_dialog(self):
+        dialog = DecisionTreeDialog(self.df, self)
+    
+        # Remove or comment out the line trying to connect to dataUpdated
+        # dialog.dataUpdated.connect(self.update_dataframe)  # Remove this line
+    
+        # Connect only the criteriaGenerated signal
+        dialog.criteriaGenerated.connect(self.handle_new_criteria)
+    
+        dialog.show()
 
 
 
@@ -873,10 +882,124 @@ class ZoneViewerDialog(QDialog):
             self.apply_filters()
 
     # Usage within your main application
-    # Usage within your main application
+        # Usage within your main application
     def open_decision_tree_dialog(self):
         dialog = DecisionTreeDialog(self.df, self)
+    
+        # Remove or comment out the line trying to connect to dataUpdated
+        # dialog.dataUpdated.connect(self.update_dataframe)  # Remove this line
+    
+        # Connect only the criteriaGenerated signal
+        dialog.criteriaGenerated.connect(self.handle_new_criteria)
+    
         dialog.show()
+
+    def apply_saved_filter(self):
+        selected_filter = self.filter_criteria_dropdown.currentText()
+        print(f"Applying filter: '{selected_filter}'")
+        print(f"Criteria DataFrame: {self.df_criteria}")
+
+        if selected_filter == "None" or selected_filter == "":
+            # If no filter is selected, return the original filtered DataFrame
+            return
+
+        if not self.df_criteria.empty:
+            criteria = self.df_criteria[self.df_criteria['Name'] == selected_filter]
+        
+            if criteria.empty:
+                print(f"No criteria found for name: '{selected_filter}'")
+                print("Available criteria names:", self.df_criteria['Name'].unique())
+                return
+
+            self.filtered_df = self.apply_criteria_to_df(self.filtered_df, criteria)
+        else:
+            print("Criteria DataFrame is empty")
+
+    def apply_saved_highlight(self):
+        selected_highlight = self.highlight_criteria_dropdown.currentText()
+        print(f"Applying highlight: '{selected_highlight}'")
+        print(f"Criteria DataFrame: {self.df_criteria}")
+
+        if selected_highlight == "None" or selected_highlight == "":
+            # Remove highlight color if no criteria is selected
+            if 'HighlightColor' in self.filtered_df.columns:
+                self.filtered_df = self.filtered_df.drop(columns=['HighlightColor'])
+            return
+
+        if not self.df_criteria.empty:
+            highlight_criteria = self.df_criteria[self.df_criteria['Name'] == selected_highlight]
+        
+            if highlight_criteria.empty:
+                print(f"No highlight criteria found for name: '{selected_highlight}'")
+                print("Available criteria names:", self.df_criteria['Name'].unique())
+            
+                # Remove highlight color if no criteria found
+                if 'HighlightColor' in self.filtered_df.columns:
+                    self.filtered_df = self.filtered_df.drop(columns=['HighlightColor'])
+                return
+
+            self.highlight_criteria = highlight_criteria
+            self.apply_criteria_to_data()
+        else:
+            print("Criteria DataFrame is empty")
+            # Remove highlight color if no criteria available
+            if 'HighlightColor' in self.filtered_df.columns:
+                self.filtered_df = self.filtered_df.drop(columns=['HighlightColor'])
+
+    def handle_new_criteria(self, criteria_df):
+        print("Received new criteria:")
+        print(criteria_df)
+
+        # Ensure the DataFrame has the required columns
+        required_columns = ['Name', 'Column', 'Operator', 'Value', 'Color']
+        for col in required_columns:
+            if col not in criteria_df.columns:
+                print(f"Warning: Missing column '{col}' in criteria DataFrame")
+                return
+
+        # Merge the new criteria with existing criteria
+        if self.df_criteria is None or self.df_criteria.empty:
+            self.df_criteria = criteria_df
+        else:
+            # Append and drop duplicates based on specific columns
+            self.df_criteria = pd.concat([self.df_criteria, criteria_df]).drop_duplicates(
+                subset=['Name', 'Column', 'Operator', 'Value']
+            )
+    
+        # Update the criteria dropdowns
+        self.update_criteria_dropdowns()
+    
+        # Automatically apply the new criteria
+        self.apply_filters()
+
+    def update_criteria_dropdowns(self):
+        # Block signals to prevent multiple updates
+        self.filter_criteria_dropdown.blockSignals(True)
+        self.highlight_criteria_dropdown.blockSignals(True)
+
+        # Clear existing items
+        self.filter_criteria_dropdown.clear()
+        self.highlight_criteria_dropdown.clear()
+    
+        # Add "None" as default
+        self.filter_criteria_dropdown.addItem("None")
+        self.highlight_criteria_dropdown.addItem("None")
+    
+        # Add unique criteria names
+        if self.df_criteria is not None and not self.df_criteria.empty and 'Name' in self.df_criteria.columns:
+            unique_names = self.df_criteria['Name'].unique()
+            print("Unique criteria names:", unique_names)
+        
+            for name in unique_names:
+                if pd.notna(name) and name != '':
+                    self.filter_criteria_dropdown.addItem(name)
+                    self.highlight_criteria_dropdown.addItem(name)
+        else:
+            print("No valid criteria names found")
+
+        # Unblock signals
+        self.filter_criteria_dropdown.blockSignals(False)
+        self.highlight_criteria_dropdown.blockSignals(False)
 
 
     def correlation_dialog(self):

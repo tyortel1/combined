@@ -324,8 +324,10 @@ class MainWindow(QMainWindow):
             self.current_uwi = self.uwi_list[0]
         self.current_uwi = self.uwi_list[self.current_uwi_index]
        #printself.current_uwi)
-        self.uwi_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_uwi, self.scenario_id)
-        self.model_data = self.db_manager.retrieve_model_data()
+        scenario_id = 1
+        self.uwi_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_uwi, scenario_id)
+        print(self.uwi_prod_rates_all)
+        self.model_data = self.db_manager.retrieve_model_data_by_scenorio(scenario_id)
         self.update_excel_widget()
         self.model_parameters()
         self.populate_well_dropdown()
@@ -439,7 +441,8 @@ class MainWindow(QMainWindow):
     def populate_scenario_dropdown_tab1(self):
         self.ui.scenario_dropdown1.blockSignals(True)  # Temporarily block signals
         self.ui.scenario_dropdown1.clear()
-        self.model_data = self.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
+        scenario_id = 1
+        self.model_data = self.db_manager.retrieve_model_data_by_scenario(scenario_id)
 
         for scenario in self.scenario_names:
             self.ui.scenario_dropdown1.addItem(scenario)
@@ -1219,11 +1222,12 @@ class MainWindow(QMainWindow):
         # Get current uwi index
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
-
-        self.uwi_model_data = self.db_manager.retrieve_model_properties(self.current_uwi, self.scenario_id)
+        scenario_id = 1
+        self.uwi_model_data = self.db_manager.retrieve_model_data_by_scenario_and_uwi( scenario_id, self.current_uwi)
+        print(self.uwi_model_data)
        #printself.uwi_model_data)
 
-        self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, self.scenario_id)
+        self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, scenario_id)
         print(self.current_error_row)
  
 

@@ -8,6 +8,7 @@ import subprocess
 from itertools import groupby
 import json
 import numpy
+from collections import defaultdict
 #from numpy.typing import _96Bit
 import pandas as pd
 import math
@@ -68,6 +69,7 @@ from Main import MainWindow
 from WellProperties import WellPropertiesDialog
 from EurNpv import EurNpv
 from PUDProperties import PUDPropertiesDialog
+from CalculatePC import PCDialog
 
 
 
@@ -101,6 +103,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.grid_scaled_max_x = None
         self.grid_scaled_min_y = None
         self.grid_scaled_max_y = None
+        self.drainage_width = 400
         self.kd_tree = None
         self.uwi_points = []
 
@@ -203,6 +206,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         self.uwiCheckbox.stateChanged.connect(self.toggle_uwi_labels)
         self.ticksCheckbox.stateChanged.connect(self.toggle_ticks)
+        self.gradientCheckbox.stateChanged.connect(self.toggle_drainage)
         self.uwiWidthSlider.valueChanged.connect(self.change_uwi_width)
         self.opacitySlider.valueChanged.connect(self.change_opacity)
         self.lineWidthSlider.valueChanged.connect(self.change_line_width)
@@ -216,19 +220,23 @@ class Map(QMainWindow, Ui_MainWindow):
         self.zone_viewer_action.triggered.connect(self.launch_zone_viewer)
         self.zoomOut.triggered.connect(self.zoom_out)
         self.zoomIn.triggered.connect(self.zoom_in)
+
         #self.exportSw.triggered.connect(self.export_to_sw)
-        self.toggle_button.clicked.connect(self.toggle_draw_mode)
+     
         self.new_project_action.triggered.connect(self.create_new_project)
         self.open_action.triggered.connect(self.open_project)
         self.calc_stage_action.triggered.connect(self.open_stages_dialog)
         self.calc_zone_attribute_action.triggered.connect(self.open_zone_attributes_dialog)
         self.calc_inzone_action.triggered.connect(self.inzone_dialog)
+        self.pc_dialog_action.triggered.connect(self.pc_dialog)
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
-        self.dataload_segy_action.triggered.connect(self.dataload_segy)
+        self.dataload_segy_action.triggered. connect(self.dataload_segy)
+
         self.well_properties_action.triggered.connect(self.well_properties)
+        self.scenarioDropdown.currentIndexChanged.connect(self.update_active_scenario)
         self.pud_properties_action.triggered.connect(self.pud_properties)
-        
+        self.gradientSizeSpinBox.editingFinished.connect(self.on_drainage_size_changed)
 
       
 
@@ -258,28 +266,42 @@ class Map(QMainWindow, Ui_MainWindow):
     def setData(self):
         if self.directional_surveys_df.empty:
             return
-
         pd.set_option('display.max_columns', None)
         pd.set_option('display.max_colwidth', None)
-
+    
+        scenario = 1
+        # Get heel and toe data first
+        heel_toe_data = {item["uwi"]: item for item in self.db_manager.get_uwis_with_heel_toe()}
+    
+        eur_data = self.db_manager.get_model_properties(scenario)
+        print(eur_data)
+    
+        # Convert the column to numeric, coercing any non-numeric values to NaN
+        eur_data['EUR_oil_remaining'] = pd.to_numeric(eur_data['EUR_oil_remaining'], errors='coerce')
+    
+        # Create the dictionary, filling NaN with 0 if needed
+        eur_dict = dict(zip(eur_data['uwi'], eur_data['EUR_oil_remaining'].fillna(0)))
+    
         self.well_data = {}
         self.scaled_data = {}
         self.scaled_data_md = {}
         self.segments_data = {} 
-
+    
+        # Print out EUR data for debugging
+        print("EUR Dictionary:")
+        for uwi, eur_value in eur_dict.items():
+            print(f"UWI: {uwi}, EUR Remaining: {eur_value}")
+    
         for uwi in self.directional_surveys_df['UWI'].unique():
             df_uwi = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
-        
+    
             x_offsets = df_uwi['X Offset'].tolist()
             y_offsets = df_uwi['Y Offset'].tolist()
             tvds = df_uwi['TVD'].tolist()
             mds = df_uwi['MD'].tolist()
             points = [QPointF(x, y) for x, y in zip(x_offsets, y_offsets)]
-
-
-
-                        # Construct segment-based data
             segments = []
+        
             for i in range(len(points) - 1):
                 segment = {
                     "Segment": i + 1,
@@ -289,24 +311,48 @@ class Map(QMainWindow, Ui_MainWindow):
                     "Y Top": points[i].y(),
                     "X Base": points[i + 1].x(),
                     "Y Base": points[i + 1].y(),
-                    "Color": "#000000"  # Default color; you can update this dynamically if needed
+                    "Color": "#000000"
                 }
                 segments.append(segment)
-
-
-            self.well_data[uwi] = {
+        
+            # Add heel and toe data if available
+            well_data = {
                 'x_offsets': x_offsets,
                 'y_offsets': y_offsets,
                 'tvds': tvds,
                 'mds': mds,
                 'points': points
             }
-
-            # Keep the scaled_data and scaled_data_md as before
+        
+            if uwi in heel_toe_data:
+                well_data.update({
+                    'heel_x': heel_toe_data[uwi]['heel_x'],
+                    'heel_y': heel_toe_data[uwi]['heel_y'],
+                    'toe_x': heel_toe_data[uwi]['toe_x'], 
+                    'toe_y': heel_toe_data[uwi]['toe_y']
+                })
+        
+            # Calculate drainage size specifically for this well
+            eur_value = eur_dict.get(uwi, 0)
+            eur_multiplier = 1 - eur_value
+        
+            # Print individual well drainage size calculation
+            print(f"UWI: {uwi}, EUR Value: {eur_value}, EUR Multiplier: {eur_multiplier}")
+        
+            # Use default drainage width if needed, scaled by EUR multiplier
+            well_data['drainage_size'] = self.drainage_width * eur_multiplier
+            print(f"UWI: {uwi}, Drainage Size: {well_data['drainage_size']}")
+        
+            self.well_data[uwi] = well_data
+    
             self.scaled_data[uwi] = list(zip(points, tvds))
             self.scaled_data_md[uwi] = list(zip(points, mds))
-        print(self.segments_data)
-        # Calculate min/max values
+    
+        # Print final well data to verify
+        print("Final Well Data Drainage Sizes:")
+        for uwi, well in self.well_data.items():
+            print(f"UWI: {uwi}, Drainage Size: {well.get('drainage_size', 'N/A')}")
+         # Calculate min/max values
         all_x = [x for well in self.well_data.values() for x in well['x_offsets']]
         all_y = [y for well in self.well_data.values() for y in well['y_offsets']]
         self.min_x, self.max_x = min(all_x), max(all_x)
@@ -317,11 +363,52 @@ class Map(QMainWindow, Ui_MainWindow):
         self.uwi_map = {(x, y): uwi for uwi, well in self.well_data.items() for x, y in zip(well['x_offsets'], well['y_offsets'])}
 
         # Build KDTree
-        self.kd_tree_wells = KDTree(self.uwi_points)
-
-        # Pass all necessary data to setScaledData
+        self.kd_tree_wells = KDTree(self.uwi_points) 
+        # Rest of the method remains the same
         self.drawingArea.setScaledData(self.well_data)
         self.set_interactive_elements_enabled(True)
+
+    def on_drainage_size_changed(self):
+        new_drainage_size = self.gradientSizeSpinBox.value()
+        self.drawingArea.clearDrainageEllipses()
+        self.drainage_width = new_drainage_size
+        self.setData()
+
+
+    def update_active_scenario(self):
+        # Get the currently selected scenario name from the dropdown
+        selected_scenario = self.scenarioDropdown.currentText()
+    
+        # Update the active scenario in the database manager
+        self.senario_id = self.db_manager.get_scenario_id(selected_scenario)
+    
+        # Update the local scenario ID
+        self.scenario_id = self.db_manager.set_active_scenario(self.scenario_id)
+
+
+    def populate_scenario_dropdown(self):
+        # Only block signals if we're in open state
+        if self.open:
+            self.scenarioDropdown.blockSignals(True)
+    
+        # Clear existing items
+        self.scenarioDropdown.clear()
+    
+        # Get scenarios from db_manager
+        scenario_names = self.db_manager.get_all_scenario_names()
+        active_scenario_name = self.db_manager.get_active_scenario_name()
+    
+        # Add scenarios to dropdown
+        self.scenarioDropdown.addItems(scenario_names)
+    
+        # Set active scenario as current
+        index = self.scenarioDropdown.findText(active_scenario_name)
+        if index >= 0:
+            self.scenarioDropdown.setCurrentIndex(index)
+    
+        # Unblock signals if we blocked them
+        if self.open:
+            self.scenarioDropdown.blockSignals(False)
 
     def populate_grid_dropdown(self, selected_grid=None):
         # Ensure grid_info_df is populated
@@ -381,7 +468,36 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-
+    def pc_dialog(self):
+        """
+        Display the Parent-Child Well Analysis dialog and process the results.
+        """
+        dialog = PCDialog(self.db_manager)
+        if dialog.exec() == QDialog.Accepted:
+            # Get current scenario ID and results
+            scenario_name = dialog.scenario_combo.currentText()
+            scenario_id = self.db_manager.get_scenario_id(scenario_name)
+            results = dialog.results
+        
+            # Count occurrences of each target UWI
+            uwi_counts = {}
+            for result in results:
+                uwi = result['target_uwi']
+                uwi_counts[uwi] = uwi_counts.get(uwi, 0) + 1
+        
+            # Convert to list of tuples (uwi, count)
+            uwi_count_list = [(uwi, count) for uwi, count in uwi_counts.items()]
+    
+            # Update parent well counts in database
+            try:
+                self.db_manager.update_parent_well_counts(uwi_count_list, scenario_id)
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    "Warning",
+                    f"Error updating parent wells count: {str(e)}",
+                    QMessageBox.Ok
+                )
 
 
 
@@ -1436,6 +1552,13 @@ class Map(QMainWindow, Ui_MainWindow):
         state == Qt.Checked
         self.drawingArea.toggleticksVisibility(state)
 
+    def toggle_drainage(self, state):
+
+        print(f"Checkbox state: {state}")  # Should print 0 or 2
+        state == Qt.Checked
+        self.drawingArea.togglegradientVisibility(state)
+
+
 
     def change_uwi_width(self, value=80):
         self.uwi_width = value
@@ -1498,7 +1621,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.setData()
         
         self.drawingArea.setScaledData(self.well_data)
-        print(self.well_data)
+        self.populate_scenario_dropdown()
+       
         self.drawingArea.fitSceneInView()
 
 
@@ -2351,7 +2475,25 @@ class Map(QMainWindow, Ui_MainWindow):
         #    self.zone_selected()
    
 
+    def pc_dialog(self):
+        """
+        Display the Parent-Child Well Analysis dialog, process the results, and count intersections.
+        """
+        dialog = PCDialog(self.db_manager)
+        if dialog.exec() == QDialog.Accepted:
+            # Access results from the dialog
+            results = dialog.results
 
+            # Count intersections for each UWI
+            intersection_counts = defaultdict(int)
+            for entry in results:
+                target_uwi = entry["target_uwi"]
+                intersection_counts[target_uwi] += 1
+
+            # Display the intersection counts
+            print("Intersection Counts by UWI:")
+            for uwi, count in intersection_counts.items():
+                print(f"UWI: {uwi}, Intersections: {count}")
 
     def open_zone_attributes_dialog(self):
         print(self.zone_names)

@@ -1,25 +1,24 @@
-import pandas as pd
-from PySide6.QtWidgets import QDialog, QListWidget, QVBoxLayout,QTextEdit, QFormLayout, QPushButton, QSpacerItem, QSizePolicy, QLabel, QMessageBox, QHBoxLayout, QListWidgetItem, QComboBox, QLineEdit
-from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (QDialog, QListWidget, QVBoxLayout, QTextEdit, 
+    QFormLayout, QPushButton, QSpacerItem, QSizePolicy, QLabel, QMessageBox, 
+    QHBoxLayout, QListWidgetItem, QComboBox, QLineEdit, QColorDialog)
+from PySide6.QtGui import QIcon, QColor, QPalette
 from PySide6.QtCore import Qt
-from sklearn.tree import DecisionTreeClassifier
-import matplotlib.pyplot as plt
-from sklearn import tree
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from sklearn.tree import _tree
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor, _tree
 import numpy as np
 from collections import defaultdict, Counter
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.model_selection import train_test_split
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QComboBox, QColorDialog
-from PySide6.QtGui import QColor, QPalette
-from PySide6.QtCore import Qt
+from HighlightCriteriaDialog import HighlightCriteriaDialog
+import pandas as pd
+from PySide6.QtCore import Signal
 
 class DecisionTreeDialog(QDialog):
+
+
+
+    criteriaGenerated = Signal(pd.DataFrame)
     def __init__(self, master_df, parent=None):
         super().__init__(parent)
-        self.master_df = master_df
+        # Create a deep copy of the DataFrame at initialization
+        self.master_df = master_df.copy()
         self.initUI()
 
     def initUI(self):
@@ -30,7 +29,7 @@ class DecisionTreeDialog(QDialog):
         self.df_filtered = pd.DataFrame()
         main_layout = QVBoxLayout(self)
 
-        # Layout for attribute selection
+        # Changed to match the actual method name
         self.setup_selector_layout(main_layout, "Select Attributes", 
                                    available_items=available_columns,
                                    move_all_right_callback=self.move_all_attributes_right,
@@ -69,7 +68,10 @@ class DecisionTreeDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
         main_layout.addLayout(button_layout)
 
-    def setup_selector_layout(self, main_layout, label_text, available_items, move_all_right_callback, move_right_callback, move_left_callback, move_all_left_callback, available_list_attr, selected_list_attr):
+
+    def setup_selector_layout(self, main_layout, label_text, available_items, move_all_right_callback, 
+                        move_right_callback, move_left_callback, move_all_left_callback, 
+                        available_list_attr, selected_list_attr):
         section_label = QLabel(label_text)
         main_layout.addWidget(section_label)
 
@@ -110,12 +112,10 @@ class DecisionTreeDialog(QDialog):
         selected_listbox = QListWidget()
         selected_listbox.setSelectionMode(QListWidget.ExtendedSelection)
         setattr(self, selected_list_attr, selected_listbox)
-        
+    
         list_layout.addWidget(selected_listbox)
-
         main_layout.addLayout(list_layout)
 
-    # Methods for moving attributes
     def move_all_attributes_right(self):
         self.move_all_items(self.attribute_available_listbox, self.attribute_selected_listbox)
 
@@ -128,7 +128,6 @@ class DecisionTreeDialog(QDialog):
     def move_all_attributes_left(self):
         self.move_all_items(self.attribute_selected_listbox, self.attribute_available_listbox)
 
-    # Helper methods for moving items between list boxes
     def move_selected_items(self, source_list, target_list):
         for item in source_list.selectedItems():
             target_list.addItem(item.text())
@@ -139,157 +138,154 @@ class DecisionTreeDialog(QDialog):
             item = source_list.takeItem(0)
             target_list.addItem(item.text())
 
-    def reset_master_df(self):
-        # Reset the master DataFrame to its original state
-        self.df_filtered = self.master_df.copy()
 
-
-        # You can also reset any other UI elements or internal variables as needed
-
-        print("Master DataFrame and UI have been reset.")
 
     def build_decision_tree(self):
-        selected_attributes = [self.attribute_selected_listbox.item(i).text() for i in range(self.attribute_selected_listbox.count())]
+        selected_attributes = [self.attribute_selected_listbox.item(i).text() 
+                             for i in range(self.attribute_selected_listbox.count())]
         selected_outcome = self.outcome_dropdown.currentText()
 
+        # Calculate total number of existing bad frac stages
+        total_bad_fracs = self.master_df[selected_outcome].sum()
+        print(f"Total existing bad frac stages: {total_bad_fracs}")
+
         if len(selected_attributes) > 0:
-            # Create a copy of the master DataFrame including only the selected columns
             relevant_columns = selected_attributes + [selected_outcome]
             self.df_filtered = self.master_df[relevant_columns].copy()
 
-            # Filter the DataFrame to include only rows where the outcome is not zero or NaN
             self.df_filtered = self.df_filtered.loc[
                 (self.df_filtered[selected_outcome] != 0) & 
                 (self.df_filtered[selected_outcome].notna())
             ]
 
-            print(self.df_filtered)  # Debugging output
-        
-            if self.df_filtered.empty:
-                QMessageBox.warning(self, "No Data", "Filtered data is empty. Please check your selections.")
-                return
-
-            if len(selected_attributes) > 0:
-                # Check if the filtered outcome column contains only the value 1
-                if self.df_filtered[selected_outcome].nunique() == 1 and self.df_filtered[selected_outcome].iloc[0] == 1:
-                    # Outcome is always 1, use distribution analysis
-                    print("Outcome is always 1. Running distribution analysis...")
-                    self.analyze_most_likely_values(selected_attributes, selected_outcome)
-                else:
-                    # Outcome has varying values, use decision tree analysis
-                    threshold = float(self.threshold_edit.text())
-                    print(f"Outcome varies. Running decision tree analysis with threshold {threshold}...")
-                    self.plot_decision_tree(selected_attributes, selected_outcome, threshold)
-            else:
-                QMessageBox.warning(self, "Invalid Selection", "Please select at least one attribute.")
-
+            # Try progressively lower thresholds
+            thresholds = [0.3, 0.2, 0.1, 0.05]
+            for threshold in thresholds:
+                print(f"\nTrying threshold: {threshold}")
+                predicted_bad_fracs = self.plot_decision_tree(selected_attributes, selected_outcome, threshold)
+            
+                # If we capture a good portion of existing bad fracs, stop
+                if predicted_bad_fracs is not None:
+                    capture_rate = predicted_bad_fracs.sum() / total_bad_fracs
+                    print(f"Capture rate: {capture_rate:.2%}")
+                    if capture_rate > 0.7:  # Adjust this threshold as needed
+                        break
 
     def analyze_most_likely_values(self, attributes, outcome):
         try:
             print("Starting analysis...")
             analysis_results = []
             tolerance = 1e-5  # Small tolerance for floating-point comparison
-
+    
+            # Make a copy of df_filtered to avoid SettingWithCopyWarning
+            working_df = self.df_filtered.copy()
+    
             for attribute in attributes:
                 print(f"Processing attribute: {attribute}")
-                self.df_filtered[attribute].fillna(0, inplace=True)
-                self.df_filtered[attribute] = pd.to_numeric(self.df_filtered[attribute], errors='coerce').fillna(0)
-
-                if pd.api.types.is_numeric_dtype(self.df_filtered[attribute]):
-                    median_value = self.df_filtered[attribute].median()
-
-                    above_median_count = (self.df_filtered[attribute] > median_value + tolerance).sum()
-                    below_median_count = (self.df_filtered[attribute] < median_value - tolerance).sum()
-                    equal_median_count = (
-                        (self.df_filtered[attribute] >= median_value - tolerance) &
-                        (self.df_filtered[attribute] <= median_value + tolerance)
-                    ).sum()
-
-                    if above_median_count > below_median_count and above_median_count > equal_median_count:
-                        most_likely = f"above {median_value:.2f}"
-                    elif below_median_count > above_median_count and below_median_count > equal_median_count:
-                        most_likely = f"below {median_value:.2f}"
-                    else:
-                        most_likely = f"equal to {median_value:.2f}"
-
-                    analysis_results.append({"Attribute": attribute, "Condition": most_likely})
-                else:
-                    analysis_results.append({"Attribute": attribute, "Condition": "non-numeric or missing"})
-
-            print("Final analysis results:", analysis_results)
         
-            # Pass the analysis results as a list of dictionaries to the dialog
-            dialog = ResultDisplayDialog(analysis_results, self)
-            dialog.exec_()
+                # Create a copy of the column and process it
+                working_df.loc[:, attribute] = working_df[attribute].fillna(0)
+                working_df.loc[:, attribute] = pd.to_numeric(working_df[attribute], errors='coerce').fillna(0)
+        
+                if pd.api.types.is_numeric_dtype(working_df[attribute]):
+                    median_value = working_df[attribute].median()
+                    q1 = working_df[attribute].quantile(0.25)
+                    q3 = working_df[attribute].quantile(0.75)
+            
+                    # Calculate count of values above and below median
+                    above_median_count = (working_df[attribute] > median_value + tolerance).sum()
+                    below_median_count = (working_df[attribute] < median_value - tolerance).sum()
+            
+                    # Determine the condition based on distribution
+                    if above_median_count > below_median_count:
+                        # If mostly above median, provide a range description
+                        condition = f"between {median_value:.2f} and {q3:.2f}"
+                    elif below_median_count > above_median_count:
+                        # If mostly below median, provide a range description
+                        condition = f"between {q1:.2f} and {median_value:.2f}"
+                    else:
+                        # If evenly distributed, provide a broader range
+                        condition = f"between {q1:.2f} and {q3:.2f}"
+            
+                    # Add to analysis results
+                    analysis_results.append({
+                        "Attribute": attribute, 
+                        "Condition": condition
+                    })
+            
+                    print(f"Analysis for {attribute}: {condition}")
+    
+            print("Final analysis results:", analysis_results)
+
+            # Directly call show_result_dialog with the analysis results
+            self.show_result_dialog(analysis_results)
 
         except Exception as e:
             print(f"Error analyzing most likely values: {e}")
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")
 
-
-
-
     def plot_decision_tree(self, attributes, outcome, threshold):
         try:
-            # Filter the DataFrame to include only rows where the outcome is not zero, not NaN, and meets/exceeds the threshold
-            df_filtered = self.master_df.loc[
-                (self.master_df[outcome] != 0) & 
-                (self.master_df[outcome].notna())
-            ]
-            print(df_filtered)
-            X = df_filtered[attributes]
-            y = df_filtered[outcome]
+            X = self.df_filtered[attributes]
+            y = self.df_filtered[outcome]
 
-            # Handle NaN, infinite, and large values in X
-            X = X.replace([np.inf, -np.inf], np.nan).dropna()  # Replace infinities with NaN and then drop them
-            y = y[X.index]  # Ensure y matches the cleaned X
+            X = X.replace([np.inf, -np.inf], np.nan).dropna()
+            y = y[X.index]
 
             if X.empty or y.empty:
                 QMessageBox.warning(self, "No Valid Data", "No valid data found after cleaning.")
-                return
+                return None
 
-            # Fit the model
             is_continuous = y.dtype.kind in 'fc'
             tree_model = DecisionTreeRegressor(random_state=42) if is_continuous else DecisionTreeClassifier(random_state=42)
             tree_model.fit(X, y)
 
-            # Get paths from the tree
-            paths = self.tree_to_code(tree_model, attributes)
+            # Predict probabilities
+            if is_continuous:
+                y_pred_proba = tree_model.predict(self.master_df[attributes])
+            else:
+                y_pred_proba = tree_model.predict_proba(self.master_df[attributes])[:, 1]
 
-            # Filter paths based on the threshold (This may now be redundant since we've pre-filtered)
-            above_threshold_paths = []
-            for path, value in paths:
-                predicted_value = value[0][0] if is_continuous else value[0][1] / np.sum(value[0]) if np.sum(value[0]) > 0 else 0
+            # Create a prediction series
+            predicted_bad_fracs = (y_pred_proba >= threshold).astype(int)
         
-                if predicted_value >= threshold:
-                    above_threshold_paths.append(path)
+            print("Prediction details:")
+            print(f"Total predicted bad stages: {predicted_bad_fracs.sum()}")
+            print("Matching indices with original bad stages:")
+            matching_indices = np.where((predicted_bad_fracs == 1) & (self.master_df[outcome] == 1))[0]
+            print(f"Number of matching bad stages: {len(matching_indices)}")
 
-            if not above_threshold_paths:
-                QMessageBox.information(self, "No Paths Found", f"No paths found leading to {outcome} above {threshold}")
-                return
-
-            # Track the most common conditions across all paths
-            condition_counter = defaultdict(Counter)
-            for path in above_threshold_paths:
-                for attribute, comparison, threshold_value in path:
-                    condition_counter[attribute][(comparison, threshold_value)] += 1
-
-            # Determine the most likely value for each attribute
-            most_likely_values = []
-            for attribute, conditions in condition_counter.items():
-                most_common_condition = conditions.most_common(1)[0]
-                comparison, threshold_value = most_common_condition[0]
-                most_likely_values.append({
-                    "Attribute": attribute,
-                    "Condition": f"{comparison} {threshold_value:.2f}"
-                })
-
-            # Display the results in the dialog
+            # Open the highlight dialog with these predictions
+            most_likely_values = self._generate_most_likely_values(attributes, predicted_bad_fracs)
             self.show_result_dialog(most_likely_values)
 
+            return predicted_bad_fracs
+
         except Exception as e:
-            print(f"Error finding paths above threshold: {e}")
+            print(f"Error in decision tree analysis: {e}")
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")
+            return None
+
+    def _generate_most_likely_values(self, attributes, predictions):
+        """Generate most likely values based on prediction patterns"""
+        most_likely_values = []
+        for attr in attributes:
+            # Find significant differences in the attribute for predicted bad stages
+            bad_stage_values = self.master_df[predictions == 1][attr]
+        
+            # Calculate range for bad stages
+            if not bad_stage_values.empty:
+                lower = bad_stage_values.quantile(0.25)
+                upper = bad_stage_values.quantile(0.75)
+            
+                most_likely_values.append({
+                    "Attribute": attr,
+                    "Condition": f"between {lower:.2f} and {upper:.2f}"
+                })
+    
+        return most_likely_values
+
+
     def tree_to_code(self, tree, feature_names):
         tree_ = tree.tree_
         feature_name = [
@@ -310,90 +306,97 @@ class DecisionTreeDialog(QDialog):
 
         recurse(0, [])
         return paths
-    # Update the show_result_dialog method in DecisionTreeDialog
+
+
+ 
+    def reset_master_df(self):
+        """
+        Reset the master DataFrame and available columns when the outcome is changed.
+        """
+        # Reset the available attributes list
+        self.attribute_available_listbox.clear()
+        self.attribute_selected_listbox.clear()
+
+        # Repopulate the available attributes, excluding the selected outcome
+        selected_outcome = self.outcome_dropdown.currentText()
+        available_columns = sorted([col for col in self.master_df.columns if col != selected_outcome])
+    
+        for item in available_columns:
+            QListWidgetItem(item, self.attribute_available_listbox)
+
     def show_result_dialog(self, most_likely_values):
-        dialog = ResultDisplayDialog(most_likely_values, self)
-        dialog.exec_()
+        try:
+            # Prepare the criteria DataFrame
+            criteria_records = []
+            for result in most_likely_values:
+                attribute = result['Attribute']
+                condition = result['Condition']
+            
+                # Parse the 'between' condition
+                if 'between' in condition:
+                    parts = condition.split('between')
+                    lower_bound = float(parts[1].split('and')[0].strip())
+                    upper_bound = float(parts[1].split('and')[1].strip())
+                
+                    # Create two criteria records for lower and upper bounds
+                    criteria_records.extend([
+                        {
+                            'Name': 'Decision Tree Criteria',
+                            'Type': 'Highlight',
+                            'Column': attribute,
+                            'Operator': '>=',
+                            'Value': str(lower_bound),
+                            'Logical Operator': 'AND',
+                            'Color': '#FFFF00'  # Default yellow
+                        },
+                        {
+                            'Name': 'Decision Tree Criteria',
+                            'Type': 'Highlight',
+                            'Column': attribute,
+                            'Operator': '<=',
+                            'Value': str(upper_bound),
+                            'Logical Operator': 'AND',
+                            'Color': '#FFFF00'  # Default yellow
+                        }
+                    ])
+                else:
+                    # Handle other condition types if needed
+                    parts = condition.split()
+                    if len(parts) == 2:
+                        criteria_records.append({
+                            'Name': 'Decision Tree Criteria',
+                            'Type': 'Highlight',
+                            'Column': attribute,
+                            'Operator': parts[0],
+                            'Value': parts[1],
+                            'Logical Operator': 'AND',
+                            'Color': '#FFFF00'  # Default yellow
+                        })
+        
+            # Create the criteria DataFrame
+            criteria_df = pd.DataFrame(criteria_records)
+        
+            # Open the HighlightCriteriaDialog directly
+            highlight_dialog = HighlightCriteriaDialog(
+                columns=list(self.master_df.columns), 
+                existing_criteria_df=criteria_df, 
+                parent=self
+            )
+        
+            # Pre-fill the criteria name
+            highlight_dialog.criteria_name_dropdown.setCurrentText('Decision Tree Criteria')
+        
+            # Execute the dialog
+            if highlight_dialog.exec_() == QDialog.Accepted:
+                return highlight_dialog.criteria_name
+    
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+            print(f"Error in show_result_dialog: {e}")
+    
+        return None
 
-
-
-
-
-class ResultDisplayDialog(QDialog):
-    def __init__(self, most_likely_values, parent=None):
-        super(ResultDisplayDialog, self).__init__(parent)
-        self.setWindowTitle("Most Likely Values")
-        self.setGeometry(100, 100, 400, 600)
-
-        # Main layout
-        layout = QVBoxLayout(self)
-
-        # Criteria name dropdown (read-only, pre-filled)
-        self.criteria_name_dropdown = QComboBox(self)
-        self.criteria_name_dropdown.setEditable(True)
-        self.criteria_name_dropdown.addItem("Most Likely Values")
-        self.criteria_name_dropdown.setCurrentText("Most Likely Values")
-
-        layout.addWidget(QLabel("Criteria Name:"))
-        layout.addWidget(self.criteria_name_dropdown)
-
-        # Current Criteria text area (pre-filled, read-only)
-        self.criteria_text_edit = QTextEdit(self)
-        self.criteria_text_edit.setReadOnly(True)
-        layout.addWidget(QLabel("Current Criteria:"))
-        layout.addWidget(self.criteria_text_edit)
-
-        # Populate the criteria text area with the most likely values
-        criteria_text = ""
-        for i, entry in enumerate(most_likely_values):
-            criteria_text += f"{entry['Attribute']} {entry['Condition']}"
-            if i < len(most_likely_values) - 1:
-                criteria_text += " AND\n"
-        self.criteria_text_edit.setPlainText(criteria_text)
-
-        # Highlight color button and preview (read-only, pre-filled)
-        color_layout = QHBoxLayout()
-        self.color_button = QPushButton("Choose Highlight Color")
-        self.color_button.clicked.connect(self.choose_color)
-
-        self.color_preview = QLabel(self)
-        self.color_preview.setFixedSize(20, 20)
-        self.color_preview.setAutoFillBackground(True)
-        self.highlight_color = QColor(Qt.yellow)
-        self.update_color_preview()
-
-        color_layout.addWidget(self.color_button)
-        color_layout.addWidget(self.color_preview)
-
-        layout.addLayout(color_layout)
-
-        # Save and Cancel buttons
-        button_layout = QHBoxLayout()
-        save_button = QPushButton("Save Criteria")
-        cancel_button = QPushButton("Cancel")
-
-        button_layout.addWidget(save_button)
-        button_layout.addWidget(cancel_button)
-
-        save_button.clicked.connect(self.accept)
-        cancel_button.clicked.connect(self.reject)
-
-        layout.addLayout(button_layout)
-
-    def choose_color(self):
-        color = QColorDialog.getColor(self.highlight_color, self, "Select Highlight Color")
-        if color.isValid():
-            self.highlight_color = color
-            self.update_color_preview()
-
-    def update_color_preview(self):
-        palette = self.color_preview.palette()
-        palette.setColor(QPalette.Window, self.highlight_color)
-        self.color_preview.setPalette(palette)
-
-
-
-# Example usage
+# Test code
 if __name__ == "__main__":
     import sys
     from PySide6.QtWidgets import QApplication
