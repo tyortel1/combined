@@ -394,7 +394,7 @@ class SeisWareConnectDialog(QDialog):
 
 
     def directional_surveys(self):
-        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]  # Get selected UWIs from the listbox
+        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
         print(selected_uwis)
         self.selected_uwis = selected_uwis
 
@@ -402,36 +402,23 @@ class SeisWareConnectDialog(QDialog):
             QMessageBox.information(self, "Info", "No wells selected for export.")
             return
 
-        self.directional_surveys = []  # Initialize list to store directional survey data
         survey_data = []
-        total_lat_data = []  # To store total lateral lengths
-        self.uwis_and_offsets = []  # To store offsets
-        self.total_lat_data = []  # Initialize to store total lateral data
+        total_lat_data = []
 
         for uwi in selected_uwis:
             well = self.uwi_to_well_dict.get(uwi)
             print(well)
             if well:
                 depth_unit = SeisWare.Unit.Meter
-                x_offsets = []
-                y_offsets = []
-                md_values = []
-                tvd_values = []
-                cumulative_distances = []
-
                 surfaceX = well.TopHole().x.Value(depth_unit)
                 surfaceY = well.TopHole().y.Value(depth_unit)
                 surfaceDatum = well.DatumElevation().Value(depth_unit)
                 print(f"Well ID: {well.ID()}")
-                print(f"Available methods: {dir(well)}")
-                
-                spud_date_struct = well.SpudDate()   # Populate it using the SpudDate method
+
+                spud_date_struct = well.SpudDate()
                 print(f"Spud Date Struct - Year: {spud_date_struct.year}, Month: {spud_date_struct.month}, Day: {spud_date_struct.day}")
 
-                # Access and validate the attributes
-                spud_date_struct = well.SpudDate()  # Assuming SpudDate is the correct method
-
-                # Check if SpudDate is available and valid
+                # Validate spud date
                 if spud_date_struct.year and spud_date_struct.month and spud_date_struct.day:
                     try:
                         spud_date = datetime.date(
@@ -447,7 +434,6 @@ class SeisWareConnectDialog(QDialog):
                     print("Spud date is not available or incomplete.")
                     spud_date = None
 
-
                 dirsrvylist = SeisWare.DirectionalSurveyList()
                 self.login_instance.DirectionalSurveyManager().GetAllForWell(well.ID(), dirsrvylist)
                 dirsrvy = [i for i in dirsrvylist if i.OffsetNorthType() > 0]
@@ -457,63 +443,91 @@ class SeisWareConnectDialog(QDialog):
                     srvypoints = SeisWare.DirectionalSurveyPointList()
                     dirsrvy[0].Values(srvypoints)
 
-                    cumulative_distance = 0
+                    previous_md = None
+                    previous_tvd = None
+                    previous_x = None
+                    previous_y = None
                     start_lat = None
+                    heel_x, heel_y = None, None
+                    toe_x, toe_y = None, None
+                    cumulative_distance = 0
+                    tvd_sum = 0
+                    tvd_count = 0
 
-                    for i, point in enumerate(srvypoints):
+                    for point in srvypoints:
+                        well_uwi = well.UWI()
                         x_offset = surfaceX + point.xOffset.Value(depth_unit)
                         y_offset = surfaceY + point.yOffset.Value(depth_unit)
                         tvd = surfaceDatum - point.tvd.Value(depth_unit)
                         md = point.md.Value(depth_unit)
 
-                        if i > 0:
-                            prev_x_offset = x_offsets[-1]
-                            prev_y_offset = y_offsets[-1]
-                            distance = np.sqrt((x_offset - prev_x_offset) ** 2 + (y_offset - prev_y_offset) ** 2)
+                        # Update TVD sum and count for average TVD calculation
+                        tvd_sum += tvd
+                        tvd_count += 1
+
+                        # Calculate cumulative distance
+                        if previous_x is not None and previous_y is not None:
+                            distance = np.sqrt((x_offset - previous_x)**2 + (y_offset - previous_y)**2)
                             cumulative_distance += distance
 
-                        x_offsets.append(x_offset)
-                        y_offsets.append(y_offset)
-                        md_values.append(md)
-                        tvd_values.append(tvd)
-                        cumulative_distances.append(cumulative_distance)
+                        # Calculate inclination for heel detection
+                        if previous_md is not None and previous_tvd is not None:
+                            delta_md = md - previous_md
+                            delta_tvd = tvd - previous_tvd
+                            inclination = np.degrees(np.arccos(delta_tvd / delta_md)) if delta_md != 0 else 0.0
 
-                        if start_lat is None:
-                            start_lat = md
+                            # Capture heel point
+                            if start_lat is None and inclination < 95:
+                                start_lat = md
+                                heel_x, heel_y = x_offset, y_offset
+                                heel_md = md
+                        else:
+                            inclination = 0.0
 
-                    end_lat = md  # Ensure end_lat is assigned
+                        # Store survey point data
+                        survey_data.append([well_uwi, x_offset, y_offset, md, tvd, cumulative_distance])
+
+                        # Update toe point (last valid point)
+                        toe_x, toe_y = x_offset, y_offset
+
+                        # Update previous values
+                        previous_md = md
+                        previous_tvd = tvd
+                        previous_x = x_offset
+                        previous_y = y_offset
+
+                    # Calculate total lateral distance and average TVD
+                    end_lat = md
+                    avg_tvd = tvd_sum / tvd_count if tvd_count > 0 else None
+
                     if start_lat is not None:
                         total_lat = end_lat - start_lat
-                        total_lat_data.append((uwi, total_lat, surfaceX, surfaceY, spud_date))
+                        total_lat_data.append((well_uwi, 'Active', surfaceX, surfaceY, total_lat, heel_x, heel_y, toe_x, toe_y, heel_md, end_lat, avg_tvd, end_lat, spud_date))
                     else:
-                        total_lat_data.append((uwi, None, surfaceX, surfaceY, spud_date))
+                        total_lat_data.append((well_uwi, 'Active', surfaceX, surfaceY, None, None, None, None, None, None, None, None, None, spud_date))
 
-                    print(total_lat_data)
-
-                    # Append the survey data into directional_surveys
-                    self.directional_surveys.append((uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances))
-
-                    # Append data for total lateral distance and surface coordinates
-                    self.uwis_and_offsets.append((uwi, x_offsets, y_offsets))
                 else:
                     QMessageBox.warning(self, "Warning", f"No directional survey found for well {uwi}.")
 
-        # Convert the total lateral data to a DataFrame
-        self.well_data_df = pd.DataFrame(total_lat_data, columns=['UWI', 'Total Lateral', 'Surface X', 'Surface Y', 'Spud Date'])
-        print("Well Data DataFrame:")
-        self.well_data_df['Spud Date'] = self.well_data_df['Spud Date'].apply(lambda x: x if pd.notnull(x) else None)
-        print(self.well_data_df)
-
-        # Flatten the directional surveys into a DataFrame
-        data_list = []
-        for uwi, md_values, tvd_values, x_offsets, y_offsets, cumulative_distances in self.directional_surveys:
-            for i in range(len(md_values)):
-                data_list.append([uwi, md_values[i], tvd_values[i], x_offsets[i], y_offsets[i], cumulative_distances[i]])
-
-        columns = ['UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance']
-        self.directional_survey_values = pd.DataFrame(data_list, columns=columns)
-        print("Directional Survey DataFrame:")
+        # Create directional survey DataFrame
+        self.directional_survey_values = pd.DataFrame(
+            survey_data,
+            columns=['UWI', 'X Offset', 'Y Offset', 'MD', 'TVD', 'Cumulative Distance']
+        )
+        print("Directional Survey Data:")
         print(self.directional_survey_values)
+
+        # Create well data DataFrame with proper column order
+        self.well_data_df = pd.DataFrame(
+            total_lat_data,
+            columns=['uwi', 'status', 'surface_x', 'surface_y', 'lateral', 
+                     'heel_x', 'heel_y', 'toe_x', 'toe_y', 'heel_md', 
+                     'toe_md', 'average_tvd', 'total_length', 'spud_date']
+        )
+        print("Well Data:")
+        print(self.well_data_df)
+        self.well_data_df['spud_date'] = self.well_data_df['spud_date'].apply(lambda x: x if pd.notnull(x) else None)
+
 
 
 

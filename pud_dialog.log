@@ -6499,3 +6499,12 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-21 23:17:08,207 - root - INFO - Processing well WP5L1Side1Leg1 with UWI: 840300000505415
 2025-01-21 23:17:31,990 - root - INFO - Well pads table populated successfully.
 2025-01-21 23:17:50,080 - root - INFO - Dialog closed successfully
+2025-01-22 20:50:41,627 - root - DEBUG - Toolbar setup completed
+2025-01-22 20:50:41,629 - root - DEBUG - Scenario dropdown setup completed
+2025-01-22 20:50:41,636 - root - DEBUG - Table setup completed
+2025-01-22 20:50:41,636 - root - DEBUG - UI setup completed successfully
+2025-01-22 20:50:41,638 - root - DEBUG - Signal connections established
+2025-01-22 20:50:41,640 - root - INFO - No scenarios to load.
+2025-01-22 20:50:41,640 - root - INFO - PUDPropertiesDialog initialized
+2025-01-22 20:50:43,701 - root - INFO - Dialog closed successfully
+2025-01-22 20:50:45,238 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.

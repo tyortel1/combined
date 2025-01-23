@@ -1,15 +1,18 @@
-﻿from http.client import PARTIAL_CONTENT
-from PySide6.QtWidgets import QDialog, QLabel, QComboBox,QLineEdit, QMessageBox, QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+﻿from PySide6.QtWidgets import (QDialog, QLabel, QComboBox, QMessageBox, 
+                               QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, 
+                               QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
 from PySide6.QtGui import QIcon
 import pandas as pd
-from shapely.geometry import LineString, Point, MultiPoint
+from shapely.geometry import LineString
 import numpy as np
+from PySide6.QtWidgets import QProgressDialog
 
 class InZoneDialog(QDialog):
-    def __init__(self, master_df, directional_surveys_df, grid_info_df, kd_tree_depth_grids, kd_tree_att_grids, zone_names, depth_grid_data_dict, attribute_grid_data_dict, parent=None):
+    def __init__(self, db_manager, directional_surveys_df, grid_info_df, kd_tree_depth_grids,
+                 kd_tree_att_grids, zone_names, depth_grid_data_dict, attribute_grid_data_dict, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Find Wells in Zone")
-        self.master_df = master_df
+        self.db_manager = db_manager
         self.directional_surveys_df = directional_surveys_df
         self.grid_info_df = grid_info_df
         self.kd_tree_depth_grids = kd_tree_depth_grids
@@ -17,41 +20,49 @@ class InZoneDialog(QDialog):
         self.zone_names = zone_names
         self.depth_grid_data_dict = depth_grid_data_dict
         self.attribute_grid_data_dict = attribute_grid_data_dict
-        self.sorted_grid_order  = []
+        self.sorted_grid_order = []
         self.total_laterals = []
 
+        self.setup_ui()
 
+    def setup_ui(self):
+        # Zone Name Selection
         self.zone_name_label = QLabel("Zone Name:", self)
         self.zone_name_combo = QComboBox(self)
-        self.zone_name_combo.setEditable(True)  # Allow typing new names
+        self.zone_name_combo.setEditable(True)
         self.zone_name_combo.addItems(self.zone_names)
 
-
-        # Two-list selector layout for grids
+        # Grid Selection Lists
         grid_list_layout = QHBoxLayout()
-
+        
+        # Available Grids List
         self.available_grids_list = QListWidget()
         self.available_grids_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         grid_list_layout.addWidget(self.available_grids_list)
 
+        # Arrow Buttons Layout
         grid_arrow_layout = QVBoxLayout()
         grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
+        # Move All Right Button
         self.move_all_grids_right_button = QPushButton()
         self.move_all_grids_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
         self.move_all_grids_right_button.clicked.connect(self.move_all_grids_right)
         grid_arrow_layout.addWidget(self.move_all_grids_right_button)
 
+        # Move Selected Right Button
         self.move_grids_right_button = QPushButton()
         self.move_grids_right_button.setIcon(QIcon("icons/arrow_right.ico"))
         self.move_grids_right_button.clicked.connect(self.move_selected_grids_right)
         grid_arrow_layout.addWidget(self.move_grids_right_button)
 
+        # Move Selected Left Button
         self.move_grids_left_button = QPushButton()
         self.move_grids_left_button.setIcon(QIcon("icons/arrow_left.ico"))
         self.move_grids_left_button.clicked.connect(self.move_selected_grids_left)
         grid_arrow_layout.addWidget(self.move_grids_left_button)
 
+        # Move All Left Button
         self.move_all_grids_left_button = QPushButton()
         self.move_all_grids_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
         self.move_all_grids_left_button.clicked.connect(self.move_all_grids_left)
@@ -60,22 +71,22 @@ class InZoneDialog(QDialog):
         grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
         grid_list_layout.addLayout(grid_arrow_layout)
 
+        # Selected Grids List
         self.selected_grids_list = QListWidget()
         self.selected_grids_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         grid_list_layout.addWidget(self.selected_grids_list)
 
-        # Set layout
+        # Main Layout
         layout = QVBoxLayout()
         layout.addWidget(self.zone_name_label)
         layout.addWidget(self.zone_name_combo)
         layout.addLayout(grid_list_layout)
 
-        # Calculate Button
+        # Buttons
         self.calculate_button = QPushButton("Calculate", self)
         self.calculate_button.clicked.connect(self.create_grid_dataframe)
         layout.addWidget(self.calculate_button)
 
-        # Close Button
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.accept)
         layout.addWidget(self.close_button)
@@ -84,14 +95,14 @@ class InZoneDialog(QDialog):
         self.update_grid_selection()
 
     def update_grid_selection(self):
-        # Only select depth grids
+        """Update the available grids list with depth grids."""
         grid_names = self.grid_info_df[self.grid_info_df['Type'] == 'Depth']['Grid'].tolist()
-
         self.available_grids_list.clear()
         for grid_name in grid_names:
             item = QListWidgetItem(grid_name)
             self.available_grids_list.addItem(item)
 
+    # Grid Movement Methods
     def move_all_grids_right(self):
         while self.available_grids_list.count() > 0:
             item = self.available_grids_list.takeItem(0)
@@ -99,41 +110,33 @@ class InZoneDialog(QDialog):
 
     def move_selected_grids_right(self):
         for item in self.available_grids_list.selectedItems():
-            self.selected_grids_list.addItem(self.available_grids_list.takeItem(self.available_grids_list.row(item)))
+            self.selected_grids_list.addItem(self.available_grids_list.takeItem(
+                self.available_grids_list.row(item)))
 
     def move_selected_grids_left(self):
         for item in self.selected_grids_list.selectedItems():
-            self.available_grids_list.addItem(self.selected_grids_list.takeItem(self.selected_grids_list.row(item)))
+            self.available_grids_list.addItem(self.selected_grids_list.takeItem(
+                self.selected_grids_list.row(item)))
 
     def move_all_grids_left(self):
         while self.selected_grids_list.count() > 0:
             item = self.selected_grids_list.takeItem(0)
             self.available_grids_list.addItem(item)
 
-    def create_well_lines(self):
-        """Create well path lines from directional surveys."""
-        well_lines = []
-        for uwi, group in self.directional_surveys_df.groupby('UWI'):
-            coords = list(zip(group['X Offset'], group['Y Offset'], group['TVD']))
-            well_path = LineString(coords)
-            well_lines.append((uwi, well_path))
-
-        return well_lines
-
     def create_grid_dataframe(self):
-
-        #Grab the name they want to call this
-        zone_name = self.zone_name_combo.text().strip()
+        """Create and process the grid data."""
+        zone_name = self.zone_name_combo.currentText().strip()
 
         if not zone_name:
             QMessageBox.warning(self, "Error", "Zone name cannot be empty. Please enter a valid zone name.")
             return
 
-        #Create a DataFrame for each well with X, Y offsets, TVD, and closest Z values for each grid
-        data = []
 
+
+
+        # Create DataFrame with well and grid data
+        data = []
         for uwi, group in self.directional_surveys_df.groupby('UWI'):
-          
             for i, row in group.iterrows():
                 x = row['X Offset']
                 y = row['Y Offset']
@@ -141,86 +144,77 @@ class InZoneDialog(QDialog):
                 md = row['MD']
                 cum_distance = row['Cumulative Distance']
 
-                # Initialize a dictionary to store the closest Z values for each grid
                 closest_z_values = {}
-
-                # Query each KD-Tree to find the closest Z value for each grid
                 for grid, kdtree in self.kd_tree_depth_grids.items():
                     if kdtree.data.size > 0:
                         distances, indices = kdtree.query([x, y])
                         if indices < len(self.depth_grid_data_dict[grid]):
                             closest_z_values[grid] = self.depth_grid_data_dict[grid][indices]
                         else:
-                            closest_z_values[grid] = None  # Handle cases where the index is out of range
+                            closest_z_values[grid] = None
                     else:
-                        closest_z_values[grid] = None  # Handle cases where the KD-Tree is empty
+                        closest_z_values[grid] = None
 
-                # Prepare the row for the DataFrame
+                # Prepare row data
                 row_data = {
                     'UWI': uwi,
                     'X Offset': x,
                     'Y Offset': y,
                     'TVD': tvd,
-                    'MD' : md,
-                    'Cumulative Distance' : cum_distance
+                    'MD': md,
+                    'Cumulative Distance': cum_distance
                 }
-                # Add the closest Z values for each grid to the row data
+                
+                # Add closest Z values
                 for grid in self.kd_tree_depth_grids.keys():
                     row_data[f'{grid} Closest Z'] = closest_z_values.get(grid)
 
                 data.append(row_data)
 
-
-        # Have a dataframe of basically all the well lines along with grid lines
+        # Create main DataFrame
         df = pd.DataFrame(data)
-      
         
-        # Assuming df is already sorted by UWI and TVD as it should be something to keep in mind 
-        selected_grids = [self.selected_grids_list.item(i).text() for i in range(self.selected_grids_list.count())]
-
-        #Sort the grids by average tvd so we can understand if we are entering or exiting zone
+        # Get selected grids and process intersections
+        selected_grids = [self.selected_grids_list.item(i).text() 
+                         for i in range(self.selected_grids_list.count())]
+        
         self.sorted_grid_order = self.get_sorted_grid_order(selected_grids)
-
-
-        #Find interections for each line if they exist
-        intersections = self.find_tvd_grid_intersections(df, selected_grids)
         
-  
-        self.update_master_df(intersections)
-     
-    def get_sorted_grid_order(self, selected_grids):
-        # Dictionary to store average TVD for each grid
-        grid_tvd_averages = {}
+        try:
+            # Find intersections
+            intersections = self.find_tvd_grid_intersections(df, selected_grids)
+            
+            # Create percentage data
+            percentage_data = self.create_percentage_dataframe(intersections)
+            
 
-        # Calculate the average TVD for each grid using the depth_grid_data_dict
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to process and save zone data: {str(e)}")
+
+    def get_sorted_grid_order(self, selected_grids):
+        """Sort grids by average TVD."""
+        grid_tvd_averages = {}
+        
         for grid in selected_grids:
             z_values = self.depth_grid_data_dict.get(grid, [])
-        
             if len(z_values) > 0:
-                average_tvd = np.mean(z_values)
-                grid_tvd_averages[grid] = average_tvd
-
-        # Sort the grids based on the average TVD in ascending order (lowest to highest)
-        sorted_grids = sorted(grid_tvd_averages, key=grid_tvd_averages.get)
-    
-        return sorted_grids
-        
-
-    #What is this who knows maybe its magic thats making it work so im leaving it alone
-    def calculate(self):
-        grid_df = self.create_grid_dataframe()
-
-
+                grid_tvd_averages[grid] = np.mean(z_values)
+                
+        return sorted(grid_tvd_averages, key=grid_tvd_averages.get)
 
     def find_tvd_grid_intersections(self, df, selected_grids):
+        """Find intersections between well paths and grid surfaces."""
         sorted_grids = self.get_sorted_grid_order(selected_grids)[::-1]
         intersections_list = []
         self.total_laterals = []
+
+        # Process each well
         for uwi in df['UWI'].unique():
             well_df = df[df['UWI'] == uwi].sort_values(by='MD').reset_index(drop=True)
             well_df['Inclination'] = np.nan
 
-            # Calculate inclination for each row
+            # Calculate inclination
             for i in range(1, len(well_df)):
                 current_row = well_df.iloc[i]
                 previous_row = well_df.iloc[i - 1]
@@ -230,63 +224,56 @@ class InZoneDialog(QDialog):
                     inclination = np.degrees(np.arccos(delta_tvd / delta_md))
                     well_df.at[i, 'Inclination'] = inclination
 
-            # Filter to only the horizontal portions of the well (Inclination < 91 degrees)
+            # Filter to horizontal sections
             well_df = well_df[well_df['Inclination'] < 91].reset_index(drop=True)
 
-            # Calculate the total lateral length
+            # Calculate total lateral length
             total_lateral = well_df['MD'].max() - well_df['MD'].min()
             self.total_laterals.append({
                 'UWI': uwi,
                 'Total Lateral Length': total_lateral
             })
-        
+
             if well_df.empty:
-                continue  # Skip to the next UWI if this one has no horizontal portions
-            
-            # OKay so i am trying to create zones here so i will assume the first zone is like the begging of the well
+                continue
+
+            # Process intersection points
             first_row = well_df.iloc[0]
             first_x_offset = first_row['X Offset']
             first_y_offset = first_row['Y Offset']
             first_md = first_row['MD']
             first_tvd = first_row['TVD']
 
-            # The last depth of the well will be the very end of the last zone
             last_row = well_df.iloc[-1]
             last_x_offset = last_row['X Offset']
             last_y_offset = last_row['Y Offset']
             last_md = last_row['MD']
             last_tvd = last_row['TVD']
 
+            # Get initial grid
             grid_z_values = {}
-
-            # Collect Z values for each grid at the first MD
             for grid in sorted_grids:
-                z_value = well_df[f'{grid} Closest Z'].iloc[0]
-                grid_z_values[grid] = z_value
+                grid_z_values[grid] = well_df[f'{grid} Closest Z'].iloc[0]
 
-            # Determine which grid is directly above the first TVD
             initial_grid = "Above All"
             for i in range(1, len(sorted_grids)):
                 grid_below = sorted_grids[i - 1]
                 grid_above = sorted_grids[i]
-
                 z_below = grid_z_values[grid_below]
                 z_above = grid_z_values[grid_above]
 
                 if z_below >= first_tvd >= z_above:
                     initial_grid = grid_below
-                   
                     break
-    
 
+            # Calculate well angle
+            general_angle = self.calculate_angle(first_x_offset, first_y_offset, 
+                                              last_x_offset, last_y_offset)
 
-            #I need thse angles to draw sticks on the map that are perpedicularish to the overall direction fo the line so im doing it here
-            general_angle = self.calculate_angle(first_x_offset, first_y_offset, last_x_offset, last_y_offset)
-
-            # Initialize the first intersection using the first row
+            # Process intersections
             current_intersection = {
                 'UWI': uwi,
-                'Grid Name': initial_grid,  # Will be filled in when the first grid intersection is found
+                'Grid Name': initial_grid,
                 'Top X Offset': first_x_offset,
                 'Top Y Offset': first_y_offset,
                 'Top Depth': first_md,
@@ -299,66 +286,45 @@ class InZoneDialog(QDialog):
                 'Angle Base': general_angle
             }
 
-
- 
             for i in range(1, len(well_df) - 1):
-
                 cum_distance1 = well_df['Cumulative Distance'].iloc[i-1]
                 tvd1 = well_df['TVD'].iloc[i-1]
                 cum_distance2 = well_df['Cumulative Distance'].iloc[i]
                 tvd2 = well_df['TVD'].iloc[i]
-                md = well_df['MD'].iloc[i]
-                    
 
-                # Create the well path line segment between two tvd points
                 well_line = LineString([(tvd1, cum_distance1), (tvd2, cum_distance2)])
 
                 for grid in sorted_grids:
                     z1 = well_df[f'{grid} Closest Z'].iloc[i-1]
-
-
                     z2 = well_df[f'{grid} Closest Z'].iloc[i]
-                    #print (md)
 
-                    # Create the grid line segment for the same point as we iterate through grid lines
                     grid_line = LineString([(z1, cum_distance1), (z2, cum_distance2)])
 
-                    #This is to tell if its going into or out of a zone depending on slopes its either entering a zone or exiting
+                    # Calculate slopes
                     well_slope = (tvd2 - tvd1) / (cum_distance2 - cum_distance1) if (cum_distance2 - cum_distance1) != 0 else 0
                     grid_slope = (z2 - z1) / (cum_distance2 - cum_distance1) if (cum_distance2 - cum_distance1) != 0 else 0
-                    #print (grid_line)
-                    #print (well_line)
 
-                    # Calculate the intersection between the well line and the grid line
                     if well_line.intersects(grid_line):
                         intersection_point = well_line.intersection(grid_line)
-                
+                        
                         if intersection_point.geom_type == 'Point':
-                            print('intersection found')
                             x_intersect, y_intersect = intersection_point.x, intersection_point.y
-                            
 
-                            # Determine the correct grid based on the slope
+                            # Determine intersection grid
                             if well_slope > grid_slope:
-                                # Use the grid above (higher in sorted list)
                                 grid_index = sorted_grids.index(grid)
-                                if grid_index > 0:
-                                    intersection_grid = sorted_grids[grid_index - 1]
-                                else:
-                                    intersection_grid = "Above All"
+                                intersection_grid = sorted_grids[grid_index - 1] if grid_index > 0 else "Above All"
                             else:
-                                # Use the current grid
                                 intersection_grid = grid
 
-                            # Use the intersect of cum distance to figure out where the approximate offsets are
+                            # Calculate intersection location
                             t = (y_intersect - cum_distance1) / (cum_distance2 - cum_distance1) if (cum_distance2 - cum_distance1) != 0 else 0
                             x_offset_intersect = well_df['X Offset'].iloc[i-1] + t * (well_df['X Offset'].iloc[i] - well_df['X Offset'].iloc[i-1])
                             y_offset_intersect = well_df['Y Offset'].iloc[i-1] + t * (well_df['Y Offset'].iloc[i] - well_df['Y Offset'].iloc[i-1])
                             md_intersect = well_df['MD'].iloc[i-1] + t * (well_df['MD'].iloc[i] - well_df['MD'].iloc[i-1])
 
-                            #Finish off the current zone base
+                            # Complete current intersection
                             if current_intersection:
-                                # Complete the current intersection with Base values
                                 current_intersection.update({
                                     'Base X Offset': x_offset_intersect,
                                     'Base Y Offset': y_offset_intersect,
@@ -366,8 +332,8 @@ class InZoneDialog(QDialog):
                                     'Base TVD': z1
                                 })
                                 intersections_list.append(current_intersection)
-                            
-                            # Start a new zone as the Top
+
+                            # Start new intersection
                             current_intersection = {
                                 'UWI': uwi,
                                 'Grid Name': intersection_grid,
@@ -382,8 +348,8 @@ class InZoneDialog(QDialog):
                                 'Angle Top': general_angle,
                                 'Angle Base': general_angle
                             }
-                     
-            #Finish the last zone with the last point in the directional survey
+
+            # Complete final intersection
             if current_intersection:
                 current_intersection.update({
                     'Base X Offset': last_x_offset,
@@ -392,236 +358,110 @@ class InZoneDialog(QDialog):
                     'Base TVD': last_tvd
                 })
                 intersections_list.append(current_intersection)
-       
-        # Convert the list of intersections to a DataFrame
+
+        # Create final DataFrame
         df_intersections = pd.DataFrame(intersections_list)
+        
+        # Add required columns
+        zone_name = self.zone_name_combo.currentText().strip()
+        zone_type = 'Intersections'
 
-        # Add 'Zone Type', 'Attribute Type', and 'Zone Name' columns
-        zone_name = self.zone_name_combo.text()
-        df_intersections['Zone Type'] = 'Intersections'
-        df_intersections['Attribute Type'] = 'Zone'
-        df_intersections['Zone Name'] = zone_name
 
-        self.calculate_lateral_length_percentages(df_intersections)
-    
-        if zone_name not in self.zone_names:
-            self.zone_names.append(zone_name)
-      
+
+        # Save the zone name and type
+        self.db_manager.add_zone_names(zone_name, zone_type)
+
+        # Create a table name dynamically
+        table_name = f"{zone_name.replace(' ', '_').replace('-', '_')}"
+
+        # Save the percentage data into a new table in the database
+        self.db_manager.create_table_from_df(table_name, df_intersections)
+
         return df_intersections
-    
 
-    def calculate_lateral_length_percentages(self, df_intersections):
-        # Create a DataFrame to store the results
-        lateral_length_df = pd.DataFrame()
+    def create_percentage_dataframe(self, df_intersections):
+        """
+        Create a DataFrame with percentage data for each well, ensuring zone name includes both name and type.
+        """
+        percentage_data = []
 
-        # Get a list of all unique grids in the intersections
+        # Construct the zone name and type
+        base_zone_name = self.zone_name_combo.currentText().strip()
+        if not base_zone_name:
+            raise ValueError("Zone name cannot be empty.")
+
+        zone_name = f"{base_zone_name}_Percentages"
+        zone_type = "Well"  # Zone type fixed to 'Well'
+
         all_grids = df_intersections['Grid Name'].unique()
 
-        # Ensure all grid columns exist in master_df
-        for grid in all_grids:
-            if grid not in self.master_df.columns:
-                self.master_df[grid] = 0.0  # Initialize missing grid columns with 0%
-
-        # Ensure the 'Total Lateral Length' column exists in master_df
-        if 'Total Lateral Length' not in self.master_df.columns:
-            self.master_df['Total Lateral Length'] = 0.0
-
-        zone_name = self.zone_name_combo.currentText().strip()
-
-        # Iterate through the unique UWIs in the df_intersections
         for uwi in df_intersections['UWI'].unique():
-            # Filter the intersection DataFrame by UWI
-            uwi_df = df_intersections[df_intersections['UWI'] == uwi].sort_values(by='Top Depth').reset_index(drop=True)
+            # Get the total lateral length
+            total_lateral = next(
+                (item['Total Lateral Length'] for item in self.total_laterals if item['UWI'] == uwi),
+                None
+            )
 
-            # Retrieve the total lateral length for this UWI from self.total_laterals
-            total_lateral_length = next(item['Total Lateral Length'] for item in self.total_laterals if item['UWI'] == uwi)
+            if total_lateral is None or total_lateral == 0:
+                continue  # Skip wells with no lateral length
 
-            # Initialize dictionary for storing lengths per grid
+            # Calculate grid percentages
+            uwi_df = df_intersections[df_intersections['UWI'] == uwi]
             grid_lengths = {grid: 0.0 for grid in all_grids}
 
-            # Iterate through the intersection points to calculate the length in each grid
-            for i in range(len(uwi_df)):
-                current_grid = uwi_df.iloc[i]['Grid Name']
+            for _, row in uwi_df.iterrows():
+                grid = row['Grid Name']
+                length = row['Base Depth'] - row['Top Depth']
+                grid_lengths[grid] += length
 
-                # Calculate the MD range between the intersection points
-                top_md = uwi_df.iloc[i]['Top Depth']
-                base_md = uwi_df.iloc[i]['Base Depth']
+            grid_percentages = {grid: (length / total_lateral) * 100 for grid, length in grid_lengths.items()}
 
-                # Calculate the MD difference for the current segment
-                segment_length = base_md - top_md
-
-                # Update the length for the current grid
-                grid_lengths[current_grid] += segment_length
-
-            # Calculate the percentage of the total lateral length for each grid
-            grid_percentages = {grid: (length / total_lateral_length) * 100 for grid, length in grid_lengths.items()}
-
-            # Find the first X and Y offsets from the directional survey data
+            # Get well location data
             first_survey = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi].iloc[0]
-            first_x_offset = first_survey['X Offset']
-            first_y_offset = first_survey['Y Offset']
 
-            # Prepare the row data for master_df
-            new_row = {
+            # Create percentage row
+            percentage_row = {
                 'UWI': uwi,
-                'Zone Name': zone_name,  # Add the zone name here
-                'Attribute Type': 'Well',
-                'Zone Type': 'Stages',
-                'Total Lateral Length': total_lateral_length,
-                'Top X Offset': first_x_offset,
-                'Base X Offset': first_x_offset,
-                'Top Y Offset': first_y_offset,
-                'Base Y Offset': first_y_offset
+                'Zone Name': base_zone_name,
+                'Zone Type': zone_type,
+                'Total Lateral Length': total_lateral,
+                'Top X Offset': first_survey['X Offset'],
+                'Top Y Offset': first_survey['Y Offset'],
+                'Base X Offset': first_survey['X Offset'],
+                'Base Y Offset': first_survey['Y Offset']
             }
-            new_row.update(grid_percentages)
-          
+            percentage_row.update(grid_percentages)
+            percentage_data.append(percentage_row)
 
-            # Check if this combination of UWI and Zone Name already exists
-            existing_row = self.master_df[
-                (self.master_df['UWI'] == uwi) & 
-                (self.master_df['Zone Name'] == zone_name)
-            ]
+        # Convert percentage data into a DataFrame
+        percentage_df = pd.DataFrame(percentage_data)
 
-            if not existing_row.empty:
-                # If the row exists, update the existing row for all columns in new_row
-                for key, value in new_row.items():
-                    # Check if the column exists in master_df
-                    if key not in self.master_df.columns:
-                        # Add the column to master_df with default values (NaN)
-                        self.master_df[key] = pd.NA
+        # Save the zone name and type
+        self.db_manager.add_zone_names(zone_name, zone_type)
 
-                    # Update the value for the existing row
-                    self.master_df.loc[
-                        (self.master_df['UWI'] == uwi) & 
-                        (self.master_df['Zone Name'] == zone_name), key
-                    ] = value
-            else:
-                # If the row does not exist, append the new row
-                self.master_df = self.master_df.append(new_row, ignore_index=True)
+        # Create a table name dynamically
+        table_name = f"{zone_name.replace(' ', '_').replace('-', '_')}"
 
-        # Ensure the zone name is added to the list if it's new
-        if zone_name not in self.zone_names:
-            self.zone_names.append(zone_name)
+        # Save the percentage data into a new table in the database
+        self.db_manager.create_table_from_df(table_name, percentage_df)
+
+        return percentage_df
 
 
-    #Update the Master with this new data feels clunky here
-    def update_master_df(self, valid_df):
-        print('updating')
-        # Ensure the master_df has the required columns
-        required_columns = [
-            'UWI', 'Attribute Type', 'Zone Name', 'Top Depth', 'Base Depth',
-            'Top Depth', 'Base Depth', 'Top X Offset', 'Top Y Offset',
-            'Base X Offset', 'Base Y Offset', 'Grid Name', 'Zone Type',
-            'Angle Top', 'Angle Base'  # Include the angle columns
-        ]
-
-        for col in required_columns:
-            if col not in self.master_df.columns:
-                self.master_df[col] = pd.NA
-
-        for _, row in valid_df.iterrows():
-            uwi = row['UWI']
-            attribute_type = row['Attribute Type']
-            zone_name = row['Zone Name']
-            top_md = row['Top Depth']
-            base_md = row['Base Depth']
-            zone_type = row.get('Zone Type', pd.NA)
-            angle_top = row.get('Angle Top')
-            angle_base = row.get('Angle Base')
-
-
-            # Check for matching rows
-            matching_rows = self.master_df[
-                (self.master_df['UWI'] == uwi) &
-                (self.master_df['Attribute Type'] == attribute_type) &
-                (self.master_df['Zone Name'] == zone_name) &
-                (self.master_df['Top Depth'] == top_md) &
-                (self.master_df['Base Depth'] == base_md) &
-                (self.master_df['Zone Type'] == zone_type)
-            ]
-
-            if not matching_rows.empty:
-                # Update existing rows
-                for col in valid_df.columns:
-                    if col not in ['UWI', 'Attribute Type', 'Zone Name', 'Top Depth', 'Base Depth', 'Zone Type']:
-                        if col in self.master_df.columns:
-                            self.master_df.loc[
-                                (self.master_df['UWI'] == uwi) &
-                                (self.master_df['Attribute Type'] == attribute_type) &
-                                (self.master_df['Zone Name'] == zone_name) &
-                                (self.master_df['Top Depth'] == top_md) &
-                                (self.master_df['Base Depth'] == base_md) &
-                                (self.master_df['Zone Type'] == zone_type), col
-                            ] = row[col]
-            
-                # Also update the angles
-                self.master_df.loc[
-                    (self.master_df['UWI'] == uwi) &
-                    (self.master_df['Attribute Type'] == attribute_type) &
-                    (self.master_df['Zone Name'] == zone_name) &
-                    (self.master_df['Top Depth'] == top_md) &
-                    (self.master_df['Base Depth'] == base_md) &
-                    (self.master_df['Zone Type'] == zone_type), 'Angle Top'
-                ] = angle_top
-            
-                self.master_df.loc[
-                    (self.master_df['UWI'] == uwi) &
-                    (self.master_df['Attribute Type'] == attribute_type) &
-                    (self.master_df['Zone Name'] == zone_name) &
-                    (self.master_df['Top Depth'] == top_md) &
-                    (self.master_df['Base Depth'] == base_md) &
-                    (self.master_df['Zone Type'] == zone_type), 'Angle Base'
-                ] = angle_base
-            else:
-                # Append new rows
-                new_row = {
-                    'UWI': uwi,
-                    'Attribute Type': attribute_type,
-                    'Zone Name': zone_name,
-                    'Top Depth': top_md,
-                    'Base Depth': base_md,
-                    'Top X Offset': row.get('Top X Offset', pd.NA),
-                    'Top Y Offset': row.get('Top Y Offset', pd.NA),
-                    'Base X Offset': row.get('Base X Offset', pd.NA),
-                    'Base Y Offset': row.get('Base Y Offset', pd.NA),
-                    'Grid Name': row.get('Grid Name', pd.NA),
-                    'Zone Type': zone_type,
-                    'Angle Top': angle_top,
-                    'Angle Base': angle_base
-                }
-                # Use this (current approach):
-                new_row_df = pd.DataFrame([new_row])  # Convert new_row (a dictionary or series) into a DataFrame
-                self.master_df = pd.concat([self.master_df, new_row_df], ignore_index=True)
-
-        print('done')
-
-
-
-        #Draw a line from Top hole to Bottom hole figure out its orientation 90 from that is the tick Angle.
     def calculate_angle(self, x1, y1, x2, y2):
-        """Calculate the angle between two points in radians, accounting for inverted y-axis, round to the nearest 0, π/2, π, 3π/2, or 2π, and rotate by 90 degrees."""
+        """Calculate angle between two points."""
         dx = x2 - x1
-        dy = y1 - y2  # Invert dy to account for the y-axis being inverted
+        dy = y1 - y2  # Invert dy for y-axis
 
-        angle = np.arctan2(dy, dx)  # Calculate the angle in radians
-
-        # Normalize the angle to the range [0, 2π)
+        angle = np.arctan2(dy, dx)
         if angle < 0:
             angle += 2 * np.pi
 
-        # Define the target angles (0, π/2, π, 3π/2, 2π) in radians
         target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
-
-        # Round to the nearest target angle
         rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
-
-        # Rotate the angle by 90 degrees (π/2 radians)
         rotated_angle = rounded_angle + np.pi/2
 
-        # Normalize the rotated angle to the range [0, 2π)
         if rotated_angle >= 2 * np.pi:
             rotated_angle -= 2 * np.pi
 
-        print(f"Original angle (radians): {angle}, Rounded angle (radians): {rounded_angle}, Rotated angle (radians): {rotated_angle}")
-    
         return rotated_angle

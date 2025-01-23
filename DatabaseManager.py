@@ -46,8 +46,6 @@ class DatabaseManager:
             surface_x REAL DEFAULT NULL,
             surface_y REAL DEFAULT NULL,
             lateral REAL DEFAULT NULL,
-            npv REAL DEFAULT NULL,
-            npv_discounted REAL DEFAULT NULL,
             heel_x REAL DEFAULT NULL,
             heel_y REAL DEFAULT NULL,
             toe_x REAL DEFAULT NULL,
@@ -69,27 +67,26 @@ class DatabaseManager:
             self.disconnect()
 
     def save_uwi_data(self, total_lat_data):
-        # Ensure input data is a DataFrame
         if not isinstance(total_lat_data, pd.DataFrame):
             print("Input data must be a pandas DataFrame.")
             return
 
-        # Check if the DataFrame is empty
         if total_lat_data.empty:
             print("The DataFrame is empty. Nothing to save.")
             return
 
-        # Connect to the database
         self.connect()
 
         try:
+            expected_columns = [
+                'uwi', 'status', 'surface_x', 'surface_y', 'lateral',
+                'heel_x', 'heel_y', 'toe_x', 'toe_y', 'heel_md',
+                'toe_md', 'average_tvd', 'total_length', 'spud_date'
+            ]
+            total_lat_data = total_lat_data[expected_columns]  # Enforce correct column order
+
             for _, row in total_lat_data.iterrows():
                 uwi = row['uwi']
-
-                # No special handling for spud_date if it's already valid or None
-                spud_date = row.get('spud_date')
-
-                # Prepare the dynamic SQL for updating columns
                 update_columns = [col for col in row.index if col != 'uwi']
                 set_clause = ", ".join([f"{col} = COALESCE(?, {col})" for col in update_columns])
 
@@ -99,14 +96,13 @@ class DatabaseManager:
                 WHERE uwi = ?
                 """
 
-                # Prepare update values
                 update_values = [row[col] for col in update_columns]
                 update_values.append(uwi)
 
-                # Execute update
+                print(f"Executing SQL Update: {sql_update}")
+                print(f"Values: {update_values}")
                 self.cursor.execute(sql_update, update_values)
 
-                # If no rows were updated, insert a new record
                 if self.cursor.rowcount == 0:
                     columns = ['uwi'] + update_columns
                     placeholders = ", ".join(["?" for _ in columns])
@@ -116,10 +112,13 @@ class DatabaseManager:
                     VALUES ({placeholders})
                     """
 
-                    insert_values = [uwi] + update_values
+                    # Correct insert values to avoid duplicating 'uwi'
+                    insert_values = [row[col] for col in columns]
+
+                    print(f"Executing SQL Insert: {sql_insert}")
+                    print(f"Values: {insert_values}")
                     self.cursor.execute(sql_insert, insert_values)
 
-            # Commit the transaction
             self.connection.commit()
             print("Well data updated successfully.")
 
@@ -129,6 +128,7 @@ class DatabaseManager:
 
         finally:
             self.disconnect()
+
 
     def get_uwis_with_surface_xy(self):
         """Fetches all UWIs along with their surface X and Y coordinates from the database."""
@@ -399,46 +399,46 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS model_properties (
             scenario_id INTEGER NOT NULL,
             uwi TEXT NOT NULL,
-            max_oil_production REAL DEFAULT NULL,
-            max_gas_production REAL DEFAULT NULL,
-            max_oil_production_date TEXT DEFAULT NULL,
-            max_gas_production_date TEXT DEFAULT NULL,
-            one_year_oil_production REAL DEFAULT NULL,
-            one_year_gas_production REAL DEFAULT NULL,
-            di_oil REAL DEFAULT NULL,
-            di_gas REAL DEFAULT NULL,
-            oil_b_factor REAL DEFAULT NULL,
-            gas_b_factor REAL DEFAULT NULL,
-            min_dec_oil REAL DEFAULT NULL,
-            min_dec_gas REAL DEFAULT NULL,
-            model_oil TEXT DEFAULT NULL,
-            model_gas TEXT DEFAULT NULL,
-            economic_limit_type TEXT DEFAULT NULL,
-            economic_limit_date TEXT DEFAULT NULL,
-            oil_price REAL DEFAULT NULL,
-            gas_price REAL DEFAULT NULL,
-            oil_price_dif REAL DEFAULT NULL,
-            gas_price_dif REAL DEFAULT NULL,
-            discount_rate REAL DEFAULT NULL,
-            working_interest REAL DEFAULT NULL,
-            royalty REAL DEFAULT NULL,
-            tax_rate REAL DEFAULT NULL,
-            capital_expenditures REAL DEFAULT NULL,
-            operating_expenditures REAL DEFAULT NULL,
-            net_price_oil REAL DEFAULT NULL,
-            net_price_gas REAL DEFAULT NULL,
-            gas_model_status TEXT DEFAULT NULL,
-            oil_model_status TEXT DEFAULT NULL,
-            q_oil_eur REAL DEFAULT NULL, 
-            q_gas_eur REAL DEFAULT NULL,  
-            EFR_oil REAL DEFAULT NULL,    
-            EFR_gas REAL DEFAULT NULL,    
-            EUR_oil_remaining REAL DEFAULT NULL,  
-            EUR_gas_remaining REAL DEFAULT NULL,  
-            npv REAL DEFAULT NULL,           
-            npv_discounted REAL DEFAULT NULL,  
-            payback_months REAL DEFAULT NULL,  ,
-            parrent_well REAL DEFAULT NULL,  
+            max_oil_production REAL DEFAULT 0,
+            max_gas_production REAL DEFAULT 0,
+            max_oil_production_date TEXT DEFAULT '0000-00-00',
+            max_gas_production_date TEXT DEFAULT '0000-00-00',
+            one_year_oil_production REAL DEFAULT 0,
+            one_year_gas_production REAL DEFAULT 0,
+            di_oil REAL DEFAULT 0,
+            di_gas REAL DEFAULT 0,
+            oil_b_factor REAL DEFAULT 0,
+            gas_b_factor REAL DEFAULT 0,
+            min_dec_oil REAL DEFAULT 0,
+            min_dec_gas REAL DEFAULT 0,
+            model_oil TEXT DEFAULT '',
+            model_gas TEXT DEFAULT '',
+            economic_limit_type TEXT DEFAULT '',
+            economic_limit_date TEXT DEFAULT '0000-00-00',
+            oil_price REAL DEFAULT 0,
+            gas_price REAL DEFAULT 0,
+            oil_price_dif REAL DEFAULT 0,
+            gas_price_dif REAL DEFAULT 0,
+            discount_rate REAL DEFAULT 0,
+            working_interest REAL DEFAULT 0,
+            royalty REAL DEFAULT 0,
+            tax_rate REAL DEFAULT 0,
+            capital_expenditures REAL DEFAULT 0,
+            operating_expenditures REAL DEFAULT 0,
+            net_price_oil REAL DEFAULT 0,
+            net_price_gas REAL DEFAULT 0,
+            gas_model_status TEXT DEFAULT '',
+            oil_model_status TEXT DEFAULT '',
+            q_oil_eur REAL DEFAULT 0, 
+            q_gas_eur REAL DEFAULT 0,  
+            EFR_oil REAL DEFAULT 0,    
+            EFR_gas REAL DEFAULT 0,    
+            EUR_oil_remaining REAL DEFAULT 0,  
+            EUR_gas_remaining REAL DEFAULT 0,  
+            npv REAL DEFAULT 0,           
+            npv_discounted REAL DEFAULT 0,  
+            payback_months REAL DEFAULT 0,  
+            parent_wells REAL DEFAULT 0,  
             PRIMARY KEY (scenario_id, uwi)
         )
         """
@@ -2191,3 +2191,205 @@ class DatabaseManager:
             print("Error inserting DataFrame into the database:", e)
         finally:
             self.disconnect()
+
+
+    def create_zones_table(self):
+        """
+        Create the Zones table to store zone names and types if it does not already exist.
+        """
+        self.connect()
+        try:
+            query = """
+            CREATE TABLE IF NOT EXISTS Zones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ZoneName TEXT UNIQUE NOT NULL,
+                Type TEXT NOT NULL
+            )
+            """
+            self.cursor.execute(query)
+            self.connection.commit()
+            print("Zones table created successfully.")
+        except sqlite3.Error as e:
+            print(f"Error creating Zones table: {e}")
+            raise
+        finally:
+            self.disconnect()
+
+    def get_sqlite_type(self, pandas_dtype):
+        """Convert pandas dtype to SQLite column type."""
+        if pd.api.types.is_integer_dtype(pandas_dtype):
+            return "INTEGER"
+        elif pd.api.types.is_float_dtype(pandas_dtype):
+            return "REAL"
+        elif pd.api.types.is_bool_dtype(pandas_dtype):
+            return "INTEGER"  # SQLite doesn't have boolean, use INTEGER
+        else:
+            return "TEXT"  # Default to TEXT for other types
+
+    def create_table_from_df(self, table_name, df):
+        """
+        Create a new table from a DataFrame structure and insert the DataFrame data.
+        """
+        self.connect()
+        try:
+            # Prepare columns definition from DataFrame
+            columns = ['id INTEGER PRIMARY KEY AUTOINCREMENT']
+            for column in df.columns:
+                col_name = column.replace(' ', '_').replace('-', '_')  # Sanitize column names
+                col_type = self.get_sqlite_type(df[column].dtype)  # Get SQLite type
+                columns.append(f"{col_name} {col_type}")
+
+            # Create the SQL query to create the table
+            create_query = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                {', '.join(columns)}
+            )
+            """
+            self.cursor.execute(create_query)
+            self.connection.commit()
+            print(f"Table '{table_name}' created successfully.")
+
+            # Insert DataFrame data into the table
+            if not df.empty:
+                # Prepare placeholders and column names for insert query
+                col_names = [col.replace(' ', '_').replace('-', '_') for col in df.columns]
+                placeholders = ', '.join(['?' for _ in col_names])
+                columns_str = ', '.join(col_names)
+
+                # Insert query
+                insert_query = f"""
+                INSERT INTO {table_name} ({columns_str}) 
+                VALUES ({placeholders})
+                """
+            
+                # Convert DataFrame rows to list of tuples
+                rows = df.to_records(index=False).tolist()
+            
+                self.cursor.executemany(insert_query, rows)
+                self.connection.commit()
+                print(f"Data inserted into '{table_name}' successfully.")
+            else:
+                print(f"No data to insert into '{table_name}'.")
+            
+        except Exception as e:
+            print(f"Error creating table or inserting data: {e}")
+            self.connection.rollback()
+            raise
+        finally:
+            self.disconnect()
+
+    def add_zone_names(self, zone_name, zone_type):
+        """
+        Add a zone entry with a specific type to the database.
+
+        Parameters:
+            zone_name (str): The name of the zone to add.
+            zone_type (str): The type of the zone (must be one of 'Zones', 'Intersections', 'Well').
+
+        Raises:
+            ValueError: If the zone_type is not one of the allowed types.
+        """
+        # Validate the type
+        valid_types = {'Zones', 'Intersections', 'Well'}
+        if zone_type not in valid_types:
+            raise ValueError(f"Invalid zone type '{zone_type}'. Must be one of {valid_types}.")
+
+        self.connect()
+        try:
+            # Insert the zone name with the given type
+            self.cursor.execute("""
+                INSERT OR IGNORE INTO Zones (ZoneName, Type)
+                VALUES (?, ?)
+            """, (zone_name, zone_type))
+        
+            self.connection.commit()
+        except sqlite3.Error as e:
+            print(f"Error adding zone name '{zone_name}' with type '{zone_type}': {e}")
+            self.connection.rollback()
+            raise
+        finally:
+            self.disconnect()
+
+    def fetch_zone_names_by_type(self, zone_type=None):
+        print(zone_type)
+        """
+        Fetch zone names from the Zones table, optionally filtered by type.
+
+        Parameters:
+            zone_type (str, optional): The type of zones to fetch. 
+                                       If None, fetch all zone names.
+
+        Returns:
+            list: A list of zone names, optionally filtered by type.
+        """
+        self.connect()
+        try:
+            if zone_type and zone_type != "All":
+                query = "SELECT ZoneName FROM Zones WHERE Type = ? ORDER BY ZoneName"
+                self.cursor.execute(query, (zone_type,))
+            else:
+                query = "SELECT ZoneName FROM Zones ORDER BY ZoneName"
+                self.cursor.execute(query)
+        
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error fetching zone names: {e}")
+            raise
+        finally:
+            self.disconnect()
+
+    def fetch_zone_table_data(self, zone_name):
+        """
+        Fetch entire table data for a specific zone name.
+
+        Parameters:
+        -----------
+        zone_name : str
+            The name of the zone to fetch data for
+
+        Returns:
+        --------
+        tuple: A tuple containing (data, columns)
+            - data: List of rows from the table
+            - columns: List of column names
+        """
+        self.connect()
+        try:
+            # First, try to find the correct table
+            # You might need to adjust this query based on your database schema
+            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [table[0] for table in self.cursor.fetchall()]
+        
+            # Find a table that matches the zone name or contains the zone name
+            matching_tables = [
+                table for table in tables 
+                if zone_name.lower() in table.lower() or 
+                   table.lower().startswith(zone_name.lower())
+            ]
+
+            if not matching_tables:
+                raise ValueError(f"No table found for zone name: {zone_name}")
+
+            # Use the first matching table
+            table_name = matching_tables[0]
+
+            # Fetch data from the table
+            query = f"SELECT * FROM {table_name}"
+            self.cursor.execute(query)
+        
+            # Fetch all rows
+            data = self.cursor.fetchall()
+        
+            # Get column names
+            columns = [description[0] for description in self.cursor.description]
+        
+            return data, columns
+        except sqlite3.Error as e:
+            print(f"Error fetching zone table data: {e}")
+            raise
+        except ValueError as e:
+            print(str(e))
+            raise
+        finally:
+            self.disconnect()
+

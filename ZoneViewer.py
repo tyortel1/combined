@@ -2,7 +2,7 @@ import os
 import sys
 import pandas as pd
 from PySide6.QtWidgets import QApplication,QMessageBox, QLineEdit, QDialog, QVBoxLayout, QTableView, QFileDialog, QAbstractItemView, QHBoxLayout, QPushButton, QLabel, QComboBox, QToolBar, QSlider, QWidget, QListWidget, QFormLayout
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, Signal, QSettings
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QColor, QAction
 from ColumnSelectDialog import ColumnSelectionDialog
 from PySide6.QtCore import Signal
@@ -11,6 +11,7 @@ from CriteriaToZone import CriteriaToZoneDialog
 from DecisionTreeDialog import DecisionTreeDialog
 from DeleteZone import DeleteZone
 from CalculateCorrelations import CalculateCorrelations
+import json
 
 
 
@@ -20,25 +21,36 @@ class ZoneViewerDialog(QDialog):
     newAttributeAdded = Signal(str) 
     zoneNamesUpdated = Signal(list) 
 
-    def __init__(self, df, zone_names, selected_uwis, save_zone_viewer_settings=None,zone_criteria_df=None, column_filters=None):
+    def __init__(self, db_manager):
+
         super(ZoneViewerDialog, self).__init__()
         self.setWindowTitle("Zone Properties")
         self.resize(1500, 1200)
          # Set window flags to include the maximize button
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
+        self.db_manager = db_manager
 
-        self.df = df
-       
-        self.zone_names = zone_names
-        self.selected_uwis = selected_uwis
-        self.selected_columns = df.columns.tolist()  # Initially select all columns
-        self.settings_dict = save_zone_viewer_settings
+        self.zone_names = []
+        self.df = pd.DataFrame()
+        self.filtered_df = pd.DataFrame()
+        self.selected_uwis = None
+        self.saved_sort_column = None
+
+
+
+          # Initially select all columns
+
+
+
+    
         self.page_size = 1000  # Number of rows per page
         self.current_page = 0
-        self.column_filters = column_filters if column_filters is not None else {}
+        self.column_filters = {}
         self.current_config_name = None
+        self.settings = False
 
-        self.df_criteria = zone_criteria_df if zone_criteria_df is not None else pd.DataFrame()
+
+        self.df_criteria = pd.DataFrame()
         self.highlight_criteria = pd.DataFrame()  
 
         # Create main vertical layout
@@ -128,7 +140,7 @@ class ZoneViewerDialog(QDialog):
         self.filter_layout = QVBoxLayout()
         self.filter_layout.setSpacing(5)
 
-        self.filter_layout.addWidget(QLabel("Column Filters:"))
+        self.filter_layout.addWidget(QLabel("Saved Conifurations:"))
         self.column_filter_dropdown = QComboBox(self)
         self.column_filter_dropdown.addItem("Select Saved Configuration") 
         self.column_filter_dropdown.addItems(self.column_filters.keys())
@@ -137,17 +149,31 @@ class ZoneViewerDialog(QDialog):
         self.filter_layout.addWidget(self.column_filter_dropdown)
 
 
-                # Sort dropdown with label
-        self.filter_layout.addWidget(QLabel("Sort By:"))
-        self.sort_dropdown = QComboBox(self)
-        self.sort_dropdown.addItem("Sort by...")  # Default text
+                # Zone Type Filter
+        self.zone_type_filter_label = QLabel("Filter by Zone Type")
+        self.zone_type_filter = QComboBox(self)
+        self.zone_type_filter.setFixedSize(QSize(180, 25))
+        self.zone_type_filter.addItem("All")
+        sorted_zone_types = sorted(["Well", "Zone", "Intersections"])
+        self.zone_type_filter.addItems(sorted_zone_types)
+        self.zone_type_filter.setCurrentText("All")  # Set initial value
+        self.zone_type_filter.currentTextChanged.connect(self.on_zone_type_selected)
+        self.filter_layout.addWidget(self.zone_type_filter_label)
+        self.filter_layout.addWidget(self.zone_type_filter)
 
-        # Sort the columns alphabetically before adding them to the dropdown
-        sorted_columns = sorted(self.df.columns.tolist())
-        self.sort_dropdown.addItems(sorted_columns)
+                # Zone Name Filter
+        self.zone_name_filter_label = QLabel("Filter by Zone Name")
+        self.zone_name_filter = QComboBox(self)
+        self.zone_name_filter.setFixedSize(QSize(180, 25))
+        self.zone_name_filter.addItem("Select Zone")
+        sorted_zone_names = sorted(self.zone_names)
+        self.zone_name_filter.addItems(sorted_zone_names)
+        self.zone_name_filter.setCurrentText("Select Zone")  # Set initial value
+        self.zone_name_filter.currentTextChanged.connect(self.on_zone_selected)
+        self.filter_layout.addWidget(self.zone_name_filter_label)
+        self.filter_layout.addWidget(self.zone_name_filter)
 
-        self.sort_dropdown.currentIndexChanged.connect(self.sort_data)
-        self.filter_layout.addWidget(self.sort_dropdown)
+
 
 
         # Search bar with label
@@ -157,7 +183,17 @@ class ZoneViewerDialog(QDialog):
         self.search_bar.returnPressed.connect(self.apply_search_filter)
         self.filter_layout.addWidget(self.search_bar)
 
+                # UWI Filter
+        self.uwi_filter_label = QLabel("Filter by UWI")
+        self.uwi_filter = QComboBox(self)
+        self.uwi_filter.setFixedSize(QSize(180, 25))
+        self.uwi_filter.addItem("All")
+      
 
+        self.uwi_filter.setCurrentText("All")  # Set initial value
+        self.uwi_filter.currentTextChanged.connect(self.apply_filters)
+        self.filter_layout.addWidget(self.uwi_filter_label)
+        self.filter_layout.addWidget(self.uwi_filter)
 
         # Criteria dropdowns
         self.filter_criteria_dropdown = QComboBox(self)
@@ -168,58 +204,15 @@ class ZoneViewerDialog(QDialog):
         self.highlight_criteria_dropdown.addItem("None")
         self.highlight_criteria_dropdown.currentIndexChanged.connect(self.apply_filters)
 
-        # UWI Filter
-        # Sort the columns alphabetically before adding them to the dropdown
-        sorted_columns = sorted(self.df.columns.tolist())
-        self.sort_dropdown.addItems(sorted_columns)
 
-        # UWI Filter
-        self.uwi_filter_label = QLabel("Filter by UWI")
-        self.uwi_filter = QComboBox(self)
-        self.uwi_filter.setFixedSize(QSize(180, 25))
-        self.uwi_filter.addItem("All")
-        sorted_uwis = sorted(self.selected_uwis)
-        self.uwi_filter.addItems(sorted_uwis)
-        self.uwi_filter.setCurrentText("All")  # Set initial value
-        self.uwi_filter.currentTextChanged.connect(self.apply_filters)
-        self.filter_layout.addWidget(self.uwi_filter_label)
-        self.filter_layout.addWidget(self.uwi_filter)
+     
 
-        # Attribute Filter
-        self.attribute_filter_label = QLabel("Filter by Attribute")
-        self.attribute_filter = QComboBox(self)
-        self.attribute_filter.setFixedSize(QSize(180, 25))
-        self.attribute_filter.addItem("All")
-        sorted_attributes = sorted(["Well", "Zone"])
-        self.attribute_filter.addItems(sorted_attributes)
-        self.attribute_filter.setCurrentText("All")  # Set initial value
-        self.attribute_filter.currentTextChanged.connect(self.apply_filters)
-        self.filter_layout.addWidget(self.attribute_filter_label)
-        self.filter_layout.addWidget(self.attribute_filter)
 
-        # Zone Name Filter
-        self.zone_name_filter_label = QLabel("Filter by Zone Name")
-        self.zone_name_filter = QComboBox(self)
-        self.zone_name_filter.setFixedSize(QSize(180, 25))
-        self.zone_name_filter.addItem("All")
-        sorted_zone_names = sorted(self.zone_names)
-        self.zone_name_filter.addItems(sorted_zone_names)
-        self.zone_name_filter.setCurrentText("All")  # Set initial value
-        self.zone_name_filter.currentTextChanged.connect(self.apply_filters)
-        self.filter_layout.addWidget(self.zone_name_filter_label)
-        self.filter_layout.addWidget(self.zone_name_filter)
 
-        # Zone Type Filter
-        self.zone_type_filter_label = QLabel("Filter by Zone Type")
-        self.zone_type_filter = QComboBox(self)
-        self.zone_type_filter.setFixedSize(QSize(180, 25))
-        self.zone_type_filter.addItem("All")
-        sorted_zone_types = sorted(["Completions", "Tests", "Production", "Injection"])
-        self.zone_type_filter.addItems(sorted_zone_types)
-        self.zone_type_filter.setCurrentText("All")  # Set initial value
-        self.zone_type_filter.currentTextChanged.connect(self.apply_filters)
-        self.filter_layout.addWidget(self.zone_type_filter_label)
-        self.filter_layout.addWidget(self.zone_type_filter)
+
+
+
+
 
 
 
@@ -277,65 +270,206 @@ class ZoneViewerDialog(QDialog):
         # Add the table view to the layout
         self.right_layout.addWidget(self.table_view)
 
-
-        self.filtered_df = self.df.copy()
-        self.update_page_label()
+        self.load_saved_configurations()
         self.load_settings()
 
-
-        # Connect signals to update settings
-        self.uwi_filter.currentTextChanged.connect(self.update_settings_dict)
-        self.attribute_filter.currentTextChanged.connect(self.update_settings_dict)
-        self.zone_name_filter.currentTextChanged.connect(self.update_settings_dict)
-        self.zone_type_filter.currentTextChanged.connect(self.update_settings_dict)
-        self.column_width_slider.valueChanged.connect(self.update_settings_dict)
-        self.row_height_slider.valueChanged.connect(self.update_settings_dict)
-        self.font_size_slider.valueChanged.connect(self.update_settings_dict)
-
-    
         
+
+
+
+
+
+
+    def initialize_viewer(self, zone_type=None):
+        """
+        Initialize the ZoneViewer with the selected zone type and load data.
+        """
+        try:
+            # Fetch initial zone names
+            print(zone_type)
+
+
+            results = self.db_manager.fetch_zone_names_by_type(zone_type)
+            if self.settings:
+                # Block signals before setting the text
+                self.zone_type_filter.blockSignals(True)
+                self.zone_type_filter.setCurrentText(self.zone_type)
+                # Unblock signals after setting the text
+                self.zone_type_filter.blockSignals(False)
+
+            print(results)
+            self.zone_names = [row[0] for row in results]  # Extract ZoneName from tuples
+        except Exception as e:
+            print(f"Error fetching zone names: {e}")
+            self.zone_names = []
+
+        # Call populate_zone_names method if UI is already set up
+        if hasattr(self, 'zone_name_filter'):
+            self.populate_zone_names(zone_type)
+
+    def on_zone_type_selected(self):
+        """
+        Clear zone names and repopulate them when a zone type is selected.
+        """
+        selected_zone_type = self.zone_type_filter.currentText()
+        print(f"Selected zone type: {selected_zone_type}")
+        self.populate_zone_names(selected_zone_type)
+       
+
+
+    def populate_zone_names(self, zone_type=None):
+        """
+        Populate zone names in the UI based on the selected type.
+        Parameters:
+            zone_type (str): The type of zones to fetch (e.g., 'Zones', 'Intersections', 'Well').
+        """
+        try:
+            # Block signals to avoid triggering connected methods
+            self.zone_name_filter.blockSignals(True)
+
+            # Fetch zone names from the database based on the zone type
+            results = self.db_manager.fetch_zone_names_by_type(zone_type)
+            self.zone_names = [row[0] for row in results]  # Extract ZoneName from tuples
+
+            # Populate zone names in the dropdown
+            self.zone_name_filter.clear()
+            self.zone_name_filter.addItem("Select Zone")  # Default option
+            self.zone_name_filter.addItems(sorted(self.zone_names))
+
+        
+            # Optional: Set a default selection
+            if self.settings:
+                self.zone_name_filter.setCurrentText(self.zone_name_filter_text)
+                self.on_zone_selected()
+            else:
+                self.zone_name_filter.setCurrentText("Select Zone")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load zone names: {str(e)}")
+            print(f"Error in populate_zone_names: {e}")
+        finally:
+            # Unblock signals after changes are done
+            self.zone_name_filter.blockSignals(False)
+
+
+
+    def on_zone_selected(self):
+        """
+        Load data and update UI elements when a zone is selected.
+        """
+        selected_zone = self.zone_name_filter.currentText().strip()
+        print(f"Selected zone: {selected_zone}")
+    
+        # If "All" or "Select Zone" is selected, clear data
+        if selected_zone in ["Select Zone", None, ""]:
+            print("No valid zone selected. Clearing data.")
+            self.df = pd.DataFrame()
+            self.selected_uwis = []
+            self.selected_columns = []
+            self.load_data()  # Clear the table view
+            self.update_page_label()  # Reset pagination
+            return
+    
+        try:
+            print(selected_zone)
+            # Fetch entire table data for the selected zone
+            data, columns = self.db_manager.fetch_zone_table_data(selected_zone)
+        
+            # Create DataFrame
+            self.df = pd.DataFrame(data, columns=columns)
+            print("Loaded DataFrame:")
+            print(self.df)
+        
+            # Validate DataFrame
+            if self.df.empty:
+                QMessageBox.warning(self, "No Data", f"No data found for zone '{selected_zone}'")
+                return
+        
+            # Update UI elements
+            self.selected_uwis = self.get_unique_uwis_from_dataframe()
+            self.selected_columns = self.df.columns.tolist()
+        
+
+            self.apply_filters()
+            self.load_data()
+        
+        except Exception as e:
+            QMessageBox.critical(
+                self, 
+                "Error", 
+                f"Failed to load data for zone '{selected_zone}': {str(e)}"
+            )
+            # Optional: log the full traceback
+            import traceback
+            traceback.print_exc()
+    def get_unique_uwis_from_dataframe(self):
+        """
+        Fetch unique UWIs from the initial DataFrame.
+
+        Returns:
+            list: A sorted list of unique UWIs.
+        """
+        if 'UWI' in self.df.columns:
+            return sorted(self.df['UWI'].unique().tolist())
+        else:
+            QMessageBox.warning(self, "Warning", "The UWI column is missing in the data.")
+            return []      
+        
+        
+ 
+
+    def update_zone_data(self):
+        """Update zone data when the zone type changes."""
+        self.load_zone_data()
+        self.update_filtered_data()
+
+    def update_filtered_data(self):
+        """Apply filters and reload the table data."""
+        zone_name = self.zone_name_filter.currentText()
+        zone_type = self.zone_type_filter.currentText()
+
+        if zone_name == "Select Zone":
+            self.filtered_df = pd.DataFrame()
+            return
+
+        # Apply filters based on selected zone name and type
+        if zone_name != "Select Zone":
+            self.filtered_df = self.df[(self.df["Zone Name"] == zone_name) & 
+                                       (self.df["Zone Type"] == zone_type)]
+        else:
+            self.filtered_df = []
+
+        # Update the table view
+        self.load_data()       
         
     def handle_sort_indicator_changed(self, logicalIndex, order):
         # Get the column name based on the logical index
         sort_column = self.table_view.horizontalHeader().model().headerData(logicalIndex, Qt.Horizontal)
 
+        # Save the current sort column and order
+        self.saved_sort_column = sort_column
+        self.saved_sort_order = Qt.AscendingOrder if order == Qt.AscendingOrder else Qt.DescendingOrder
+
         # Determine if the column is numeric and sort accordingly
         if pd.api.types.is_numeric_dtype(self.filtered_df[sort_column]):
-            self.filtered_df.sort_values(by=sort_column, ascending=order == Qt.AscendingOrder, inplace=True, key=pd.to_numeric)
+            self.filtered_df.sort_values(
+                by=sort_column,
+                ascending=order == Qt.AscendingOrder,
+                inplace=True,
+                key=pd.to_numeric
+            )
         else:
-            self.filtered_df.sort_values(by=sort_column, ascending=order == Qt.AscendingOrder, inplace=True)
+            self.filtered_df.sort_values(
+                by=sort_column,
+                ascending=order == Qt.AscendingOrder,
+                inplace=True
+            )
 
         # Reset the current page and reload the data
         self.current_page = 0
         self.update_page_label()
         self.load_data()
         
-        
-    def sort_data(self):
-        sort_column = self.sort_dropdown.currentText()
-    
-        if sort_column != "Sort by...":  # Ignore if the user hasn't selected a valid column
-            if not self.filtered_df.empty:  # Check if filtered_df exists and is not empty
-                df_to_sort = self.filtered_df
-            else:
-                df_to_sort = self.df
 
-            df_to_sort.sort_values(by=sort_column, ascending=True, inplace=True)  # Sort the DataFrame
-
-
-            if pd.api.types.is_numeric_dtype(df_to_sort[sort_column]):
-                df_to_sort.sort_values(by=sort_column, ascending=True, inplace=True, key=pd.to_numeric)
-
-            # If filtering was applied previously, update filtered_df, otherwise set it as the sorted DataFrame
-            if not self.filtered_df.empty:
-                self.filtered_df = df_to_sort
-            else:
-                self.filtered_df = df_to_sort.copy()
-
-            # Reset to the first page and reload the data
-            self.current_page = 0
-            self.update_page_label()
-            self.load_data()
 
 
 
@@ -348,7 +482,6 @@ class ZoneViewerDialog(QDialog):
     def apply_search_filter(self):
         search_text = self.search_bar.text().strip().lower()
 
-    
         if search_text:
             # Check each row if any of the column values contain the search text
             search_condition = self.filtered_df.apply(
@@ -356,8 +489,9 @@ class ZoneViewerDialog(QDialog):
             )
             self.filtered_df = self.filtered_df[search_condition]
         else:
-            # If search text is cleared, reapply the existing filters without the search condition
-            self.apply_saved_filter()
+            # If search text is cleared, reapply filters without the search condition
+            self.filtered_df = self.df.copy()  # Reset to the original DataFrame
+            self.apply_filters()  # Reapply any saved filters and sorting
 
         # Reset the current page and update the view
         self.current_page = 0
@@ -391,88 +525,71 @@ class ZoneViewerDialog(QDialog):
 
         
     def apply_filters(self):
+        # Clear search bar
         self.search_bar.setText("")
 
-        self.uwi_filter.blockSignals(True)
-        self.attribute_filter.blockSignals(True)
-        self.zone_name_filter.blockSignals(True)
-        self.zone_type_filter.blockSignals(True)
-        self.filter_criteria_dropdown.blockSignals(True)
-        self.highlight_criteria_dropdown.blockSignals(True)
-        self.sort_dropdown.blockSignals(True)
-
-        uwi_filter_text = self.uwi_filter.currentText().strip().lower()
-        attribute_filter_text = self.attribute_filter.currentText().strip().lower()
-        zone_name_filter_text = self.zone_name_filter.currentText().strip().lower()
-        zone_type_filter_text = self.zone_type_filter.currentText().strip().lower()
-
-        # Initialize filter conditions
-        uwi_filter_condition = pd.Series([True] * len(self.df), index=self.df.index)
-        attribute_filter_condition = pd.Series([True] * len(self.df), index=self.df.index)
-        zone_name_filter_condition = pd.Series([True] * len(self.df), index=self.df.index)
-        zone_type_filter_condition = pd.Series([True] * len(self.df), index=self.df.index)
-
-        # Apply UWI filter if not "All"
-        if uwi_filter_text != "all":
-            uwi_filter_condition = self.df['uwi'].astype(str).str.lower().str.contains(uwi_filter_text)
-
-        # Apply Attribute filter if not "All"
-        if attribute_filter_text != "all":
-            attribute_filter_condition = self.df['Attribute Type'].astype(str).str.lower() == attribute_filter_text
-
-        # Apply Zone Name filter if not "All"
-        if zone_name_filter_text != "all":
-            zone_name_filter_condition = self.df['Zone Name'].astype(str).str.lower() == zone_name_filter_text
-
-        # Apply Zone Type filter if not "All"
-        if zone_type_filter_text != "all":
-            zone_type_filter_condition = self.df['Zone Type'].astype(str).str.lower() == zone_type_filter_text
-
-        # Ensure all boolean series are aligned with the DataFrame's index
-        uwi_filter_condition = uwi_filter_condition.reindex(self.df.index, fill_value=False)
-        attribute_filter_condition = attribute_filter_condition.reindex(self.df.index, fill_value=False)
-        zone_name_filter_condition = zone_name_filter_condition.reindex(self.df.index, fill_value=False)
-        zone_type_filter_condition = zone_type_filter_condition.reindex(self.df.index, fill_value=False)
-
-        # Apply all filter conditions to the DataFrame
-        self.filtered_df = self.df[
-            uwi_filter_condition &
-            attribute_filter_condition &
-            zone_name_filter_condition &
-            zone_type_filter_condition
+        # Block signals to prevent multiple updates
+        filters_to_block = [
+            self.uwi_filter, 
+ 
+            self.zone_name_filter, 
+            self.zone_type_filter, 
+            self.filter_criteria_dropdown, 
+            self.highlight_criteria_dropdown, 
+     
         ]
-
-
-
-        self.apply_saved_filter()
-        self.apply_saved_highlight()
-
-
-        sort_column = self.sort_dropdown.currentText()
     
-        if sort_column != "Sort by...":  # Ignore if the user hasn't selected a valid column
-            if not self.filtered_df.empty:  # Check if filtered_df exists and is not empty
-                df_to_sort = self.filtered_df
-            else:
-                df_to_sort = self.df
+        for filter_widget in filters_to_block:
+            filter_widget.blockSignals(True)
 
-            df_to_sort.sort_values(by=sort_column, ascending=True, inplace=True)  # Sort the DataFrame
+        try:
+            # Get the selected zone name
 
-            # If filtering was applied previously, update filtered_df, otherwise set it as the sorted DataFrame
-            if not self.filtered_df.empty:
-                self.filtered_df = df_to_sort
-            else:
-                self.filtered_df = df_to_sort.copy()
+            filtered_df = self.df.copy()
 
-        # Unblock signals after all operations are completed
-        self.uwi_filter.blockSignals(False)
-        self.attribute_filter.blockSignals(False)
-        self.zone_name_filter.blockSignals(False)
-        self.zone_type_filter.blockSignals(False)
-        self.filter_criteria_dropdown.blockSignals(False)
-        self.highlight_criteria_dropdown.blockSignals(False)
-        self.sort_dropdown.blockSignals(False)
+            # Extract filter texts
+            uwi_filter_text = self.uwi_filter.currentText().strip().lower()
+           
+            zone_type_filter_text = self.zone_type_filter.currentText().strip().lower()
+
+            # Apply UWI filter
+            if uwi_filter_text != "all":
+                filtered_df = filtered_df[
+                    filtered_df['UWI'].astype(str).str.lower().str.contains(uwi_filter_text)
+                ]
+
+
+
+            # Update filtered DataFrame
+            self.filtered_df = filtered_df
+
+            # Apply additional filters
+            self.apply_saved_filter()
+            self.apply_saved_highlight()
+
+            # Sorting
+            # Use saved sorting column and order
+            if hasattr(self, 'saved_sort_column') and self.saved_sort_column:
+                ascending = self.saved_sort_order == Qt.AscendingOrder
+                if pd.api.types.is_numeric_dtype(self.filtered_df[self.saved_sort_column]):
+                    self.filtered_df.sort_values(
+                        by=self.saved_sort_column,
+                        ascending=ascending,
+                        inplace=True,
+                        key=pd.to_numeric
+                    )
+                else:
+                    self.filtered_df.sort_values(
+                        by=self.saved_sort_column,
+                        ascending=ascending,
+                        inplace=True)
+
+        finally:
+            # Unblock signals 
+            for filter_widget in filters_to_block:
+                filter_widget.blockSignals(False)
     
+        # Reset pagination and load data
         self.current_page = 0
         self.update_page_label()
         self.load_data()
@@ -710,10 +827,8 @@ class ZoneViewerDialog(QDialog):
             self.load_data()
 
     def open_column_selection_dialog(self):
-        # Retrieve the currently selected configuration name from the dropdown
         self.current_config_name = self.column_filter_dropdown.currentText()
-
-        # Open the dialog with the current columns, selected columns, column filters, and the current configuration name
+    
         dialog = ColumnSelectionDialog(
             all_columns=self.df.columns.tolist(),
             selected_columns=self.selected_columns,
@@ -721,41 +836,39 @@ class ZoneViewerDialog(QDialog):
             current_config_name=self.current_config_name,
             parent=self
         )
-
-
+    
         if dialog.exec_() == QDialog.Accepted:
-            # Get the updated column filters from the dialog
+            # Update column filters
             self.column_filters = dialog.column_filters
             self.current_config_name = dialog.current_config_name
-       
+        
+            # Save settings after update
+            self.save_settings()
 
-            # Update the column_filter_dropdown with the new saved column sets
+            # Refresh dropdown
             self.column_filter_dropdown.clear()
-            self.column_filter_dropdown.addItem("Select Saved Configuration")  # Add a default item
+            self.column_filter_dropdown.addItem("Select Saved Configuration")
             self.column_filter_dropdown.addItems(self.column_filters.keys())
-
-            # Set the dropdown to the current configuration name if it exists
+        
             if self.current_config_name and self.current_config_name in self.column_filters:
                 self.column_filter_dropdown.setCurrentText(self.current_config_name)
                 self.selected_columns = self.column_filters[self.current_config_name]
             else:
-                # If the current configuration name is not found, use the default selected columns from the dialog
                 self.column_filter_dropdown.setCurrentText("Select Saved Configuration")
                 self.selected_columns = dialog.get_selected_columns()
-
-            # Load the data based on the selected columns
+        
             self.load_data()
-
-            # Save the current configuration name to settings
-            self.update_settings_dict()
 
     def apply_column_dimensions(self):
         column_width = self.column_width_slider.value()
         row_height = self.row_height_slider.value()
         font_size = self.font_size_slider.value()
 
-        for column in range(self.table_view.model().columnCount()):
-            self.table_view.setColumnWidth(column, column_width)
+        # Check if model exists before trying to access it
+        if self.table_view.model() is not None:
+            for column in range(self.table_view.model().columnCount()):
+                self.table_view.setColumnWidth(column, column_width)
+    
         self.table_view.verticalHeader().setDefaultSectionSize(row_height)
 
         # Set the font size for the table view
@@ -774,97 +887,144 @@ class ZoneViewerDialog(QDialog):
 
             page_data.to_csv(file_path, index=False)
 
-    def update_settings_dict(self):
-        self.current_config_name = self.column_filter_dropdown.currentText()
-        """Update the settings dictionary with current values"""
-        self.settings_dict = {
-            "column_width": self.column_width_slider.value(),
-            "row_height": self.row_height_slider.value(),
-            "font_size": self.font_size_slider.value(),
-            "selected_columns": self.selected_columns,
-            "uwi_filter": self.uwi_filter.currentText(),
-            "attribute_filter": self.attribute_filter.currentText(),
-            "zone_name_filter": self.zone_name_filter.currentText(),
-            "zone_type_filter": self.zone_type_filter.currentText(),
-            "filter_criteria": self.filter_criteria_dropdown.currentText(),  # Save current filter criteria selection
-            "highlight_criteria": self.highlight_criteria_dropdown.currentText(),  # Save current highlight criteria selection
-            "current_column_filter": self.column_filter_dropdown.currentText()
-        }
-
+    def save_settings(self):
+        if not self.current_config_name or self.current_config_name == "Select Saved Configuration":
+            return
+    
+        settings = QSettings('ZoneApp', 'ZoneViewer')
+        settings.beginGroup(self.current_config_name)
+    
+        # Save column filters and configuration
+        settings.setValue('column_filters', json.dumps(self.column_filters))
+        settings.setValue('selected_columns', json.dumps(self.selected_columns))
+        settings.setValue('current_config', self.current_config_name)
+    
+        # Save dropdown states
+        settings.setValue('zone_type_filter', self.zone_type_filter.currentText())
+        settings.setValue('zone_name_filter', self.zone_name_filter.currentText())
+        settings.setValue('uwi_filter', self.uwi_filter.currentText())
+        settings.setValue('rows_per_page', self.rows_per_page_combo.currentText())
+        settings.setValue('filter_criteria', self.filter_criteria_dropdown.currentText())
+        settings.setValue('highlight_criteria', self.highlight_criteria_dropdown.currentText())
+    
+        # Save slider values
+        settings.setValue('column_width', self.column_width_slider.value())
+        settings.setValue('row_height', self.row_height_slider.value())
+        settings.setValue('font_size', self.font_size_slider.value())
+    
+        # Save criteria
+        if not self.df_criteria.empty:
+            settings.setValue('df_criteria', self.df_criteria.to_json())
+    
+        settings.endGroup()
+    
+        # Save the name of the last used configuration
+        settings.setValue('last_config', self.current_config_name)
+        settings.sync()
+        
     def load_settings(self):
-        if self.settings_dict is None:
-            # If no settings are provided, do nothing and return
+        self.settings = True
+        settings = QSettings('ZoneApp', 'ZoneViewer')
+        last_config_name = settings.value('last_config')
+        print(f"Loading settings, last config: {last_config_name}")
+
+        # If no last config, initialize the viewer
+        if not last_config_name:
+            print("No last config found")
+            self.initialize_viewer()
             return
 
-        settings = self.settings_dict
-   
-        # Block signals for sliders and dropdowns to prevent triggering their connected methods
-        self.column_width_slider.blockSignals(True)
-        self.row_height_slider.blockSignals(True)
-        self.font_size_slider.blockSignals(True)
-        self.uwi_filter.blockSignals(True)
-        self.attribute_filter.blockSignals(True)
-        self.zone_name_filter.blockSignals(True)
-        self.zone_type_filter.blockSignals(True)
-        self.filter_criteria_dropdown.blockSignals(True)
-        self.highlight_criteria_dropdown.blockSignals(True)
+        # Initialize all variables with defaults
+        self.current_config_name = last_config_name or "DefaultConfig"
+        self.column_filters = {}
+        self.selected_columns = []
+        self.zone_type_filter_text = "All"
+        self.zone_name_filter_text = "Select Zone"
+        self.uwi_filter_text = "All"
+        self.rows_per_page = "1000"
+        self.filter_criteria_text = "None"
+        self.highlight_criteria_text = "None"
+        self.column_width = 100
+        self.row_height = 20
+        self.font_size = 8
+        self.df_criteria = pd.DataFrame()
 
-        try:
-            # Load settings into the sliders and filters
-            self.column_width_slider.setValue(settings.get("column_width", 100))
-            self.row_height_slider.setValue(settings.get("row_height", 20))
-            self.font_size_slider.setValue(settings.get("font_size", 8))
-            self.selected_columns = settings.get("selected_columns", self.df.columns.tolist())
-            self.uwi_filter.setCurrentText(settings.get("uwi_filter", "All"))
-            self.attribute_filter.setCurrentText(settings.get("attribute_filter", "All"))
-            self.zone_name_filter.setCurrentText(settings.get("zone_name_filter", "All"))
-            self.zone_type_filter.setCurrentText(settings.get("zone_type_filter", "All"))
-            self.column_filter_dropdown.setCurrentText(settings.get("current_column_filter", "All"))
-            self.current_config_name = self.column_filter_dropdown.currentText()
+        if last_config_name:
+            settings.beginGroup(last_config_name)
 
+            # Block signals for UI components
+            widgets_to_block = [
+                self.uwi_filter,
+                self.zone_name_filter,
+                self.zone_type_filter,
+                self.filter_criteria_dropdown,
+                self.highlight_criteria_dropdown,
+                self.column_width_slider,
+                self.row_height_slider,
+                self.font_size_slider
+            ]
+            for widget in widgets_to_block:
+                widget.blockSignals(True)
 
-            # Clear existing items in the dropdowns
-            self.filter_criteria_dropdown.clear()
-            self.highlight_criteria_dropdown.clear()
+            try:
+                # Load settings with defaults if keys are missing
+                self.column_filters = json.loads(settings.value('column_filters', '{}'))
+                self.selected_columns = json.loads(settings.value('selected_columns', '[]'))
+                self.zone_type_filter_text = settings.value('zone_type_filter', 'All')
+                self.zone_name_filter_text = settings.value('zone_name_filter', 'Select Zone')
+                self.uwi_filter_text = settings.value('uwi_filter', 'All')
+                self.rows_per_page = settings.value('rows_per_page', '1000')
+                self.filter_criteria_text = settings.value('filter_criteria', 'None')
+                self.highlight_criteria_text = settings.value('highlight_criteria', 'None')
+                self.column_width = int(settings.value('column_width', 100))
+                self.row_height = int(settings.value('row_height', 20))
+                self.font_size = int(settings.value('font_size', 8))
+                criteria_json = settings.value('df_criteria', '{}')
+                if criteria_json:
+                    self.df_criteria = pd.read_json(criteria_json)
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+            finally:
+                # Unblock signals
+                for widget in widgets_to_block:
+                    widget.blockSignals(False)
+                settings.endGroup()
 
-            # Add "None" as the default option
-            self.filter_criteria_dropdown.addItem("None")
-            self.highlight_criteria_dropdown.addItem("None")
+        self.initialize_viewer(self.zone_type_filter_text)
 
-            if hasattr(self, 'df_criteria') and self.df_criteria is not None and not self.df_criteria.empty:
-                if 'Name' in self.df_criteria.columns:
-                    for criteria_name in self.df_criteria['Name'].unique():
-                        self.filter_criteria_dropdown.addItem(criteria_name)
-                        self.highlight_criteria_dropdown.addItem(criteria_name)
-                else:
-                    print("The df_criteria DataFrame does not have the 'Name' column.")
-            else:
-                print("df_criteria is either not defined, None, or empty.")
+        # Apply loaded settings to the UI
+        self.zone_type_filter.setCurrentText(self.zone_type_filter_text)
+        self.zone_name_filter.setCurrentText(self.zone_name_filter_text)
+        self.uwi_filter.setCurrentText(self.uwi_filter_text)
+        self.rows_per_page_combo.setCurrentText(self.rows_per_page)
+        self.filter_criteria_dropdown.setCurrentText(self.filter_criteria_text)
+        self.highlight_criteria_dropdown.setCurrentText(self.highlight_criteria_text)
+        self.column_width_slider.setValue(self.column_width)
+        self.row_height_slider.setValue(self.row_height)
+        self.font_size_slider.setValue(self.font_size)
 
-            # Restore the selected criteria from settings
-            saved_filter_criteria = settings.get("filter_criteria", "None")
-            saved_highlight_criteria = settings.get("highlight_criteria", "None")
-
-            if saved_filter_criteria in [self.filter_criteria_dropdown.itemText(i) for i in range(self.filter_criteria_dropdown.count())]:
-                self.filter_criteria_dropdown.setCurrentText(saved_filter_criteria)
-
-            if saved_highlight_criteria in [self.highlight_criteria_dropdown.itemText(i) for i in range(self.highlight_criteria_dropdown.count())]:
-                self.highlight_criteria_dropdown.setCurrentText(saved_highlight_criteria)
-        finally:
-            # Re-enable signals after the settings have been loaded
-            self.column_width_slider.blockSignals(False)
-            self.row_height_slider.blockSignals(False)
-            self.font_size_slider.blockSignals(False)
-            self.uwi_filter.blockSignals(False)
-            self.attribute_filter.blockSignals(False)
-            self.zone_name_filter.blockSignals(False)
-            self.zone_type_filter.blockSignals(False)
-            self.filter_criteria_dropdown.blockSignals(False)
-            self.highlight_criteria_dropdown.blockSignals(False)
-
-        # Apply filters and column dimensions after loading settings
-        self.apply_filters()
         self.apply_column_dimensions()
+        self.apply_filters()
+        self.load_data()
+        self.settings = False
+
+    def load_saved_configurations(self):
+        settings = QSettings('ZoneApp', 'ZoneViewer')
+        saved_configs = []
+    
+        # Get all groups except special keys
+        for key in settings.childGroups():
+            if key != 'last_config':
+                saved_configs.append(key)
+            
+        self.column_filter_dropdown.clear()
+        self.column_filter_dropdown.addItem("Select Saved Configuration")
+        self.column_filter_dropdown.addItems(saved_configs)
+    
+        last_config = settings.value('last_config')
+        if last_config and last_config in saved_configs:
+            self.column_filter_dropdown.setCurrentText(last_config)
+            self.current_config_name = last_config
 
     def open_criteria_to_zone_dialog(self):
         if self.df_criteria.empty:
@@ -1028,7 +1188,7 @@ class ZoneViewerDialog(QDialog):
     def update_after_deletion(self):
         # Step 1: Update zone-related dropdowns and lists
         self.zone_name_filter.clear()
-        self.zone_name_filter.addItem("All")
+        self.zone_name_filter.addItem("Select Zone")
         self.zone_name_filter.addItems(sorted(self.zone_names))
 
         # Step 2: Reapply filters since the data has changed
@@ -1050,17 +1210,7 @@ class ZoneViewerDialog(QDialog):
         self.dataUpdated.emit(self.df)
         self.zoneNamesUpdated.emit(self.zone_names)
 
-    def closeEvent(self, event):
-        self.update_settings_dict()
 
-        # Emit the settings and criteria DataFrame back to the main application
-        self.settingsClosed.emit({
-            "settings": self.settings_dict,
-            "criteria": self.df_criteria,
-            "columns" : self.column_filters
-        })
-
-        super().closeEvent(event)
 
 def main():
     app = QApplication(sys.argv)

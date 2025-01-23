@@ -333,7 +333,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 })
         
             # Calculate drainage size specifically for this well
-            eur_value = eur_dict.get(uwi, 0)
+            eur_value = eur_dict.get(uwi, 1)
             eur_multiplier = 1 - eur_value
         
             # Print individual well drainage size calculation
@@ -1700,6 +1700,7 @@ class Map(QMainWindow, Ui_MainWindow):
             # Update UI and internal states
             self.set_interactive_elements_enabled(False)
             self.import_menu.setEnabled(True)
+            self.calculate_menu.setEnabled(True)
             self.data_loader_menu_action.setEnabled(True)
 
             # Reset DataFrames
@@ -1735,6 +1736,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.create_scenario_names_table()
                 
                 self.db_manager.create_directional_surveys_table()
+                self.db_manager.create_zones_table()
                 
                 # Additional database initialization if needed
                 # For example, creating tables or setting up initial data
@@ -1849,6 +1851,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.insert_survey_dataframe_into_db(directional_survey_values, )
                 self.directional_surveys_df = directional_survey_values
                 self.setData()
+                print(well_data_df)
                 self.db_manager.save_uwi_data(well_data_df)
 
             else:
@@ -2266,23 +2269,13 @@ class Map(QMainWindow, Ui_MainWindow):
             for action in actions_to_toggle:
                 action.setEnabled(True)
         self.update()
-######################################Launch####################################
+    ######################################Launch####################################
     def launch_zone_viewer(self):
-        # Create the dialog with settings if available
+        # Create the dialog with the db_manager
         self.zone_viewer_dialog = ZoneViewerDialog(
-            self.master_df, 
-            self.zone_names, 
-            self.selected_uwis, 
-            self.save_zone_viewer_settings, 
-            self.zone_criteria_df,
-            self.column_filters
+            self.db_manager,  # Pass the database manager
+# Column filters
         )
-
-        # Connect the signal for saving settings when the dialog is closed
-        self.zone_viewer_dialog.settingsClosed.connect(self.save_zone_settings)
-        self.zone_viewer_dialog.dataUpdated.connect(self.update_master_df)
-        self.zone_viewer_dialog.newAttributeAdded.connect(self.add_new_attribute_to_dropdowns)
-        self.zone_viewer_dialog.zoneNamesUpdated.connect(self.update_zone_names)
 
         self.zone_viewer_dialog.show()
 
@@ -2519,7 +2512,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def inzone_dialog(self):
         dialog = InZoneDialog(
-            self.master_df,
+            self.db_manager,  # Pass the database manager
             self.directional_surveys_df,
             self.grid_info_df,
             self.kd_tree_depth_grids,
@@ -2527,10 +2520,10 @@ class Map(QMainWindow, Ui_MainWindow):
             self.zone_names,
             self.depth_grid_data_dict,
             self.attribute_grid_data_dict
-              )
+        )
         dialog.exec()
 
-        self.master_df = dialog.master_df
+
         self.zone_names = dialog.zone_names
         self.project_saver.save_zone_names(self.zone_names)
         self.populate_zone_dropdown()
