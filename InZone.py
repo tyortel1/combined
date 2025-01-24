@@ -372,7 +372,7 @@ class InZoneDialog(QDialog):
         self.db_manager.add_zone_names(zone_name, zone_type)
 
         # Create a table name dynamically
-        table_name = f"{zone_name.replace(' ', '_').replace('-', '_')}"
+        table_name = f"{zone_name.replace(' ', '').replace('-', '')}"
 
         # Save the percentage data into a new table in the database
         self.db_manager.create_table_from_df(table_name, df_intersections)

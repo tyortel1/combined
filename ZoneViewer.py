@@ -365,8 +365,11 @@ class ZoneViewerDialog(QDialog):
             self.df = pd.DataFrame()
             self.selected_uwis = []
             self.selected_columns = []
+            self.uwi_filter.clear()
+            self.uwi_filter.addItem("All")# Reset pagination
             self.load_data()  # Clear the table view
-            self.update_page_label()  # Reset pagination
+            self.update_page_label() 
+
             return
     
         try:
@@ -387,6 +390,14 @@ class ZoneViewerDialog(QDialog):
             # Update UI elements
             self.selected_uwis = self.get_unique_uwis_from_dataframe()
             self.selected_columns = self.df.columns.tolist()
+                        # Update UWI filter
+            self.uwi_filter.blockSignals(True)
+            self.uwi_filter.clear()
+            self.uwi_filter.addItem("All")
+            if "uwi" in self.df.columns:
+                unique_uwis = sorted(self.df["uwi"].unique().tolist())
+                self.uwi_filter.addItems([str(uwi) for uwi in unique_uwis])
+            self.uwi_filter.blockSignals(False)
         
 
             self.apply_filters()
@@ -408,8 +419,8 @@ class ZoneViewerDialog(QDialog):
         Returns:
             list: A sorted list of unique UWIs.
         """
-        if 'UWI' in self.df.columns:
-            return sorted(self.df['UWI'].unique().tolist())
+        if 'uwi' in self.df.columns:
+            return sorted(self.df['uwi'].unique().tolist())
         else:
             QMessageBox.warning(self, "Warning", "The UWI column is missing in the data.")
             return []      
@@ -555,7 +566,7 @@ class ZoneViewerDialog(QDialog):
             # Apply UWI filter
             if uwi_filter_text != "all":
                 filtered_df = filtered_df[
-                    filtered_df['UWI'].astype(str).str.lower().str.contains(uwi_filter_text)
+                    filtered_df['uwi'].astype(str).str.lower().str.contains(uwi_filter_text)
                 ]
 
 

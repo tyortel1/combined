@@ -173,6 +173,10 @@ class Map(QMainWindow, Ui_MainWindow):
         self.db_manager = DatabaseManager(None)
         self.db_path = None
         self.well_data_df = pd.DataFrame()
+        self.cached_zone_df = None
+        self.cached_zone_name = None
+        self.cached_well_zone_df = None
+        self.cached_well_zone_name = None
 
          # Create an instance of EurNpv
 
@@ -263,116 +267,92 @@ class Map(QMainWindow, Ui_MainWindow):
             )
         QCoreApplication.quit()
         
-    def setData(self):
+    def setData(self, force_recalculate=False):
+        """
+        Populate well data, scaled data, and other attributes. Recalculates only if needed.
+
+        Parameters:
+            force_recalculate (bool): If True, recalculates all data even if cached.
+        """
         if self.directional_surveys_df.empty:
             return
+
         pd.set_option('display.max_columns', None)
         pd.set_option('display.max_colwidth', None)
-    
+
         scenario = 1
-        # Get heel and toe data first
-        heel_toe_data = {item["uwi"]: item for item in self.db_manager.get_uwis_with_heel_toe()}
-    
+        # Load or cache heel/toe data
+        if not hasattr(self, 'heel_toe_data') or force_recalculate:
+            self.heel_toe_data = {item["uwi"]: item for item in self.db_manager.get_uwis_with_heel_toe()}
+
+        # Load EUR data
         eur_data = self.db_manager.get_model_properties(scenario)
-        print(eur_data)
-    
-        # Convert the column to numeric, coercing any non-numeric values to NaN
         eur_data['EUR_oil_remaining'] = pd.to_numeric(eur_data['EUR_oil_remaining'], errors='coerce')
-    
-        # Create the dictionary, filling NaN with 0 if needed
         eur_dict = dict(zip(eur_data['uwi'], eur_data['EUR_oil_remaining'].fillna(0)))
-    
-        self.well_data = {}
-        self.scaled_data = {}
-        self.scaled_data_md = {}
-        self.segments_data = {} 
-    
-        # Print out EUR data for debugging
-        print("EUR Dictionary:")
-        for uwi, eur_value in eur_dict.items():
-            print(f"UWI: {uwi}, EUR Remaining: {eur_value}")
-    
-        for uwi in self.directional_surveys_df['UWI'].unique():
-            df_uwi = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
-    
-            x_offsets = df_uwi['X Offset'].tolist()
-            y_offsets = df_uwi['Y Offset'].tolist()
-            tvds = df_uwi['TVD'].tolist()
-            mds = df_uwi['MD'].tolist()
-            points = [QPointF(x, y) for x, y in zip(x_offsets, y_offsets)]
-            segments = []
-        
-            for i in range(len(points) - 1):
-                segment = {
-                    "Segment": i + 1,
-                    "MD Top": mds[i],
-                    "MD Base": mds[i + 1],
-                    "X Top": points[i].x(),
-                    "Y Top": points[i].y(),
-                    "X Base": points[i + 1].x(),
-                    "Y Base": points[i + 1].y(),
-                    "Color": "#000000"
+
+        # Reuse well_data if already calculated, unless forced to recalculate
+        if not hasattr(self, 'well_data') or force_recalculate:
+            self.well_data = {}
+            for uwi in self.directional_surveys_df['UWI'].unique():
+                df_uwi = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+
+                x_offsets = df_uwi['X Offset'].tolist()
+                y_offsets = df_uwi['Y Offset'].tolist()
+                tvds = df_uwi['TVD'].tolist()
+                mds = df_uwi['MD'].tolist()
+                points = [QPointF(x, y) for x, y in zip(x_offsets, y_offsets)]
+
+                # Prepare static well data
+                well_data = {
+                    'x_offsets': x_offsets,
+                    'y_offsets': y_offsets,
+                    'tvds': tvds,
+                    'mds': mds,
+                    'points': points
                 }
-                segments.append(segment)
-        
-            # Add heel and toe data if available
-            well_data = {
-                'x_offsets': x_offsets,
-                'y_offsets': y_offsets,
-                'tvds': tvds,
-                'mds': mds,
-                'points': points
-            }
-        
-            if uwi in heel_toe_data:
-                well_data.update({
-                    'heel_x': heel_toe_data[uwi]['heel_x'],
-                    'heel_y': heel_toe_data[uwi]['heel_y'],
-                    'toe_x': heel_toe_data[uwi]['toe_x'], 
-                    'toe_y': heel_toe_data[uwi]['toe_y']
-                })
-        
-            # Calculate drainage size specifically for this well
+
+                # Add heel and toe data if available
+                if uwi in self.heel_toe_data:
+                    well_data.update({
+                        'heel_x': self.heel_toe_data[uwi]['heel_x'],
+                        'heel_y': self.heel_toe_data[uwi]['heel_y'],
+                        'toe_x': self.heel_toe_data[uwi]['toe_x'],
+                        'toe_y': self.heel_toe_data[uwi]['toe_y']
+                    })
+
+                self.well_data[uwi] = well_data
+
+        # Update dynamic data (e.g., drainage
+        # 
+        # 
+        #  size)
+        for uwi, well_data in self.well_data.items():
             eur_value = eur_dict.get(uwi, 1)
             eur_multiplier = 1 - eur_value
-        
-            # Print individual well drainage size calculation
-            print(f"UWI: {uwi}, EUR Value: {eur_value}, EUR Multiplier: {eur_multiplier}")
-        
-            # Use default drainage width if needed, scaled by EUR multiplier
             well_data['drainage_size'] = self.drainage_width * eur_multiplier
-            print(f"UWI: {uwi}, Drainage Size: {well_data['drainage_size']}")
-        
-            self.well_data[uwi] = well_data
-    
-            self.scaled_data[uwi] = list(zip(points, tvds))
-            self.scaled_data_md[uwi] = list(zip(points, mds))
-    
-        # Print final well data to verify
-        print("Final Well Data Drainage Sizes:")
-        for uwi, well in self.well_data.items():
-            print(f"UWI: {uwi}, Drainage Size: {well.get('drainage_size', 'N/A')}")
-         # Calculate min/max values
-        all_x = [x for well in self.well_data.values() for x in well['x_offsets']]
-        all_y = [y for well in self.well_data.values() for y in well['y_offsets']]
-        self.min_x, self.max_x = min(all_x), max(all_x)
-        self.min_y, self.max_y = min(all_y), max(all_y)
 
-        # Create uwi_points and uwi_map
-        self.uwi_points = [(x, y) for well in self.well_data.values() for x, y in zip(well['x_offsets'], well['y_offsets'])]
-        self.uwi_map = {(x, y): uwi for uwi, well in self.well_data.items() for x, y in zip(well['x_offsets'], well['y_offsets'])}
+        # Rebuild spatial data only if recalculated
+        if force_recalculate or not hasattr(self, 'kd_tree_wells'):
+            all_x = [x for well in self.well_data.values() for x in well['x_offsets']]
+            all_y = [y for well in self.well_data.values() for y in well['y_offsets']]
+            self.min_x, self.max_x = min(all_x), max(all_x)
+            self.min_y, self.max_y = min(all_y), max(all_y)
 
-        # Build KDTree
-        self.kd_tree_wells = KDTree(self.uwi_points) 
-        # Rest of the method remains the same
+            self.uwi_points = [(x, y) for well in self.well_data.values() for x, y in zip(well['x_offsets'], well['y_offsets'])]
+            self.uwi_map = {(x, y): uwi for uwi, well in self.well_data.items() for x, y in zip(well['x_offsets'], well['y_offsets'])}
+
+            self.kd_tree_wells = KDTree(self.uwi_points)
+
+        # Pass the data to the drawing area
         self.drawingArea.setScaledData(self.well_data)
         self.set_interactive_elements_enabled(True)
+
 
     def on_drainage_size_changed(self):
         new_drainage_size = self.gradientSizeSpinBox.value()
         self.drawingArea.clearDrainageEllipses()
         self.drainage_width = new_drainage_size
-        self.setData()
+        self.setData(True)
 
 
     def update_active_scenario(self):
@@ -434,39 +414,34 @@ class Map(QMainWindow, Ui_MainWindow):
             self.gridDropdown.setCurrentText(selected_grid)
 
     def populate_zone_dropdown(self, selected_zone=None):
-        """Populates the dropdown with zone names and sets the selected zone if provided."""
-        self.selected_zone = selected_zone
-        print( self.master_df)
-        print(type(self.master_df))
-        if not self.master_df.empty:
-            # Filter out any entries where 'Attribute Type' is 'Well'
-            zone_df = self.master_df[self.master_df['Attribute Type'] == "Zone"]
-
-            # Get the unique zone names from the filtered DataFrame and sort them alphabetically
-            self.zone_names = sorted(zone_df['Zone Name'].unique().tolist())
-
-
-            # Block signals to prevent unwanted triggers during population
+       self.selected_zone = selected_zone
+       zones = self.db_manager.fetch_zone_names_by_type("Zone")
+       intersections = self.db_manager.fetch_zone_names_by_type("Intersections")
+   
+       all_zones = zones + intersections if zones and intersections else zones or intersections
+       if all_zones:
+           zone_names_sorted = sorted([z[0] for z in all_zones])
+           self.zoneDropdown.blockSignals(True)
+           self.zoneDropdown.clear()
+           self.zoneDropdown.addItem("Select Zone")
+           self.zoneDropdown.addItems(zone_names_sorted)
+           self.zoneDropdown.blockSignals(False)
+       
+           if self.selected_zone and self.selected_zone in zone_names_sorted:
+               self.zoneDropdown.setCurrentText(selected_zone)
+               self.zoneAttributeDropdown.setEnabled(True)
+           else:
+               self.zoneDropdown.setCurrentText('Select Zone')
+               self.zoneAttributeDropdown.setEnabled(False)
+       else:
+            # Block signals temporarily to avoid triggering unwanted updates
             self.zoneDropdown.blockSignals(True)
             self.zoneDropdown.clear()
-            self.zoneDropdown.addItem("Select Zone")
-            self.zoneDropdown.addItems(self.zone_names)
+            self.zoneDropdown.addItem("No Zones Available")
             self.zoneDropdown.blockSignals(False)
 
-            # Set the selected zone if provided and if it exists in the dropdown
-            if self.selected_zone and self.selected_zone in self.zone_names:
-                self.zoneDropdown.setCurrentText(selected_zone)
-                self.zoneAttributeDropdown.setEnabled(True)
-            else:
-                self.zoneDropdown.setCurrentText('Select Zone')  # Clear selection if zone is not found
-                self.zoneAttributeDropdown.setEnabled(False)
-        else:
-            self.zone_names = []
-            self.zoneDropdown.clear()
-            self.zoneDropdown.addItem("No Zones Available")
+            # Disable the zone attribute dropdown
             self.zoneAttributeDropdown.setEnabled(False)
-
-
 
     def pc_dialog(self):
         """
@@ -487,7 +462,7 @@ class Map(QMainWindow, Ui_MainWindow):
         
             # Convert to list of tuples (uwi, count)
             uwi_count_list = [(uwi, count) for uwi, count in uwi_counts.items()]
-    
+            print(uwi_count_list, scenario_id)    
             # Update parent well counts in database
             try:
                 self.db_manager.update_parent_well_counts(uwi_count_list, scenario_id)
@@ -500,53 +475,58 @@ class Map(QMainWindow, Ui_MainWindow):
                 )
 
 
-
-
     def populate_zone_attributes(self):
-        """Populate the zone attribute dropdown with attributes having numeric values for the selected zone."""
-        # Check if master_df is empty
-        if self.master_df.empty:
-            print("Master DataFrame is empty. No operations performed.")
-            return  # Stop further processing
+        """
+        Populate the zone attributes dropdown with filtered numeric columns and Grid_Name if applicable.
+        """
+        if not self.selected_zone:
+            return
 
-        # Filter master_df for the selected zone
-        zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
+        # Fetch all column names and sample data from the selected zone table
+        df = self.cached_zone_df  # Fetch the table as a DataFrame
+        columns = self.cached_zone_df.columns.tolist()  # Extract all column names
 
-        # Drop fixed columns that are not relevant for selection
-        columns_to_exclude = [
-            'Zone Name', 'Zone Type', 'Attribute Type', 
-            'Top Depth', 'Base Depth', 'UWI', 
-            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
+        # Columns to exclude from the dropdown
+        exclude = [
+            'id', 'Zone_Name', 'Zone_Type', 'Attribute_Type',
+            'Top_Depth', 'Base_Depth', 'UWI', 'Top_X_Offset',
+            'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
+            'Angle_Top', 'Angle_Base', 'Base_TVD', 'Top_TVD'
         ]
-        remaining_df = zone_df.drop(columns=columns_to_exclude)
 
-        # Find columns with numeric data types
-        numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
-        numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
+        # Filter out excluded columns
+        filtered_cols = [col for col in columns if col not in exclude]
 
-        # Further filter to only include columns with at least one non-null value
-        non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
+        # Further filter for numeric columns (optional)
+        numeric_cols = df[filtered_cols].select_dtypes(include=[np.number]).columns.tolist()
 
-        # Ensure "Grid Name" is included if it has non-null values
-        if 'Grid Name' in zone_df.columns and zone_df['Grid Name'].notnull().any():
-            non_null_numeric_columns.append('Grid Name')
+        # Ensure numeric columns have non-zero ranges and no missing data
+        numeric_cols = [
+            col for col in numeric_cols
+            if (df[col].max() - df[col].min() > 0) and df[col].notnull().any()
+        ]
 
-        # Sort the list of columns alphabetically
-        non_null_numeric_columns = sorted(non_null_numeric_columns)
+        # Add 'Grid_Name' if it exists and contains valid (non-null) data
+        if 'Grid_Name' in df.columns and df['Grid_Name'].notnull().any():
+            numeric_cols.append('Grid_Name')
 
-        # Clear the dropdown before populating
+        # Sort the final list of numeric columns
+        numeric_cols = sorted([col for col in numeric_cols if col not in exclude])
+
+        # Populate the dropdown
         self.zoneAttributeDropdown.blockSignals(True)
         self.zoneAttributeDropdown.clear()
 
-        if non_null_numeric_columns:
+        if numeric_cols:
             self.zoneAttributeDropdown.addItem("Select Zone Attribute")
-            self.zoneAttributeDropdown.addItems(non_null_numeric_columns)
+            self.zoneAttributeDropdown.addItems(numeric_cols)
             self.zoneAttributeDropdown.setEnabled(True)
         else:
             self.zoneAttributeDropdown.addItem("No Attributes Available")
             self.zoneAttributeDropdown.setEnabled(False)
 
         self.zoneAttributeDropdown.blockSignals(False)
+
 
     def grid_selected(self, index):
         if index == 0:  # "Select Grid" is selected
@@ -612,36 +592,51 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def zone_selected(self):
         """Handles the selection of a zone from the dropdown."""
-        self.selected_zone = self.zoneDropdown.currentText()
- 
-        if self.selected_zone == "Select Zone":
+
+        self.selected_zone = self.zoneDropdown.currentText().replace(" ", "_")
+
+
+        print(self.selected_zone)
+
+        print(self.selected_zone)
+
+        if not self.selected_zone or self.selected_zone.strip() == "Select Zone":
             # Clear the zones in the plotting area
-            
             self.processed_data = []
             self.drawingArea.clearZones()
-            
+
+            # Clear cache for zone data
+            self.cached_zone_df = None
+            self.cached_zone_name = None
 
         else:
-            self.processed_data = []
-            self.plot_zones(self.selected_zone)
-         
-            
-        for uwi, well in self.well_data.items():
-            mds = well['mds']  # Get the list of measured depths
-            well['md_colors'] = [QColor(Qt.black)] * len(mds) 
+            # Load the entire table into memory for the selected zone
+            try:
+                if self.cached_zone_name != self.selected_zone:
+                    self.cached_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
+                    self.cached_zone_name = self.selected_zone
+                else:
+                    print(f"Using cached data for zone: {self.selected_zone}")
 
-        
-        
-        print(self.well_data)
-        self.zoneAttributeDropdown.blockSignals(True)
-        self.zoneAttributeDropdown.clear()
-        self.populate_zone_attributes()
-        self.drawingArea.setScaledData(self.well_data)
-        self.zoneAttributeDropdown.blockSignals(False)
-        self.zoneAttributeDropdown.setEnabled(False)
+                # Clear processed data and plot zones
+                self.processed_data = []
+                self.plot_zones(self.selected_zone)
 
-        self.zoneAttributeDropdown.setEnabled(True) 
-        return
+                # Initialize well data with black colors
+                for uwi, well in self.well_data.items():
+                    mds = well['mds']  # Get the list of measured depths
+                    well['md_colors'] = [QColor(Qt.black)] * len(mds)
+
+                # Populate dropdowns and pass scaled data to the drawing area
+                self.zoneAttributeDropdown.blockSignals(True)
+                self.zoneAttributeDropdown.clear()
+                self.populate_zone_attributes()
+                self.drawingArea.setScaledData(self.well_data)
+                self.zoneAttributeDropdown.blockSignals(False)
+                self.zoneAttributeDropdown.setEnabled(True)
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load data for zone '{self.selected_zone}': {e}")
 
     def zone_attribute_selected(self):
         self.drawingArea.clearUWILines()
@@ -651,7 +646,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Check if a zone and zone attribute are selected
         if self.selected_zone and self.selected_zone_attribute:
-            if self.selected_zone_attribute == "Grid Name":
+            if self.selected_zone_attribute == "Grid_Name":
                 # If the selected attribute is "Grid Name", apply the grid name colors
                 self.apply_grid_name_colors()
                 self.drawingArea.setScaledData(self.well_data)
@@ -673,7 +668,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def apply_grid_name_colors(self):
         """Simplified method to apply grid name colors directly when Zone Name equals Grid Name."""
         # Filter the DataFrame for the selected zone
-        zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
+        zone_df = self.cached_zone_df
 
         if zone_df.empty:
             QMessageBox.warning(self, "Warning", f"No data found for zone '{self.selected_zone}'.")
@@ -685,9 +680,9 @@ class Map(QMainWindow, Ui_MainWindow):
         # Iterate through each zone and populate the color map
         for _, zone in zone_df.iterrows():
             uwi = zone['UWI']
-            grid_name = zone['Grid Name']
-            top_depth = zone['Top Depth']
-            base_depth = zone['Base Depth']
+            grid_name = zone['Grid_Name']
+            top_depth = zone['Top_Depth']
+            base_depth = zone['Base_Depth']
 
             # Retrieve the color for the grid from grid_info_df
             grid_color = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name, 'Color (RGB)'].values
@@ -708,12 +703,12 @@ class Map(QMainWindow, Ui_MainWindow):
         for _, zone in zone_df.iterrows():
             uwi = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
-            top_depth = zone['Top Depth']
-            base_depth = zone['Base Depth']
-            top_x_offset = zone['Top X Offset']
-            top_y_offset = zone['Top Y Offset']
-            base_x_offset = zone['Base X Offset']
-            base_y_offset = zone['Base Y Offset']
+            top_depth = zone['Top_Depth']
+            base_depth = zone['Base_Depth']
+            top_x_offset = zone['Top_X_Offset']
+            top_y_offset = zone['Top_Y_Offset']
+            base_x_offset = zone['Base_X_Offset']
+            base_y_offset = zone['Base_Y_Offset']
             top_point = QPointF(top_x_offset, top_y_offset)
             base_point = QPointF(base_x_offset, base_y_offset)
 
@@ -773,15 +768,25 @@ class Map(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Error", f"An error occurred while updating colors: {e}")
 
     def preprocess_zone_attribute_data(self):
+        """Populates the well data with colors based on the selected zone and attribute."""
 
-        zone_df = pd.DataFrame
-        """Populates the well data with colors based on the selected zone."""
-        zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
-    
-
-        if zone_df.empty:
-            QMessageBox.warning(self, "Warning", f"No data found for zone '{self.selected_zone}'.")
+        # Ensure selected zone and attribute are valid
+        if not self.selected_zone or not self.selected_zone_attribute:
+            QMessageBox.warning(self, "Warning", "Please select a valid zone and attribute.")
             return
+
+        try:
+            # Fetch the selected attribute data for the zone
+            zone_df = self.cached_zone_df
+
+            if zone_df.empty:
+                QMessageBox.warning(self, "Warning", f"No data found for attribute '{self.selected_zone_attribute}' in zone '{self.selected_zone}'.")
+                return
+
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", str(e))
+            return
+
 
         # Load the selected color palette
         color_bar_name = self.zoneAttributeColorBarDropdown.currentText()
@@ -804,8 +809,8 @@ class Map(QMainWindow, Ui_MainWindow):
         for _, zone in zone_df.iterrows():
             uwi = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
-            top_depth = zone['Top Depth']
-            base_depth = zone['Base Depth']
+            top_depth = zone['Top_Depth']
+            base_depth = zone['Base_Depth']
 
             if uwi not in self.well_data or pd.isna(attribute_value):
                 continue
@@ -821,14 +826,14 @@ class Map(QMainWindow, Ui_MainWindow):
         for _, zone in zone_df.iterrows():
             uwi = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
-            top_depth = zone['Top Depth']
-            base_depth = zone['Base Depth']
-            top_x_offset = zone['Top X Offset']
-            top_y_offset = zone['Top Y Offset']
-            base_x_offset = zone['Base X Offset']
-            base_y_offset = zone['Base Y Offset']
+            top_depth = zone['Top_Depth']
+            base_depth = zone['Base_Depth']
+            top_x_offset = zone['Top_X_Offset']
+            top_y_offset = zone['Top_Y_Offset']
+            base_x_offset = zone['Base_X_Offset']
+            base_y_offset = zone['Base_Y_Offset']
             top_point = QPointF(top_x_offset, top_y_offset)
-            base_point = QPointF(base_x_offset, base_y_offset)
+            base_point = QPointF(base_x_offset, base_y_offset)      
 
 
             # Insert top depth data
@@ -928,122 +933,33 @@ class Map(QMainWindow, Ui_MainWindow):
         self.drawingArea.setGridPoints(points_with_values)
 
     def plot_zones(self, zone_name):
+       self.zone_data_df = self.db_manager.fetch_zone_data(zone_name)
 
-        if self.master_df.empty:
-            return  # Do nothing if the DataFrame is empty
-        # Filter for the relevant zones
-        zones = self.master_df[(self.master_df['Attribute Type'] == 'Zone') & (self.master_df['Zone Name'] == zone_name)]
+       print(self.zone_data_df)
 
-        # Check if the required columns already contain data
-        if all(col in self.master_df.columns for col in ['Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base']) \
-                and not self.master_df[['Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Angle Top', 'Angle Base']].isna().any().any():
-            # Create zone_data_df directly from master_df if the columns contain data
-            self.zone_data_df = self.master_df[
-                (self.master_df['Attribute Type'] == 'Zone') &
-                (self.master_df['Zone Name'] == zone_name)
-            ][['UWI', 'Zone Name', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Top Depth', 'Base Depth', 'Angle Top', 'Angle Base']]
+       if self.zone_data_df['Angle_Top'].isnull().any():
+           for uwi in self.zone_data_df['UWI'].unique():
+               uwi_data = self.zone_data_df[self.zone_data_df['UWI'] == uwi]
+           
+               x1 = uwi_data.iloc[0]['Top_X_Offset']
+               y1 = uwi_data.iloc[0]['Top_Y_Offset']
+               x2 = uwi_data.iloc[-1]['Base_X_Offset'] 
+               y2 = uwi_data.iloc[-1]['Base_Y_Offset']
 
-            self.zone_data_df.columns = [
-                'UWI', 'Zone Name', 'Top X Offset', 'Top Y Offset', 'Base X Offset', 'Base Y Offset', 'Top Depth', 'Base Depth', 'Angle Top', 'Angle Base'
-            ]
-                      
-          
-          
-        else:
-            # Perform calculations and update master_df if the columns are missing data
-            self.zone_data_df = pd.DataFrame()
+               dx = x2 - x1
+               dy = y1 - y2
+               angle = np.arctan2(dy, dx)
+               if angle < 0:
+                   angle += 2 * np.pi
 
-            for _, zone in zones.iterrows():
-                uwi = zone['UWI']
-                top_md = zone['Top Depth']
-                base_md = zone['Base Depth']
-                top_x, top_y, base_x, base_y = self.calculate_offsets(uwi, top_md, base_md)
+               target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
+               rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
+               rotated_angle = (rounded_angle + np.pi/2) % (2 * np.pi)
 
-                if top_x is not None and top_y is not None and base_x is not None and base_y is not None:
-                    # Append to the DataFrame
-                    self.zone_data_df = self.zone_data_df.append({
-                        'UWI': uwi,
-                        'Zone Name': zone_name,
-                        'Top X Offset': top_x,
-                        'Top Y Offset': top_y,
-                        'Base X Offset': base_x,
-                        'Base Y Offset': base_y,
-                        'Top Depth': top_md,
-                        'Base Depth': base_md,
-                    }, ignore_index=True)
+               self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, ['Angle_Top', 'Angle_Base']] = rotated_angle
+               self.db_manager.update_zone_angles(zone_name, uwi, rotated_angle, rotated_angle)
 
-            # Calculate angles after all data has been appended
-            for uwi in self.zone_data_df['UWI'].unique():
-                uwi_data = self.zone_data_df[self.zone_data_df['UWI'] == uwi]
-
-                # Get the first and last X, Y offsets
-                first_row = uwi_data.iloc[0]
-                last_row = uwi_data.iloc[-1]
-                x2 = last_row['Base X Offset']
-                x1 = first_row['Top X Offset']
-                y1 = first_row['Top Y Offset']
-                y2 = last_row['Base Y Offset']
-                last_row = uwi_data.iloc[-1]
-
-                dx = x2 - x1
-                dy = y1 - y2  
-
-                angle = np.arctan2(dy, dx)  # Calculate the angle in radians
-
-                # Normalize the angle to the range [0, 2π)
-                if angle < 0:
-                    angle += 2 * np.pi
-
-                # Define the target angles (0, π/2, π, 3π/2, 2π) in radians
-                target_angles = [0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]
-
-                # Round to the nearest target angle
-                rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
-
-                # Rotate the angle by 90 degrees (π/2 radians)
-                rotated_angle = rounded_angle + np.pi/2
-
-                # Normalize the rotated angle to the range [0, 2π)
-                if rotated_angle >= 2 * np.pi:
-                    rotated_angle -= 2 * np.pi
-
-                # Update the angle in the DataFrame
-                self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, 'Angle Top'] = rotated_angle
-                self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, 'Angle Base'] = rotated_angle
- 
-
-            for _, row in self.zone_data_df.iterrows():
-                uwi = row['UWI']
-                top_md = row['Top Depth']
-                base_md = row['Base Depth']
-                top_x = row['Top X Offset']
-                top_y = row['Top Y Offset']
-                base_x = row['Base X Offset']
-                base_y = row['Base Y Offset']
-                rotated_angle = row['Angle Top']  # Angle Top and Base should be the same
-
-                # Create a mask to identify the correct row in master_df
-                mask = (
-                    (self.master_df['UWI'] == uwi) &
-                    (self.master_df['Zone Name'] == zone_name) &
-                    (self.master_df['Top Depth'] == top_md) &
-                    (self.master_df['Base Depth'] == base_md)
-                )
-
-                # Update the master_df with the corresponding data
-                if not self.master_df[mask].empty:
-                    self.master_df.loc[mask, 'Top X Offset'] = top_x
-                    self.master_df.loc[mask, 'Top Y Offset'] = top_y
-                    self.master_df.loc[mask, 'Base X Offset'] = base_x
-                    self.master_df.loc[mask, 'Base Y Offset'] = base_y
-                    self.master_df.loc[mask, 'Angle Top'] = rotated_angle
-                    self.master_df.loc[mask, 'Angle Base'] = rotated_angle
-
-        # Save the updated master_df
-            self.save_master_df()
-   
-        # Plot all collected zones
-        self.plot_all_zones()
+       self.plot_all_zones()
 
     def calculate_offsets(self, uwi, top_md_ft, base_md_ft):
         # Convert top and base MD from feet to meters
@@ -1087,22 +1003,34 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def plot_all_zones(self):
         try:
-            
-          
+            # Reset zone_ticks to ensure no redundant data
+            self.zone_ticks = []
+
             for _, row in self.zone_data_df.iterrows():
-                top_x, top_y = row['Top X Offset'], row['Top Y Offset']
-                base_x, base_y = row['Base X Offset'], row['Base Y Offset']
-                top_md, base_md = row['Top Depth'], row['Base Depth']
-                angle_top, angle_base = row['Angle Top'], row['Angle Base']
+                # Ensure column names match your DataFrame
+                top_x, top_y = float(row['Top_X_Offset']), float(row['Top_Y_Offset'])
+                base_x, base_y = float(row['Base_X_Offset']), float(row['Base_Y_Offset'])
+                top_md, base_md = float(row['Top_Depth']), float(row['Base_Depth'])
+
+                # Ensure angles are valid floats
+                angle_top = float(row['Angle_Top'])
+                angle_base = float(row['Angle_Base'])
 
                 # Append tick information for top and base
                 self.zone_ticks.append((top_x, top_y, top_md, angle_top))
                 self.zone_ticks.append((base_x, base_y, base_md, angle_base))
-        
+
+
+
+            # Update the drawing area
             self.drawingArea.clearZones()
             self.drawingArea.setZoneTicks(self.zone_ticks)
+
+        except ValueError as e:
+            print(f"Error converting values to float: {e}")
         except Exception as e:
             print(f"Error plotting zones: {e}")
+
             
 
 
@@ -1110,59 +1038,70 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def populate_well_zone_dropdown(self):
         """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
-
-        # Clear the dropdown and set a default option
+    
+        # Block signals to avoid triggering unnecessary events
         self.WellZoneDropdown.blockSignals(True)
+    
+        # Clear existing items and set the default option
         self.WellZoneDropdown.clear()
         self.WellZoneDropdown.addItem("Select Well Zone")
-            # Check if self.model_data exists and is not empty
-     
 
-        if hasattr(self, 'model_data') and isinstance(self.model_data, list) and len(self.model_data) > 0:
-            if "DC Properties" not in [self.WellZoneDropdown.itemText(i) for i in range(self.WellZoneDropdown.count())]:
-                self.WellZoneDropdown.addItem("DC Properties")
+        try:
+            # Fetch unique zone names from the database where type is 'Well'
+            zones = self.db_manager.fetch_zone_names_by_type("Well")
 
+            if zones:
+                # Sort zones alphabetically
+                zones = [zone[0] for zone in zones if zone[0].strip()] 
+                zones = sorted(zones)
+                print(zones)
 
-        if not self.master_df.empty:
-            # Filter the DataFrame to include only entries where 'Attribute Type' is 'Well'
-            well_df = self.master_df[self.master_df['Attribute Type'] == "Well"]
+                # Populate the dropdown with sorted zone names
+                self.WellZoneDropdown.addItems(zones)
+            else:
+                print("No zones of type 'Well' found.")
 
-            # Get the unique zone names from the filtered DataFrame
-            self.well_zone_names = well_df['Zone Name'].unique().tolist()
+        except Exception as e:
+            print(f"Error populating Well Zone dropdown: {e}")
 
-            # Sort the zone names alphabetically
-            self.well_zone_names.sort()
-
-            # Populate the dropdown with the filtered and sorted zone names
-            if self.well_zone_names:
-                self.WellZoneDropdown.addItems(self.well_zone_names)
-
-        self.WellZoneDropdown.blockSignals(False)
+        finally:
+            # Unblock signals after populating the dropdown
+            self.WellZoneDropdown.blockSignals(False)
 
     def well_zone_selected(self):
-        """Handles the selection of a zone from the dropdown."""
-        self.selected_zone = self.WellZoneDropdown.currentText()
+        """Handles the selection of a well zone from the dropdown."""
+        self.selected_well_zone = self.WellZoneDropdown.currentText()
 
         self.WellAttributeDropdown.blockSignals(True)
         self.WellAttributeDropdown.clear()
         self.drawingArea.clearWellAttributeBoxes()
         self.WellAttributeDropdown.addItem("Select Well Attribute")
-        
         self.WellAttributeDropdown.blockSignals(False)
         self.WellAttributeDropdown.setEnabled(False)
 
-         
- 
-        if self.selected_zone == "Select Well Zone":
+        if self.selected_well_zone == "Select_Well_Zone":
+            # Reset well attribute dropdown and clear the plotting area
             self.WellAttributeDropdown.setEnabled(False)
-
-             
-            # Clear the zones in the plotting area
-
+            self.cached_well_zone_df = None
+            self.cached_well_zone_name = None
         else:
-            self.populate_well_attribute_dropdown()
-            self.WellAttributeDropdown.setEnabled(True)
-      
+            try:
+                # Load the entire table into memory for the selected well zone
+                if not hasattr(self, 'cached_well_zone_df') or self.cached_well_zone_name != self.selected_well_zone:
+                    self.cached_well_zone_df = self.db_manager.fetch_table_data(self.selected_well_zone)
+                    self.cached_well_zone_name = self.selected_well_zone
+                else:
+                    print(f"Using cached data for well zone: {self.selected_well_zone}")
+
+                # Populate the well attribute dropdown
+                self.populate_well_attribute_dropdown()
+
+                # Enable the dropdown
+                self.WellAttributeDropdown.setEnabled(True)
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load data for well zone '{self.selected_well_zone}': {e}")
+
         
  
 
@@ -1179,35 +1118,22 @@ class Map(QMainWindow, Ui_MainWindow):
     
 
 
-
-        if selected_well_zone == "DC Properties":
-            # Populate with all column headers from model_data
-            well_zone_df = pd.DataFrame(self.model_data)
-            print("Type of model_data:", type(self.model_data))
-            print("Contents of model_data:", self.model_data)
-            print(self.model_data)
-            print(well_zone_df)
-            self.WellAttributeDropdown.setEnabled(True)
-
-        elif selected_well_zone != "Select Well Attribute":
-            # Check if master_df exists and is not empty
-            if hasattr(self, 'master_df') and not self.master_df.empty:
-                # Filter master_df for the selected well zone
-                well_zone_df = self.master_df[(self.master_df['Zone Name'] == selected_well_zone) & 
-                                              (self.master_df['Attribute Type'] == "Well")]
+        if selected_well_zone != "Select Well Attribute":
+  
+            well_zone_df = self.cached_well_zone_df
 
         elif selected_well_zone == "Select Well Attribute":
-            # Check if master_df exists and is not empty
-            if hasattr(self, 'master_df') and not self.master_df.empty:
+
                 # Filter master_df for the selected well zone
-                well_zone_df = self.master_df
+            well_zone_df = None
 
 
         # Drop fixed columns that are not relevant for selection
         columns_to_exclude = [
-            'Zone Name', 'Zone Type', 'Attribute Type', 
-            'Top Depth', 'Base Depth', 'UWI', 
-            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
+            'Zone_Name', 'Zone_Type', 'Attribute_Type',
+            'Top_Depth', 'Base_Depth', 'UWI',
+            'Top_X_Offset', 'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
+            'Angle_Top', 'Angle_Base'
         ]
         remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
         print(remaining_df)
@@ -1255,54 +1181,70 @@ class Map(QMainWindow, Ui_MainWindow):
     
         # Get the selected attribute from the dropdown
         selected_attribute = self.WellAttributeDropdown.currentText()
-    
+
         # Ensure a valid attribute is selected
         if selected_attribute == "Select Well Attribute" or not selected_attribute:
             return
 
-        # Filter the master_df for the selected well zone and attribute type
-        selected_well_zone = self.WellZoneDropdown.currentText()
-        if selected_well_zone == "DC Properties":
-            # Populate with all column headers from model_data
-            well_zone_df = pd.DataFrame(self.model_data)
-            print(well_zone_df)
-            self.WellAttributeDropdown.setEnabled(True)
+                # Check if the selected table is `model_properties`
+        if self.cached_well_zone_name == "model_properties":
+            active_scenario_id = self.db_manager.get_active_scenario_id()  # Method to fetch the active scenario ID
 
-        elif selected_well_zone != "Select Well Zone":
-            # Check if master_df exists and is not empty
-            if hasattr(self, 'master_df') and not self.master_df.empty:
-                # Filter master_df for the selected well zone
-                well_zone_df = self.master_df[
-                    (self.master_df['Zone Name'] == selected_well_zone) & 
-                    (self.master_df['Attribute Type'] == "Well")
-                ]
+            try:
+                # Fetch data for the active scenario
+                model_data_active = self.db_manager.retrieve_model_data_by_scenorio(active_scenario_id)
 
-        # Check if the selected attribute is in the filtered DataFrame
+                if active_scenario_id == 1:
+                    # If the active scenario is 1, use only the active scenario data
+                    combined_data = model_data_active
+                else:
+                    # Otherwise, fetch data for scenario ID 1 and combine
+                    model_data_default = self.db_manager.retrieve_model_data_by_scenorio(1)
+                    combined_data = model_data_active + model_data_default
+
+                if not combined_data:
+                    QMessageBox.warning(self, "Error", "No model data found for the selected scenarios.")
+                    return
+
+                # Convert combined data (list of dicts) into a DataFrame
+                well_zone_df = pd.DataFrame(combined_data).drop_duplicates()
+
+            except Exception as e:
+                print(f"Error fetching model data for scenarios: {e}")
+                QMessageBox.critical(self, "Error", "Failed to load model properties data.")
+                return
+        else:
+            # Use cached well zone data for other zones
+            well_zone_df = self.cached_well_zone_df.copy()
+
+        # Ensure the selected attribute exists in the DataFrame
         if selected_attribute not in well_zone_df.columns:
+            print(f"Selected attribute '{selected_attribute}' not found in well zone data.")
             return
 
-        # Determine if the selected attribute is a date field
+        # Process date or numeric fields
+        date_field = None
         if selected_attribute.lower().endswith("date"):
             # Attempt to convert the column to datetime
             try:
                 well_zone_df[selected_attribute] = pd.to_datetime(
                     well_zone_df[selected_attribute], errors='coerce'
                 )
-                if well_zone_df[selected_attribute].notnull().all():
+                valid_dates = well_zone_df[selected_attribute].dropna()
+                if not valid_dates.empty:
                     date_field = well_zone_df[selected_attribute]
                 else:
-                    date_field = None
-                    print(f"Warning: {selected_attribute} has invalid date values.")
+                    print(f"Warning: {selected_attribute} has invalid or null date values.")
+                    return
             except Exception as e:
-                date_field = None
                 print(f"Error converting {selected_attribute} to datetime: {e}")
+                return
         else:
             # Treat the column as numeric
             try:
                 well_zone_df[selected_attribute] = pd.to_numeric(
                     well_zone_df[selected_attribute], errors='coerce'
                 )
-                date_field = None  # Explicitly set as None to indicate numeric
             except Exception as e:
                 print(f"Error converting {selected_attribute} to numeric: {e}")
                 return
@@ -1618,7 +1560,7 @@ class Map(QMainWindow, Ui_MainWindow):
         
         self.project_loader.open_from_file()
         print(self.directional_surveys_df)
-        self.setData()
+        self.setData(True)
         
         self.drawingArea.setScaledData(self.well_data)
         self.populate_scenario_dropdown()
@@ -1787,7 +1729,7 @@ class Map(QMainWindow, Ui_MainWindow):
             }
 
             self.populate_grid_dropdown()
-            self.setData()
+            self.setData(True)
      
 
             # Enable menus and interactive elements
@@ -1815,9 +1757,27 @@ class Map(QMainWindow, Ui_MainWindow):
             production_data, directional_survey_values, well_data_df, self.selected_uwis = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df, dialog.selected_uwis
             self.prepare_and_update(production_data, directional_survey_values, well_data_df)
 
+
             self.well_list = well_data_df['uwi'].tolist()
             print(self.well_list)
-            self.well_data_df = well_data_df
+            # Assign well_data_df only if it's valid
+            if not well_data_df.empty:
+                self.well_data_df = well_data_df
+
+                # Add 'model_properties' zone using add_zone_names
+                try:
+                    zone_name = "model_properties"
+                    zone_type = "Well"
+
+                    # Use the add_zone_names method
+                    if self.db_manager.add_zone_names(zone_name, zone_type):
+                        print(f"Zone '{zone_name}' with type '{zone_type}' added successfully.")
+                    else:
+                        print(f"Zone '{zone_name}' with type '{zone_type}' already exists.")
+                except Exception as e:
+                    print(f"Error adding zone '{zone_name}': {e}")
+            else:
+                print("No valid well data to process.")
 
     def import_excel(self):
         dialog = ImportExcelDialog()
@@ -1850,7 +1810,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
                 self.db_manager.insert_survey_dataframe_into_db(directional_survey_values, )
                 self.directional_surveys_df = directional_survey_values
-                self.setData()
+                self.setData(True)
                 print(well_data_df)
                 self.db_manager.save_uwi_data(well_data_df)
 
@@ -1878,43 +1838,46 @@ class Map(QMainWindow, Ui_MainWindow):
    
 
     def dataload_well_zones(self):
-        
         if not self.selected_uwis:
             # Show error message if no UWI is selected
             QMessageBox.warning(self, "Error", "Load Wells First")
             return
+
+        self.selected_uwis = self.db_manager.get_uwis()
         dialog = DataLoadWellZonesDialog(self.selected_uwis, self.directional_surveys_df)
         print(self.directional_surveys_df)
         if dialog.exec() == QDialog.Accepted:
             result = dialog.import_data()
             if result:
-                df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header = result
-                           # Append the new data to the existing DataFrame
-                # Ensure zone_name is a list, even if it's a single item
-                if isinstance(zone_name, str):
-                    zone_name = [zone_name]
-                    print(zone_name)
-                    
-                # Append the new data to the existing DataFrame
-                if not self.master_df.empty:
-                    self.master_df = pd.concat([self.master_df, df], ignore_index=True)
-                    print(self.master_df)
-               
-                else:
-                    self.master_df = df
+                df, zone_type, zone_name = result
 
-                # Update zone names
-                self.zone_names.extend(zone_name)
-                self.zone_names = list(set(self.zone_names))  # Remove duplicates
-           
-                
-                # Ensure the project saver is initialized
-                if not hasattr(self, 'project_saver'):
-                    self.project_saver = ProjectSaver(self.project_file_name)
+                try:
+                    # Add the zone name and check if it already exists
+                    zone_added = self.db_manager.add_zone_names(zone_name, zone_type)
+                    if not zone_added:
+                        QMessageBox.information(self, "Info", f"Zone '{zone_name}' already exists.")
+                        return
 
-                # Save the updated master_df using the ProjectSaver
-                self.project_saver.save_master_df(self.master_df)
-                self.project_saver.save_zone_names(self.zone_names)
+                    # Create the table name
+                    table_name = f"{zone_name.replace(' ', '_').replace('-', '_').lower()}"
+
+                    # Ensure the table name starts with a valid character
+                    if not table_name[0].isalpha():
+                        table_name = f"z_{table_name}"
+
+                    # Create the table and check if it already exists
+                    table_created = self.db_manager.create_table_from_df(table_name, df)
+                    if not table_created:
+                        QMessageBox.information(self, "Info", f"Table '{table_name}' already exists.")
+                        return
+
+                    QMessageBox.information(self, "Success", f"Zone '{zone_name}' and table '{table_name}' saved successfully.")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Failed to save zone '{zone_name}': {str(e)}")
+
+
+
+
 
                 print("Project data updated and saved")
                 self.populate_zone_dropdown()
@@ -2349,7 +2312,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 if current_uwi not in self.well_list:
                     raise ValueError(f"UWI {current_uwi} not found in well list.")
                 
-                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, parent=self)
+                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, self.db_manager, parent=self)
                 self.open_windows.append(navigator)
                 
                 navigator.show()
@@ -2468,25 +2431,6 @@ class Map(QMainWindow, Ui_MainWindow):
         #    self.zone_selected()
    
 
-    def pc_dialog(self):
-        """
-        Display the Parent-Child Well Analysis dialog, process the results, and count intersections.
-        """
-        dialog = PCDialog(self.db_manager)
-        if dialog.exec() == QDialog.Accepted:
-            # Access results from the dialog
-            results = dialog.results
-
-            # Count intersections for each UWI
-            intersection_counts = defaultdict(int)
-            for entry in results:
-                target_uwi = entry["target_uwi"]
-                intersection_counts[target_uwi] += 1
-
-            # Display the intersection counts
-            print("Intersection Counts by UWI:")
-            for uwi, count in intersection_counts.items():
-                print(f"UWI: {uwi}, Intersections: {count}")
 
     def open_zone_attributes_dialog(self):
         print(self.zone_names)
@@ -2524,12 +2468,8 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.exec()
 
 
-        self.zone_names = dialog.zone_names
-        self.project_saver.save_zone_names(self.zone_names)
         self.populate_zone_dropdown()
-     
-        self.master_df.fillna(0)
-        self.save_master_df()
+
 
 
 

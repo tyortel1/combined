@@ -27,7 +27,7 @@ from scipy.ndimage import gaussian_filter
 class Plot(QDialog):
     closed = Signal()
     
-    def __init__(self, uwi_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_uwi, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree, parent=None):
+    def __init__(self, uwi_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_uwi, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree,db_manager, parent=None):
         super().__init__(parent)
         self.main_app = parent
         self.uwi_list = uwi_list
@@ -57,6 +57,7 @@ class Plot(QDialog):
         self.fig = go.Figure()
         self.palette_name = 'Rainbow'
         self.next_well = False
+        self.db_manager = db_manager
      
         
 
@@ -238,13 +239,6 @@ class Plot(QDialog):
 
     def populate_zone_names(self):
 
-    
-        if 'UWI' in self.master_df.columns:
-            # Filter the master DataFrame based on the current UWI
-            self.uwi_att_data = self.master_df[self.master_df['UWI'] == self.current_uwi]
-        else:
-            # If 'UWI' column does not exist, set self.uwi_att_data to an empty DataFrame
-            self.uwi_att_data = pd.DataFrame()
 
         self.zone_selector.blockSignals(True)
         # Clear existing items
@@ -253,25 +247,27 @@ class Plot(QDialog):
         # Add default option
         self.zone_selector.addItem("Select Zone")
 
-        if not self.uwi_att_data.empty and 'Zone Name' in self.uwi_att_data.columns:
-            # Find unique zone names if data is available
-            self.zones = sorted(self.uwi_att_data['Zone Name'].dropna().unique())
-            self.zone_selector.addItems(self.zones)
-        else:
-            # Data is empty or 'Zone Name' column does not exist, add only the default option
-            self.zone_selector.addItem("No Zones Available")
+        try:
+            # Fetch unique zone names from the database where type is 'Well'
+            zones = self.db_manager.fetch_zone_names_by_type("Zone")
 
-        # Set default selection to the first item
-        self.zone_selector.setCurrentIndex(0)
-        self.zone_selector.blockSignals(False)
+            if zones:
+                # Sort zones alphabetically
+                zones = [zone[0] for zone in zones if zone[0].strip()] 
+                zones = sorted(zones)
+                print(zones)
 
-        self.zone_attribute_selector .blockSignals(True)
+                # Populate the dropdown with sorted zone names
+                self.zone_selector.addItems(zones)
+            else:
+                print("No zones of type 'Well' found.")
 
-                    # Add placeholder item to Select Attribute Filter
-        self.zone_attribute_selector .addItem("Select Zone Attribute")
-        self.zone_attribute_selector .setCurrentIndex(0)  # Set placeholder as current
-        self.zone_attribute_selector .setEnabled(False)  
-        self.zone_attribute_selector .blockSignals(False)
+        except Exception as e:
+            print(f"Error populating Well Zone dropdown: {e}")
+
+        finally:
+            # Unblock signals after populating the dropdown
+            self.zone_selector.blockSignals(False)
 
 
     def populate_zone_attribute(self):
@@ -279,20 +275,22 @@ class Plot(QDialog):
         self.zone_attribute_selector.blockSignals(True)
         self.zone_attribute_selector.setEnabled(True)
 
-    
-        if 'Zone Name' in self.master_df.columns:
-            # Filter the DataFrame for the selected zone
-            zone_df = self.master_df[self.master_df['Zone Name'] == self.selected_zone]
-        else:
-            # If 'Zone Name' column does not exist, set zone_df to an empty DataFrame
-            zone_df = pd.DataFrame()
+        zone_df = self.selected_zone_df
+        print(zone_df)
+        columns = self.selected_zone_df.columns.tolist() 
 
         # Columns to exclude
-        columns_to_exclude = ['Zone Name', 'Zone Type', 'Attribute Type', 'Top Depth', 'Base Depth', 'UWI', 'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset']
+        columns_to_exclude = [
+            'id', 'Zone_Name', 'Zone_Type', 'Attribute_Type',
+            'Top_Depth', 'Base_Depth', 'UWI', 'Top_X_Offset',
+            'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
+            'Angle_Top', 'Angle_Base', 'Base_TVD', 'Top_TVD'
+        ]
 
         # Drop fixed columns and find columns with at least one non-null value
-        remaining_df = zone_df.drop(columns=columns_to_exclude, errors='ignore')
-        self.attributes_names = sorted(remaining_df.columns[remaining_df.notna().any()].tolist())
+        zone_df = zone_df.drop(columns=columns_to_exclude, errors='ignore')
+        self.attributes_names = sorted(zone_df.columns[zone_df.notna().any()].tolist())
+        print(self.attributes_names)
         # Find attributes (columns with at least one non-null value)
  
     
@@ -310,28 +308,16 @@ class Plot(QDialog):
     def zone_selected(self):
         # Get the selected zone name from the zone selector
         
-        self.selected_zone = self.zone_selector.currentText()
-        self.populate_zone_attribute()
+        self.selected_zone = self.zone_selector.currentText().replace(" ", "_")
+        print(self.selected_zone)
+        
 
-
-
-
-
-
-  
 
         if self.selected_zone != "Select Zone":
             # Filter the master_df to grab the relevant UWI and Zone data
-            self.selected_zone_df = self.master_df[
-                (self.master_df['Zone Name'] == self.selected_zone) & 
-                (self.master_df['UWI'] == self.current_uwi)
-            ]
+            self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
 
-            # Extract specific attributes
 
-            self.selected_zone_df = self.selected_zone_df[['UWI', 'Zone Name', 'Top Depth', 'Base Depth', 
-                                                           'Top X Offset', 'Base X Offset', 
-                                                           'Top Y Offset', 'Base Y Offset']]
         
 
 
@@ -344,6 +330,8 @@ class Plot(QDialog):
       
             if self.next_well == False:
                 self.plot_current_well()
+
+        self.populate_zone_attribute()
 
 
     def populate_color_bar_dropdown(self):
@@ -742,9 +730,10 @@ class Plot(QDialog):
 
 
             # Filter the master_df for the current UWI and selected zone
-            zone_data = self.master_df[(self.master_df['UWI'] == self.current_uwi) & 
-                                       (self.master_df['Zone Name'] == self.selected_zone)]
+            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_uwi]
+
             print(zone_data)
+
 
             if zone_data.empty:
                 print(f"No data found for UWI {self.current_uwi} and zone {self.selected_zone}")
@@ -762,8 +751,8 @@ class Plot(QDialog):
   
 
             for _, zone_row in zone_data.iterrows():
-                top_md = zone_row['Top Depth']
-                base_md = zone_row['Base Depth']
+                top_md = zone_row['Top_Depth']
+                base_md = zone_row['Base_Depth']
 
                 top_cum_dist = self.interpolate_value(top_md, 'Cumulative Distance')
                 base_cum_dist = self.interpolate_value(base_md, 'Cumulative Distance')

@@ -12,13 +12,13 @@ class DataLoadWellZonesDialog(QDialog):
 
         self.layout = QVBoxLayout(self)
 
-        self.attribute_type_label = QLabel("Attribute Type:", self)
-        self.layout.addWidget(self.attribute_type_label)
+        self.zone_type_label = QLabel("Zone Type:", self)
+        self.layout.addWidget(self.zone_type_label)
 
-        self.attribute_type_combo = QComboBox(self)
-        self.attribute_type_combo.addItems(["Well", "Zone"])
-        self.attribute_type_combo.currentIndexChanged.connect(self.update_headers)
-        self.layout.addWidget(self.attribute_type_combo)
+        self.zone_type_combo = QComboBox(self)
+        self.zone_type_combo.addItems(["Well", "Zone", "Intersections"])
+        self.zone_type_combo.currentIndexChanged.connect(self.update_headers)
+        self.layout.addWidget(self.zone_type_combo)
 
         self.zone_name_label = QLabel("Zone Name:", self)
         self.layout.addWidget(self.zone_name_label)
@@ -26,12 +26,7 @@ class DataLoadWellZonesDialog(QDialog):
         self.zone_name_input = QLineEdit(self)
         self.layout.addWidget(self.zone_name_input)
 
-        self.zone_type_label = QLabel("Zone Type:", self)
-        self.layout.addWidget(self.zone_type_label)
 
-        self.zone_type_combo = QComboBox(self)
-        self.zone_type_combo.addItems(["Completions", "Tests", "Production", "Injection", "Stage", "Intersection"])
-        self.layout.addWidget(self.zone_type_combo)
 
         # Unit Dropdown
         self.unit_label = QLabel("Unit of Measurement:", self)
@@ -120,9 +115,9 @@ class DataLoadWellZonesDialog(QDialog):
         self.update_headers()
 
     def update_headers(self):
-        attribute_type = self.attribute_type_combo.currentText()
+        zone_type = self.zone_type_combo.currentText()
         for dropdown in self.headers_dropdowns:
-            if attribute_type == "Well":
+            if zone_type == "Well":
                 allowed_options = ["None", "Attribute", "UWI"]
             else:  # Zone
                 allowed_options = ["None", "Attribute", "UWI", "Top Depth", "Base Depth"]
@@ -161,17 +156,17 @@ class DataLoadWellZonesDialog(QDialog):
 
             df = pd.read_csv(self.file_path, usecols=selected_headers)
 
-            attribute_type = self.attribute_type_combo.currentText()
-            zone_name = self.zone_name_input.text().strip()
             zone_type = self.zone_type_combo.currentText()
+            zone_name = self.zone_name_input.text().strip()
+
             unit = self.unit_combo.currentText()
 
             uwi_header = self.get_special_header("UWI")
             if not uwi_header:
-                QMessageBox.warning(self, "Warning", f"Please select a UWI header for {attribute_type} attributes.")
+                QMessageBox.warning(self, "Warning", f"Please select a UWI header for {zone_type} attributes.")
                 return
 
-            if attribute_type == "Zone":
+            if zone_type == "Zone":
                 top_depth_header = self.get_special_header("Top Depth")
                 base_depth_header = self.get_special_header("Base Depth")
                 if not (top_depth_header and base_depth_header):
@@ -199,7 +194,7 @@ class DataLoadWellZonesDialog(QDialog):
                 return
 
             # Add required columns to the DataFrame
-            valid_df['Attribute Type'] = attribute_type
+
             valid_df['Zone Name'] = zone_name
             valid_df['Zone Type'] = zone_type
         
@@ -215,7 +210,7 @@ class DataLoadWellZonesDialog(QDialog):
 
             valid_df.rename(columns=rename_map, inplace=True)
             print(valid_df.columns.tolist())
-            if attribute_type == "Zone":
+            if zone_type == "Zone":
           
                 # Add columns for angles
 
@@ -278,10 +273,13 @@ class DataLoadWellZonesDialog(QDialog):
 
 
 
-            return valid_df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header
+            return valid_df, zone_type, zone_name
         finally:
             # Ensure the loading dialog is closed even if an error occurs
             loading_dialog.close()
+
+
+
     def calculate_offsets(self, uwi, top_md, base_md):
         well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
         if well_data.empty:
@@ -369,13 +367,11 @@ if __name__ == "__main__":
     if dialog.exec_() == QDialog.Accepted:
         result = dialog.import_data()
         if result:
-            df, attribute_type, zone_name, zone_type, uwi_header, top_depth_header, base_depth_header = result
+            df, zone_type, zone_name = result
             print(df)
-            print(f"Attribute Type: {attribute_type}")
+
             print(f"Zone Name: {zone_name}")
             print(f"Zone Type: {zone_type}")
-            print(f"UWI Header: {uwi_header}")
-            print(f"Top Depth Header: {top_depth_header}")
-            print(f"Base Depth Header: {base_depth_header}")
+
 
     sys.exit(app.exec_())

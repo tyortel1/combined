@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import logging
+import re
 
 class DatabaseManager:
     def __init__(self, db_path):
@@ -11,6 +12,7 @@ class DatabaseManager:
 
     def connect(self):
         self.connection = sqlite3.connect(self.db_path)
+
 
         self.cursor = self.connection.cursor()
 
@@ -144,48 +146,76 @@ class DatabaseManager:
             self.disconnect()
 
     def get_uwis_with_heel_toe(self):
+        """
+        Fetches all UWIs along with their heel and toe coordinates from the database.
+        Handles None or missing values gracefully.
+        """
         try:
             self.connect()
-        
-            query = """
-            SELECT 
-                uwi, 
-                CAST(heel_x AS FLOAT) AS heel_x, 
-                CAST(heel_y AS FLOAT) AS heel_y, 
-                CAST(toe_x AS FLOAT) AS toe_x, 
-                CAST(toe_y AS FLOAT) AS toe_y
-            FROM uwis
-            WHERE 
-                (heel_x IS NOT NULL AND heel_y IS NOT NULL AND 
-                toe_x IS NOT NULL AND toe_y IS NOT NULL)
-            """
-        
-            self.cursor.execute(query)
-        
-            # Fetch all rows
-            heel_toe_data = self.cursor.fetchall()
-        
-            # Convert rows into dictionaries and cast values as float
-            result = [
-                {
-                    "uwi": row[0],
-                    "heel_x": float(row[1]) if row[1] is not None else None,
-                    "heel_y": float(row[2]) if row[2] is not None else None,
-                    "toe_x": float(row[3]) if row[3] is not None else None,
-                    "toe_y": float(row[4]) if row[4] is not None else None
-                }
-                for row in heel_toe_data
-            ]
-        
-            print(f"Retrieved {len(result)} wells with heel and toe coordinates.")
-            return result
-    
+            self.cursor.execute("SELECT uwi, heel_x, heel_y, toe_x, toe_y FROM uwis")
+            results = self.cursor.fetchall()
+            formatted_results = []
+            for row in results:
+                # Skip rows with missing critical data
+                if any(value is None for value in row[1:]):
+                    print(f"Skipping row for UWI {row[0]} due to missing data: {row}")
+                    continue
+
+                try:
+                    formatted_results.append({
+                        "uwi": str(row[0]),
+                        "heel_x": float(row[1]),
+                        "heel_y": float(row[2]),
+                        "toe_x": float(row[3]),
+                        "toe_y": float(row[4]),
+                    })
+                except ValueError as ve:
+                    print(f"Skipping invalid row for UWI {row[0]}: {ve}")
+                    continue
+            return formatted_results
         except sqlite3.Error as e:
-            print(f"Error retrieving heel and toe coordinates: {e}")
+            print("Error retrieving UWIs with heel/toe coordinates:", e)
             return []
-    
         finally:
             self.disconnect()
+
+
+    def get_uwis_with_average_tvd(self):
+        """
+        Fetches all UWIs along with their average TVD from the database.
+        Handles None or missing values gracefully.
+        """
+        try:
+            self.connect()
+            self.cursor.execute("SELECT uwi, average_tvd FROM uwis")
+            results = self.cursor.fetchall()
+            formatted_results = []
+        
+            for row in results:
+                # Skip rows with missing average_tvd
+                if row[1] is None:
+                    print(f"Skipping row for UWI {row[0]} due to missing average_tvd data: {row}")
+                    continue
+            
+                try:
+                    formatted_results.append({
+                        "uwi": str(row[0]),
+                        "average_tvd": float(row[1])
+                    })
+                except ValueError as ve:
+                    print(f"Skipping invalid row for UWI {row[0]}: {ve}")
+                    continue
+                
+            return formatted_results
+        
+        except sqlite3.Error as e:
+            print("Error retrieving UWIs with average TVD:", e)
+            return []
+        finally:
+            self.disconnect()
+
+
+
     def update_uwi_revenue_and_efr(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
         self.connect()
         update_sql = """
@@ -1359,6 +1389,7 @@ class DatabaseManager:
             uwi VARCHAR(255),
             scenario_id INTEGER,
             start_date DATE,
+            decline_curve_type VARCHAR(255),
             decline_curve VARCHAR(255),
             total_depth DECIMAL(10, 2),
             total_capex_cost DECIMAL(15, 2),
@@ -2228,55 +2259,111 @@ class DatabaseManager:
 
     def create_table_from_df(self, table_name, df):
         """
-        Create a new table from a DataFrame structure and insert the DataFrame data.
+        Creates a SQLite table from a pandas DataFrame with sanitized table and column names.
+        Skips columns that fail sanitization or validation.
+
+        Parameters:
+            table_name (str): Desired name of the table.
+            df (pd.DataFrame): The DataFrame to be converted into a table.
+
+        Returns:
+            bool: True if the table was created successfully, False if the table already exists.
         """
+        import re  # Ensure re module is imported
         self.connect()
         try:
-            # Prepare columns definition from DataFrame
-            columns = ['id INTEGER PRIMARY KEY AUTOINCREMENT']
-            for column in df.columns:
-                col_name = column.replace(' ', '_').replace('-', '_')  # Sanitize column names
-                col_type = self.get_sqlite_type(df[column].dtype)  # Get SQLite type
-                columns.append(f"{col_name} {col_type}")
+            # Validate and sanitize the table name
+            table_name = table_name.lower().replace(' ', '_').replace('-', '_')
+            if not table_name.isidentifier():
+                table_name = f"t_{table_name}"
+            if not table_name.isidentifier():
+                raise ValueError("Invalid table name after sanitization")
 
-            # Create the SQL query to create the table
-            create_query = f"""
-            CREATE TABLE IF NOT EXISTS {table_name} (
-                {', '.join(columns)}
-            )
-            """
+            # Check if the table already exists
+            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+            if self.cursor.fetchone():
+                return False
+
+            # Sanitize column names
+            def sanitize_column(col):
+                replacements = {
+                    '³': '3', '²': '2', '.': '_', '/': '_', '[': '', ']': '',
+                    '(': '', ')': '', ' ': '_', '-': '_', '#': '_', '$': '_',
+                    '%': '_', '^': '_', '&': '_', '!': '_', '@': '_'
+                }
+                for old, new in replacements.items():
+                    col = col.replace(old, new)
+
+                # Replace remaining invalid characters
+                col = re.sub(r'[^a-zA-Z0-9_]', '_', col)
+
+                # Ensure the column name starts with a valid character
+                if not col[0].isalpha():
+                    col = f"c_{col}"
+
+                # Validate column name length
+                if not col:
+                    return None  # Skip invalid column names
+                return col
+
+            # Debug original columns
+            print("Original DataFrame columns:", df.columns.tolist())
+
+            # Sanitize column names and track valid columns
+            valid_columns = []
+            sanitized_columns = []
+            for col in df.columns:
+                sanitized_col = sanitize_column(col)
+                if sanitized_col:
+                    valid_columns.append(col)
+                    sanitized_columns.append(sanitized_col)
+                else:
+                    print(f"Skipping invalid column: {col}")
+
+            # Filter DataFrame to include only valid columns
+            df = df[valid_columns]
+            df.columns = sanitized_columns
+
+            # Debug sanitized columns
+            print("Sanitized DataFrame columns:", sanitized_columns)
+
+            # Validate and define column data types
+            columns = ["id INTEGER PRIMARY KEY AUTOINCREMENT"]
+            for col, sanitized_col in zip(valid_columns, sanitized_columns):
+                try:
+                    col_type = self.get_sqlite_type(df[sanitized_col].dtype)
+                    columns.append(f"`{sanitized_col}` {col_type}")
+                except Exception as e:
+                    print(f"Skipping column '{col}' due to error: {e}")
+
+            # Create table query
+            create_query = f"""CREATE TABLE `{table_name}` ({', '.join(columns)})"""
+            print("Create Table Query:", create_query)
             self.cursor.execute(create_query)
-            self.connection.commit()
-            print(f"Table '{table_name}' created successfully.")
 
-            # Insert DataFrame data into the table
+            # Insert data if DataFrame is not empty
             if not df.empty:
-                # Prepare placeholders and column names for insert query
-                col_names = [col.replace(' ', '_').replace('-', '_') for col in df.columns]
-                placeholders = ', '.join(['?' for _ in col_names])
-                columns_str = ', '.join(col_names)
+                df = df.where(pd.notnull(df), None)  # Replace NaN with None
+                placeholders = ','.join(['?' for _ in sanitized_columns])
+                insert_query = f"INSERT INTO `{table_name}` (`{'`,`'.join(sanitized_columns)}`) VALUES ({placeholders})"
+                print("Insert Query:", insert_query)
+                self.cursor.executemany(insert_query, df.to_records(index=False).tolist())
 
-                # Insert query
-                insert_query = f"""
-                INSERT INTO {table_name} ({columns_str}) 
-                VALUES ({placeholders})
-                """
-            
-                # Convert DataFrame rows to list of tuples
-                rows = df.to_records(index=False).tolist()
-            
-                self.cursor.executemany(insert_query, rows)
-                self.connection.commit()
-                print(f"Data inserted into '{table_name}' successfully.")
-            else:
-                print(f"No data to insert into '{table_name}'.")
-            
+            # Commit the transaction
+            self.connection.commit()
+            print(f"Table '{table_name}' created and data inserted successfully.")
+            return True
+
         except Exception as e:
-            print(f"Error creating table or inserting data: {e}")
+            # Rollback on error and log the exception
             self.connection.rollback()
+            print(f"Error creating table '{table_name}': {e}")
             raise
         finally:
+            # Disconnect from the database
             self.disconnect()
+
+
 
     def add_zone_names(self, zone_name, zone_type):
         """
@@ -2286,23 +2373,29 @@ class DatabaseManager:
             zone_name (str): The name of the zone to add.
             zone_type (str): The type of the zone (must be one of 'Zones', 'Intersections', 'Well').
 
-        Raises:
-            ValueError: If the zone_type is not one of the allowed types.
+        Returns:
+            bool: True if the zone name was added, False if it already exists.
         """
-        # Validate the type
-        valid_types = {'Zones', 'Intersections', 'Well'}
+        valid_types = {'Zone', 'Intersections', 'Well'}
         if zone_type not in valid_types:
             raise ValueError(f"Invalid zone type '{zone_type}'. Must be one of {valid_types}.")
 
         self.connect()
         try:
+            # Check if the zone name already exists
+            self.cursor.execute("SELECT COUNT(*) FROM Zones WHERE ZoneName = ? AND Type = ?", (zone_name, zone_type))
+            if self.cursor.fetchone()[0] > 0:
+                print(f"Zone '{zone_name}' with type '{zone_type}' already exists.")
+                return False  # Zone name already exists
+
             # Insert the zone name with the given type
             self.cursor.execute("""
-                INSERT OR IGNORE INTO Zones (ZoneName, Type)
+                INSERT INTO Zones (ZoneName, Type)
                 VALUES (?, ?)
             """, (zone_name, zone_type))
-        
             self.connection.commit()
+            print(f"Zone '{zone_name}' with type '{zone_type}' added successfully.")
+            return True
         except sqlite3.Error as e:
             print(f"Error adding zone name '{zone_name}' with type '{zone_type}': {e}")
             self.connection.rollback()
@@ -2393,3 +2486,136 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def fetch_zone_data(self, zone_name):
+       self.connect()
+       try:
+           query = f"""
+           SELECT UWI, Top_X_Offset, Top_Y_Offset, Base_X_Offset, Base_Y_Offset, 
+                  Top_Depth, Base_Depth, Angle_Top, Angle_Base 
+           FROM {zone_name}
+           """
+           return pd.read_sql(query, self.connection)
+       finally:
+           self.disconnect()
+
+    def plot_zones(self, zone_name):
+       query = f"""
+       SELECT UWI, Top_X_Offset, Top_Y_Offset, Base_X_Offset, Base_Y_Offset, 
+              Top_Depth, Base_Depth, Angle_Top, Angle_Base 
+       FROM {zone_name}
+       """
+       zone_data_df = pd.read_sql(query, self.db_manager.connection)
+       return zone_data_df
+
+    def update_zone_angles(self, zone_name, uwi, angle_top, angle_base):
+       """Update angles for a specific UWI in a zone table."""
+       self.connect()
+       try:
+           query = f"""
+           UPDATE {zone_name} 
+           SET Angle_Top = ?, Angle_Base = ?
+           WHERE UWI = ?
+           """
+           self.cursor.execute(query, (angle_top, angle_base, uwi))
+           self.connection.commit()
+       finally:
+           self.disconnect()
+
+    def fetch_table_data(self, table_name):
+        """Fetch all data from a table."""
+        self.connect()
+        try:
+            return pd.read_sql(f"SELECT * FROM {table_name}", self.connection)
+        finally:
+            self.disconnect()
+
+    def fetch_table_columns(self, table_name):
+        """
+        Fetch all column names from a given SQLite table.
+
+        Parameters:
+            table_name (str): The name of the table.
+
+        Returns:
+            list: A list of column names in the table.
+        """
+        self.connect()  # Establish connection
+        try:
+            # Ensure the table name is valid
+            if not table_name.isidentifier():
+                raise ValueError("Invalid table name")
+
+            # Query SQLite PRAGMA to get column names
+            query = f"PRAGMA table_info(`{table_name}`)"
+            self.cursor.execute(query)
+            columns_info = self.cursor.fetchall()
+
+            # Extract column names from the query result
+            column_names = [col_info[1] for col_info in columns_info]  # `col_info[1]` is the column name
+            return column_names
+
+        except Exception as e:
+            print(f"Error fetching columns for table '{table_name}': {e}")
+            raise
+
+        finally:
+            self.disconnect()  # Close connection
+
+
+    def fetch_zone_attribute(self, zone_name, attribute_name):
+        """
+        Fetches a specific attribute column for the given zone name from the database.
+
+        Parameters:
+            zone_name (str): The name of the zone (table name).
+            attribute_name (str): The name of the column (attribute) to fetch.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the requested column and related UWI and depth information.
+        """
+        self.connect()  # Establish connection
+        try:
+            query = f"""
+                SELECT `UWI`, `Top_Depth`, `Base_Depth`, `Top_X_Offset`, `Top_Y_Offset`, 
+                       `Base_X_Offset`, `Base_Y_Offset`, `{attribute_name}`
+                FROM `{zone_name}`
+            """
+            return pd.read_sql(query, self.connection)
+
+        except Exception as e:
+            raise ValueError(f"Failed to fetch attribute '{attribute_name}' for zone '{zone_name}': {e}")
+
+        finally:
+            self.disconnect()  # Close connection
+
+    def fetch_entire_database(self):
+        """
+        Fetches all data from all tables in the database and loads it into memory.
+
+        Returns:
+            dict: A dictionary where keys are table names and values are DataFrames containing the table data.
+        """
+        self.connect()
+        try:
+            # Fetch all table names from the database
+            query = "SELECT name FROM sqlite_master WHERE type='table';"
+            self.cursor.execute(query)
+            table_names = [row[0] for row in self.cursor.fetchall()]
+
+            # Dictionary to store data from all tables
+            db_data = {}
+
+            # Load data from each table into a DataFrame
+            for table_name in table_names:
+                print(f"Loading data from table: {table_name}")  # Debug log
+                table_query = f"SELECT * FROM `{table_name}`"
+                db_data[table_name] = pd.read_sql(table_query, self.connection)
+
+            return db_data
+
+        except Exception as e:
+            print(f"Error loading database: {e}")
+            raise
+
+        finally:
+            self.disconnect()

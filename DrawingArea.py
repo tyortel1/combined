@@ -9,7 +9,7 @@ class BulkZoneTicks(QGraphicsItem):
     def __init__(self, zone_ticks, line_width=1):
         super().__init__()
         self.zone_ticks = zone_ticks
-        self._line_width = line_width / 10
+        self._line_width = line_width 
         self.setFlag(QGraphicsItem.ItemUsesExtendedStyleOption)
 
     @property
@@ -18,7 +18,7 @@ class BulkZoneTicks(QGraphicsItem):
 
     @line_width.setter
     def line_width(self, value):
-        self._line_width = value / 10
+        self._line_width = value 
         self.update()
 
     def boundingRect(self):
@@ -28,18 +28,37 @@ class BulkZoneTicks(QGraphicsItem):
         return QRectF(min(x_coords), min(y_coords), max(x_coords) - min(x_coords), max(y_coords) - min(y_coords))
 
     def paint(self, painter, option, widget):
-        scale = painter.transform().m11()
-        visible_rect = option.exposedRect
+        try:
+            # Iterate over zone ticks, assuming it's a list of tuples (x, y, md, angle)
+            pen = QPen(QColor(0, 100, 0)) 
+            pen.setWidthF(self._line_width/10)  # Set the pen width using line_width
+            painter.setPen(pen)
 
-        painter.setPen(QPen(QColor(0, 100, 0), self.line_width))
 
-        for x, y, _, angle in self.zone_ticks:
-            if not visible_rect.contains(x, y):
-                continue
+            for tick in self.zone_ticks:
+                if len(tick) != 4:
+                    print(f"Invalid tick data: {tick}")
+                    continue
 
-            start_point = (x - 100 * np.cos(angle), y - 100 * np.sin(angle))
-            end_point = (x + 100 * np.cos(angle), y + 100 * np.sin(angle))
-            painter.drawLine(start_point[0], start_point[1], end_point[0], end_point[1])
+                # Extract x, y, and angle from tick
+                x, y, _, angle = tick
+
+
+                # Check if angle is a valid numeric type (float or int)
+                if not isinstance(angle, (int, float)):
+                    print(f"Invalid angle type: {angle}")
+                    continue
+
+                # Calculate start and end points for the line
+                start_point = (x - 100 * np.cos(angle), y - 100 * np.sin(angle))
+                end_point = (x + 100 * np.cos(angle), y + 100 * np.sin(angle))
+                
+
+                # Draw the line
+                painter.drawLine(QPointF(*start_point), QPointF(*end_point))
+
+        except Exception as e:
+            print(f"Error in paint: {e}")
 
 class WellAttributeBox(QGraphicsRectItem):
     def __init__(self, uwi, position, color, size=10):
@@ -163,7 +182,7 @@ class DrawingArea(QGraphicsView):
 
                 # Use drainage size from well data, with fallback to default
                 width = well.get('drainage_size', self.drainage_size)
-                print(width)
+               
    
                 length = np.sqrt(dx*dx + dy*dy)
 
@@ -300,7 +319,7 @@ class DrawingArea(QGraphicsView):
                 print(f"Invalid data for UWI {uwi}. Skipping.")
                 continue
 
-            print(f"Processing UWI: {uwi}")
+  
 
             # Extract data, handling missing keys gracefully
             mds = data.get('mds', [])
@@ -425,12 +444,13 @@ class DrawingArea(QGraphicsView):
                     self.scene.removeItem(item)
 
             # Create BulkZoneTicks object
-            bulk_ticks = BulkZoneTicks(zone_ticks, line_width=self.line_width)
+            thick = self.line_width 
+            bulk_ticks = BulkZoneTicks(zone_ticks, line_width=thick)
             bulk_ticks.setData(0, 'bulkzoneticks')
             bulk_ticks.setZValue(6)
 
             # Set opacity for the ticks (value between 0.0 and 1.0)
-            bulk_ticks.setOpacity(.5)  # Example: 50% opacity
+            bulk_ticks.setOpacity(1)  # Example: 50% opacity
 
             self.scene.addItem(bulk_ticks)
 

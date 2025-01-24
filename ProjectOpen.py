@@ -73,9 +73,7 @@ class ProjectLoader:
             # Load the bounding box, if it exists
             self.parent.bounding_box = data_loaded.get('bounding_box', None)
 
-            # Load zone names
-            self.parent.zone_names = data_loaded.get('zone_names', [])
-            print(self.parent.zone_names)
+
 
             self.parent.line_width = data_loaded.get('line_width', 2)
             self.parent.line_opacity = data_loaded.get('line_opacity', 0.8)
@@ -98,18 +96,11 @@ class ProjectLoader:
             # Set dropdowns to the saved values
             selected_grid = data_loaded.get('selected_grid', 'Default Grid')
             self.parent.gridDropdown.setCurrentText(selected_grid)
+
     
-            selected_zone = data_loaded.get('selected_zone', 'Default Zone')
-            self.parent.zoneDropdown.setCurrentText(selected_zone)
-    
-            selected_zone_attribute = data_loaded.get('selected_zone_attribute', 'Default Zone Attribute')
-            self.parent.zoneAttributeDropdown.setCurrentText(selected_zone_attribute)
     
             selected_well_zone = data_loaded.get('selected_well_zone', 'Default Well Zone')
             self.parent.WellZoneDropdown.setCurrentText(selected_well_zone)
-    
-            selected_well_attribute = data_loaded.get('selected_well_attribute', 'Default Well Attribute')
-            self.parent.WellAttributeDropdown.setCurrentText(selected_well_attribute)
     
             grid_color_bar_dropdown = data_loaded.get('grid_color_bar_dropdown', 'Default Grid Color Bar')
             self.parent.gridColorBarDropdown.setCurrentText(grid_color_bar_dropdown)
@@ -191,13 +182,7 @@ class ProjectLoader:
             # Populate dropdowns
             self.parent.populate_well_zone_dropdown()
             self.parent.populate_grid_dropdown(grid_selected)
-            self.parent.populate_zone_dropdown(selected_zone)
-
-            # Set the selected zone and well attribute to trigger a draw
-            self.parent.zoneDropdown.setCurrentText(selected_zone)
-            self.parent.zoneAttributeDropdown.setCurrentText(selected_zone_attribute)
-            self.parent.WellZoneDropdown.setCurrentText(selected_well_zone)
-            self.parent.WellAttributeDropdown.setCurrentText(selected_well_attribute)
+            self.parent.populate_zone_dropdown()
 
 
 
