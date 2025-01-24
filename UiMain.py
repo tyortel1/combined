@@ -66,7 +66,8 @@ class UI_main:
         self.create_dca_tab(MainWindow)
         self.create_well_parameters_tab(MainWindow)
         self.create_future_production_tab(MainWindow)
-        self.create_well_pads_tab(MainWindow)
+
+
         self.tab_widget.currentChanged.connect(MainWindow.on_tab_changed) 
 
     def create_dca_tab(self, MainWindow):
@@ -480,7 +481,7 @@ class UI_main:
 
         icon_path_iterate = os.path.join(self.script_dir, "Icons", "Iterate")
         self.iterate_di = QAction(QIcon(icon_path_iterate), "Iterate", MainWindow)
-        self.iterate_di.triggered.connect(MainWindow.iterate_di)
+        self.iterate_di.triggered.connect(MainWindow.iterate_curve)
 
         icon_path_exponential = os.path.join(self.script_dir, "Icons", "Logrithmic.png")
         self.graph_type = QAction(QIcon(icon_path_exponential), "Exponential", MainWindow)
@@ -625,7 +626,7 @@ class UI_main:
         self.data_type_dropdown3.currentTextChanged.connect(MainWindow.updateTable3)
 
         # Checkbox for active wells selection
-        self.include_active_wells_checkbox = QCheckBox("Include Active Wells Only")
+        self.include_active_wells_checkbox = QCheckBox("Include Active Wells")
         self.include_active_wells_checkbox.setFixedHeight(32)  # Set the height to 32px
         self.include_active_wells_checkbox.stateChanged.connect(MainWindow.updateTable3)
 
@@ -660,74 +661,7 @@ class UI_main:
         # Set the layout for the tab
         tab3.setLayout(tab3_layout)
 
-    def create_well_pads_tab(self, MainWindow):
-        tab4 = QWidget()
-        tab4_layout = QGridLayout(tab4)
 
-        pad_toolbar = QToolBar("Pad Toolbar")
-        pad_toolbar.setIconSize(QSize(32, 32))  # Set the icon size
-
-        
-        icon_add_scenario4 = os.path.join(self.script_dir, "Icons", "Add Scenario")
-        self.add_scenario4 = QAction(QIcon(icon_add_scenario4), "Add scenario", MainWindow)
-        self.add_scenario4.triggered.connect(MainWindow.add_scenario)
-
-
-        # Create actions for the toolbar
-        self.run_scenario4 = QAction(QIcon(os.path.join(self.script_dir, "Icons", "Update Curve")), "Update Curve", MainWindow)
-        self.run_scenario4.triggered.connect(MainWindow.run_scenario4)
-
-        self.delete_pad4 = QAction(QIcon(os.path.join(self.script_dir, "Icons", "delete")), "Delete Pad", MainWindow)
-        self.delete_pad4.triggered.connect(MainWindow.delete_pad)
-
-        self.add_well4 = QAction(QIcon(os.path.join(self.script_dir, "Icons", "add")), "Add Pads", MainWindow)
-        self.add_well4.triggered.connect(MainWindow.add_well)
-
-        self.add_scenario4 = QAction(QIcon(os.path.join(self.script_dir, "Icons", "Add Scenario")), "Add Scenario", MainWindow)
-        self.add_scenario4.triggered.connect(MainWindow.add_scenario)
-
-        self.launch_combined_cashflow4 = QAction(QIcon(os.path.join(self.script_dir, "Icons", "Launch Graph")), "Launch Combined Cashflow", MainWindow)
-        self.launch_combined_cashflow4.triggered.connect(MainWindow.launch_combined_cashflow)
-
-        # Add actions to the toolbar
-        
-        pad_toolbar.addAction(self.add_scenario4)
-        pad_toolbar.addAction(self.run_scenario4)
-        pad_toolbar.addAction(self.add_well4)
-        pad_toolbar.addAction(self.delete_pad4)
-        pad_toolbar.addAction(self.launch_combined_cashflow4)
-
-        # Add toolbar and dropdown to the layout
-        tab4_layout.addWidget(pad_toolbar, 0, 1, 1, 10)
-    
-        self.scenario_dropdown4 = QComboBox()
-        self.scenario_dropdown4.setFixedHeight(32) 
-        self.scenario_dropdown4.currentTextChanged.connect(MainWindow.on_scenario_changed4)
-        tab4_layout.addWidget(self.scenario_dropdown4, 0, 0, 1, 1)
-
-        # Create the Excel-like widget for well pads
-        self.well_pads_table = QTableWidget()
-        self.well_pads_table.setColumnCount(16)
-        self.well_pads_table.setHorizontalHeaderLabels([
-            "Pad Name", "Start Date", "Decline Curve", "Total Lateral", "Total CAPEX Cost",
-            "Total OPEX Cost", "Num Wells", "Drill Time", "Prod Type", "Oil Model Status",
-            "Gas Model Status", "Pad Cost", "Exploration Cost", "Cost per Foot",
-            "Distance to Pipe", "Cost per Foot to Pipe"
-        ])
-        self.well_pads_table.verticalHeader().setVisible(False)
-        tab4_layout.addWidget(self.well_pads_table, 1, 0, 1, 11)
-
-        # Add tab to the tab widget
-        self.tab_widget.addTab(tab4, "Well Pads")
-
-        # Initially disable actions
- 
-        self.delete_pad4.setEnabled(False)
-        self.add_well4.setEnabled(False)
-        self.add_scenario4.setEnabled(False)
-        self.launch_combined_cashflow4.setEnabled(False)
-        self.run_scenario4.setEnabled(False)
-        self.well_pads_table.itemChanged.connect(MainWindow.on_table_item_changed)
 
     def activate_icons(self):
         self.regenerate_curves.setEnabled(True)
@@ -747,12 +681,7 @@ class UI_main:
         self.well_dropdown.setEnabled(True)
         self.scenario_dropdown1.setEnabled(True)
 
-
-        self.run_scenario4.setEnabled(True)
-        self.delete_pad4.setEnabled(True)
-        self.add_well4.setEnabled(True)
-        self.launch_combined_cashflow4.setEnabled(True)
-        self.add_scenario4.setEnabled(True)
+  
 
     def calculate_net_price(self):
         try:

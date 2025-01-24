@@ -70,6 +70,7 @@ from WellProperties import WellPropertiesDialog
 from EurNpv import EurNpv
 from PUDProperties import PUDPropertiesDialog
 from CalculatePC import PCDialog
+from LaunchCombinedCashflow import LaunchCombinedCashflow
 
 
 
@@ -235,12 +236,24 @@ class Map(QMainWindow, Ui_MainWindow):
         self.pc_dialog_action.triggered.connect(self.pc_dialog)
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
-        self.dataload_segy_action.triggered. connect(self.dataload_segy)
+        self.dataload_segy_action.triggered.connect(self.dataload_segy)
+        self.launch_cashflow_action.triggered.connect(self.launch_combined_cashflow)
 
         self.well_properties_action.triggered.connect(self.well_properties)
         self.scenarioDropdown.currentIndexChanged.connect(self.update_active_scenario)
         self.pud_properties_action.triggered.connect(self.pud_properties)
         self.gradientSizeSpinBox.editingFinished.connect(self.on_drainage_size_changed)
+        #self.export_action.triggered.connect(self.export_results)
+        #self.export_properties.triggered.connect(self.export_sw_properties)
+        #self.zone_to_sw.triggered.connect(self.send_zones_to_sw)
+
+        # DCA/Launch menu action
+        self.dca_action.triggered.connect(self.launch_secondary_window)
+
+        # Launch menu cashflow connection
+        self.cashflow_action.triggered.connect(self.launch_combined_cashflow)
+
+
 
       
 
@@ -2241,6 +2254,22 @@ class Map(QMainWindow, Ui_MainWindow):
         )
 
         self.zone_viewer_dialog.show()
+
+    def launch_combined_cashflow(self):
+        self.cashflow_window = LaunchCombinedCashflow()
+        # Example data
+        combined_data, date_ranges = self.db_manager.retrieve_and_sum()
+        model_data = self.db_manager.retrieve_model_data()
+        model_data_df = pd.DataFrame(model_data)
+        merged_df = pd.merge(date_ranges, model_data_df, on='uwi', how='inner')
+
+        # Select only the uwi, first_date (start date), and capital_expenditures (CapEx) columns
+        capex_df = merged_df[['uwi', 'first_date', 'capital_expenditures']]
+       #printcapex_df)
+
+        self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df )
+        self.cashflow_window.show()
+
 
 
     def launch_secondary_window(self):

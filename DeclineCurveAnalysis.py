@@ -12,7 +12,7 @@ import time
 
 
 class DeclineCurveAnalysis:
-    def __init__(self, combined_df=None, model_data=None, iterate_di=None, uwi_list=None):
+    def __init__(self, combined_df=None, model_data=None, iterate=False, uwi_list=None):
         self.model_data = model_data
 
         self.uwi_model_data = None
@@ -44,13 +44,7 @@ class DeclineCurveAnalysis:
         self.load_gas = True
         self.planned = True
 
-        if iterate_di:
-            self.iterate_di= iterate_di
-            self.iterate_di = iterate_di.lower() == 'true'
-        else:
-             self.iterate_di = False 
-
-        self.row = None
+        self.iterate = iterate
 
 
                 # Initialize error tracking and best values
@@ -108,6 +102,7 @@ class DeclineCurveAnalysis:
             if self.uwi_model_data:
                 self.load_oil = bool(self.uwi_model_data.get('oil_model_status', 0))
                 self.load_gas = bool(self.uwi_model_data.get('gas_model_status', 0))
+                print(self.load_oil)
                 #print(self.load_oil)
                 # Calculate production rates for the current 
                 
@@ -144,7 +139,7 @@ class DeclineCurveAnalysis:
     def planned_prod_rate(self, updated_model, uwi_combined_df=None, iterate = False):
         print(updated_model)
 
-        self.iterate_di = iterate
+        self.iterate = iterate
         if not updated_model.empty:
             self.uwi_model_data = updated_model.iloc[0].to_dict()  # Convert the first row to a dictionary
             self.current_uwi = self.uwi_model_data['uwi']
@@ -154,6 +149,7 @@ class DeclineCurveAnalysis:
         print(self.uwi_model_data)
         self.production_rates_data = None
         self.load_oil = bool(self.uwi_model_data.get('oil_model_status', 0))
+        print(self.load_oil)
         self.load_gas = bool(self.uwi_model_data.get('gas_model_status', 0))
         self.di_oil = float(self.uwi_model_data['di_oil']) if self.load_oil == True else None
         self.di_gas = float(self.uwi_model_data['di_gas']) if self.load_gas == True else None
@@ -172,13 +168,13 @@ class DeclineCurveAnalysis:
 
 
         self.update = False
-        self.iterate_di = False
+        self.iterate = False
         return self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data
 
     def update_prod_rate(self, updated_model, uwi_combined_df=None, iterate = False):
         print(updated_model)
 
-        self.iterate_di = iterate
+        self.iterate = iterate
         self.update = True
                 # Check if uwi_combined_df is provided
         if uwi_combined_df is not None:
@@ -193,9 +189,10 @@ class DeclineCurveAnalysis:
         self.current_uwi = self.uwi_model_data['uwi']
         #print(self.uwi_model_data)
         self.production_rates_data = None
-        self.load_oil = bool(self.uwi_model_data.get('oil_model_status', 0))
-        self.load_gas = bool(self.uwi_model_data.get('gas_model_status', 0))
-        #print(self.load_oil)
+        self.load_oil = int(self.uwi_model_data.get('oil_model_status', 0)) == 1
+        self.load_gas = int(self.uwi_model_data.get('gas_model_status', 0)) == 1
+        print(self.uwi_model_data.get('oil_model_status'))
+        print(self.load_oil)
 
         self.iterate_nominal_di()
         self.forcast_rates()
@@ -207,7 +204,7 @@ class DeclineCurveAnalysis:
 
 
         self.update = False
-        self.iterate_di = False
+        self.iterate = False
         return self.uwi_production_rates_data, self.uwi_error, df_uwi_model_data
 
     def iterate_nominal_di(self):
@@ -228,16 +225,17 @@ class DeclineCurveAnalysis:
    
 
 
-        if self.iterate_di == False:
+        if self.iterate == False:
           
             self.di_oil = float(self.uwi_model_data['di_oil']) if self.load_oil == True else None
             self.di_gas = float(self.uwi_model_data['di_gas']) if self.load_gas == True else None
             self.qi_oil = float(self.uwi_model_data['max_oil_production']) if self.load_oil == True else None
+            print(self.qi_oil)
             self.qi_gas = float(self.uwi_model_data['max_gas_production']) if self.load_gas == True else None
             self.production_rates_data = self._calculate_production_rates_for_uwi_individual()
 
         else:
-            self.iterate_di = False
+            self.iterate = False
        
             if self.uwi_model_data:
                 
@@ -301,7 +299,7 @@ class DeclineCurveAnalysis:
                 print(f"An error occurred during curve fitting for uwi {uwi}: {e}")
         
           
-            self.iterate_di = True
+            self.iterate = True
             self.production_rates_data = self._calculate_production_rates_for_uwi_individual()
     
             try:
@@ -359,7 +357,7 @@ class DeclineCurveAnalysis:
 
     def initialize_oil_parameters(self):
 
-        if self.iterate_di == False:
+        if self.iterate == False:
                  # Initialize static parameters for oil
             self.di_oil = 99.9 if self.di_oil == 100 else self.di_oil
             self.di_oil = float(self.uwi_model_data['di_oil']) 
@@ -373,7 +371,7 @@ class DeclineCurveAnalysis:
 
     def initialize_gas_parameters(self):
         # Initialize static parameters for gas
-        if self.iterate_di == False:
+        if self.iterate == False:
             self.di_gas = 99.9 if self.di_gas == 100 else self.di_gas
             self.di_gas = float(self.uwi_model_data['di_gas']) 
             self.gas_b_factor = float(self.uwi_model_data['gas_b_factor'])
@@ -391,7 +389,7 @@ class DeclineCurveAnalysis:
         oil_revenue = 0
         gas_revenue = 0
      
-
+        print(self.load_oil)
         if self.load_oil:
             self.initialize_oil_parameters()
             

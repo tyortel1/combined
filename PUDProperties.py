@@ -49,6 +49,7 @@ class PUDPropertiesDialog(QDialog):
     
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
+        self.setWindowTitle("Pad Production Scenario Builder")
         self.db_manager = db_manager
         self.setup_logging()
         

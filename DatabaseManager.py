@@ -525,27 +525,25 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error updating EUR values for UWI {uwi}: {e}")
 
-
-    def retrieve_model_data_by_scenario_and_uwi(self,  scenario_id, current_uwi):
-        """
-        Retrieve model properties for the specified UWI and scenario_id.
-        """
-        print("Retrieving model properties for UWI:", current_uwi, "Scenario ID:", scenario_id)
-
+    #keep
+    def retrieve_model_data_by_scenario_and_uwi(self, scenario_id, uwi):
         try:
             self.connect()
-            query = "SELECT * FROM model_properties WHERE uwi = ? AND scenario_id = ?"
-            self.cursor.execute(query, (current_uwi, scenario_id))
-            data = self.cursor.fetchone()
-            if data:
-                # Extract column names from the cursor description
-                columns = [description[0] for description in self.cursor.description]
-                # Convert fetched data to a DataFrame
-                df = pd.DataFrame([data], columns=columns)
-
-                return df
-            else:
+            print(f"Connected to database at {self.db_path}")
+        
+            query = "SELECT * FROM model_properties WHERE scenario_id = ? AND uwi = ?"
+            self.cursor.execute(query, (scenario_id, uwi))
+            data = self.cursor.fetchall()
+        
+            if not data:
+                print(f"No data found for scenario_id: {scenario_id} and uwi: {uwi}")
                 return None
+            
+            columns = [description[0] for description in self.cursor.description]
+            df = pd.DataFrame(data, columns=columns)
+            print(f"Retrieved data shape: {df.shape}")
+            return df
+        
         except sqlite3.Error as e:
             print("Error retrieving model data:", e)
             return None
@@ -706,33 +704,8 @@ class DatabaseManager:
             return pd.DataFrame()  # Return empty DataFrame
         finally:
             self.disconnect()
-    def retrieve_model_data_by_scenario_and_uwi(self, scenario_id, uwi):
-        try:
-            self.connect()
-            print(f"Connected to database at {self.db_path}")
-            
-            query = "SELECT * FROM model_properties WHERE scenario_id = ? AND uwi = ?"
-            self.cursor.execute(query, (scenario_id, uwi))
-            rows = self.cursor.fetchall()
-            
-            if not rows:
-                print(f"No data found for scenario_id: {scenario_id} and uwi: {uwi}")
-                return None
-            
-            column_names = [description[0] for description in self.cursor.description]
-            print(f"Column names: {column_names}")
-            
-            # Convert rows to DataFrame
-            model_data_df = pd.DataFrame(rows, columns=column_names)
-            return model_data_df
-        
-        except sqlite3.Error as e:
-            print("Error retrieving model data:", e)
-            return None
-        
-        finally:
-            self.disconnect()
-            print("Disconnected from database")
+
+
 
 
 
@@ -754,28 +727,28 @@ class DatabaseManager:
             self.disconnect()
 
 
-
-
-
-
-
-
-
-
-    def retrieve_sum_of_errors(self):
+    def retrieve_sum_of_errors(self, scenario_id=None):
         try:
             self.connect()
-            self.cursor.execute("SELECT * FROM sum_of_errors")
+            if scenario_id is not None:
+                self.cursor.execute("SELECT * FROM sum_of_errors WHERE scenario_id = ?", (scenario_id,))
+            else:
+                self.cursor.execute("SELECT * FROM sum_of_errors")
+        
             rows = self.cursor.fetchall()
             column_names = [description[0] for description in self.cursor.description]
             df = pd.DataFrame(rows, columns=column_names)
             return df
+        
         except sqlite3.Error as e:
-            print("Error retrieving sum of errors:", e)
+            print(f"Error retrieving sum of errors for scenario {scenario_id}: {e}")
             return None
-
         finally:
             self.disconnect()
+
+
+
+
 
     def get_all_uwis(self):
         import pandas as pd
@@ -902,66 +875,55 @@ class DatabaseManager:
 
 
     def update_model_properties(self, df_model_properties, scenario_id):
-   
-        print(df_model_properties)
-        try:
-            # If model_data is a list, convert it to a DataFrame
-                
-            df_model_properties = df_model_properties
+       try:
+           df_model_properties = df_model_properties.copy()
+           df_model_properties['scenario_id'] = scenario_id
+       
+           # Convert model status columns to integer
+           df_model_properties['oil_model_status'] = df_model_properties['oil_model_status'].astype(int)
+           df_model_properties['gas_model_status'] = df_model_properties['gas_model_status'].astype(int)
 
-            # Add the scenario_id column to the dataframe
-            df_model_properties['scenario_id'] = scenario_id
-        
-            # Extract uwi from the DataFrame
+           uwi = df_model_properties['uwi'].iloc[0]
+           self.connect()
 
-            uwi = df_model_properties['uwi'].iloc[0]
-            self.connect()
+           self.cursor.execute("SELECT COUNT(*) FROM model_properties WHERE scenario_id = ? AND uwi = ?", 
+                             (scenario_id, uwi))
+           exists = self.cursor.fetchone()[0] > 0
 
-            # Check if the combination of scenario_id and UWI exists in the table
-            self.cursor.execute("SELECT COUNT(*) FROM model_properties WHERE scenario_id = ? AND uwi = ?", (scenario_id, uwi))
-            exists = self.cursor.fetchone()[0] > 0
+           if exists:
+               update_cols = [col for col in df_model_properties.columns if col not in ['uwi', 'scenario_id']]
+               update_sql = f"UPDATE model_properties SET {', '.join(f'{col} = ?' for col in update_cols)} WHERE scenario_id = ? AND uwi = ?"
+           
+               values = []
+               for col in update_cols:
+                   value = df_model_properties[col].iloc[0]
+                   if isinstance(value, pd.Timestamp):
+                       value = value.strftime('%Y-%m-%d')
+                   elif isinstance(value, pd.Series):
+                       value = value.item()
+                   elif isinstance(value, bool):
+                       value = int(value)
+                   elif col in ['oil_model_status', 'gas_model_status']:
+                       value = int(value)
+                   values.append(value)
 
-            if exists:
-                # Generate the SQL UPDATE statement, excluding the specified fields
-                update_sql = f"UPDATE model_properties SET {', '.join([f'{col} = ?' for col in df_model_properties.columns if col not in ['uwi', 'scenario_id']])} WHERE scenario_id = ? AND uwi = ?"
-            
-                # Extract the values to be updated from the DataFrame and perform data type conversion
-                values = []
-                for col in df_model_properties.columns:
-                    if col not in ['uwi', 'scenario_id']:
-                        value = df_model_properties[col].iloc[0]
-                        # Perform data type conversion based on the data types expected by SQLite
-                        if isinstance(value, pd.Timestamp):  # Convert datetime64[ns] to string
-                            value = value.strftime('%Y-%m-%d')  # Extract date part only
-                        elif isinstance(value, pd.Series):  # Extract scalar value from pandas Series
-                            value = value.item()
-                        elif isinstance(value, bool):  # Convert boolean to integer
-                            value = int(value)
-                        # Append the converted value to the values list
-                        values.append(value)
-            
-                # Ensure scenario_id and uwi are the last values in the list
-                values.extend([scenario_id, uwi])
-
-                # Print values for debugging
-                print("Values to be updated:", values)
-
-                # Execute the UPDATE statement
-                self.cursor.execute(update_sql, values)
-                self.connection.commit()
-                print(f"Model properties updated successfully for scenario_id {scenario_id} and uwi {uwi}.")
-            else:
-                # Insert the new record
-                df_model_properties.to_sql('model_properties', self.connection, if_exists='append', index=False)
-                self.connection.commit()
-                print(f"Model properties inserted successfully for scenario_id {scenario_id} and uwi {uwi}.")
-
-        except sqlite3.Error as e:
-            print("Error updating model properties:", e)
-            self.connection.rollback()
-
-        finally:
-            self.disconnect()
+               values.extend([scenario_id, uwi])
+               self.cursor.execute(update_sql, values)
+           else:
+               # For new records, ensure integer types before insertion
+               df_model_properties.to_sql('model_properties', self.connection, 
+                                        if_exists='append', index=False,
+                                        dtype={
+                                            'oil_model_status': 'INTEGER',
+                                            'gas_model_status': 'INTEGER'
+                                        })
+       
+           self.connection.commit()
+       except sqlite3.Error as e:
+           print(f"Error updating model properties: {e}")
+           self.connection.rollback()
+       finally:
+           self.disconnect()
 
 
 
@@ -1140,11 +1102,10 @@ class DatabaseManager:
             self.disconnect()
 
     def update_model_status(self, current_uwi, new_status, model_type):
-        # Update the model status in the database for the specified type and uwi
         try:
             self.connect()
-            query = f"UPDATE model_properties SET {model_type}_model_status = ? WHERE uwi = ?"
-            self.cursor.execute(query, (new_status, current_uwi))
+            query = f"UPDATE model_properties SET {model_type}_model_status = CAST(? AS INTEGER) WHERE uwi = ?"
+            self.cursor.execute(query, (int(new_status), current_uwi))
             self.connection.commit()
         except sqlite3.Error as e:
             print(f"Error updating {model_type} model status:", e)
@@ -1396,8 +1357,8 @@ class DatabaseManager:
             total_opex_cost DECIMAL(15, 2),
             drill_time INTEGER,
             prod_type VARCHAR(50),
-            oil_model_status BOOLEAN,
-            gas_model_status BOOLEAN,
+            oil_model_status INTEGER,
+            gas_model_status INTEGER,
             pad_cost DECIMAL(15, 2),
             exploration_cost DECIMAL(15, 2),
             cost_per_foot DECIMAL(10, 2),

@@ -6893,3 +6893,104 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-23 22:24:14,811 - root - INFO - Initial data loaded successfully.
 2025-01-23 22:24:14,812 - root - INFO - PUDPropertiesDialog initialized
 2025-01-23 22:24:17,626 - root - INFO - Dialog closed successfully
+2025-01-24 09:45:27,241 - root - DEBUG - Toolbar setup completed
+2025-01-24 09:45:27,244 - root - DEBUG - Scenario dropdown setup completed
+2025-01-24 09:45:27,248 - root - DEBUG - Table setup completed
+2025-01-24 09:45:27,248 - root - DEBUG - UI setup completed successfully
+2025-01-24 09:45:27,250 - root - DEBUG - Signal connections established
+2025-01-24 09:45:27,255 - root - INFO - Scenario changed to: Second
+2025-01-24 09:45:27,256 - root - DEBUG - UI updated for scenario: Second
+2025-01-24 09:45:27,342 - root - INFO - Well pads table populated successfully.
+2025-01-24 09:45:27,407 - root - INFO - Well pads table populated successfully.
+2025-01-24 09:45:27,407 - root - INFO - Initial data loaded successfully.
+2025-01-24 09:45:27,407 - root - INFO - PUDPropertiesDialog initialized
+2025-01-24 09:45:32,288 - root - INFO - Dialog closed successfully
+2025-01-24 09:45:38,702 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-24 12:40:42,878 - root - DEBUG - Toolbar setup completed
+2025-01-24 12:40:42,881 - root - DEBUG - Scenario dropdown setup completed
+2025-01-24 12:40:42,884 - root - DEBUG - Table setup completed
+2025-01-24 12:40:42,884 - root - DEBUG - UI setup completed successfully
+2025-01-24 12:40:42,886 - root - DEBUG - Signal connections established
+2025-01-24 12:40:42,888 - root - INFO - No scenarios to load.
+2025-01-24 12:40:42,888 - root - INFO - PUDPropertiesDialog initialized
+2025-01-24 12:40:48,131 - root - INFO - Dialog closed successfully
+2025-01-24 12:40:57,802 - root - DEBUG - Toolbar setup completed
+2025-01-24 12:40:57,802 - root - DEBUG - Scenario dropdown setup completed
+2025-01-24 12:40:57,803 - root - DEBUG - Table setup completed
+2025-01-24 12:40:57,804 - root - DEBUG - UI setup completed successfully
+2025-01-24 12:40:57,805 - root - DEBUG - Signal connections established
+2025-01-24 12:40:57,808 - root - INFO - No scenarios to load.
+2025-01-24 12:40:57,809 - root - INFO - PUDPropertiesDialog initialized
+2025-01-24 12:41:32,178 - root - INFO - Scenario 'First' added successfully with ID 2. Active: 0
+2025-01-24 12:41:32,232 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-24 12:41:32,238 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-24 12:41:32,245 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-24 12:41:32,251 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-24 12:41:32,258 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-24 12:41:32,265 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-24 12:41:32,271 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-24 12:41:32,277 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-24 12:41:32,284 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-24 12:41:32,291 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-24 12:41:32,298 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-24 12:41:32,305 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-24 12:41:32,312 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-24 12:41:32,317 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-24 12:41:32,324 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-24 12:41:32,331 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-24 12:41:32,337 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-24 12:41:32,343 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-24 12:41:32,350 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-24 12:41:32,360 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-24 12:41:32,368 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-24 12:41:32,375 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-24 12:41:32,382 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-24 12:41:32,391 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-24 12:41:32,399 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-24 12:41:32,406 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-24 12:41:32,413 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-24 12:41:33,994 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-24 12:41:34,061 - root - INFO - Processing well WP3L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:34,163 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-24 12:41:43,981 - root - INFO - Processing well WP4L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:44,833 - root - INFO - Processing well WP1L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:45,621 - root - INFO - Processing well WP2L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:46,522 - root - INFO - Processing well WP6L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:47,341 - root - INFO - Processed 5/27 wells
+2025-01-24 12:41:47,342 - root - INFO - Processing well WP9L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:48,106 - root - INFO - Processing well WP8L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:48,860 - root - INFO - Processing well WP7L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:49,605 - root - INFO - Processing well WP5L1Side1Leg1 with UWI: 840300000505415
+2025-01-24 12:41:50,335 - root - INFO - Processing well WP6L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:51,096 - root - INFO - Processed 10/27 wells
+2025-01-24 12:41:51,097 - root - INFO - Processing well WP9L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:51,834 - root - INFO - Processing well WP4L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:52,576 - root - INFO - Processing well WP1L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:53,312 - root - INFO - Processing well WP5L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:54,050 - root - INFO - Processing well WP7L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:54,793 - root - INFO - Processed 15/27 wells
+2025-01-24 12:41:54,795 - root - INFO - Processing well WP2L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:55,534 - root - INFO - Processing well WP3L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:56,263 - root - INFO - Processing well WP8L1Side1Leg2 with UWI: 840300000505415
+2025-01-24 12:41:57,004 - root - INFO - Processing well WP7L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:41:57,742 - root - INFO - Processing well WP2L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:41:58,497 - root - INFO - Processed 20/27 wells
+2025-01-24 12:41:58,499 - root - INFO - Processing well WP8L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:41:59,486 - root - INFO - Processing well WP9L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:00,854 - root - INFO - Processing well WP5L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:01,896 - root - INFO - Processing well WP6L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:02,789 - root - INFO - Processing well WP4L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:03,580 - root - INFO - Processed 25/27 wells
+2025-01-24 12:42:03,582 - root - INFO - Processing well WP3L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:04,415 - root - INFO - Processing well WP1L1Side1Leg3 with UWI: 840300000505415
+2025-01-24 12:42:29,977 - root - INFO - Well pads table populated successfully.
+2025-01-24 12:43:05,799 - root - INFO - Dialog closed successfully
+2025-01-24 13:11:02,435 - root - DEBUG - Toolbar setup completed
+2025-01-24 13:11:02,437 - root - DEBUG - Scenario dropdown setup completed
+2025-01-24 13:11:02,441 - root - DEBUG - Table setup completed
+2025-01-24 13:11:02,441 - root - DEBUG - UI setup completed successfully
+2025-01-24 13:11:02,442 - root - DEBUG - Signal connections established
+2025-01-24 13:11:02,501 - root - INFO - Well pads table populated successfully.
+2025-01-24 13:11:02,501 - root - INFO - Initial data loaded successfully.
+2025-01-24 13:11:02,501 - root - INFO - PUDPropertiesDialog initialized
+2025-01-24 13:11:06,451 - root - INFO - Dialog closed successfully

@@ -254,8 +254,14 @@ class Ui_MainWindow:
         MainWindow.launch_menu.addAction(MainWindow.plot_action)
         MainWindow.color_action = QAction("Color Editor", MainWindow)
         MainWindow.launch_menu.addAction(MainWindow.color_action)
-        MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.zone_viewer_action)
+        MainWindow.pud_properties_action = QAction("Pad Production Scenario Builder", MainWindow)
+        MainWindow.launch_menu.addAction(MainWindow.pud_properties_action)
+        MainWindow.dca_action = QAction("Decline Curve Analysis", MainWindow)
+        MainWindow.launch_menu.addAction(MainWindow.dca_action)  # Add this line
+
+  
+        MainWindow.launch_cashflow_action = QAction("Launch Combined Cashflow", MainWindow)
+        MainWindow.launch_menu.addAction(MainWindow.launch_cashflow_action)
 
         MainWindow.calculate_menu = MainWindow.menu_bar.addMenu("Calculate")
         MainWindow.calculate_menu.setEnabled(False)
@@ -307,53 +313,45 @@ class Ui_MainWindow:
         MainWindow.properties_menu = MainWindow.menu_bar.addMenu("Properties")
         MainWindow.properties_menu.setEnabled(True)
 
-        MainWindow.well_properties_action = QAction("Well", MainWindow)
+        MainWindow.well_properties_action = QAction("Well Properties", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.well_properties_action)
 
         MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
 
-        MainWindow.pud_properties_action = QAction("PUD Wells", MainWindow)
-        MainWindow.properties_menu.addAction(MainWindow.pud_properties_action)
+
+
         
         
         MainWindow.toolbar = QToolBar("Main Toolbar", MainWindow)
         MainWindow.addToolBar(MainWindow.toolbar)
-
+                       
         MainWindow.setWindowIcon(QIcon("icons/ZoneAnalyzer.png"))
         MainWindow.plot_icon = QIcon("icons/plot.ico")
         MainWindow.gun_barrel_icon = QIcon("icons/gunb.ico")
         MainWindow.zoom_in_icon = QIcon("icons/Zoom_in.ico")
         MainWindow.zoom_out_icon = QIcon("icons/Zoom_out.ico")
-        #MainWindow.exportSw_icon = QIcon("icons/export.ico")
         MainWindow.color_editor_icon = QIcon("icons/color_editor.ico")
         MainWindow.cross_plot_icon = QIcon("icons/Cross-Plot-Data-Icon.ico")
-
-        MainWindow.plot_tool_action = QAction(MainWindow.plot_icon, "QC Zones", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.plot_tool_action)
-
-        MainWindow.gun_barrel_action = QAction(MainWindow.gun_barrel_icon, "Create Gun Barrel", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.gun_barrel_action)
-
-        MainWindow.cross_plot_action = QAction(MainWindow.cross_plot_icon, "Cross Plot", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.cross_plot_action)
-
-        MainWindow.color_editor_action = QAction(MainWindow.color_editor_icon, "Edit Grid Colors", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.color_editor_action)
-
-        # Zoom controls
-        MainWindow.zoomOut = QAction(MainWindow.zoom_out_icon, "Zoom Out", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.zoomOut)
-
-        MainWindow.zoomIn = QAction(MainWindow.zoom_in_icon, "Zoom In", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.zoomIn)
-
-        MainWindow.color_editor_action = QAction(MainWindow.color_editor_icon, "Edit Grid Colors", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.color_editor_action)
-
+        MainWindow.launch_cashflow_icon = QIcon("icons/Launch Graph.png")
         MainWindow.launch_icon = QIcon("icons/Decline.ico")
-        MainWindow.launch_action = QAction(MainWindow.launch_icon, "Launch Decline Curve Analysis", MainWindow)
-        MainWindow.toolbar.addAction(MainWindow.launch_action)
+
+        # Add actions to toolbar
+        actions = [
+            ("plot_tool_action", MainWindow.plot_icon, "QC Zones"),
+            ("gun_barrel_action", MainWindow.gun_barrel_icon, "Create Gun Barrel"),
+            ("cross_plot_action", MainWindow.cross_plot_icon, "Cross Plot"),
+            ("color_editor_action", MainWindow.color_editor_icon, "Edit Grid Colors"),
+            ("zoomOut", MainWindow.zoom_out_icon, "Zoom Out"),
+            ("zoomIn", MainWindow.zoom_in_icon, "Zoom In"),
+            ("launch_action", MainWindow.launch_icon, "Launch Decline Curve Analysis"),
+            ("cashflow_action", MainWindow.launch_cashflow_icon, "Launch Combined Cashflow")
+        ]
+
+        for action_name, icon, text in actions:
+            action = QAction(icon, text, MainWindow)
+            setattr(MainWindow, action_name, action)
+            MainWindow.toolbar.addAction(action)
 
 # Connect the action to the method that launches the secondary window
         MainWindow.launch_action.triggered.connect(MainWindow.launch_secondary_window)

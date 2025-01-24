@@ -132,46 +132,19 @@ class MainWindow(QMainWindow):
 
 
 
-    #def open_project(self):
-    #    self.open = True
-    #    # Initialize the file dialog with the default directory if available
-    #    default_dir = self.get_last_directory()  # Use the newly defined method
-    #    if not default_dir:
-    #        default_dir = ""  # Fallback to the empty string if no directory is returned
-
-    #    options = QFileDialog.Options()
-    #    file_dialog = QFileDialog()
-    #    file_dialog.setDirectory(default_dir)
-    #    file_dialog.setNameFilter("Database Files (*.db)")
-    #    file_dialog.setFileMode(QFileDialog.ExistingFile)
-    #    if file_dialog.exec_():
-    #        selected_files = file_dialog.selectedFiles()
-    #        if selected_files:
-    #            self.db_path = selected_files[0]
-    #            directory = os.path.dirname(self.db_path)
-    #            try:
-    #                self.db_manager = DatabaseManager(self.db_path)
-    #                self.db_manager.connect()
-    #                QMessageBox.information(self, "Project Opened", f"The project '{os.path.basename(self.db_path)}' has been opened successfully.", QMessageBox.Ok)
-    #                self.retrieve_data()
-    #                self.save_last_directory(directory)  # Save the directory of the opened file
-    #            except Exception as e:
-    #                QMessageBox.critical(self, "Error", f"Failed to open project: {str(e)}", QMessageBox.Ok)
-    #    else:
-    #        print("Error: No database file selected.")
 
 
 
        
     def retrieve_data(self):
         if self.db_manager:
-            self.scenario_id = 1
+            
             self.db_manager.connect()
             self.scenario_id = self.db_manager.get_active_scenario_id()
             print(self.scenario_id)
             self.scenario_name = self.db_manager.get_active_scenario_name()
             self.prod_rates_all = self.db_manager.retrieve_prod_rates_all() 
-            self.uwi_list  = self.db_manager.get_uwis()
+            self.uwi_list  = self.db_manager.get_uwis_by_scenario_id(self.scenario_id)
             print(self.uwi_list)
             self.scenario_names = self.db_manager.get_all_scenario_names()
             self.ui.activate_icons()
@@ -185,11 +158,14 @@ class MainWindow(QMainWindow):
                 self.populate_well_dropdown()
 
                 self.model_data = self.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
-                self.sum_of_errors = self.db_manager.retrieve_sum_of_errors()
-                self.eur_npv = EurNpv(self.db_manager, self.db_path)
+                self.sum_of_errors = self.db_manager.retrieve_sum_of_errors(self.scenario_id)
+                self.eur_npv = EurNpv(self.db_manager, self.scenario_id)
                 self.eur_npv.calculate_eur()
                 self.eur_npv.calculate_npv_and_efr()
+                
                 self.update_displays()
+                self.check_model_status_and_set_icon
+             
                 
                #printself.uwi_list)
                 
@@ -324,10 +300,10 @@ class MainWindow(QMainWindow):
             self.current_uwi = self.uwi_list[0]
         self.current_uwi = self.uwi_list[self.current_uwi_index]
        #printself.current_uwi)
-        scenario_id = 1
-        self.uwi_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_uwi, scenario_id)
+        
+        self.uwi_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_uwi, self.scenario_id)
         print(self.uwi_prod_rates_all)
-        self.model_data = self.db_manager.retrieve_model_data_by_scenorio(scenario_id)
+        self.model_data = self.db_manager.retrieve_model_data_by_scenorio(self.scenario_id)
         self.update_excel_widget()
         self.model_parameters()
         self.populate_well_dropdown()
@@ -378,8 +354,7 @@ class MainWindow(QMainWindow):
             self.populate_scenario_dropdown_tab2()
         elif index == 2:
             self.populate_scenario_dropdown_tab3()
-        elif index == 3:
-            self.populate_scenario_dropdown_tab4()
+
 
 
     def on_scenario_changed_tab1(self):
@@ -441,8 +416,8 @@ class MainWindow(QMainWindow):
     def populate_scenario_dropdown_tab1(self):
         self.ui.scenario_dropdown1.blockSignals(True)  # Temporarily block signals
         self.ui.scenario_dropdown1.clear()
-        scenario_id = 1
-        self.model_data = self.db_manager.retrieve_model_data_by_scenario(scenario_id)
+     
+        self.model_data = self.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
 
         for scenario in self.scenario_names:
             self.ui.scenario_dropdown1.addItem(scenario)
@@ -480,20 +455,7 @@ class MainWindow(QMainWindow):
             self.ui.scenario_dropdown3.blockSignals(False)
             self.updateTable3()
      
-    def populate_scenario_dropdown_tab4(self):
-        self.ui.scenario_dropdown4.blockSignals(True)  # Temporarily block signals
-        self.ui.scenario_dropdown4.clear()
-        self.model_data = self.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
 
-
-        for scenario in self.scenario_names:
-            self.ui.scenario_dropdown4.addItem(scenario)
-
-        self.ui.scenario_dropdown4.setCurrentText(self.scenario_name)
-
-        self.ui.scenario_dropdown4.blockSignals(False)
-        self.populate_well_pads_table()
- 
 
 
     def populate_tab_2(self):
@@ -559,6 +521,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print("Error populating tab 2:", e)
         print("pop2 end")
+
     def updateTable3(self):
             # Clear the current data and sorting in the table
         self.ui.data_table3.clear()
@@ -880,311 +843,9 @@ class MainWindow(QMainWindow):
         active_scenario_id = self.db_manager.get_scenario_id(current_scenario_name)
         self.db_manager.set_active_scenario(active_scenario_id)
 
-    def update_scenario(self):
 
 
-    
-        for edited_row in self.edited_rows:
-            # Fetch data from the edited row
-            original_name = self.ui.well_pads_table.item(edited_row, 0).text()
-            start_date = self.ui.well_pads_table.item(edited_row, 1).text()
-            decline_curve_name = self.ui.well_pads_table.item(edited_row, 2).text()
-            
-        
-  
-            try:
-                QDateTime.fromString(start_date, "yyyy-MM-dd")
-            except ValueError:
-               # print(f"Error: Invalid date format in row {edited_row}. Skipping update.")
-                continue
-
-
-            # Get well_pad_id and decline_curve_id
-            well_pad_id = self.db_manager.get_well_pad_id(original_name)
-           # print('wellpad', well_pad_id)
-            decline_curve_id = self.db_manager.get_decline_curve_id(decline_curve_name)
-
-            # Prepare scenario data
-            scenario_data = {
-                'scenario_id': self.scenario_id,
-                'well_pad_id': well_pad_id,
-                'start_date': start_date,
-                'decline_curve_id': decline_curve_id
-            }
-           # print(scenario_data)
-        
-            # Add or update scenario in the database
-            self.db_manager.add_or_update_scenario(scenario_data)
-
-            # Prepare well_pad_data dictionary for columns in well_pads table
-            well_pad_data = {}
-
-            # Read columns dynamically starting from index 3
-            num_columns = self.ui.well_pads_table.columnCount()
-            for col in range(3, num_columns):
-                column_item = self.ui.well_pads_table.item(edited_row, col)
-                if column_item is None:
-                    print(f"Warning: Missing data in column {col} of row {edited_row}.")
-                    continue
-                column_name = self.ui.well_pads_table.horizontalHeaderItem(col).text()
-                column_value = column_item.text()
-                well_pad_data[column_name] = column_value
-    
-        
-            # Update well pad in the well_pads table
-            try:
-                self.db_manager.update_well_pad(well_pad_id, {
-                    'total_lateral': well_pad_data.get('Total Lateral', ''),
-                    'total_capex_cost': well_pad_data.get('Total Capex Cost', ''),
-                    'total_opex_cost': well_pad_data.get('Total Opex Cost', ''),
-                    'drill_time': well_pad_data.get('Drill Time', ''),
-                    'prod_type': well_pad_data.get('Prod Type', ''),
-                    'oil_model_status': well_pad_data.get('Oil Model Status', ''),
-                    'gas_model_status': well_pad_data.get('Gas Model Status', ''),
-                    'pad_cost': well_pad_data.get('Pad Cost', ''),
-                    'exploration_cost': well_pad_data.get('Exploration Cost', ''),
-                    'cost_per_foot': well_pad_data.get('Cost Per Foot', ''),
-                    'distance_to_pipe': well_pad_data.get('Distance To Pipe', ''),
-                    'cost_per_foot_to_pipe': well_pad_data.get('Cost Per Foot To Pipe', ''),
-                })
-                print(f"Updated well pad '{well_pad_id}' successfully.")
-            except Exception as e:
-                print(f"Exception occurred while updating well pad '{well_pad_id}': {e}")
-    
-        # After updating scenarios, refresh the well pads table
-        self.populate_well_pads_table()
-        print('hi1')
-        # Clear edited rows list after processing
-        self.edited_rows.clear()
-        print('hi2')
-        self.ui.well_pads_table.blockSignals(False)
-
-
-  
-    def run_scenario4(self):
-        # Fetch current scenario details
-
-        # Iterate through each row in the well_pads_table
-        num_rows = self.ui.well_pads_table.rowCount()
-        for row in range(num_rows):
-            # Fetch data from the well_pads_table
-            original_name_item = self.ui.well_pads_table.item(row, 0)
-            start_date_item = self.ui.well_pads_table.item(row, 1)
-            decline_curve_name = self.ui.well_pads_table.item(row, 2).text()
-        
-
-
-            # Convert start_date_item to the appropriate format
-            start_date = QDateTime.fromString(start_date_item.text(), "yyyy-MM-dd").date()
-
-            # Get other well pad data dynamically
-            well_pad_data = {}
-            num_columns = self.ui.well_pads_table.columnCount()
-            for col in range(3, num_columns):
-                column_name = self.ui.well_pads_table.horizontalHeaderItem(col).text()
-                column_value = self.ui.well_pads_table.item(row, col).text()
-                well_pad_data[column_name] = column_value
-
-            # Get decline curve data and scenario data from the database
-            decline_curve_id = self.db_manager.get_decline_curve_id(decline_curve_name)
-            decline_curve_data = self.db_manager.get_decline_curve_data(decline_curve_name)
-
-            # Determine other parameters needed for handle_scenario
-
-            base_uwi = original_name_item.text()
-            drill_time = int(well_pad_data.get('Drill Time', 0))
-            total_capex_cost = float(well_pad_data.get('Total Capex Cost', 0))
-            total_opex_cost = float(well_pad_data.get('Total Opex Cost', 0))
-            prod_type = well_pad_data.get('Prod Type', '')
-            oil_model_status = int(well_pad_data.get('Oil Model Status', 0))
-            gas_model_status = int(well_pad_data.get('Gas Model Status', 0))
-
-            # Call handle_scenario with retrieved data
-            self.handle_scenario(self.scenario_id, start_date, num_wells, base_uwi, decline_curve_data, drill_time,
-                                 total_capex_cost, total_opex_cost, prod_type, oil_model_status, gas_model_status)
-
-
-
-    def add_well(self):
-        decline_curves = self.db_manager.get_decline_curve_names()
-        scenarios = self.db_manager.get_scenario_names()
-      
-        scenarios = [scenario for scenario in scenarios if scenario != 'Active_Wells']
-        # Fetch scenario names from the database
-        dialog = AddWell(self, decline_curves, scenarios)
-    
-        if dialog.exec_() == QDialog.Accepted:
-            
-            base_uwi = dialog.uwi_input.text()
-            num_wells = dialog.num_wells_input.value()
-            drill_time = dialog.drill_time_input.value()
-            total_capex_cost = float(dialog.capex_cost_output.text().replace('$', ''))
-            total_opex_cost = dialog.opex_input.value()
-            prod_type = dialog.prod_type_input.currentText()
-            pad_cost = dialog.pad_cost_input.value()  # Correct way to get the value from QDoubleSpinBox
-            exploration_cost = dialog.exploration_cost_input.value()
-            total_lateral = dialog.total_lateral_input.value()
-            cost_per_foot = dialog.cost_per_foot_input.value()
-            distance_to_pipe = dialog.distance_to_pipe_input.value()
-            cost_per_foot_to_pipe = dialog.cost_per_foot_to_pipe_input.value()
-
-            # Determine model statuses based on production type
-            oil_model_status = 1 if prod_type in ["Oil", "Both"] else 0
-            gas_model_status = 1 if prod_type in ["Gas", "Both"] else 0
-
-            # Insert data into well_pads table
-            well_pad_data = {
-                'original_name': base_uwi,
-                'total_lateral': total_lateral,
-                'total_capex_cost': total_capex_cost,
-                'total_opex_cost': total_opex_cost,
-                'num_wells': num_wells,
-                'drill_time': drill_time,
-                'prod_type': prod_type,
-                'oil_model_status': oil_model_status,
-                'gas_model_status': gas_model_status,
-                'pad_cost': pad_cost,
-                'exploration_cost': exploration_cost,
-                'cost_per_foot': cost_per_foot,
-                'distance_to_pipe': distance_to_pipe,
-                'cost_per_foot_to_pipe': cost_per_foot_to_pipe
-            }
-            self.db_manager.insert_well_pad(well_pad_data)
-
-
-
-            scenario_selected = dialog.scenario_input.currentIndex() != -1
-            if scenario_selected:
-                decline_curve = dialog.decline_curve_input.currentText()
-                decline_curve_data = self.db_manager.get_decline_curve_data(decline_curve)
-  
-
-                # Fetch decline curve ID
-                
-       
-
-                scenario = dialog.scenario_input.currentText()
-               ## print(scenario)
-                scenario_id = self.db_manager.get_scenario_id(scenario)
-                start_date = dialog.start_date_input.date()
-                decline_curve_id = self.db_manager.get_decline_curve_id(decline_curve)
-                well_pad_id = self.db_manager.get_well_pad_id(base_uwi)
-               # print(well_pad_id)
-                # Insert scenario into scenarios table
-                scenario_data = {
-                    'scenario_id': scenario_id,
-                    'well_pad_id': well_pad_id,
-                    'start_date': start_date.toString("yyyy-MM-dd"),
-                    'decline_curve_id': decline_curve_id
-                }
-               # print(scenario_data)
-                inserted_scenario_id = self.db_manager.add_or_update_scenario(scenario_data)
-                if not inserted_scenario_id:
-                    print("Error inserting scenario data.")
-                    return
-                #print(scenario_id)
-                self.handle_scenario(scenario_id, start_date, num_wells, base_uwi, decline_curve_data, drill_time, total_capex_cost, total_opex_cost, prod_type, oil_model_status, gas_model_status)
-
-        if self.tab_index == 3:
-            self.populate_well_pads_table() 
-
-
-    def add_scenario(self):
-        dialog = ScenarioNameDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
-            scenario_name = dialog.get_scenario_name()
-            is_active = False  # Get the active status from the dialog
-
-            if scenario_name:
-                self.db_manager.insert_scenario_name(scenario_name, is_active)
-                self.scenario_names = self.db_manager.get_all_scenario_names()
-                # Refresh the dropdown lists on tab1 and tab3
-                self.populate_scenario_dropdown_tab1()
-                self.populate_scenario_dropdown_tab2()
-                self.populate_scenario_dropdown_tab4()
-            else:
-                QMessageBox.warning(self, "Warning", "Scenario name cannot be empty.")
-        
-        
-    def handle_scenario(self, scenario_id, start_date,  base_uwi, decline_curve_data, drill_time, total_capex_cost, total_opex_cost, prod_type, oil_model_status, gas_model_status):
-        #print(scenario_id)
-        if decline_curve_data is None:
-            print("Skipping scenario handling due to missing decline curve data.")
-            return
-        # Divide total CAPEX and OPEX costs by the number of wells
-        capex_cost_per_well = total_capex_cost / 1
-        opex_cost_per_well = total_opex_cost / 1
-
-        for i in range(1):
-            uwi = f"{base_uwi}_{i+1}"
-            well_start_date = start_date.addMonths(i * drill_time).toString("yyyy-MM-dd")
-
-            well_data = {
-                'uwi': uwi,
-                'max_oil_production': decline_curve_data['max_oil_production'],
-                'max_gas_production': decline_curve_data['max_gas_production'],
-                'max_oil_production_date': well_start_date,
-                'max_gas_production_date': well_start_date,
-                'one_year_oil_production': decline_curve_data['one_year_oil_production'],
-                'one_year_gas_production': decline_curve_data['one_year_gas_production'],
-                'di_oil': decline_curve_data['di_oil'],
-                'di_gas': decline_curve_data['di_gas'],
-                'oil_b_factor': decline_curve_data['oil_b_factor'],
-                'gas_b_factor': decline_curve_data['gas_b_factor'],
-                'min_dec_oil': decline_curve_data['min_dec_oil'],
-                'min_dec_gas': decline_curve_data['min_dec_gas'],
-                'model_oil': decline_curve_data['model_oil'],
-                'model_gas': decline_curve_data['model_gas'],
-                'oil_price': decline_curve_data['oil_price'],
-                'gas_price': decline_curve_data['gas_price'],
-                'oil_price_dif': decline_curve_data['oil_price_dif'],
-                'gas_price_dif': decline_curve_data['gas_price_dif'],
-                'discount_rate': decline_curve_data['discount_rate'],
-                'working_interest': decline_curve_data['working_interest'],
-                'royalty': decline_curve_data['royalty'],
-                'tax_rate': decline_curve_data['tax_rate'],
-                'capital_expenditures': capex_cost_per_well,
-                'operating_expenditures': opex_cost_per_well,
-                'economic_limit_type': decline_curve_data['economic_limit_type'],
-                'economic_limit_date': decline_curve_data['economic_limit_date'],
-                'net_price_oil': decline_curve_data['net_price_oil'],
-                'net_price_gas': decline_curve_data['net_price_gas'],
-                'gas_model_status': gas_model_status,
-                'oil_model_status': oil_model_status,
-                }
-
-            df_uwi_model_data = pd.DataFrame([well_data])
-            #print(df_uwi_model_data)
-            status = "Planned"
-            self.db_manager.insert_uwi(uwi, status)
-            self.db_manager.update_model_properties(df_uwi_model_data, scenario_id)
-
-            self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(df_uwi_model_data)
-            #printscenario_id)
-            self.db_manager.update_uwi_prod_rates(self.uwi_production_rates_data, scenario_id)
-
-            self.uwi_error = pd.DataFrame({
-                'uwi': uwi,
-                'sum_error_oil': [0],
-                'sum_error_gas': [0]
-            })
-           #printself.senario_id)
-            self.db_manager.update_uwi_errors(self.uwi_error, scenario_id)
-
-
-
-            if self.displayed_status == "Planned":
-                self.uwi_list = self.db_manager.get_uwis_by_status(self.displayed_status)
-                self.current_uwi_index = len(self.uwi_list) - 1
-                self.current_uwi = uwi
-
-        self.eur_npv = EurNpv(self.db_manager, self.db_path)
-        self.eur_npv.calculate_eur()
-        self.eur_npv.calculate_npv_and_efr()
-        self.update_displays()
-
-        self.update_navigation_buttons()
-
+ 
 
 
 
@@ -1222,12 +883,12 @@ class MainWindow(QMainWindow):
         # Get current uwi index
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
-        scenario_id = 1
-        self.uwi_model_data = self.db_manager.retrieve_model_data_by_scenario_and_uwi( scenario_id, self.current_uwi)
+
+        self.uwi_model_data = self.db_manager.retrieve_model_data_by_scenario_and_uwi( self.scenario_id, self.current_uwi)
         print(self.uwi_model_data)
        #printself.uwi_model_data)
 
-        self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, scenario_id)
+        self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, self.scenario_id)
         print(self.current_error_row)
  
 
@@ -1383,9 +1044,8 @@ class MainWindow(QMainWindow):
  
 
 #Upated Current Decline Curves and the models
-    def update_decline_curve(self, di_oil=None, di_gas=None, iterate=None):
-        if iterate == None:
-            iterate = False
+    def update_decline_curve(self, di_oil=None, di_gas=None, iterate=False):
+
 
         self.ui.calculate_net_price()
         uwi_model_data = []
@@ -1460,23 +1120,26 @@ class MainWindow(QMainWindow):
             'economic_limit_date': pd.to_datetime(economic_limit_date),
             'net_price_oil' : float(net_price_oil),
             'net_price_gas' : float(net_price_gas),
-            'oil_model_status' : (oil_model_status),
-            'gas_model_status' : (gas_model_status),
+            'oil_model_status' : int(oil_model_status),
+            'gas_model_status' : int(gas_model_status)
             
         }
         self.ui.calculate_net_price()
         uwi_model_data.append(updated_model_data)
-
+     
         # Convert the list of dictionaries to a DataFrame
         df_uwi_model_data = pd.DataFrame(uwi_model_data)
        #printdf_uwi_model_data)
         
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
+        self.scenario_id = 1
         self.db_manager.update_model_properties(df_uwi_model_data, self.scenario_id)
-       #printdf_uwi_model_data)
+        print(df_uwi_model_data)
+        self.scenario_id = 1
+
         self.uwi_model_data  = self.db_manager.retrieve_model_data_by_scenario_and_uwi(self.scenario_id, self.current_uwi )
-       #printself.uwi_model_data)
+        print(self.uwi_model_data)
 
 
 
@@ -1519,7 +1182,7 @@ class MainWindow(QMainWindow):
         #print(self.uwi_error)
 
 
-    def iterate_di(self):
+    def iterate_curve(self):
         self.iterate = True
         self.update_decline_curve(iterate=True)
         self.iterate = False
@@ -1549,14 +1212,13 @@ class MainWindow(QMainWindow):
 
     def gas_model(self):
 
-        self.db_manager = DatabaseManager(self.db_path)
-        self.db_manager.connect()
+
     
         # Get the current status of the gas model from the database
-        gas_model_status = self.db_manager.get_model_status(self.current_uwi, 'gas')
+        gas_model_status = int(self.db_manager.get_model_status(self.current_uwi, 'gas'))
     
         # Toggle the status
-        new_status = 1 if gas_model_status == 0 else 0
+        new_status = 0 if gas_model_status == 1 else 1
 
     # Update the database with the new status
         self.db_manager.update_model_status(self.current_uwi, new_status, 'gas')
@@ -1568,20 +1230,20 @@ class MainWindow(QMainWindow):
         self.update_decline_curve()
 
     def oil_model(self):
-        self.db_manager = DatabaseManager(self.db_path)
-        self.db_manager.connect()
-        oil_model_status = self.db_manager.get_model_status(self.current_uwi, 'oil')
+       oil_model_status = int(self.db_manager.get_model_status(self.current_uwi, 'oil'))
 
-        new_status = 1 if oil_model_status == 0 else 0
+   
+       # Convert to integers for consistent comparison
+       oil_model_status = int(oil_model_status)
+       new_status = 0 if oil_model_status == 1 else 1
+   
+       self.db_manager.update_model_status(self.current_uwi, new_status, 'oil')
 
-            # Update the database with the new status
-        self.db_manager.update_model_status(self.current_uwi, new_status, 'oil')
+       icon_name = f"oil_{'on' if new_status == 1 else 'off'}"
+       icon_path = os.path.join(self.script_dir, "Icons", f"{icon_name}.png")
+       self.ui.oil_model.setIcon(QIcon(icon_path))
+       self.update_decline_curve()
 
-        # Update the icon based on the new status
-        icon_name = f"oil_{'on' if new_status == 1 else 'off'}"  # Assuming your icon names are "oil_on.png" and "oil_off.png"
-        icon_path = os.path.join(self.script_dir, "Icons", f"{icon_name}.png")
-        self.ui.oil_model.setIcon(QIcon(icon_path))
-        self.update_decline_curve()
 
     def delete_well(self):
 
@@ -1613,21 +1275,14 @@ class MainWindow(QMainWindow):
 
 
     def check_model_status_and_set_icon(self):
-        current_data = self.model_data[self.current_uwi_index]
+       oil_status = int(self.db_manager.get_model_status(self.current_uwi, 'oil'))
+       gas_status = int(self.db_manager.get_model_status(self.current_uwi, 'gas'))
+   
+       oil_icon = os.path.join(self.script_dir, "Icons", f"oil_{'on' if oil_status == 1 else 'off'}.png")
+       gas_icon = os.path.join(self.script_dir, "Icons", f"gas_{'on' if gas_status == 1 else 'off'}.png") 
 
-        # Check oil model status and set icon
-        if current_data.get('oil_model_status', 'on') == "off":
-            oil_icon_path = os.path.join(self.script_dir, "Icons", "oil_off")
-        else:
-            oil_icon_path = os.path.join(self.script_dir, "Icons", "oil_on")
-        self.ui.oil_model.setIcon(QIcon(oil_icon_path))
-
-        # Check gas model status and set icon
-        if current_data.get('gas_model_status', 'on') == "off":
-            gas_icon_path = os.path.join(self.script_dir, "Icons", "gas_off")
-        else:
-            gas_icon_path = os.path.join(self.script_dir, "Icons", "gas_on")
-        self.ui.gas_model.setIcon(QIcon(gas_icon_path))
+       self.ui.oil_model.setIcon(QIcon(oil_icon))
+       self.ui.gas_model.setIcon(QIcon(gas_icon))
 
 
     def save_dc(self):
@@ -1660,6 +1315,7 @@ class MainWindow(QMainWindow):
         pass
 
     def delete_pad(self):
+
         pass
     
     def average_uwis(self, selected_uwis):
