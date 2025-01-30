@@ -71,6 +71,9 @@ from EurNpv import EurNpv
 from PUDProperties import PUDPropertiesDialog
 from CalculatePC import PCDialog
 from LaunchCombinedCashflow import LaunchCombinedCashflow
+from CalculateCorrelationMatrix import GenerateCorrelationMatrix
+from CalculateWellComparisons import WellComparisonDialog
+
 
 
 
@@ -234,6 +237,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.calc_zone_attribute_action.triggered.connect(self.open_zone_attributes_dialog)
         self.calc_inzone_action.triggered.connect(self.inzone_dialog)
         self.pc_dialog_action.triggered.connect(self.pc_dialog)
+        self.correlation_matrix_action.triggered.connect(self.generate_correlation_matrix)
+        self.well_comparison_action.triggered.connect(self.well_comparison)
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
         self.dataload_segy_action.triggered.connect(self.dataload_segy)
@@ -1092,7 +1097,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.WellAttributeDropdown.blockSignals(False)
         self.WellAttributeDropdown.setEnabled(False)
 
-        if self.selected_well_zone == "Select_Well_Zone":
+        if self.selected_well_zone == "Select Well Zone":
             # Reset well attribute dropdown and clear the plotting area
             self.WellAttributeDropdown.setEnabled(False)
             self.cached_well_zone_df = None
@@ -1830,6 +1835,10 @@ class Map(QMainWindow, Ui_MainWindow):
             else:
                 print("No directional survey data to insert.")
         
+            self.eur_npv = EurNpv(self.db_manager, self.scenario_id) 
+            self.eur_npv.calculate_eur()
+            self.eur_npv.calculate_npv_and_efr()
+            self.eur_npv.calculate_payback_months()
 
     def handle_default_parameters(self):
         self.default_properties_dialog = DefaultProperties()
@@ -1998,9 +2007,9 @@ class Map(QMainWindow, Ui_MainWindow):
             print(self.sum_of_errors)
             
                 # Close the connection after the operation
-        self.eur_npv = EurNpv(self.db_manager, self.db_path) 
-        self.eur_npv.calculate_eur()
-        self.eur_npv.calculate_npv_and_efr()
+        
+        
+
 
         
 
@@ -2427,6 +2436,17 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 ###########################Calcs#################################
+
+    def generate_correlation_matrix(self):
+    
+        dialog = GenerateCorrelationMatrix(self.db_manager)
+        dialog.exec()
+
+    def well_comparison(self):
+        
+        dialog = WellComparisonDialog(self.db_manager)
+        dialog.exec()
+
 
     def open_stages_dialog(self):
         dialog = StagesCalculationDialog(self.master_df, self.directional_surveys_df, self.zone_names)

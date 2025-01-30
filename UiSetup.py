@@ -275,6 +275,10 @@ class Ui_MainWindow:
         MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
         MainWindow.pc_dialog_action = QAction("Calculate Parent Child", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.pc_dialog_action)
+        MainWindow.correlation_matrix_action = QAction("Well Correlation Matrix", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.correlation_matrix_action)
+        MainWindow.well_comparison_action = QAction("Well Comparison Calculation", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.well_comparison_action)
 
 
 

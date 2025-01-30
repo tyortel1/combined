@@ -6994,3 +6994,81 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-24 13:11:02,501 - root - INFO - Initial data loaded successfully.
 2025-01-24 13:11:02,501 - root - INFO - PUDPropertiesDialog initialized
 2025-01-24 13:11:06,451 - root - INFO - Dialog closed successfully
+2025-01-30 12:31:04,069 - root - DEBUG - Toolbar setup completed
+2025-01-30 12:31:04,071 - root - DEBUG - Scenario dropdown setup completed
+2025-01-30 12:31:04,074 - root - DEBUG - Table setup completed
+2025-01-30 12:31:04,074 - root - DEBUG - UI setup completed successfully
+2025-01-30 12:31:04,075 - root - DEBUG - Signal connections established
+2025-01-30 12:31:04,077 - root - INFO - No scenarios to load.
+2025-01-30 12:31:04,077 - root - INFO - PUDPropertiesDialog initialized
+2025-01-30 12:31:15,672 - root - INFO - Dialog closed successfully
+2025-01-30 12:31:36,704 - root - DEBUG - Toolbar setup completed
+2025-01-30 12:31:36,705 - root - DEBUG - Scenario dropdown setup completed
+2025-01-30 12:31:36,706 - root - DEBUG - Table setup completed
+2025-01-30 12:31:36,706 - root - DEBUG - UI setup completed successfully
+2025-01-30 12:31:36,707 - root - DEBUG - Signal connections established
+2025-01-30 12:31:36,713 - root - INFO - No scenarios to load.
+2025-01-30 12:31:36,714 - root - INFO - PUDPropertiesDialog initialized
+2025-01-30 12:31:50,418 - root - INFO - Scenario 'First' added successfully with ID 2. Active: 0
+2025-01-30 12:31:50,464 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-30 12:31:50,469 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-30 12:31:50,476 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-30 12:31:50,483 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-30 12:31:50,490 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-30 12:31:50,496 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-30 12:31:50,504 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-30 12:31:50,511 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-30 12:31:50,516 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-30 12:31:50,524 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-30 12:31:50,531 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-30 12:31:50,538 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-30 12:31:50,545 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-30 12:31:50,552 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-30 12:31:50,560 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-30 12:31:50,566 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-30 12:31:50,573 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-30 12:31:50,580 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-30 12:31:50,587 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-30 12:31:50,593 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-30 12:31:50,600 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-30 12:31:50,606 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-30 12:31:50,612 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-30 12:31:50,619 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-30 12:31:50,625 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-30 12:31:50,630 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-30 12:31:50,638 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-30 12:31:51,853 - root - INFO - Scenario 2 updated with 27 wells.
+2025-01-30 12:31:51,920 - root - INFO - Processing well WP8L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:52,250 - root - INFO - Processing well WP3L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:52,525 - root - INFO - Processing well WP2L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:52,808 - root - INFO - Processing well WP7L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:53,090 - root - INFO - Processing well WP3L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:53,364 - root - INFO - Processed 5/27 wells
+2025-01-30 12:31:53,365 - root - INFO - Processing well WP6L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:53,648 - root - INFO - Processing well WP8L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:53,927 - root - INFO - Processing well WP3L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:54,214 - root - INFO - Processing well WP7L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:54,495 - root - INFO - Processing well WP5L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:54,773 - root - INFO - Processed 10/27 wells
+2025-01-30 12:31:54,774 - root - INFO - Processing well WP9L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:55,060 - root - INFO - Processing well WP1L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:55,335 - root - INFO - Processing well WP2L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:55,607 - root - INFO - Processing well WP7L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:55,882 - root - INFO - Processing well WP9L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:56,167 - root - INFO - Processed 15/27 wells
+2025-01-30 12:31:56,167 - root - INFO - Processing well WP6L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:56,450 - root - INFO - Processing well WP5L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:56,741 - root - INFO - Processing well WP6L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:57,022 - root - INFO - Processing well WP4L1Side1Leg1 with UWI: 840300000505415
+2025-01-30 12:31:57,302 - root - INFO - Processing well WP9L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:57,572 - root - INFO - Processed 20/27 wells
+2025-01-30 12:31:57,573 - root - INFO - Processing well WP1L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:57,848 - root - INFO - Processing well WP1L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:58,131 - root - INFO - Processing well WP2L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:58,419 - root - INFO - Processing well WP5L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:58,703 - root - INFO - Processing well WP4L1Side1Leg3 with UWI: 840300000505415
+2025-01-30 12:31:58,983 - root - INFO - Processed 25/27 wells
+2025-01-30 12:31:58,984 - root - INFO - Processing well WP4L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:31:59,295 - root - INFO - Processing well WP8L1Side1Leg2 with UWI: 840300000505415
+2025-01-30 12:32:01,033 - root - INFO - Well pads table populated successfully.
+2025-01-30 12:32:06,633 - root - INFO - Dialog closed successfully

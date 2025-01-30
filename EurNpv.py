@@ -2,8 +2,6 @@ import pandas as pd
 from datetime import datetime
 from DatabaseManager import DatabaseManager
 
-
-
 class EurNpv:
     def __init__(self, db_manager, scenario_id=1):
         self.db_manager = db_manager
@@ -12,19 +10,32 @@ class EurNpv:
     def calculate_eur(self):
         try:
             self.prod_rates_all = self.db_manager.retrieve_prod_rates_all(scenario_id=self.scenario_id)
+            print(self.scenario_id)
             if self.prod_rates_all.empty:
                 raise ValueError(f"No production rates found for scenario {self.scenario_id}")
+
+            # Retrieve lateral lengths from uwis table
+            lateral_lengths = self.db_manager.retrieve_lateral_lengths()
 
             eur_df = self.prod_rates_all.groupby('uwi').agg({
                 'q_oil': 'sum',
                 'q_gas': 'sum'
             }).reset_index().rename(columns={'q_oil': 'q_oil_eur', 'q_gas': 'q_gas_eur'})
 
+            # Merge lateral lengths
+            eur_df = eur_df.merge(lateral_lengths, on='uwi', how='left')
+
+            # Normalize EUR values by lateral length
+            eur_df['q_oil_eur_normalized'] = eur_df['q_oil_eur'] / eur_df['lateral']
+            eur_df['q_gas_eur_normalized'] = eur_df['q_gas_eur'] / eur_df['lateral']
+
             for _, row in eur_df.iterrows():
                 self.db_manager.save_eur_to_model_properties(
                     row['uwi'], 
                     row['q_oil_eur'], 
                     row['q_gas_eur'], 
+                    row.get('q_oil_eur_normalized', None),
+                    row.get('q_gas_eur_normalized', None),
                     self.scenario_id
                 )
             return eur_df
@@ -78,6 +89,34 @@ class EurNpv:
             return results
         except Exception as e:
             print(f"Error calculating NPV and EFR: {e}")
+            return pd.DataFrame()
+
+    def calculate_payback_months(self):
+        try:
+            payback_results = []
+            for uwi, well_data in self.prod_rates_all.groupby('uwi'):
+                capex = self.db_manager.get_capex_for_uwi(uwi, self.scenario_id)
+                opex = self.db_manager.get_opex_for_uwi(uwi, self.scenario_id)
+                cumulative_revenue = 0
+                months = 0
+                
+                for _, month_data in well_data.sort_values(by='date').iterrows():
+                    monthly_revenue = month_data['total_revenue']
+                    cumulative_revenue += monthly_revenue - opex
+                    months += 1
+                    
+                    if cumulative_revenue >= capex:
+                        break
+                else:
+                    months = None  # Indicates payback was not reached within the data range
+                
+                self.db_manager.update_payback_months(uwi, months, self.scenario_id)
+                payback_results.append({'uwi': uwi, 'payback_months': months})
+            
+            payback_df = pd.DataFrame(payback_results)
+            return payback_df
+        except Exception as e:
+            print(f"Error calculating payback months: {e}")
             return pd.DataFrame()
 
     @staticmethod

@@ -145,6 +145,10 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+
+
+
+
     def get_uwis_with_heel_toe(self):
         """
         Fetches all UWIs along with their heel and toe coordinates from the database.
@@ -425,6 +429,8 @@ class DatabaseManager:
 
     def create_model_properties_table(self):
         self.connect()
+    
+        # Define the table creation SQL
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS model_properties (
             scenario_id INTEGER NOT NULL,
@@ -460,7 +466,9 @@ class DatabaseManager:
             gas_model_status TEXT DEFAULT '',
             oil_model_status TEXT DEFAULT '',
             q_oil_eur REAL DEFAULT 0, 
-            q_gas_eur REAL DEFAULT 0,  
+            q_gas_eur REAL DEFAULT 0,
+            q_oil_eur_normalized REAL DEFAULT 0, 
+            q_gas_eur_normalized REAL DEFAULT 0,  
             EFR_oil REAL DEFAULT 0,    
             EFR_gas REAL DEFAULT 0,    
             EUR_oil_remaining REAL DEFAULT 0,  
@@ -472,14 +480,35 @@ class DatabaseManager:
             PRIMARY KEY (scenario_id, uwi)
         )
         """
+    
         try:
+            # Execute the table creation
             self.cursor.execute(create_table_sql)
             self.connection.commit()
-            print("Model properties table created or updated successfully.")
+            print("Model properties table checked/created successfully.")
+
+            # Check if the new columns exist
+            self.cursor.execute("PRAGMA table_info(model_properties)")
+            existing_columns = {column[1] for column in self.cursor.fetchall()}
+        
+            # List of new columns to add
+            new_columns = {
+                "q_oil_eur_normalized": "REAL DEFAULT 0",
+                "q_gas_eur_normalized": "REAL DEFAULT 0"
+            }
+
+            for column, dtype in new_columns.items():
+                if column not in existing_columns:
+                    alter_sql = f"ALTER TABLE model_properties ADD COLUMN {column} {dtype}"
+                    self.cursor.execute(alter_sql)
+                    print(f"Added column {column} to model_properties table.")
+
+            self.connection.commit()
         except sqlite3.Error as e:
-            print("Error creating model properties table:", e)
+            print("Error creating/updating model properties table:", e)
         finally:
             self.disconnect()
+
     def delete_model_properties_for_scenario(self, scenario_id):
         """Delete model properties associated with a specific scenario."""
         query = "DELETE FROM model_properties WHERE scenario_id = ?"
@@ -501,29 +530,34 @@ class DatabaseManager:
                 conn.commit()
         except sqlite3.Error as e:
             print(f"Error deleting production rates for scenario {scenario_id}: {e}")
-    def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, scenario_id=1):
+
+    def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, q_oil_eur_normalized=None, q_gas_eur_normalized=None, scenario_id=1):
         """
         Update the EUR values in the model_properties table for the given UWI and scenario_id.
         """
-        self.connect()  # Ensure the database connection is established
+        self.connect()
 
-        # SQL query to update EUR values
         query = """
         UPDATE model_properties
         SET 
             q_oil_eur = ?, 
-            q_gas_eur = ?
+            q_gas_eur = ?, 
+            q_oil_eur_normalized = ?, 
+            q_gas_eur_normalized = ?
         WHERE 
             scenario_id = ? AND uwi = ?;
         """
 
         try:
-            self.cursor.execute(query, (q_oil_eur, q_gas_eur, scenario_id, uwi))
+            self.cursor.execute(query, (q_oil_eur, q_gas_eur, q_oil_eur_normalized, q_gas_eur_normalized, scenario_id, uwi))
             if self.cursor.rowcount == 0:
                 print(f"No matching row found for UWI: {uwi} and Scenario ID: {scenario_id}.")
-            self.connection.commit()  # Commit the changes
+            self.connection.commit()
         except Exception as e:
             print(f"Error updating EUR values for UWI {uwi}: {e}")
+        finally:
+            self.disconnect()
+
 
     #keep
     def retrieve_model_data_by_scenario_and_uwi(self, scenario_id, uwi):
@@ -568,6 +602,35 @@ class DatabaseManager:
             print(f"Error storing model data: {e}")
         finally:
             self.disconnect()
+
+
+    
+    def update_payback_months(self, uwi, payback_months, scenario_id):
+        """
+        Updates the payback_months column in model_properties for a given UWI and scenario.
+        
+        :param uwi: Unique Well Identifier
+        :param payback_months: Number of months required for payback
+        :param scenario_id: Scenario identifier
+        """
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            query = """
+                UPDATE model_properties 
+                SET payback_months = ? 
+                WHERE uwi = ? AND scenario_id = ?
+            """
+            cursor.execute(query, (payback_months, uwi, scenario_id))
+            self.connection.commit()
+            print(f"Updated payback months for UWI {uwi} in scenario {scenario_id}: {payback_months}")
+        except Exception as e:
+            print(f"Error updating payback months for UWI {uwi}: {e}")
+        finally:
+            self.disconnect()
+
+
+
 
     def retrieve_prod_rates_all(self, current_uwi=None, scenario_id=None):
         try:
@@ -784,6 +847,76 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def get_capex_for_uwi(self, uwi, scenario_id):
+        """
+        Retrieve capital expenditures (CapEx) for a given UWI and scenario.
+    
+        Args:
+            uwi (str): Unique Well Identifier.
+            scenario_id (int): Scenario ID.
+    
+        Returns:
+            float: CapEx value or 0 if not found.
+        """
+        self.connect()
+        query = """
+        SELECT capital_expenditures FROM model_properties
+        WHERE scenario_id = ? AND uwi = ?
+        """
+        try:
+            self.cursor.execute(query, (scenario_id, uwi))
+            result = self.cursor.fetchone()
+            return result[0] if result else 0
+        except Exception as e:
+            print(f"Error retrieving CapEx for UWI {uwi}: {e}")
+            return 0
+        finally:
+            self.disconnect()
+
+    def get_opex_for_uwi(self, uwi, scenario_id):
+        """
+        Retrieve operating expenditures (OpEx) for a given UWI and scenario.
+    
+        Args:
+            uwi (str): Unique Well Identifier.
+            scenario_id (int): Scenario ID.
+    
+        Returns:
+            float: OpEx value or 0 if not found.
+        """
+        self.connect()
+        query = """
+        SELECT operating_expenditures FROM model_properties
+        WHERE scenario_id = ? AND uwi = ?
+        """
+        try:
+            self.cursor.execute(query, (scenario_id, uwi))
+            result = self.cursor.fetchone()
+            return result[0] if result else 0
+        except Exception as e:
+            print(f"Error retrieving OpEx for UWI {uwi}: {e}")
+            return 0
+        finally:
+            self.disconnect()
+
+
+    def retrieve_lateral_lengths(self):
+        """
+        Retrieve lateral lengths for all UWIs from the database.
+    
+        Returns:
+            pd.DataFrame: DataFrame with columns ['uwi', 'lateral']
+        """
+        self.connect()
+        try:
+            query = "SELECT uwi, lateral FROM uwis WHERE lateral IS NOT NULL"
+            df = pd.read_sql(query, self.connection)
+            return df
+        except Exception as e:
+            print(f"Error retrieving lateral lengths: {e}")
+            return pd.DataFrame()
+        finally:
+            self.disconnect()
 
     def get_planned_wells(self):
         """Get all wells with 'Planned' status"""
@@ -2185,6 +2318,134 @@ class DatabaseManager:
             self.disconnect()
 
 
+    def get_well_attributes(self, wells, attributes):
+        """
+        Retrieve specified attributes for given wells from multiple tables
+
+        Parameters:
+        -----------
+        wells : list
+            List of UWIs to retrieve data for
+        attributes : list
+            List of attributes in format 'table_name.column_name'
+
+        Returns:
+        --------
+        pd.DataFrame with wells as index and attributes as columns
+        """
+        try:
+            self.connect()
+    
+            # Prepare a DataFrame to store results
+            result_df = pd.DataFrame(index=wells)
+    
+            for attr in attributes:
+                # Split attribute into table and column name
+                table, column = attr.split('.')
+        
+                try:
+                    # Try uppercase UWI first
+                    try:
+                        query = f"""
+                        SELECT UWI, "{column}" 
+                        FROM "{table}" 
+                        WHERE UWI IN ({','.join(['?']*len(wells))})
+                        """
+                        df_attr = pd.read_sql(query, self.connection, params=wells)
+                        df_attr.set_index('UWI', inplace=True)
+                
+                    except:
+                        # If that fails, try lowercase uwi
+                        query = f"""
+                        SELECT uwi, "{column}" 
+                        FROM "{table}" 
+                        WHERE uwi IN ({','.join(['?']*len(wells))})
+                        """
+                        df_attr = pd.read_sql(query, self.connection, params=wells)
+                        df_attr.set_index('uwi', inplace=True)
+            
+                    # Add to result DataFrame
+                    result_df[attr] = df_attr[column]
+        
+                except Exception as e:
+                    print(f"Error fetching attribute {attr}: {e}")
+                    continue
+    
+            return result_df
+
+        except Exception as e:
+            print(f"Error retrieving well attributes: {e}")
+            return pd.DataFrame()
+        finally:
+            self.disconnect()
+
+
+    def _is_numeric_column(self, data, col_idx):
+        """
+        Strictly check if a column contains only numeric values.
+        Returns True only if ALL non-NULL values are numeric.
+        """
+        try:
+            for row in data:
+                if row[col_idx] is not None and row[col_idx] != '':
+                    # Try converting to float to check if numeric
+                    try:
+                        float(row[col_idx])
+                    except (ValueError, TypeError):
+                        return False
+            return True
+        except Exception:
+            return False
+
+    def get_numeric_attributes(self):
+        """
+        Discover and return strictly numeric attributes from zone tables.
+        Excludes any columns with mixed types or string values.
+        """
+        try:
+            self.connect()
+            numeric_columns = set()
+            well_zones = self.fetch_zone_names_by_type("Well")
+        
+            for zone_tuple in well_zones:
+                zone_name = zone_tuple[0]
+                try:
+                    # Fetch zone table data
+                    data, columns = self.fetch_zone_table_data(zone_name)
+                
+                    # Process each column except UWI
+                    for col in columns[1:]:  # Skip UWI column
+                        col_idx = columns.index(col)
+                    
+                        # Enhanced numeric check
+                        if self._is_numeric_column(data, col_idx):
+                            # Additional validation: check for consistent data type
+                            sample_values = [row[col_idx] for row in data 
+                                           if row[col_idx] is not None and row[col_idx] != '']
+                        
+                            if sample_values:  # Only process if we have non-null values
+                                try:
+                                    # Convert all values to float to ensure consistency
+                                    all_numeric = all(isinstance(float(val), float) 
+                                                   for val in sample_values)
+                                    if all_numeric:
+                                        numeric_columns.add(f"{zone_name}.{col}")
+                                except (ValueError, TypeError):
+                                    continue
+                            
+                except Exception as zone_error:
+                    print(f"Skipping zone {zone_name}: {zone_error}")
+                    continue
+
+            return sorted(list(numeric_columns))
+        
+        except Exception as e:
+            print(f"Error discovering numeric attributes: {e}")
+            return []
+        
+        finally:
+            self.disconnect()
+
     def create_zones_table(self):
         """
         Create the Zones table to store zone names and types if it does not already exist.
@@ -2446,6 +2707,55 @@ class DatabaseManager:
             raise
         finally:
             self.disconnect()
+
+    def fetch_correlation_data(self, table_name, column_name, uwis):
+        """
+        Fetch specific column data for selected UWIs.
+        Parameters:
+        -----------
+        table_name : str
+            The name of the zone/table
+        column_name : str
+            The specific column to fetch
+        uwis : list
+            List of UWIs to fetch data for
+        Returns:
+        --------
+        pd.Series: Series containing the values for the specified column
+        """
+        self.connect()
+        try:
+            # First, find the actual table name using same logic as fetch_zone_table_data
+            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [table[0] for table in self.cursor.fetchall()]
+        
+            matching_tables = [
+                table for table in tables 
+                if table_name.lower() in table.lower() or 
+                   table.lower().startswith(table_name.lower())
+            ]
+            if not matching_tables:
+                raise ValueError(f"No table found for: {table_name}")
+        
+            actual_table = matching_tables[0]
+        
+            # Create placeholders for SQL IN clause
+            placeholders = ','.join('?' * len(uwis))
+        
+            # Fetch just the specific column for the selected UWIs
+            query = f"SELECT UWI, {column_name} FROM {actual_table} WHERE UWI IN ({placeholders})"
+            self.cursor.execute(query, uwis)
+        
+            # Convert to DataFrame
+            results = self.cursor.fetchall()
+            return pd.DataFrame(results, columns=['UWI', column_name])
+        
+        except sqlite3.Error as e:
+            print(f"Error fetching correlation data: {e}")
+            raise
+        finally:
+            self.disconnect()
+
 
     def fetch_zone_data(self, zone_name):
        self.connect()

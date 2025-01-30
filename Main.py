@@ -1157,9 +1157,10 @@ class MainWindow(QMainWindow):
 
         #self.regenerate_html_for_uwi(self.current_uwi)
         self.update_db()
-        self.eur_npv = EurNpv(self.db_manager, self.db_path)
+        self.eur_npv = EurNpv(self.db_manager, self.scenario_id) 
         self.eur_npv.calculate_eur()
         self.eur_npv.calculate_npv_and_efr()
+        self.eur_npv.calculate_payback_months()
         self.update_displays()
         
         self.regenerated = False
