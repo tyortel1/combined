@@ -477,11 +477,29 @@ class Plot(QDialog):
             if not self.seismic_data:
                 print("No seismic data available, skipping plotting.")
             else:
-                # Build KDTree for seismic trace locations
+                # ADD THE DEBUG PRINTS RIGHT HERE
+                print("Seismic data shape:", self.seismic_data['trace_data'].shape if 'trace_data' in self.seismic_data else "No trace_data found")
+                print("Time axis length:", len(self.seismic_data['time_axis']) if 'time_axis' in self.seismic_data else "No time_axis found")
 
                 # Batch query for all well path points to find nearest seismic traces
                 well_coords = np.column_stack((self.current_well_data['X Offset'], self.current_well_data['Y Offset']))
+                print("Well coordinates shape:", well_coords.shape)
+                print("Well X range:", well_coords[:, 0].min(), "to", well_coords[:, 0].max())
+                print("Well Y range:", well_coords[:, 1].min(), "to", well_coords[:, 1].max())
+                print("First few seismic coordinates from KDTree:")
+                print(self.seismic_kdtree.data[:5])
+                print("\nSeismic coordinate ranges:")
+                print("X range:", self.seismic_kdtree.data[:, 0].min(), "to", self.seismic_kdtree.data[:, 0].max())
+                print("Y range:", self.seismic_kdtree.data[:, 1].min(), "to", self.seismic_kdtree.data[:, 1].max())
+
                 distances, indices = self.seismic_kdtree.query(well_coords)
+                print("KDTree indices range:", indices.min(), "to", indices.max())
+
+                                # Add distance-based filtering
+                max_distance = 100  # Maximum distance in same units as your coordinates
+                valid_traces = distances <= max_distance
+                indices = indices[valid_traces]
+                filtered_distances = distances[valid_traces]
 
                 seismic_trace_amplitudes = self.seismic_data['trace_data'][indices, :]
                 cumulative_distances = np.array(self.combined_distances)

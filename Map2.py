@@ -52,7 +52,7 @@ from ProjectOpen import ProjectLoader# Import the DrawingArea class
 from UiSetup import Ui_MainWindow
 from Calculations import StagesCalculationDialog, ZoneAttributesDialog, WellAttributesDialog
 from InZone import InZoneDialog
-from CrossPlot import CrossPlot
+from CrossPlot import CrossPlot3D
 from DataLoadSegy import DataLoadSegy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -2391,7 +2391,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.plot_gb.closed.connect(lambda: self.plot_gb_windows.remove(self.plot_gb))
 
     def crossPlot(self):
-        self.cross_plot_dialog = CrossPlot(self.master_df)
+        self.cross_plot_dialog = CrossPlot3D(self.db_manager)
         self.cross_plot_dialog.show()
 
 
