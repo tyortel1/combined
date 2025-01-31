@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 from DefaultProperties import DefaultProperties
 from DatabaseManager import DatabaseManager
 

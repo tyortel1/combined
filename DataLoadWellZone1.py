@@ -1,4 +1,4 @@
-﻿from genericpath import samefile
+from genericpath import samefile
 import pandas as pd
 import numpy as np
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QProgressDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox

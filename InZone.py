@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import (QDialog, QLabel, QComboBox, QMessageBox, 
+from PySide6.QtWidgets import (QDialog, QLabel, QComboBox, QMessageBox, 
                                QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, 
                                QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
 from PySide6.QtGui import QIcon

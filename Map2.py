@@ -1,4 +1,4 @@
-﻿# main.pydef well
+# main.pydef well
 from email.policy import default
 import subprocess
 import sys

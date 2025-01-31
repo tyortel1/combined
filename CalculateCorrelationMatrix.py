@@ -59,6 +59,7 @@ class CorrelationDisplayDialog(QDialog):
         self.setWindowTitle("Correlation Matrix Results")
         self.setMinimumWidth(1400)
         self.setMinimumHeight(900)
+
         self.correlation_matrix = correlation_matrix
         self.data_matrix = data_matrix
 
@@ -67,21 +68,21 @@ class CorrelationDisplayDialog(QDialog):
         splitter = QSplitter(Qt.Horizontal)
         main_layout = QHBoxLayout(self)
 
-        ## ---- LEFT PANEL: HEATMAP ---- ##
+        # Left Panel: Heatmap
         heatmap_section = QWidget()
         heatmap_layout = QVBoxLayout(heatmap_section)
 
-        fig = Figure(figsize=(8, 6))
-        self.heatmap_canvas = FigureCanvasQTAgg(fig)
-        self.heatmap_ax = fig.add_subplot(111)
+        self.heatmap_fig = Figure(figsize=(8, 6))
+        self.heatmap_canvas = FigureCanvasQTAgg(self.heatmap_fig)
+        self.heatmap_ax = self.heatmap_fig.add_subplot(111)
 
-        self.draw_heatmap()  # Draw the heatmap initially
+        self.draw_heatmap()
         self.heatmap_canvas.mpl_connect('button_press_event', self.on_heatmap_click)
 
         heatmap_layout.addWidget(self.heatmap_canvas)
         splitter.addWidget(heatmap_section)
 
-        ## ---- RIGHT PANEL: RAW DATA + CROSSPLOT ---- ##
+        # Right Panel: Raw Data Table + Crossplot
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
 
@@ -110,7 +111,6 @@ class CorrelationDisplayDialog(QDialog):
         right_layout.addWidget(export_button, alignment=Qt.AlignRight | Qt.AlignBottom)
 
         splitter.addWidget(right_panel)
-
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
 
@@ -120,7 +120,7 @@ class CorrelationDisplayDialog(QDialog):
     def draw_heatmap(self):
         """Draws the heatmap with interactive click support."""
         self.heatmap_ax.clear()
-        heatmap = sns.heatmap(
+        sns.heatmap(
             self.correlation_matrix, annot=True, cmap='RdYlBu', center=0, 
             fmt='.2f', vmin=-1, vmax=1, ax=self.heatmap_ax, cbar=True,
             annot_kws={"size": 8},
@@ -130,10 +130,6 @@ class CorrelationDisplayDialog(QDialog):
 
         self.heatmap_ax.tick_params(axis='x', labelsize=6, rotation=45)
         self.heatmap_ax.tick_params(axis='y', labelsize=6)
-
-        if heatmap.collections and heatmap.collections[0].colorbar:
-            heatmap.collections[0].colorbar.ax.tick_params(labelsize=8)
-
         self.heatmap_canvas.draw()
 
     def on_heatmap_click(self, event):
@@ -193,6 +189,43 @@ class CorrelationDisplayDialog(QDialog):
                 self.raw_data_table.setItem(i, j, item)
 
         self.raw_data_table.resizeColumnsToContents()
+
+    def export_to_excel(self):
+        """Export correlation matrix to an Excel file with colors"""
+        try:
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Excel Files (*.xlsx)")
+            if not file_path:
+                return  
+
+            if not file_path.lower().endswith('.xlsx'):
+                file_path += '.xlsx'
+
+            workbook = openpyxl.Workbook()
+            std_sheet = workbook.active
+            workbook.remove(std_sheet)
+
+            sheet = workbook.create_sheet("Correlation Matrix")
+
+            for col_idx, col_name in enumerate(self.correlation_matrix.columns, start=2):
+                sheet.cell(row=1, column=col_idx, value=col_name)
+
+            for row_idx, row_name in enumerate(self.correlation_matrix.index, start=2):
+                sheet.cell(row=row_idx, column=1, value=row_name)
+
+                for col_idx, col_name in enumerate(self.correlation_matrix.columns, start=2):
+                    value = self.correlation_matrix.loc[row_name, col_name]
+                    cell = sheet.cell(row=row_idx, column=col_idx, value=value)
+
+                    if pd.notna(value):
+                        rgb = (255, 204, 204)  # Default color
+                        hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                        cell.fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+
+            workbook.save(file_path)
+            QMessageBox.information(self, "Export Successful", f"File saved to {file_path}")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"An error occurred while exporting: {str(e)}")
 
     def get_seaborn_qcolor(self, value):
         """Convert Seaborn heatmap color to QColor for Qt tables"""
@@ -385,20 +418,15 @@ class GenerateCorrelationMatrix(QDialog):
             self.available_attrs.addItem(item)
         
     def load_data(self):
-        """Load planned and active UWIs and attributes from the database"""
+        """Load available UWIs and attributes from the database"""
         try:
-            # Load UWIs
-            print("\nGetting Planned and Active UWIs...")
-            planned_wells = self.db_manager.get_uwis_by_status("Planned")
-            active_wells = self.db_manager.get_uwis_by_status("Active")
+            # Load UWIs into available_uwis
+            print("\nGetting UWIs...")
+            uwis = self.db_manager.get_uwis()  # Fetch all UWIs
+            print(f"Found UWIs: {uwis}")
+            self.available_uwis.addItems(uwis)  # Add to list
 
-            print(f"Planned UWIs: {planned_wells}")
-            print(f"Active UWIs: {active_wells}")
-
-            self.planned_wells_list.addItems(planned_wells)
-            self.active_wells_list.addItems(active_wells)
-    
-            # Get well zones
+            # Fetch well zones
             print("\nFetching Well Zones...")
             well_zones = self.db_manager.fetch_zone_names_by_type("Well")
             print(f"Found Well Zones: {[zone[0] for zone in well_zones]}")
@@ -419,7 +447,7 @@ class GenerateCorrelationMatrix(QDialog):
                     for col in columns[1:]:  # Skip UWI column
                         col_idx = columns.index(col)
                         print(f"Checking Column: {col}")
-                    
+
                         if self._is_numeric_column(data, col_idx):
                             numeric_columns.append(f"{zone_name}.{col}")
                         else:
@@ -429,38 +457,15 @@ class GenerateCorrelationMatrix(QDialog):
                     print(f"Skipping zone {zone_name}: {e}")
                     continue
 
-            # Add additional tables to check
-            additional_tables = ['model_properties', 'uwis', 'well_pads']
-        
-            for table in additional_tables:
-                try:
-                    # Fetch columns from additional tables
-                    self.cursor.execute(f"PRAGMA table_info({table})")
-                    columns = [col[1] for col in self.cursor.fetchall() if col[1].lower() != 'uwi']
-                
-                    for col in columns:
-                        # Check if the column looks numeric
-                        query = f"SELECT {col} FROM {table} LIMIT 5"
-                        self.cursor.execute(query)
-                        sample_data = self.cursor.fetchall()
-                    
-                        # Validate numeric nature
-                        if sample_data and all(
-                            isinstance(row[0], (int, float)) or 
-                            (isinstance(row[0], str) and row[0].replace('.','').isdigit()) 
-                            for row in sample_data if row[0] is not None
-                        ):
-                            numeric_columns.append(f"{table}.{col}")
-            
-                except Exception as e:
-                    print(f"Error processing table {table}: {e}")
-
             print(f"\nFinal List of Numeric Attributes: {numeric_columns}")
-            self.attribute_list.addItems(numeric_columns)
+
+            # Ensure attributes are correctly added to available_attrs
+            self.available_attrs.addItems(numeric_columns)
 
         except Exception as e:
             print(f"Error loading data: {str(e)}")
             QMessageBox.critical(self, "Error", f"Error loading data: {str(e)}")
+
     def _is_numeric_column(self, data, col_idx):
         try:
             print(f"\nChecking if column is numeric:")

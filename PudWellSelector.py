@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog, QLabel, QDoubleSpinBox, QComboBox, QVBoxLayout, 
     QHBoxLayout, QPushButton, QMessageBox, QListWidget, QWidget,
     QGroupBox, QLineEdit, QSpinBox, QDateTimeEdit
