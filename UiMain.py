@@ -15,13 +15,14 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QDateTimeEdit,
     QTableWidget,
-    QCheckBox, QSpacerItem, QSizePolicy, QLayout
+    QCheckBox, QSpacerItem, QSizePolicy, QLayout, QMenu, QDialog
    
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtGui import QIcon, QDoubleValidator, QAction
 from PySide6.QtCore import Qt, QDate, QDateTime, QSize
 from PySide6.QtWebEngineCore import QWebEngineSettings
+from SaveDeclineCurveDialog import SaveDeclineCurveDialog
 
 
 class UI_main:
@@ -562,29 +563,26 @@ class UI_main:
         tab2 = QWidget()
         tab2_layout = QGridLayout(tab2)
         self.tab_widget.addTab(tab2, "Well Parameters")
-
+    
         model_toolbar = QToolBar("Model Toolbar")
-        model_toolbar.setIconSize(QSize(32, 32))  # Set the icon size
-
-
-
+        model_toolbar.setIconSize(QSize(32, 32))
         update_action = QAction(QIcon(os.path.join(self.script_dir, "Icons", "Update Curve")), "Update Curves", MainWindow)
-        update_action.triggered.connect(MainWindow.model_table_update)  # Connect the update_model method
-
-        # Add actions to the model toolbar
-
+        update_action.triggered.connect(MainWindow.model_table_update)
         model_toolbar.addAction(update_action)
-
         tab2_layout.addWidget(model_toolbar, 0, 1, 1, 6)
-
+    
         self.scenario_dropdown2 = QComboBox()
         self.scenario_dropdown2.setFixedHeight(32)
         self.scenario_dropdown2.currentTextChanged.connect(MainWindow.on_scenario_changed2)
         tab2_layout.addWidget(self.scenario_dropdown2, 0, 0, 1, 1)
-
-
-
-        self.model_properties = QTableWidget(30, 33)  # 30 rows, 33 columns
+    
+        self.model_properties = QTableWidget(30, 33)
+    
+        # Set up context menu
+        self.model_properties.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.model_properties.customContextMenuRequested.connect(MainWindow.show_context_menu)
+    
+        # Rest of your existing table setup code
         self.model_properties.setHorizontalHeaderLabels([
             "uwi", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
             "one_year_oil_production", "one_year_gas_production", "di_oil", "di_gas", "oil_b_factor", "gas_b_factor",
@@ -593,16 +591,15 @@ class UI_main:
             "capital_expenditures", "operating_expenditures", "economic_limit_type", "economic_limit_date", "net_price_oil",
             "net_price_gas", "gas_model_status", "oil_model_status"
         ])
+    
         self.model_properties.verticalHeader().setVisible(False)
-
         for i in range(self.model_properties.rowCount()):
             self.model_properties.setRowHeight(i, 10)
             self.model_properties.setColumnWidth(i, 80)
-        tab2_layout.addWidget(self.model_properties, 1, 0, 9, 6)  # row: 1-9, column: 0-6
+    
+        tab2_layout.addWidget(self.model_properties, 1, 0, 9, 6)
         self.model_properties.itemChanged.connect(MainWindow.on_model_properties_item_changed)
-
-
-        # Connect header click signal to sorting handler
+    
         header = self.model_properties.horizontalHeader()
         header.sectionClicked.connect(MainWindow.on_header_clicked)
 

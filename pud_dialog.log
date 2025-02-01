@@ -7072,3 +7072,1830 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-30 12:31:59,295 - root - INFO - Processing well WP8L1Side1Leg2 with UWI: 840300000505415
 2025-01-30 12:32:01,033 - root - INFO - Well pads table populated successfully.
 2025-01-30 12:32:06,633 - root - INFO - Dialog closed successfully
+2025-01-31 15:11:35,764 - root - DEBUG - Toolbar setup completed
+2025-01-31 15:11:35,766 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 15:11:35,770 - root - DEBUG - Table setup completed
+2025-01-31 15:11:35,770 - root - DEBUG - UI setup completed successfully
+2025-01-31 15:11:35,771 - root - DEBUG - Signal connections established
+2025-01-31 15:11:35,831 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:11:35,831 - root - INFO - Initial data loaded successfully.
+2025-01-31 15:11:35,831 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 15:11:43,371 - root - INFO - Scenario changed to: Test
+2025-01-31 15:11:43,372 - root - DEBUG - UI updated for scenario: Test
+2025-01-31 15:11:43,374 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:11:45,103 - root - INFO - Scenario changed to: First
+2025-01-31 15:11:45,104 - root - DEBUG - UI updated for scenario: First
+2025-01-31 15:11:45,160 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:11:56,158 - root - INFO - Scenario changed to: Test
+2025-01-31 15:11:56,160 - root - DEBUG - UI updated for scenario: Test
+2025-01-31 15:11:56,162 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:11:58,276 - root - INFO - Scenario changed to: First
+2025-01-31 15:11:58,277 - root - DEBUG - UI updated for scenario: First
+2025-01-31 15:11:58,331 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:14:35,038 - root - INFO - Dialog closed successfully
+2025-01-31 15:14:38,286 - root - DEBUG - Toolbar setup completed
+2025-01-31 15:14:38,286 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 15:14:38,288 - root - DEBUG - Table setup completed
+2025-01-31 15:14:38,288 - root - DEBUG - UI setup completed successfully
+2025-01-31 15:14:38,288 - root - DEBUG - Signal connections established
+2025-01-31 15:14:38,357 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:14:38,357 - root - INFO - Initial data loaded successfully.
+2025-01-31 15:14:38,358 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 15:25:07,195 - root - DEBUG - Toolbar setup completed
+2025-01-31 15:25:07,196 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 15:25:07,199 - root - DEBUG - Table setup completed
+2025-01-31 15:25:07,199 - root - DEBUG - UI setup completed successfully
+2025-01-31 15:25:07,200 - root - DEBUG - Signal connections established
+2025-01-31 15:25:07,259 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:25:07,259 - root - INFO - Initial data loaded successfully.
+2025-01-31 15:25:07,259 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 15:29:16,003 - root - DEBUG - Toolbar setup completed
+2025-01-31 15:29:16,004 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 15:29:16,007 - root - DEBUG - Table setup completed
+2025-01-31 15:29:16,007 - root - DEBUG - UI setup completed successfully
+2025-01-31 15:29:16,008 - root - DEBUG - Signal connections established
+2025-01-31 15:29:16,068 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:29:16,069 - root - INFO - Initial data loaded successfully.
+2025-01-31 15:29:16,069 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 15:29:44,579 - root - INFO - Dialog closed successfully
+2025-01-31 15:53:03,124 - root - DEBUG - Toolbar setup completed
+2025-01-31 15:53:03,125 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 15:53:03,126 - root - DEBUG - Table setup completed
+2025-01-31 15:53:03,127 - root - DEBUG - UI setup completed successfully
+2025-01-31 15:53:03,128 - root - DEBUG - Signal connections established
+2025-01-31 15:53:03,205 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:53:03,205 - root - INFO - Initial data loaded successfully.
+2025-01-31 15:53:03,205 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 15:53:20,304 - root - INFO - Scenario 'Fifth' added successfully with ID 11. Active: 0
+2025-01-31 15:53:20,317 - root - INFO - Scenario changed to: Fifth
+2025-01-31 15:53:20,318 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 15:53:20,321 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:53:20,359 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 15:53:20,366 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 15:53:20,373 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 15:53:20,380 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 15:53:20,386 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 15:53:20,394 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 15:53:20,401 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 15:53:20,408 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 15:53:20,415 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 15:53:20,421 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 15:53:20,428 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 15:53:20,434 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 15:53:20,441 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 15:53:20,448 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 15:53:20,455 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 15:53:20,463 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 15:53:20,468 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 15:53:20,474 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 15:53:20,480 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 15:53:20,487 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 15:53:20,492 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 15:53:20,498 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 15:53:20,503 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 15:53:20,510 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 15:53:20,516 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 15:53:20,521 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 15:53:20,527 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 15:53:22,210 - root - INFO - Scenario 11 updated with 27 wells.
+2025-01-31 15:53:22,285 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,306 - root - ERROR - Error processing well WP8L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,307 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,323 - root - ERROR - Error processing well WP3L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,324 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,336 - root - ERROR - Error processing well WP2L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,336 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,350 - root - ERROR - Error processing well WP7L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,351 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,364 - root - ERROR - Error processing well WP3L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,364 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,377 - root - ERROR - Error processing well WP6L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,378 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,391 - root - ERROR - Error processing well WP8L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,392 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,404 - root - ERROR - Error processing well WP3L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,404 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,419 - root - ERROR - Error processing well WP7L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,420 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,435 - root - ERROR - Error processing well WP5L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,435 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,448 - root - ERROR - Error processing well WP9L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,448 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,462 - root - ERROR - Error processing well WP1L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,462 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,474 - root - ERROR - Error processing well WP2L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,475 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,486 - root - ERROR - Error processing well WP7L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,487 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,498 - root - ERROR - Error processing well WP9L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,499 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,510 - root - ERROR - Error processing well WP6L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,512 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,524 - root - ERROR - Error processing well WP5L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,524 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,536 - root - ERROR - Error processing well WP6L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,536 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 15:53:22,548 - root - ERROR - Error processing well WP4L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,549 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,560 - root - ERROR - Error processing well WP9L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,561 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,574 - root - ERROR - Error processing well WP1L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,574 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,587 - root - ERROR - Error processing well WP1L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,588 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,601 - root - ERROR - Error processing well WP2L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,602 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,615 - root - ERROR - Error processing well WP5L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,616 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 15:53:22,630 - root - ERROR - Error processing well WP4L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,631 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,646 - root - ERROR - Error processing well WP4L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:53:22,646 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 15:53:22,660 - root - ERROR - Error processing well WP8L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 15:54:01,685 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:54:13,617 - root - INFO - Widget change tracked - Row: 1, Column: 1, Value: 2025-03-30
+2025-01-31 15:55:20,602 - root - INFO - Updating scenario with 2 modified rows
+2025-01-31 15:55:20,616 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:55:20,625 - root - ERROR - Error updating row 4: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:55:34,831 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:55:47,688 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 15:55:47,690 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:55:49,104 - root - INFO - Well pads table populated successfully.
+2025-01-31 15:56:39,190 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 15:56:39,192 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:56:41,004 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:00:54,866 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:00:54,867 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:00:54,869 - root - DEBUG - Table setup completed
+2025-01-31 16:00:54,870 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:00:54,871 - root - DEBUG - Signal connections established
+2025-01-31 16:00:54,874 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:00:54,875 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:00:54,914 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:00:54,954 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:00:54,954 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:00:54,954 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:00:58,373 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 16:00:58,389 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'get_well_pad_data'
+2025-01-31 16:04:02,065 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:04:02,066 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:04:02,068 - root - DEBUG - Table setup completed
+2025-01-31 16:04:02,068 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:04:02,069 - root - DEBUG - Signal connections established
+2025-01-31 16:04:02,072 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:04:02,073 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:04:02,107 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:04:02,266 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:04:02,266 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:04:02,266 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:04:05,518 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 16:04:05,530 - root - ERROR - Error updating row 1: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:04:18,507 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:11:41,555 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:11:41,556 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:11:41,558 - root - DEBUG - Table setup completed
+2025-01-31 16:11:41,558 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:11:41,559 - root - DEBUG - Signal connections established
+2025-01-31 16:11:41,563 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:11:41,564 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:11:41,605 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:11:41,642 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:11:41,642 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:11:41,642 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:11:46,918 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 16:11:46,930 - root - ERROR - Error updating row 1: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:11:48,472 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:16:41,073 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:16:41,075 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:16:41,076 - root - DEBUG - Table setup completed
+2025-01-31 16:16:41,077 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:16:41,078 - root - DEBUG - Signal connections established
+2025-01-31 16:16:41,081 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:16:41,082 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:16:41,125 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:16:41,161 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:16:41,163 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:16:41,163 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:17:44,940 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:17:44,941 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:17:44,943 - root - DEBUG - Table setup completed
+2025-01-31 16:17:44,943 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:17:44,945 - root - DEBUG - Signal connections established
+2025-01-31 16:17:44,948 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:17:44,949 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:17:44,988 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:17:45,037 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:17:45,037 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:17:45,037 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:17:53,387 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 16:17:53,401 - root - ERROR - Error updating row 1: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:18:01,547 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:22:50,066 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:22:50,067 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:22:50,070 - root - DEBUG - Table setup completed
+2025-01-31 16:22:50,070 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:22:50,071 - root - DEBUG - Signal connections established
+2025-01-31 16:22:50,076 - root - INFO - Scenario changed to: Fifth
+2025-01-31 16:22:50,077 - root - DEBUG - UI updated for scenario: Fifth
+2025-01-31 16:22:50,113 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:22:50,152 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:22:50,152 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:22:50,152 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:22:54,909 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 16:22:54,933 - root - ERROR - Error updating row 1: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:22:56,284 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:26:32,244 - root - INFO - Scenario 'dfer' added successfully with ID 12. Active: 0
+2025-01-31 16:26:32,257 - root - INFO - Scenario changed to: dfer
+2025-01-31 16:26:32,259 - root - DEBUG - UI updated for scenario: dfer
+2025-01-31 16:26:32,262 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:26:32,299 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 16:26:32,305 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 16:26:32,312 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 16:26:32,318 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 16:26:32,324 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 16:26:32,332 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 16:26:32,339 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 16:26:32,346 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 16:26:32,354 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 16:26:32,361 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 16:26:32,369 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 16:26:32,376 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 16:26:32,383 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 16:26:32,390 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 16:26:32,396 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 16:26:32,402 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 16:26:32,408 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 16:26:32,414 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 16:26:32,420 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 16:26:32,426 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 16:26:32,431 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 16:26:32,438 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 16:26:32,443 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 16:26:32,449 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 16:26:32,456 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 16:26:32,462 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 16:26:32,468 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 16:35:02,769 - root - INFO - Scenario 12 updated with 27 wells.
+2025-01-31 16:35:02,855 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:02,898 - root - ERROR - Error processing well WP8L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,899 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:02,914 - root - ERROR - Error processing well WP3L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,914 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:02,926 - root - ERROR - Error processing well WP2L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,926 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:02,939 - root - ERROR - Error processing well WP7L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,939 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:02,952 - root - ERROR - Error processing well WP3L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,953 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:02,965 - root - ERROR - Error processing well WP6L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,966 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:02,978 - root - ERROR - Error processing well WP8L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,978 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:02,992 - root - ERROR - Error processing well WP3L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:02,993 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,009 - root - ERROR - Error processing well WP7L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,009 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,021 - root - ERROR - Error processing well WP5L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,022 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,041 - root - ERROR - Error processing well WP9L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,041 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,056 - root - ERROR - Error processing well WP1L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,056 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,069 - root - ERROR - Error processing well WP2L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,070 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,082 - root - ERROR - Error processing well WP7L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,082 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,094 - root - ERROR - Error processing well WP9L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,095 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,108 - root - ERROR - Error processing well WP6L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,108 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,120 - root - ERROR - Error processing well WP5L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,121 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,133 - root - ERROR - Error processing well WP6L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,133 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:35:03,146 - root - ERROR - Error processing well WP4L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,146 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,158 - root - ERROR - Error processing well WP9L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,159 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,171 - root - ERROR - Error processing well WP1L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,171 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,184 - root - ERROR - Error processing well WP1L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,185 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,199 - root - ERROR - Error processing well WP2L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,199 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,211 - root - ERROR - Error processing well WP5L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,212 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:35:03,226 - root - ERROR - Error processing well WP4L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,226 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,238 - root - ERROR - Error processing well WP4L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:03,239 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:35:03,252 - root - ERROR - Error processing well WP8L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 16:35:05,447 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:36:28,484 - root - INFO - Scenario 'asdfasdfFirst' added successfully with ID 13. Active: 0
+2025-01-31 16:36:28,500 - root - INFO - Scenario changed to: asdfasdfFirst
+2025-01-31 16:36:28,501 - root - DEBUG - UI updated for scenario: asdfasdfFirst
+2025-01-31 16:36:28,505 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:36:28,545 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 16:36:28,550 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 16:36:28,558 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 16:36:28,566 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 16:36:28,574 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 16:36:28,583 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 16:36:28,590 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 16:36:28,598 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 16:36:28,605 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 16:36:28,612 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 16:36:28,619 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 16:36:28,625 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 16:36:28,631 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 16:36:28,638 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 16:36:28,646 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 16:36:28,653 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 16:36:28,660 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 16:36:28,666 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 16:36:28,673 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 16:36:28,680 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 16:36:28,686 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 16:36:28,694 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 16:36:28,701 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 16:36:28,710 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 16:36:28,717 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 16:36:28,723 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 16:36:28,730 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 16:36:29,882 - root - INFO - Scenario 13 updated with 27 wells.
+2025-01-31 16:36:29,956 - root - INFO - Processing well WP8L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:30,269 - root - INFO - Processing well WP3L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:30,544 - root - INFO - Processing well WP2L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:30,848 - root - INFO - Processing well WP7L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:31,134 - root - INFO - Processing well WP3L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:31,443 - root - INFO - Processed 5/27 wells
+2025-01-31 16:36:31,444 - root - INFO - Processing well WP6L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:31,727 - root - INFO - Processing well WP8L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:32,038 - root - INFO - Processing well WP3L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:32,312 - root - INFO - Processing well WP7L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:32,616 - root - INFO - Processing well WP5L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:32,937 - root - INFO - Processed 10/27 wells
+2025-01-31 16:36:32,938 - root - INFO - Processing well WP9L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:33,263 - root - INFO - Processing well WP1L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:33,560 - root - INFO - Processing well WP2L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:33,852 - root - INFO - Processing well WP7L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:34,216 - root - INFO - Processing well WP9L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:34,549 - root - INFO - Processed 15/27 wells
+2025-01-31 16:36:34,550 - root - INFO - Processing well WP6L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:34,844 - root - INFO - Processing well WP5L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:35,137 - root - INFO - Processing well WP6L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:35,437 - root - INFO - Processing well WP4L1Side1Leg1 with UWI: 840300000505415
+2025-01-31 16:36:35,722 - root - INFO - Processing well WP9L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:36,018 - root - INFO - Processed 20/27 wells
+2025-01-31 16:36:36,018 - root - INFO - Processing well WP1L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:36,318 - root - INFO - Processing well WP1L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:36,621 - root - INFO - Processing well WP2L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:36,916 - root - INFO - Processing well WP5L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:37,198 - root - INFO - Processing well WP4L1Side1Leg3 with UWI: 840300000505415
+2025-01-31 16:36:37,494 - root - INFO - Processed 25/27 wells
+2025-01-31 16:36:37,494 - root - INFO - Processing well WP4L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:36:37,801 - root - INFO - Processing well WP8L1Side1Leg2 with UWI: 840300000505415
+2025-01-31 16:42:11,300 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:42:11,300 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:42:11,302 - root - DEBUG - Table setup completed
+2025-01-31 16:42:11,303 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:42:11,305 - root - DEBUG - Signal connections established
+2025-01-31 16:42:11,308 - root - INFO - Scenario changed to: asdfasdfFirst
+2025-01-31 16:42:11,309 - root - DEBUG - UI updated for scenario: asdfasdfFirst
+2025-01-31 16:42:11,365 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:42:11,554 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:42:11,554 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:42:11,554 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:42:37,542 - root - INFO - Scenario 'ddadaw' added successfully with ID 14. Active: 0
+2025-01-31 16:42:37,559 - root - INFO - Scenario changed to: ddadaw
+2025-01-31 16:42:37,560 - root - DEBUG - UI updated for scenario: ddadaw
+2025-01-31 16:42:37,563 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:42:37,596 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 16:42:37,602 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 16:42:37,608 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 16:42:37,615 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 16:42:37,621 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 16:42:37,628 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 16:42:37,636 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 16:42:37,642 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 16:42:37,649 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 16:42:37,656 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 16:42:37,663 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 16:42:37,670 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 16:42:37,676 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 16:42:37,683 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 16:42:37,689 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 16:42:37,696 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 16:42:37,701 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 16:42:37,707 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 16:42:37,714 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 16:42:37,720 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 16:42:37,725 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 16:42:37,732 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 16:42:37,737 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 16:42:37,743 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 16:42:37,749 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 16:42:37,754 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 16:42:37,761 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 16:42:38,896 - root - INFO - Scenario 14 updated with 27 wells.
+2025-01-31 16:42:38,930 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,930 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,930 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,931 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,931 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,931 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,932 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,932 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,932 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,933 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,933 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,933 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,934 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,934 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,934 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,934 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,934 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,934 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,935 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,936 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,936 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,936 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,936 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,937 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,937 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,937 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,937 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,938 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,938 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,938 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,939 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,939 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,939 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,939 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,939 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,939 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,941 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,941 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,941 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,941 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,942 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,942 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,942 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,942 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,942 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,942 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,942 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,942 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,943 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,943 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,943 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,943 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,945 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,945 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,945 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:42:38,945 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,945 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,945 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,946 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,946 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,946 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,946 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,946 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,947 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,947 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,947 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,947 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,948 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,948 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,948 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,948 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,949 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,949 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:42:38,949 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,949 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,950 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,950 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,950 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:42:38,950 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:42:38,950 - root - ERROR - Error fetching saved decline curve data: Cannot operate on a closed database.
+2025-01-31 16:42:38,951 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:44:56,035 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:44:56,036 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:44:56,037 - root - DEBUG - Table setup completed
+2025-01-31 16:44:56,038 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:44:56,039 - root - DEBUG - Signal connections established
+2025-01-31 16:44:56,042 - root - INFO - Scenario changed to: ddadaw
+2025-01-31 16:44:56,042 - root - DEBUG - UI updated for scenario: ddadaw
+2025-01-31 16:44:56,076 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:44:56,234 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:44:56,234 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:44:56,235 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:45:07,087 - root - INFO - Scenario '11223' added successfully with ID 15. Active: 0
+2025-01-31 16:45:07,101 - root - INFO - Scenario changed to: 11223
+2025-01-31 16:45:07,101 - root - DEBUG - UI updated for scenario: 11223
+2025-01-31 16:45:07,104 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:45:07,139 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 16:45:07,145 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 16:45:07,154 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 16:45:07,160 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 16:45:07,166 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 16:45:07,174 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 16:45:07,180 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 16:45:07,187 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 16:45:07,194 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 16:45:07,201 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 16:45:07,208 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 16:45:07,216 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 16:45:07,223 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 16:45:07,228 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 16:45:07,235 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 16:45:07,240 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 16:45:07,246 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 16:45:07,252 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 16:45:07,258 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 16:45:07,264 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 16:45:07,270 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 16:45:07,275 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 16:45:07,282 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 16:45:07,286 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 16:45:07,292 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 16:45:07,299 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 16:45:07,304 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 16:45:11,534 - root - INFO - Scenario 15 updated with 27 wells.
+2025-01-31 16:45:11,566 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,567 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,568 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,568 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,569 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,570 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,570 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,572 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,572 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,572 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,573 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,573 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,574 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,575 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,575 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,576 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,577 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,577 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,578 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,579 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,579 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,580 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,581 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,581 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,582 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,582 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,583 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,583 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,584 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,585 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,585 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,587 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,587 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,588 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,589 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,589 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,590 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,590 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,591 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,591 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,592 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,592 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,593 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,594 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,594 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,594 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,595 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,595 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,596 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,598 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,598 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,599 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,600 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,600 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,601 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:45:11,601 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,601 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,602 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,603 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,603 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,603 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,604 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,604 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,606 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,607 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,607 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,607 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,608 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,608 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,609 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,609 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,610 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,610 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:45:11,611 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,611 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,612 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,613 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,613 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:45:11,613 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:45:11,614 - root - ERROR - Error fetching saved decline curve data: no such column: scenario_id
+2025-01-31 16:45:11,614 - root - WARNING - No saved decline curve found: Art
+2025-01-31 16:48:02,402 - root - DEBUG - Toolbar setup completed
+2025-01-31 16:48:02,403 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 16:48:02,406 - root - DEBUG - Table setup completed
+2025-01-31 16:48:02,406 - root - DEBUG - UI setup completed successfully
+2025-01-31 16:48:02,407 - root - DEBUG - Signal connections established
+2025-01-31 16:48:02,410 - root - INFO - Scenario changed to: 11223
+2025-01-31 16:48:02,410 - root - DEBUG - UI updated for scenario: 11223
+2025-01-31 16:48:02,447 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:48:02,611 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:48:02,611 - root - INFO - Initial data loaded successfully.
+2025-01-31 16:48:02,611 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 16:48:11,039 - root - INFO - Scenario 'Firstasdf' added successfully with ID 16. Active: 0
+2025-01-31 16:48:11,081 - root - INFO - Scenario changed to: Firstasdf
+2025-01-31 16:48:11,082 - root - DEBUG - UI updated for scenario: Firstasdf
+2025-01-31 16:48:11,084 - root - INFO - Well pads table populated successfully.
+2025-01-31 16:48:11,121 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 16:48:11,127 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 16:48:11,133 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 16:48:11,139 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 16:48:11,146 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 16:48:11,152 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 16:48:11,158 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 16:48:11,165 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 16:48:11,172 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 16:48:11,177 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 16:48:11,217 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 16:48:11,222 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 16:48:11,229 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 16:48:11,234 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 16:48:11,239 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 16:48:11,244 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 16:48:11,249 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 16:48:11,255 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 16:48:11,296 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 16:48:11,302 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 16:48:11,308 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 16:48:11,313 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 16:48:11,319 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 16:48:11,325 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 16:48:11,330 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 16:48:11,335 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 16:48:11,339 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 16:48:15,680 - root - INFO - Scenario 16 updated with 27 wells.
+2025-01-31 16:48:15,714 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,745 - root - ERROR - Error processing well WP8L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,745 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,757 - root - ERROR - Error processing well WP3L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,757 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,767 - root - ERROR - Error processing well WP2L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,768 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,778 - root - ERROR - Error processing well WP7L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,779 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,788 - root - ERROR - Error processing well WP3L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,788 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,800 - root - ERROR - Error processing well WP6L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,801 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,810 - root - ERROR - Error processing well WP8L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,811 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,822 - root - ERROR - Error processing well WP3L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,822 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,833 - root - ERROR - Error processing well WP7L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,833 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,844 - root - ERROR - Error processing well WP5L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,845 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,856 - root - ERROR - Error processing well WP9L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,856 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,867 - root - ERROR - Error processing well WP1L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,867 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,878 - root - ERROR - Error processing well WP2L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,878 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,887 - root - ERROR - Error processing well WP7L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,888 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,898 - root - ERROR - Error processing well WP9L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,898 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,908 - root - ERROR - Error processing well WP6L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,908 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,919 - root - ERROR - Error processing well WP5L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,919 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,930 - root - ERROR - Error processing well WP6L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,930 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 16:48:15,941 - root - ERROR - Error processing well WP4L1Side1Leg1: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,942 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,952 - root - ERROR - Error processing well WP9L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,953 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,963 - root - ERROR - Error processing well WP1L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,963 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:15,973 - root - ERROR - Error processing well WP1L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,974 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,984 - root - ERROR - Error processing well WP2L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,985 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:15,993 - root - ERROR - Error processing well WP5L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:15,994 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 16:48:16,004 - root - ERROR - Error processing well WP4L1Side1Leg3: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:16,004 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:16,014 - root - ERROR - Error processing well WP4L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 16:48:16,014 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 16:48:16,023 - root - ERROR - Error processing well WP8L1Side1Leg2: "['gas_model_status', 'oil_model_status'] not in index"
+2025-01-31 18:24:40,790 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:24:40,791 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:24:40,794 - root - DEBUG - Table setup completed
+2025-01-31 18:24:40,794 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:24:40,795 - root - DEBUG - Signal connections established
+2025-01-31 18:24:40,798 - root - INFO - Scenario changed to: Firstasdf
+2025-01-31 18:24:40,799 - root - DEBUG - UI updated for scenario: Firstasdf
+2025-01-31 18:24:40,835 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:24:40,875 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:24:40,875 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:24:40,875 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:24:52,274 - root - INFO - Scenario '1123' added successfully with ID 17. Active: 0
+2025-01-31 18:24:52,289 - root - INFO - Scenario changed to: 1123
+2025-01-31 18:24:52,291 - root - DEBUG - UI updated for scenario: 1123
+2025-01-31 18:24:52,294 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:24:52,329 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:24:52,335 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:24:52,342 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:24:52,349 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:24:52,356 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:24:52,362 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:24:52,368 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:24:52,376 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:24:52,384 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:24:52,393 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:24:52,400 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:24:52,405 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:24:52,412 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:24:52,419 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:24:52,423 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:24:52,431 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:24:52,436 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:24:52,442 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:24:52,447 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:24:52,453 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:24:52,459 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:24:52,465 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:24:52,470 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:24:52,476 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:24:52,483 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:24:52,488 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:24:52,495 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:24:56,259 - root - INFO - Scenario 17 updated with 27 wells.
+2025-01-31 18:24:56,327 - root - INFO - Processing well WP8L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,355 - root - ERROR - Error processing well WP8L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,355 - root - INFO - Processing well WP3L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,365 - root - ERROR - Error processing well WP3L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,366 - root - INFO - Processing well WP2L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,376 - root - ERROR - Error processing well WP2L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,377 - root - INFO - Processing well WP7L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,387 - root - ERROR - Error processing well WP7L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,389 - root - INFO - Processing well WP3L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,400 - root - ERROR - Error processing well WP3L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,400 - root - INFO - Processing well WP6L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,411 - root - ERROR - Error processing well WP6L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,411 - root - INFO - Processing well WP8L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,421 - root - ERROR - Error processing well WP8L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,422 - root - INFO - Processing well WP3L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,431 - root - ERROR - Error processing well WP3L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,431 - root - INFO - Processing well WP7L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,443 - root - ERROR - Error processing well WP7L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,443 - root - INFO - Processing well WP5L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,453 - root - ERROR - Error processing well WP5L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,453 - root - INFO - Processing well WP9L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,462 - root - ERROR - Error processing well WP9L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,463 - root - INFO - Processing well WP1L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,474 - root - ERROR - Error processing well WP1L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,474 - root - INFO - Processing well WP2L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,483 - root - ERROR - Error processing well WP2L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,484 - root - INFO - Processing well WP7L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,497 - root - ERROR - Error processing well WP7L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,498 - root - INFO - Processing well WP9L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,510 - root - ERROR - Error processing well WP9L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,511 - root - INFO - Processing well WP6L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,522 - root - ERROR - Error processing well WP6L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,523 - root - INFO - Processing well WP5L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,534 - root - ERROR - Error processing well WP5L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,534 - root - INFO - Processing well WP6L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,544 - root - ERROR - Error processing well WP6L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,545 - root - INFO - Processing well WP4L1Side1Leg1 with Saved DC: Art
+2025-01-31 18:24:56,557 - root - ERROR - Error processing well WP4L1Side1Leg1: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,557 - root - INFO - Processing well WP9L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,567 - root - ERROR - Error processing well WP9L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,567 - root - INFO - Processing well WP1L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,578 - root - ERROR - Error processing well WP1L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,579 - root - INFO - Processing well WP1L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,589 - root - ERROR - Error processing well WP1L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,590 - root - INFO - Processing well WP2L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,600 - root - ERROR - Error processing well WP2L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,600 - root - INFO - Processing well WP5L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,610 - root - ERROR - Error processing well WP5L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,610 - root - INFO - Processing well WP4L1Side1Leg3 with Saved DC: Art
+2025-01-31 18:24:56,621 - root - ERROR - Error processing well WP4L1Side1Leg3: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,621 - root - INFO - Processing well WP4L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,632 - root - ERROR - Error processing well WP4L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:24:56,633 - root - INFO - Processing well WP8L1Side1Leg2 with Saved DC: Art
+2025-01-31 18:24:56,642 - root - ERROR - Error processing well WP8L1Side1Leg2: "['gas_model_status', 'oil_model_status', 'q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:25:37,560 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:31:29,073 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:31:29,074 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:31:29,076 - root - DEBUG - Table setup completed
+2025-01-31 18:31:29,076 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:31:29,077 - root - DEBUG - Signal connections established
+2025-01-31 18:31:29,080 - root - INFO - Scenario changed to: 1123
+2025-01-31 18:31:29,080 - root - DEBUG - UI updated for scenario: 1123
+2025-01-31 18:31:29,116 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:31:29,155 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:31:29,155 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:31:29,156 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:31:37,751 - root - INFO - Scenario 'Firstddad' added successfully with ID 18. Active: 0
+2025-01-31 18:31:37,765 - root - INFO - Scenario changed to: Firstddad
+2025-01-31 18:31:37,766 - root - DEBUG - UI updated for scenario: Firstddad
+2025-01-31 18:31:37,768 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:31:37,799 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:31:37,807 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:31:37,813 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:31:37,818 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:31:37,825 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:31:37,831 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:31:37,838 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:31:37,844 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:31:37,850 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:31:37,858 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:31:37,865 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:31:37,873 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:31:37,879 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:31:37,886 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:31:37,894 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:31:37,899 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:31:37,906 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:31:37,911 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:31:37,918 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:31:37,923 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:31:37,930 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:31:37,934 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:31:37,939 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:31:37,945 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:31:37,951 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:31:37,956 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:31:37,961 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:31:39,345 - root - INFO - Scenario 18 updated with 27 wells.
+2025-01-31 18:31:39,390 - root - ERROR - Error processing well WP8L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,398 - root - ERROR - Error processing well WP3L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,409 - root - ERROR - Error processing well WP2L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,418 - root - ERROR - Error processing well WP7L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,426 - root - ERROR - Error processing well WP3L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,433 - root - ERROR - Error processing well WP6L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,441 - root - ERROR - Error processing well WP8L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,450 - root - ERROR - Error processing well WP3L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,458 - root - ERROR - Error processing well WP7L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,464 - root - ERROR - Error processing well WP5L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,472 - root - ERROR - Error processing well WP9L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,479 - root - ERROR - Error processing well WP1L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,487 - root - ERROR - Error processing well WP2L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,494 - root - ERROR - Error processing well WP7L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,502 - root - ERROR - Error processing well WP9L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,511 - root - ERROR - Error processing well WP6L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,518 - root - ERROR - Error processing well WP5L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,525 - root - ERROR - Error processing well WP6L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,531 - root - ERROR - Error processing well WP4L1Side1Leg1: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,539 - root - ERROR - Error processing well WP9L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,545 - root - ERROR - Error processing well WP1L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,554 - root - ERROR - Error processing well WP1L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,562 - root - ERROR - Error processing well WP2L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,569 - root - ERROR - Error processing well WP5L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,576 - root - ERROR - Error processing well WP4L1Side1Leg3: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,584 - root - ERROR - Error processing well WP4L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:39,590 - root - ERROR - Error processing well WP8L1Side1Leg2: "['q_oil_eur', 'q_gas_eur', 'EFR_oil', 'EFR_gas', 'EUR_oil_remaining', 'EUR_gas_remaining', 'npv', 'npv_discounted'] not in index"
+2025-01-31 18:31:48,953 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:32:53,793 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:32:53,794 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:32:53,797 - root - DEBUG - Table setup completed
+2025-01-31 18:32:53,797 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:32:53,799 - root - DEBUG - Signal connections established
+2025-01-31 18:32:53,805 - root - INFO - Scenario changed to: Firstddad
+2025-01-31 18:32:53,806 - root - DEBUG - UI updated for scenario: Firstddad
+2025-01-31 18:32:53,852 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:32:53,896 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:32:53,897 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:32:53,897 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:33:01,533 - root - INFO - Scenario 'Firstadd' added successfully with ID 19. Active: 0
+2025-01-31 18:33:01,546 - root - INFO - Scenario changed to: Firstadd
+2025-01-31 18:33:01,547 - root - DEBUG - UI updated for scenario: Firstadd
+2025-01-31 18:33:01,548 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:33:01,588 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:33:01,594 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:33:01,602 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:33:01,610 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:33:01,618 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:33:01,626 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:33:01,632 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:33:01,639 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:33:01,647 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:33:01,653 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:33:01,661 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:33:01,669 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:33:01,674 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:33:01,683 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:33:01,690 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:33:01,699 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:33:01,708 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:33:01,714 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:33:01,720 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:33:01,726 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:33:01,732 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:33:01,738 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:33:01,743 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:33:01,749 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:33:01,755 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:33:01,760 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:33:01,764 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:33:03,328 - root - INFO - Scenario 19 updated with 27 wells.
+2025-01-31 18:36:04,276 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:36:04,277 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:36:04,279 - root - DEBUG - Table setup completed
+2025-01-31 18:36:04,279 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:36:04,280 - root - DEBUG - Signal connections established
+2025-01-31 18:36:04,283 - root - INFO - Scenario changed to: Firstadd
+2025-01-31 18:36:04,284 - root - DEBUG - UI updated for scenario: Firstadd
+2025-01-31 18:36:04,325 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:36:04,358 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:36:04,358 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:36:04,358 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:36:13,836 - root - INFO - Scenario 'Firstddaa222' added successfully with ID 20. Active: 0
+2025-01-31 18:36:13,852 - root - INFO - Scenario changed to: Firstddaa222
+2025-01-31 18:36:13,853 - root - DEBUG - UI updated for scenario: Firstddaa222
+2025-01-31 18:36:13,855 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:36:13,894 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:36:13,900 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:36:13,907 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:36:13,914 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:36:13,922 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:36:13,928 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:36:13,936 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:36:13,944 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:36:13,951 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:36:13,958 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:36:13,965 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:36:13,971 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:36:13,978 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:36:13,983 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:36:13,989 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:36:13,995 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:36:14,001 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:36:14,008 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:36:14,015 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:36:14,021 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:36:14,027 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:36:14,034 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:36:14,041 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:36:14,047 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:36:14,053 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:36:14,059 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:36:14,065 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:36:15,227 - root - INFO - Scenario 20 updated with 27 wells.
+2025-01-31 18:36:15,276 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 18:48:25,646 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:48:25,647 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:48:25,649 - root - DEBUG - Table setup completed
+2025-01-31 18:48:25,649 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:48:25,650 - root - DEBUG - Signal connections established
+2025-01-31 18:48:25,653 - root - INFO - Scenario changed to: Firstddaa222
+2025-01-31 18:48:25,654 - root - DEBUG - UI updated for scenario: Firstddaa222
+2025-01-31 18:48:25,696 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:48:25,730 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:48:25,730 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:48:25,730 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:48:34,036 - root - INFO - Scenario 'First4455' added successfully with ID 21. Active: 0
+2025-01-31 18:48:34,049 - root - INFO - Scenario changed to: First4455
+2025-01-31 18:48:34,050 - root - DEBUG - UI updated for scenario: First4455
+2025-01-31 18:48:34,054 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:48:34,084 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:48:34,091 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:48:34,098 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:48:34,104 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:48:34,111 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:48:34,117 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:48:34,123 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:48:34,129 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:48:34,135 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:48:34,143 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:48:34,149 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:48:34,156 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:48:34,163 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:48:34,171 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:48:34,177 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:48:34,183 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:48:34,191 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:48:34,197 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:48:34,204 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:48:34,209 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:48:34,215 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:48:34,221 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:48:34,227 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:48:34,233 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:48:34,238 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:48:34,245 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:48:34,250 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:48:35,645 - root - INFO - Scenario 21 updated with 27 wells.
+2025-01-31 18:48:35,728 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 18:50:21,802 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:50:21,803 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:50:21,805 - root - DEBUG - Table setup completed
+2025-01-31 18:50:21,805 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:50:21,806 - root - DEBUG - Signal connections established
+2025-01-31 18:50:21,809 - root - INFO - Scenario changed to: First4455
+2025-01-31 18:50:21,810 - root - DEBUG - UI updated for scenario: First4455
+2025-01-31 18:50:21,851 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:50:21,885 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:50:21,885 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:50:21,885 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:50:31,914 - root - INFO - Scenario 'gggaaaaaa' added successfully with ID 22. Active: 0
+2025-01-31 18:50:31,929 - root - INFO - Scenario changed to: gggaaaaaa
+2025-01-31 18:50:31,930 - root - DEBUG - UI updated for scenario: gggaaaaaa
+2025-01-31 18:50:31,933 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:50:31,967 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:50:31,973 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:50:31,980 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:50:31,987 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:50:31,993 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:50:32,000 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:50:32,007 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:50:32,015 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:50:32,021 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:50:32,031 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:50:32,036 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:50:32,043 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:50:32,050 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:50:32,055 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:50:32,061 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:50:32,066 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:50:32,072 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:50:32,078 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:50:32,085 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:50:32,090 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:50:32,096 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:50:32,102 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:50:32,107 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:50:32,114 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:50:32,120 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:50:32,126 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:50:32,132 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:50:43,103 - root - INFO - Scenario 22 updated with 27 wells.
+2025-01-31 18:50:43,141 - root - ERROR - Error processing well WP8L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,142 - root - ERROR - Error processing well WP3L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,143 - root - ERROR - Error processing well WP2L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,146 - root - ERROR - Error processing well WP7L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,148 - root - ERROR - Error processing well WP3L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,149 - root - ERROR - Error processing well WP6L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,150 - root - ERROR - Error processing well WP8L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,152 - root - ERROR - Error processing well WP3L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,154 - root - ERROR - Error processing well WP7L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,156 - root - ERROR - Error processing well WP5L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,158 - root - ERROR - Error processing well WP9L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,159 - root - ERROR - Error processing well WP1L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,160 - root - ERROR - Error processing well WP2L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,162 - root - ERROR - Error processing well WP7L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,163 - root - ERROR - Error processing well WP9L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,164 - root - ERROR - Error processing well WP6L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,166 - root - ERROR - Error processing well WP5L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,167 - root - ERROR - Error processing well WP6L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,170 - root - ERROR - Error processing well WP4L1Side1Leg1: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,172 - root - ERROR - Error processing well WP9L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,174 - root - ERROR - Error processing well WP1L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,176 - root - ERROR - Error processing well WP1L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,178 - root - ERROR - Error processing well WP2L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,180 - root - ERROR - Error processing well WP5L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,182 - root - ERROR - Error processing well WP4L1Side1Leg3: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,184 - root - ERROR - Error processing well WP4L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:50:43,186 - root - ERROR - Error processing well WP8L1Side1Leg2: 'str' object has no attribute 'strftime'
+2025-01-31 18:53:37,004 - root - DEBUG - Toolbar setup completed
+2025-01-31 18:53:37,005 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 18:53:37,008 - root - DEBUG - Table setup completed
+2025-01-31 18:53:37,008 - root - DEBUG - UI setup completed successfully
+2025-01-31 18:53:37,009 - root - DEBUG - Signal connections established
+2025-01-31 18:53:37,011 - root - INFO - Scenario changed to: gggaaaaaa
+2025-01-31 18:53:37,012 - root - DEBUG - UI updated for scenario: gggaaaaaa
+2025-01-31 18:53:37,048 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:53:37,087 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:53:37,087 - root - INFO - Initial data loaded successfully.
+2025-01-31 18:53:37,087 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 18:53:47,148 - root - INFO - Scenario '66666' added successfully with ID 23. Active: 0
+2025-01-31 18:53:47,162 - root - INFO - Scenario changed to: 66666
+2025-01-31 18:53:47,163 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 18:53:47,166 - root - INFO - Well pads table populated successfully.
+2025-01-31 18:53:47,200 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 18:53:47,207 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 18:53:47,214 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 18:53:47,221 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 18:53:47,228 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 18:53:47,234 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 18:53:47,240 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 18:53:47,246 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 18:53:47,253 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 18:53:47,260 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 18:53:47,266 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 18:53:47,272 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 18:53:47,280 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 18:53:47,287 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 18:53:47,293 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 18:53:47,299 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 18:53:47,305 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 18:53:47,311 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 18:53:47,317 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 18:53:47,323 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 18:53:47,329 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 18:53:47,335 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 18:53:47,340 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 18:53:47,347 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 18:53:47,353 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 18:53:47,359 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 18:53:47,365 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 18:53:49,407 - root - INFO - Scenario 23 updated with 27 wells.
+2025-01-31 18:53:49,474 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 18:54:45,744 - root - INFO - Processed 5/27 wells
+2025-01-31 18:55:03,414 - root - INFO - Processed 10/27 wells
+2025-01-31 18:55:21,179 - root - INFO - Processed 15/27 wells
+2025-01-31 18:55:38,543 - root - INFO - Processed 20/27 wells
+2025-01-31 18:55:56,086 - root - INFO - Processed 25/27 wells
+2025-01-31 19:01:26,987 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:02:28,285 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:02:28,323 - root - ERROR - Error updating row 0: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas'] not in index"
+2025-01-31 19:02:29,708 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:09:45,224 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:09:45,225 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:09:45,227 - root - DEBUG - Table setup completed
+2025-01-31 19:09:45,227 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:09:45,228 - root - DEBUG - Signal connections established
+2025-01-31 19:09:45,232 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:09:45,232 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:09:45,268 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:09:45,309 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:09:45,309 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:09:45,309 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:09:57,678 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:09:57,705 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 19:11:02,164 - root - ERROR - Error updating row 1: "['scenario_id', 'max_oil_production', 'max_gas_production', 'max_oil_production_date', 'max_gas_production_date', 'one_year_oil_production', 'one_year_gas_production', 'di_oil', 'di_gas', 'oil_b_factor', 'gas_b_factor', 'min_dec_oil', 'min_dec_gas', 'model_oil', 'model_gas', 'economic_limit_type', 'economic_limit_date', 'oil_price', 'gas_price', 'oil_price_dif', 'gas_price_dif', 'discount_rate', 'working_interest', 'royalty', 'tax_rate', 'capital_expenditures', 'operating_expenditures', 'net_price_oil', 'net_price_gas'] not in index"
+2025-01-31 19:18:49,770 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:18:49,771 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:18:49,773 - root - DEBUG - Table setup completed
+2025-01-31 19:18:49,773 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:18:49,774 - root - DEBUG - Signal connections established
+2025-01-31 19:18:49,778 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:18:49,779 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:18:49,815 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:18:49,854 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:18:49,854 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:18:49,854 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:18:56,157 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:18:56,213 - root - ERROR - Error processing well WP2L1Side1Leg3: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-01-31 19:22:12,629 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:22:12,630 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:22:12,631 - root - DEBUG - Table setup completed
+2025-01-31 19:22:12,631 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:22:12,632 - root - DEBUG - Signal connections established
+2025-01-31 19:22:12,636 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:22:12,637 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:22:12,684 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:22:12,722 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:22:12,722 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:22:12,723 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:22:16,653 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:22:26,365 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:31:01,814 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:31:01,815 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:31:01,818 - root - DEBUG - Table setup completed
+2025-01-31 19:31:01,818 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:31:01,820 - root - DEBUG - Signal connections established
+2025-01-31 19:31:01,822 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:31:01,822 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:31:01,860 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:31:01,901 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:31:01,901 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:31:01,901 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:31:07,546 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:31:11,081 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:37:58,767 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:37:58,768 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:37:58,770 - root - DEBUG - Table setup completed
+2025-01-31 19:37:58,770 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:37:58,771 - root - DEBUG - Signal connections established
+2025-01-31 19:37:58,775 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:37:58,776 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:37:58,817 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:37:58,862 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:37:58,862 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:37:58,862 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:38:02,557 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:38:02,583 - root - INFO - Updated well pad WP2L1Side1Leg3 in scenario 23
+2025-01-31 19:38:04,539 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:49:52,457 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:49:52,458 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:49:52,460 - root - DEBUG - Table setup completed
+2025-01-31 19:49:52,460 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:49:52,461 - root - DEBUG - Signal connections established
+2025-01-31 19:49:52,464 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:49:52,464 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:49:52,503 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:49:52,544 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:49:52,544 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:49:52,544 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:49:56,196 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:49:56,204 - root - INFO - Updated well pad WP2L1Side1Leg3 with ID 354
+2025-01-31 19:49:56,232 - root - WARNING - No model properties found for reference UWI: 840300000505415
+2025-01-31 19:49:59,936 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:51:26,322 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:51:26,323 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:51:26,326 - root - DEBUG - Table setup completed
+2025-01-31 19:51:26,326 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:51:26,327 - root - DEBUG - Signal connections established
+2025-01-31 19:51:26,331 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:51:26,331 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:51:26,383 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:51:26,432 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:51:26,432 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:51:26,432 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:51:30,808 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:51:34,723 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:56:10,997 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:56:10,998 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:56:11,001 - root - DEBUG - Table setup completed
+2025-01-31 19:56:11,001 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:56:11,002 - root - DEBUG - Signal connections established
+2025-01-31 19:56:11,006 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:56:11,007 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:56:11,047 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:56:11,090 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:56:11,090 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:56:11,090 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:56:14,699 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:56:14,723 - root - ERROR - Error in update_scenario: 'PUDPropertiesDialog' object has no attribute 'update_well_pad_all'
+2025-01-31 19:57:09,696 - root - DEBUG - Toolbar setup completed
+2025-01-31 19:57:09,698 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 19:57:09,700 - root - DEBUG - Table setup completed
+2025-01-31 19:57:09,701 - root - DEBUG - UI setup completed successfully
+2025-01-31 19:57:09,702 - root - DEBUG - Signal connections established
+2025-01-31 19:57:09,706 - root - INFO - Scenario changed to: 66666
+2025-01-31 19:57:09,707 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 19:57:09,749 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:57:09,785 - root - INFO - Well pads table populated successfully.
+2025-01-31 19:57:09,786 - root - INFO - Initial data loaded successfully.
+2025-01-31 19:57:09,786 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 19:57:13,997 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 19:57:14,023 - root - ERROR - Error in update_scenario: 'total_depth'
+2025-01-31 20:03:58,111 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:03:58,112 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:03:58,115 - root - DEBUG - Table setup completed
+2025-01-31 20:03:58,115 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:03:58,116 - root - DEBUG - Signal connections established
+2025-01-31 20:03:58,119 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:03:58,119 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:03:58,162 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:03:58,198 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:03:58,199 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:03:58,199 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:04:02,199 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:04:02,224 - root - ERROR - Error in update_scenario: 'total_depth'
+2025-01-31 20:07:18,717 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:07:18,718 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:07:18,719 - root - DEBUG - Table setup completed
+2025-01-31 20:07:18,721 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:07:18,722 - root - DEBUG - Signal connections established
+2025-01-31 20:07:18,724 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:07:18,725 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:07:18,770 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:07:18,810 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:07:18,810 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:07:18,810 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:07:22,727 - root - INFO - Updating scenario with 2 modified rows
+2025-01-31 20:07:22,752 - root - ERROR - Error in update_scenario: 'total_depth'
+2025-01-31 20:10:34,057 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:10:34,058 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:10:34,060 - root - DEBUG - Table setup completed
+2025-01-31 20:10:34,060 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:10:34,061 - root - DEBUG - Signal connections established
+2025-01-31 20:10:34,064 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:10:34,065 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:10:34,110 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:10:34,147 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:10:34,147 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:10:34,147 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:10:44,781 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:10:44,806 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:11:14,868 - root - ERROR - Error in update_scenario: 'total_depth'
+2025-01-31 20:12:35,364 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:12:35,365 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:12:35,367 - root - DEBUG - Table setup completed
+2025-01-31 20:12:35,367 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:12:35,368 - root - DEBUG - Signal connections established
+2025-01-31 20:12:35,372 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:12:35,372 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:12:35,416 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:12:35,452 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:12:35,452 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:12:35,452 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:12:39,378 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:12:39,401 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:16:24,567 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:16:24,568 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:16:24,571 - root - DEBUG - Table setup completed
+2025-01-31 20:16:24,571 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:16:24,572 - root - DEBUG - Signal connections established
+2025-01-31 20:16:24,575 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:16:24,576 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:16:24,613 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:16:24,654 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:16:24,654 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:16:24,654 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:16:28,321 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:16:28,353 - root - INFO - Scenario updated successfully!
+2025-01-31 20:18:26,963 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:18:26,964 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:18:26,965 - root - DEBUG - Table setup completed
+2025-01-31 20:18:26,966 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:18:26,966 - root - DEBUG - Signal connections established
+2025-01-31 20:18:26,971 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:18:26,972 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:18:27,264 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:18:27,299 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:18:27,309 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:18:27,339 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:18:27,339 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:18:27,339 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:18:30,798 - root - INFO - Widget change tracked - Row: 4, Column: 1, Value: 2026-01-06
+2025-01-31 20:18:34,713 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:18:34,735 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:19:30,231 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:19:30,257 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:20:28,586 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:20:28,587 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:20:28,589 - root - DEBUG - Table setup completed
+2025-01-31 20:20:28,589 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:20:28,590 - root - DEBUG - Signal connections established
+2025-01-31 20:20:28,593 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:20:28,595 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:20:28,892 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:20:28,923 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:20:28,934 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:20:28,964 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:20:28,964 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:20:28,964 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:20:32,700 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:20:32,724 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:24:42,038 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:24:42,040 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:24:42,042 - root - DEBUG - Table setup completed
+2025-01-31 20:24:42,042 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:24:42,043 - root - DEBUG - Signal connections established
+2025-01-31 20:24:42,046 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:24:42,046 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:24:42,321 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:24:42,349 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:24:42,358 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:24:42,385 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:24:42,385 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:24:42,386 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:24:45,352 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:24:45,375 - root - ERROR - Error in update_scenario: 'NoneType' object has no attribute 'text'
+2025-01-31 20:26:13,523 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:26:13,524 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:26:13,526 - root - DEBUG - Table setup completed
+2025-01-31 20:26:13,527 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:26:13,529 - root - DEBUG - Signal connections established
+2025-01-31 20:26:13,531 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:26:13,533 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:26:13,808 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:26:13,836 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:26:13,845 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:26:13,873 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:26:13,873 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:26:13,873 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:29:37,634 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:29:37,635 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:29:37,639 - root - DEBUG - Table setup completed
+2025-01-31 20:29:37,639 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:29:37,640 - root - DEBUG - Signal connections established
+2025-01-31 20:29:37,642 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:29:37,643 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:29:37,921 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:29:37,954 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:29:37,973 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:29:38,003 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:29:38,004 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:29:38,004 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:29:40,834 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:29:40,856 - root - ERROR - Error in update_scenario: 'NoneType' object has no attribute 'text'
+2025-01-31 20:30:23,870 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:30:23,891 - root - ERROR - Error in update_scenario: 'NoneType' object has no attribute 'text'
+2025-01-31 20:30:42,820 - root - INFO - Dialog closed successfully
+2025-01-31 20:30:45,096 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:30:45,096 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:30:45,098 - root - DEBUG - Table setup completed
+2025-01-31 20:30:45,098 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:30:45,099 - root - DEBUG - Signal connections established
+2025-01-31 20:30:45,130 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:30:45,131 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:30:45,144 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:30:45,201 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:30:45,217 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:30:45,273 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:30:45,273 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:30:45,273 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:30:47,288 - root - INFO - Dialog closed successfully
+2025-01-31 20:31:04,048 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:31:04,048 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:31:04,050 - root - DEBUG - Table setup completed
+2025-01-31 20:31:04,050 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:31:04,051 - root - DEBUG - Signal connections established
+2025-01-31 20:31:04,054 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:31:04,055 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:31:04,069 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:31:04,124 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:31:04,140 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:31:04,198 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:31:04,199 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:31:04,199 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:32:13,384 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:32:13,385 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:32:13,387 - root - DEBUG - Table setup completed
+2025-01-31 20:32:13,387 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:32:13,388 - root - DEBUG - Signal connections established
+2025-01-31 20:32:13,391 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:32:13,391 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:32:13,668 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:32:13,702 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:32:13,711 - root - ERROR - Unexpected error while populating row 3: 'PySide6.QtCore.QDate.fromString' called with wrong argument types:
+  PySide6.QtCore.QDate.fromString(float, str)
+Supported signatures:
+  PySide6.QtCore.QDate.fromString(str, PySide6.QtCore.Qt.DateFormat = Instance(Qt.TextDate))
+  PySide6.QtCore.QDate.fromString(str, str, PySide6.QtCore.QCalendar)
+  PySide6.QtCore.QDate.fromString(str, str, int = 1900)
+  PySide6.QtCore.QDate.fromString(str, str, int, PySide6.QtCore.QCalendar)
+2025-01-31 20:32:13,739 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:32:13,740 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:32:13,740 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:34:44,651 - root - INFO - Dialog closed successfully
+2025-01-31 20:34:46,758 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:34:46,758 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:34:46,760 - root - DEBUG - Table setup completed
+2025-01-31 20:34:46,760 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:34:46,761 - root - DEBUG - Signal connections established
+2025-01-31 20:34:46,791 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:34:46,791 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:34:46,866 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:34:46,939 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:34:46,939 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:34:46,939 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:34:57,654 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:34:57,675 - root - ERROR - Error in update_scenario: 'NoneType' object has no attribute 'text'
+2025-01-31 20:35:00,184 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:35:00,207 - root - ERROR - Error in update_scenario: 'NoneType' object has no attribute 'text'
+2025-01-31 20:36:24,649 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:36:24,651 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:36:24,653 - root - DEBUG - Table setup completed
+2025-01-31 20:36:24,653 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:36:24,654 - root - DEBUG - Signal connections established
+2025-01-31 20:36:24,657 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:36:24,657 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:36:24,702 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:36:24,740 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:36:24,741 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:36:24,741 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:36:28,910 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:36:28,931 - root - WARNING - Missing required data in row 12
+2025-01-31 20:36:28,933 - root - WARNING - Missing required data for well processing
+2025-01-31 20:36:28,974 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:37:03,978 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:37:04,006 - root - WARNING - Missing required data in row 4
+2025-01-31 20:37:04,008 - root - WARNING - Missing required data for well processing
+2025-01-31 20:37:04,050 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:38:59,414 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:38:59,416 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:38:59,418 - root - DEBUG - Table setup completed
+2025-01-31 20:38:59,418 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:38:59,419 - root - DEBUG - Signal connections established
+2025-01-31 20:38:59,423 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:38:59,424 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:38:59,469 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:38:59,507 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:38:59,507 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:38:59,508 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:39:02,799 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:39:02,824 - root - WARNING - Missing UWI in row 4
+2025-01-31 20:39:02,824 - root - INFO - No valid well pad data to update.
+2025-01-31 20:39:14,944 - root - INFO - Dialog closed successfully
+2025-01-31 20:39:17,046 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:39:17,046 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:39:17,048 - root - DEBUG - Table setup completed
+2025-01-31 20:39:17,048 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:39:17,049 - root - DEBUG - Signal connections established
+2025-01-31 20:39:17,052 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:39:17,053 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:39:17,092 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:39:17,139 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:39:17,139 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:39:17,140 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:40:27,523 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:40:27,524 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:40:27,527 - root - DEBUG - Table setup completed
+2025-01-31 20:40:27,527 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:40:27,528 - root - DEBUG - Signal connections established
+2025-01-31 20:40:27,530 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:40:27,532 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:40:27,584 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:40:27,630 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:40:27,630 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:40:27,630 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:40:30,878 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:40:30,908 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:42:41,794 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:42:41,795 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:42:41,798 - root - DEBUG - Table setup completed
+2025-01-31 20:42:41,798 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:42:41,799 - root - DEBUG - Signal connections established
+2025-01-31 20:42:41,803 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:42:41,804 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:42:41,843 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:42:41,884 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:42:41,885 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:42:41,885 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:42:45,129 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:42:45,155 - root - INFO - Updated basic data for UWI WP3L1Side1Leg3
+2025-01-31 20:42:45,155 - root - WARNING - No valid decline curve found for WP3L1Side1Leg3
+2025-01-31 20:42:45,197 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:44:32,830 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:44:32,831 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:44:32,833 - root - DEBUG - Table setup completed
+2025-01-31 20:44:32,833 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:44:32,835 - root - DEBUG - Signal connections established
+2025-01-31 20:44:32,837 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:44:32,838 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:44:32,881 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:44:32,918 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:44:32,918 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:44:32,918 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:44:38,329 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:44:38,357 - root - INFO - Updated basic data for UWI WP3L1Side1Leg3
+2025-01-31 20:44:38,358 - root - WARNING - No valid decline curve found for WP3L1Side1Leg3
+2025-01-31 20:44:38,401 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:46:16,855 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:46:16,856 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:46:16,858 - root - DEBUG - Table setup completed
+2025-01-31 20:46:16,858 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:46:16,859 - root - DEBUG - Signal connections established
+2025-01-31 20:46:16,862 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:46:16,863 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:46:16,908 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:46:16,944 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:46:16,944 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:46:16,945 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:46:27,265 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:46:27,288 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:47:59,692 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:47:59,693 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:47:59,696 - root - DEBUG - Table setup completed
+2025-01-31 20:47:59,696 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:47:59,697 - root - DEBUG - Signal connections established
+2025-01-31 20:47:59,700 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:47:59,701 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:47:59,743 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:47:59,782 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:47:59,782 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:47:59,782 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:48:02,779 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:48:02,802 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:50:14,528 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:50:14,529 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:50:14,531 - root - DEBUG - Table setup completed
+2025-01-31 20:50:14,531 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:50:14,533 - root - DEBUG - Signal connections established
+2025-01-31 20:50:14,536 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:50:14,537 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:50:14,593 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:50:14,635 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:50:14,635 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:50:14,636 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:50:17,257 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:50:17,258 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:52:44,327 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:52:44,328 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:52:44,331 - root - DEBUG - Table setup completed
+2025-01-31 20:52:44,331 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:52:44,333 - root - DEBUG - Signal connections established
+2025-01-31 20:52:44,336 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:52:44,338 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:52:44,386 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:52:44,427 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:52:44,427 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:52:44,427 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:52:50,809 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:52:53,254 - root - INFO - Modified rows content: {0}
+2025-01-31 20:52:54,543 - root - INFO - Modified rows type: <class 'set'>
+2025-01-31 20:52:55,547 - root - INFO - Total table rows: 27
+2025-01-31 20:53:06,797 - root - INFO - Updating scenario with 1 modified rows
+2025-01-31 20:54:19,852 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:54:19,853 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:54:19,855 - root - DEBUG - Table setup completed
+2025-01-31 20:54:19,855 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:54:19,858 - root - DEBUG - Signal connections established
+2025-01-31 20:54:19,862 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:54:19,863 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:54:19,915 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:54:19,956 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:54:19,956 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:54:19,956 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:54:23,906 - root - INFO - Modified rows content: {0}
+2025-01-31 20:54:23,906 - root - INFO - Total table rows: 27
+2025-01-31 20:54:23,931 - root - INFO - Processing row index: 0
+2025-01-31 20:54:23,931 - root - INFO - Row 0 values:
+2025-01-31 20:54:23,931 - root - INFO - UWI: WP8L1Side1Leg1
+2025-01-31 20:54:23,932 - root - INFO - Start Date: None
+2025-01-31 20:54:23,932 - root - INFO - DC Type: None
+2025-01-31 20:54:23,932 - root - INFO - DC: None
+2025-01-31 20:54:23,936 - root - INFO - Updated basic data for UWI WP8L1Side1Leg1
+2025-01-31 20:54:23,936 - root - WARNING - No valid decline curve found for WP8L1Side1Leg1
+2025-01-31 20:54:23,979 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:57:09,728 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:57:09,729 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:57:09,732 - root - DEBUG - Table setup completed
+2025-01-31 20:57:09,733 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:57:09,734 - root - DEBUG - Signal connections established
+2025-01-31 20:57:09,737 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:57:09,739 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:57:09,789 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:57:09,832 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:57:09,832 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:57:09,832 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:57:13,874 - root - INFO - Modified rows content: {0}
+2025-01-31 20:57:13,874 - root - INFO - Total table rows: 27
+2025-01-31 20:57:13,898 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
+2025-01-31 20:59:42,858 - root - DEBUG - Toolbar setup completed
+2025-01-31 20:59:42,859 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 20:59:42,861 - root - DEBUG - Table setup completed
+2025-01-31 20:59:42,861 - root - DEBUG - UI setup completed successfully
+2025-01-31 20:59:42,863 - root - DEBUG - Signal connections established
+2025-01-31 20:59:42,866 - root - INFO - Scenario changed to: 66666
+2025-01-31 20:59:42,867 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 20:59:42,915 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:59:42,956 - root - INFO - Well pads table populated successfully.
+2025-01-31 20:59:42,956 - root - INFO - Initial data loaded successfully.
+2025-01-31 20:59:42,956 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 20:59:54,292 - root - INFO - Modified rows content: {0}
+2025-01-31 20:59:54,292 - root - INFO - Total table rows: 27
+2025-01-31 20:59:54,324 - root - INFO - Processing row index: 0
+2025-01-31 20:59:54,325 - root - INFO - Row 0 values:
+2025-01-31 20:59:54,326 - root - INFO - UWI: WP8L1Side1Leg1
+2025-01-31 20:59:54,326 - root - INFO - Start Date: 2025-01-31
+2025-01-31 20:59:54,326 - root - INFO - DC Type: Saved DC
+2025-01-31 20:59:54,326 - root - INFO - DC: Art
+2025-01-31 20:59:54,329 - root - INFO - Updated basic data for UWI WP8L1Side1Leg1
+2025-01-31 20:59:54,386 - root - ERROR - Error processing well WP8L1Side1Leg1: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-01-31 20:59:54,437 - root - INFO - Well pads table populated successfully.
+2025-01-31 21:01:47,496 - root - DEBUG - Toolbar setup completed
+2025-01-31 21:01:47,498 - root - DEBUG - Scenario dropdown setup completed
+2025-01-31 21:01:47,499 - root - DEBUG - Table setup completed
+2025-01-31 21:01:47,500 - root - DEBUG - UI setup completed successfully
+2025-01-31 21:01:47,500 - root - DEBUG - Signal connections established
+2025-01-31 21:01:47,504 - root - INFO - Scenario changed to: 66666
+2025-01-31 21:01:47,505 - root - DEBUG - UI updated for scenario: 66666
+2025-01-31 21:01:47,547 - root - INFO - Well pads table populated successfully.
+2025-01-31 21:01:47,594 - root - INFO - Well pads table populated successfully.
+2025-01-31 21:01:47,594 - root - INFO - Initial data loaded successfully.
+2025-01-31 21:01:47,594 - root - INFO - PUDPropertiesDialog initialized
+2025-01-31 21:01:52,004 - root - INFO - Processing row index: 0
+2025-01-31 21:01:52,004 - root - INFO - Row 0 values:
+2025-01-31 21:01:52,004 - root - INFO - UWI: WP8L1Side1Leg1
+2025-01-31 21:01:52,004 - root - INFO - Start Date: 2025-01-31
+2025-01-31 21:01:52,004 - root - INFO - DC Type: Saved DC
+2025-01-31 21:01:52,004 - root - INFO - DC: Art
+2025-01-31 21:01:52,008 - root - INFO - Updated basic data for UWI WP8L1Side1Leg1
+2025-01-31 21:01:53,419 - root - INFO - Well pads table populated successfully.
+2025-01-31 21:02:20,957 - root - INFO - Scenario 'ffdasdfasdf' added successfully with ID 24. Active: 0
+2025-01-31 21:02:20,972 - root - INFO - Scenario changed to: ffdasdfasdf
+2025-01-31 21:02:20,973 - root - DEBUG - UI updated for scenario: ffdasdfasdf
+2025-01-31 21:02:20,975 - root - INFO - Well pads table populated successfully.
+2025-01-31 21:02:21,010 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-01-31 21:02:21,018 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-01-31 21:02:21,026 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-01-31 21:02:21,033 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-01-31 21:02:21,040 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-01-31 21:02:21,048 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-01-31 21:02:21,054 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-01-31 21:02:21,062 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-01-31 21:02:21,069 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-01-31 21:02:21,076 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-01-31 21:02:21,083 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-01-31 21:02:21,090 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-01-31 21:02:21,097 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-01-31 21:02:21,104 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-01-31 21:02:21,113 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-01-31 21:02:21,119 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-01-31 21:02:21,125 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-01-31 21:02:21,132 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-01-31 21:02:21,137 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-01-31 21:02:21,142 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-01-31 21:02:21,149 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-01-31 21:02:21,156 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-01-31 21:02:21,161 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-01-31 21:02:21,168 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-01-31 21:02:21,174 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-01-31 21:02:21,179 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-01-31 21:02:21,185 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-01-31 21:02:24,405 - root - INFO - Scenario 24 updated with 27 wells.
+2025-01-31 21:02:25,996 - root - INFO - Processed 5/27 wells
+2025-01-31 21:02:27,539 - root - INFO - Processed 10/27 wells
+2025-01-31 21:02:29,047 - root - INFO - Processed 15/27 wells
+2025-01-31 21:02:30,492 - root - INFO - Processed 20/27 wells
+2025-01-31 21:02:31,945 - root - INFO - Processed 25/27 wells
+2025-01-31 21:02:34,359 - root - INFO - Well pads table populated successfully.

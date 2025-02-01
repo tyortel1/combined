@@ -1,29 +1,19 @@
 # Map2.spec
-from pathlib import Path
 import os
 root_dir = os.path.dirname(os.path.abspath('Map2.py'))
+
 a = Analysis(
     ['Map2.py'],
     pathex=[root_dir],
-    binaries=[
-        ('_seisware_sdk_312.pyd', '.'),  # SeisWare SDK binary
-    ],
+    binaries=[],
     datas=[
         (os.path.join(root_dir, 'Icons'), 'Icons'),
         (os.path.join(root_dir, 'Palettes'), 'Palettes'),
-        # Add matplotlib data files
         (os.path.join(os.path.dirname(os.__file__), 'site-packages/matplotlib/mpl-data'), 'matplotlib/mpl-data'),
-        # Add SeisWare and system DLLs
-        ('libzmq-mt-4_3_0.dll', '.'),
-        ('mfc140u.dll', '.'),
-        ('msvcp140.dll', '.'),
-        ('SWSDKCore.dll', '.'),
-        ('vcruntime140.dll', '.'),
-        ('seisware_sdk_312.py', '.'),
-        ('__init__.py', '.'),
     ],
     hiddenimports=[
-        'seisware_sdk_312',  # Add SeisWare SDK import
+        'SeisWare',
+        'SeisWare.seisware_sdk_312',
         # Core Scientific Stack
         'numpy',
         'pandas',
@@ -98,7 +88,9 @@ a = Analysis(
     excludes=[],
     noarchive=False
 )
+
 pyz = PYZ(a.pure, a.zipped_data)
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -113,7 +105,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,  # Set to True temporarily for debugging
+    console=True,  # Set to True for debugging
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,

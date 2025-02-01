@@ -3,6 +3,9 @@ import pandas as pd
 import logging
 import re
 
+
+
+
 class DatabaseManager:
     def __init__(self, db_path):
         self.db_path = db_path
@@ -511,25 +514,64 @@ class DatabaseManager:
 
     def delete_model_properties_for_scenario(self, scenario_id):
         """Delete model properties associated with a specific scenario."""
-        query = "DELETE FROM model_properties WHERE scenario_id = ?"
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute(query, (scenario_id,))
-                conn.commit()
+            self.connect()
+            query = "DELETE FROM model_properties WHERE scenario_id = ?"
+            self.cursor.execute(query, (scenario_id,))
+            self.connection.commit()
         except sqlite3.Error as e:
             print(f"Error deleting model properties for scenario {scenario_id}: {e}")
+            self.connection.rollback()
+        finally:
+            self.disconnect()
 
     def delete_production_rates_for_scenario(self, scenario_id):
         """Delete production rates associated with a specific scenario."""
-        query = "DELETE FROM prod_rates_all WHERE scenario_id = ?"
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute(query, (scenario_id,))
-                conn.commit()
+            self.connect()
+            query = "DELETE FROM prod_rates_all WHERE scenario_id = ?"
+            self.cursor.execute(query, (scenario_id,))
+            self.connection.commit()
         except sqlite3.Error as e:
             print(f"Error deleting production rates for scenario {scenario_id}: {e}")
+            self.connection.rollback()
+        finally:
+            self.disconnect()
+
+
+    def delete_model_properties_for_wells(self, scenario_id, well_uwis):
+        """Delete model properties for a list of wells within a specific scenario."""
+        if not well_uwis:
+            return  # No wells provided, nothing to delete
+
+        try:
+            self.connect()
+            query = f"DELETE FROM model_properties WHERE scenario_id = ? AND uwi IN ({','.join(['?'] * len(well_uwis))})"
+            self.cursor.execute(query, (scenario_id, *well_uwis))
+            self.connection.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting model properties for scenario {scenario_id}, wells {well_uwis}: {e}")
+            self.connection.rollback()
+        finally:
+            self.disconnect()
+
+    def delete_production_rates_for_wells(self, scenario_id, well_uwis):
+        """Delete production rates for a list of wells within a specific scenario."""
+        if not well_uwis:
+            return  # No wells provided, nothing to delete
+
+        try:
+            self.connect()
+            query = f"DELETE FROM prod_rates_all WHERE scenario_id = ? AND uwi IN ({','.join(['?'] * len(well_uwis))})"
+            self.cursor.execute(query, (scenario_id, *well_uwis))
+            self.connection.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting production rates for scenario {scenario_id}, wells {well_uwis}: {e}")
+            self.connection.rollback()
+        finally:
+            self.disconnect()
+
+
 
     def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, q_oil_eur_normalized=None, q_gas_eur_normalized=None, scenario_id=1):
         """
@@ -1006,6 +1048,50 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def overwrite_model_properties(self, df_model_properties, scenario_id):
+        """
+        Forcefully overwrite model properties for the given UWI in a scenario.
+        Deletes any existing records and inserts new ones.
+        """
+        try:
+            df_model_properties = df_model_properties.copy()
+            df_model_properties['scenario_id'] = scenario_id
+
+            uwi_planned = df_model_properties['uwi'].iloc[0]
+
+            print(f" Overwriting model properties for UWI: {uwi_planned}, Scenario ID: {scenario_id}")
+
+            self.connect()
+
+            # Step 1: Delete existing record for this planned UWI
+            delete_sql = "DELETE FROM model_properties WHERE scenario_id = ? AND uwi = ?"
+            self.cursor.execute(delete_sql, (scenario_id, uwi_planned))
+            print(f" Deleted existing model properties for UWI: {uwi_planned}")
+
+            # Step 2: Ensure all fields are correctly formatted
+            for col in ['oil_model_status', 'gas_model_status']:
+                if col in df_model_properties:
+                    df_model_properties[col] = df_model_properties[col].astype(int)
+
+            # Step 3: Convert datetime columns to strings
+            date_columns = ['max_oil_production_date', 'max_gas_production_date', 'economic_limit_date']
+            for col in date_columns:
+                if col in df_model_properties.columns:
+                    df_model_properties[col] = pd.to_datetime(df_model_properties[col], errors='coerce').dt.strftime('%Y-%m-%d')
+
+            # Step 4: Insert new record
+            df_model_properties.to_sql('model_properties', self.connection, 
+                                       if_exists='append', index=False,
+                                       dtype={'oil_model_status': 'INTEGER',
+                                              'gas_model_status': 'INTEGER'})
+            self.connection.commit()
+            print(f" Inserted new model properties for UWI: {uwi_planned}")
+
+        except sqlite3.Error as e:
+            print(f" Error overwriting model properties: {e}")
+            self.connection.rollback()
+        finally:
+            self.disconnect()
 
     def update_model_properties(self, df_model_properties, scenario_id):
        try:
@@ -1439,6 +1525,42 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def get_saved_decline_curve_data(self, curve_name):
+        """
+        Fetch all relevant decline curve data from the saved_dca table using the curve name.
+        :param curve_name: Name of the saved decline curve.
+        :return: Dictionary with decline curve data.
+        """
+        self.connect()
+        try:
+            query = """
+            SELECT curve_name, uwi, max_oil_production, max_gas_production,
+                   max_oil_production_date, max_gas_production_date, one_year_oil_production,
+                   one_year_gas_production, di_oil, di_gas, oil_b_factor, gas_b_factor,
+                   min_dec_oil, min_dec_gas, model_oil, model_gas, economic_limit_type,
+                   economic_limit_date, oil_price, gas_price, oil_price_dif, gas_price_dif,
+                   discount_rate, working_interest, royalty, tax_rate, capital_expenditures,
+                   operating_expenditures, net_price_oil, net_price_gas
+            FROM saved_dca
+            WHERE curve_name = ?;
+            """
+            self.cursor.execute(query, (curve_name,))
+            result = self.cursor.fetchone()
+
+            if result:
+                columns = [desc[0] for desc in self.cursor.description]
+                return dict(zip(columns, result))
+            else:
+                logging.warning(f"No saved decline curve found for curve_name: {curve_name}")
+                return None
+        except Exception as e:
+            logging.error(f"Error fetching saved decline curve data: {e}")
+            return None
+        finally:
+            self.disconnect()
+
+
+
     def get_uwi_status(self, current_uwi):
         try:
             self.connect()
@@ -1651,8 +1773,116 @@ class DatabaseManager:
             cursor.close()
             self.disconnect()
 
+    def update_well_pad_decline_curve(self, planned_uwi, scenario_id, matched_uwi):
+        """
+        Update the decline_curve for a planned well in a specific scenario.
+        Only updates if the well exists in the given scenario.
+    
+        :param planned_uwi: The UWI of the planned well
+        :param scenario_id: The scenario ID to check/update
+        :param matched_uwi: The matched UWI to set as decline_curve
+        """
+        # First check if well exists in this scenario
+        check_query = """
+        SELECT uwi 
+        FROM well_pads 
+        WHERE uwi = ? AND scenario_id = ?
+        """
+    
+        # Update query to run if match found
+        update_query = """
+        UPDATE well_pads
+        SET 
+            decline_curve = ?,
+            decline_curve_type = 'UWI'
+        WHERE
+            uwi = ? 
+            AND scenario_id = ?
+        """
+    
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+        
+            # Check for existing well in scenario
+            cursor.execute(check_query, (planned_uwi, scenario_id))
+            result = cursor.fetchone()
+        
+            if result:
+                # Well exists in scenario, proceed with update
+                # Fixed parameter order to ensure matched_uwi goes into decline_curve
+                cursor.execute(update_query, (matched_uwi, planned_uwi, scenario_id))
+                self.connection.commit()
+            
+                # Updated print statement to show actual values being set
+                print(f"✅ Well pad for UWI {planned_uwi} updated:")
+                print(f"   → decline_curve = {matched_uwi}, decline_curve_type = 'UWI', scenario_id = {scenario_id}")
+            else:
+                print(f"❌ No matching well found for UWI {planned_uwi} in Scenario {scenario_id}")
+            
+        except sqlite3.Error as e:
+            print(f"❌ Error updating decline curve: {e}")
+            self.connection.rollback()
+        finally:
+            cursor.close()
+            self.disconnect()
 
-    def update_well_pad(self, well_pad_id, well_pad_data):
+
+
+    def update_well_pad_decline_curve(self, planned_uwi, scenario_id, matched_uwi):
+        """
+        Update the decline_curve for a planned well in a specific scenario.
+        Only updates if the well exists in the given scenario.
+    
+        :param planned_uwi: The UWI of the planned well
+        :param scenario_id: The scenario ID to check/update
+        :param matched_uwi: The matched UWI to set as decline_curve
+        """
+        check_query = """
+        SELECT uwi 
+        FROM well_pads 
+        WHERE uwi = ? AND scenario_id = ?
+        """
+    
+        update_query = """
+        UPDATE well_pads
+        SET decline_curve = ?,
+            decline_curve_type = 'UWI'
+        WHERE uwi = ? AND scenario_id = ?
+        """
+    
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+        
+            print("DEBUG - Input values:")
+            print(f"planned_uwi: {planned_uwi}")
+            print(f"scenario_id: {scenario_id}")
+            print(f"matched_uwi: {matched_uwi}")
+        
+            cursor.execute(check_query, (planned_uwi, scenario_id))
+            result = cursor.fetchone()
+        
+            if result:
+                cursor.execute(update_query, (matched_uwi, planned_uwi, scenario_id))
+                self.connection.commit()
+            
+                print("\nDEBUG - After update:")
+                print(f"SET decline_curve = {matched_uwi}")
+                print(f"WHERE uwi = {planned_uwi}")
+                print(f"AND scenario_id = {scenario_id}")
+            
+            else:
+                print(f"No matching well found for UWI {planned_uwi} in Scenario {scenario_id}")
+            
+        except sqlite3.Error as e:
+            print(f"Error updating decline curve: {e}")
+            self.connection.rollback()
+        finally:
+            cursor.close()
+            self.disconnect()
+
+    def update_well_pad_all(self, well_pad_id, well_pad_data):
         """
         Update well pad data in the well_pads table.
 
@@ -1705,6 +1935,26 @@ class DatabaseManager:
             print(f"Well pad with ID {well_pad_id} updated successfully.")
         except sqlite3.Error as e:
             print("Error updating well pad in well_pads table:", e)
+            self.connection.rollback()
+        finally:
+            cursor.close()
+            self.disconnect()
+
+    def update_well_pad_decline_data(self, well_pad_id, start_date, decline_curve_type, decline_curve):
+        """Update only Start Date, Decline Curve Type, and Decline Curve in the well_pads table."""
+        query = """
+        UPDATE well_pads
+        SET start_date = ?, decline_curve_type = ?, decline_curve = ?
+        WHERE id = ?
+        """
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            cursor.execute(query, (start_date, decline_curve_type, decline_curve, well_pad_id))
+            self.connection.commit()
+            print(f"Updated Well Pad ID {well_pad_id}: Start Date = {start_date}, Decline Curve Type = {decline_curve_type}, Decline Curve = {decline_curve}")
+        except sqlite3.Error as e:
+            print("Error updating well pad:", e)
             self.connection.rollback()
         finally:
             cursor.close()
@@ -1891,8 +2141,24 @@ class DatabaseManager:
 
     def get_well_pads(self, scenario_id):
         query = """
-        SELECT id, uwi, total_depth, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
-               pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe, start_date
+        SELECT 
+            id, 
+            uwi, 
+            start_date,
+            decline_curve_type,
+            decline_curve,
+            total_depth, 
+            total_capex_cost, 
+            total_opex_cost, 
+            drill_time, 
+            prod_type, 
+            oil_model_status, 
+            gas_model_status,
+            pad_cost, 
+            exploration_cost, 
+            cost_per_foot, 
+            distance_to_pipe, 
+            cost_per_foot_to_pipe
         FROM well_pads
         WHERE scenario_id = ?
         """
@@ -1901,16 +2167,116 @@ class DatabaseManager:
             cursor = self.connection.cursor()
             cursor.execute(query, (scenario_id,))
             rows = cursor.fetchall()
-            # Get the column names
+        
+            # Get the column names from cursor description
             columns = [column[0] for column in cursor.description]
+        
+            # Create list of dictionaries with all fields
             well_pads = [dict(zip(columns, row)) for row in rows]
+        
+            # Debug print
+            print(f"\nDEBUG - Database Query Results:")
+            print(f"Columns retrieved: {columns}")
+            if well_pads:
+                print(f"First well pad data: {well_pads[0]}")
+        
             return well_pads
+        
         except sqlite3.Error as e:
             print(f"Error fetching well pads for scenario_id {scenario_id}:", e)
             return []
         finally:
             cursor.close()
             self.disconnect()
+
+    def get_well_pad_data(self, well_pad_id):
+        """
+        Retrieve data for a specific well pad by its ID.
+    
+        :param well_pad_id: The ID of the well pad to retrieve
+        :return: Dictionary containing well pad data or None if not found
+        """
+        query = """
+        SELECT 
+            id, 
+            uwi, 
+            start_date,
+            decline_curve_type,
+            decline_curve,
+            total_depth, 
+            total_capex_cost, 
+            total_opex_cost, 
+            drill_time, 
+            prod_type, 
+            oil_model_status, 
+            gas_model_status,
+            pad_cost, 
+            exploration_cost, 
+            cost_per_foot, 
+            distance_to_pipe, 
+            cost_per_foot_to_pipe
+        FROM well_pads
+        WHERE id = ?
+        """
+    
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            cursor.execute(query, (well_pad_id,))
+            row = cursor.fetchone()
+        
+            if row:
+                # Get the column names from cursor description
+                columns = [column[0] for column in cursor.description]
+                # Create dictionary with field names
+                well_pad_data = dict(zip(columns, row))
+                return well_pad_data
+            return None
+        
+        except sqlite3.Error as e:
+            print(f"Error fetching well pad data for id {well_pad_id}:", e)
+            return None
+        finally:
+            cursor.close()
+            self.disconnect()
+    def get_well_pads_for_wells(self, scenario_id, well_uwis):
+        """
+        Retrieve well pad data for specific wells in a given scenario.
+
+        :param scenario_id: Scenario ID to filter well pads.
+        :param well_uwis: List of UWIs to filter the well pads.
+        :return: DataFrame containing well pad data for the specified wells.
+        """
+        if not well_uwis:
+            return pd.DataFrame()  # Return an empty DataFrame if no wells are selected
+
+        query = """
+        SELECT id, uwi, total_depth, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
+               pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe, start_date
+        FROM well_pads
+        WHERE scenario_id = ? AND uwi IN ({})
+        """.format(",".join("?" * len(well_uwis)))
+
+        try:
+            self.connect()
+            cursor = self.connection.cursor()
+            cursor.execute(query, [scenario_id] + well_uwis)
+            rows = cursor.fetchall()
+
+            # Get the column names
+            columns = [column[0] for column in cursor.description]
+
+            # Convert to a DataFrame
+            well_pads_df = pd.DataFrame(rows, columns=columns)
+
+            return well_pads_df
+        except sqlite3.Error as e:
+            print(f"Error fetching well pads for scenario_id {scenario_id} and selected wells:", e)
+            return pd.DataFrame()
+        finally:
+            cursor.close()
+            self.disconnect()
+
 
 
     def create_scenario_names_table(self):
@@ -2890,3 +3256,5 @@ class DatabaseManager:
 
         finally:
             self.disconnect()
+
+

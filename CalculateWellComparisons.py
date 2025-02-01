@@ -1,7 +1,7 @@
-from PySide6.QtWidgets import (
+﻿from PySide6.QtWidgets import (
     QDialog, QLabel, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
     QAbstractItemView, QGroupBox, QLineEdit, QMessageBox, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout, QSlider, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
+    QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout, QSlider, QComboBox, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -14,6 +14,47 @@ from PySide6.QtWidgets import (
     QPushButton, QLineEdit, QAbstractItemView
 )
 from PySide6.QtCore import Qt
+from DeclineCurveAnalysis import DeclineCurveAnalysis
+
+
+class ScenarioNameDialog(QDialog):
+    """Dialog to select an existing scenario or create a new one."""
+    def __init__(self, db_manager, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Scenario")
+        self.setMinimumWidth(300)
+        self.db_manager = db_manager
+        self.scenario_id = None
+
+        layout = QVBoxLayout(self)
+
+
+        # Step 1: Fetch existing scenario names
+        self.scenario_names = self.db_manager.get_scenario_names()
+
+        # Step 2: Create Dropdown for Existing Scenarios
+        self.scenario_dropdown = QComboBox(self)
+        self.scenario_dropdown.addItems(self.scenario_names)
+        self.scenario_dropdown.setEditable(True)  # Allows users to type a new scenario
+        layout.addWidget(QLabel("Select or Type a Scenario Name:"))
+        layout.addWidget(self.scenario_dropdown)
+
+        # Step 3: Buttons
+        button_layout = QHBoxLayout()
+        self.ok_button = QPushButton("OK")
+        self.cancel_button = QPushButton("Cancel")
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        layout.addLayout(button_layout)
+
+        # Connect buttons
+        self.ok_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.reject)
+
+    def get_selected_scenario(self):
+        """Return the selected scenario name."""
+        return self.scenario_dropdown.currentText().strip()
+
 
 class DualListSelector(QWidget):
     def __init__(self, title: str, parent=None):
@@ -170,6 +211,7 @@ class WellComparisonDialog(QDialog):
         self.setup_ui()
         self.weight_sliders = {}
         self.iqr_multiplier = 2.0  # Default value
+        self.dca = DeclineCurveAnalysis()
 
     def setup_ui(self):
         self.setWindowTitle("Well Comparison")
@@ -230,7 +272,7 @@ class WellComparisonDialog(QDialog):
         # Ensure button signals are connected
         self.weights_button.clicked.connect(self.open_weights_dialog)
         self.calculate_button.clicked.connect(self.run_comparison)
-        self.decline_curve_button.clicked.connect(self.apply_decline_curve)
+        self.decline_curve_button.clicked.connect(self.assign_type_curve)
         self.export_button.clicked.connect(self.export_to_excel)
 
 
@@ -274,26 +316,235 @@ class WellComparisonDialog(QDialog):
         header.setStretchLastSection(True)
 
     def load_data(self):
-        """Load initial data for the selectors."""
+        """Load initial data for the selectors. Filters active wells to only include those with model properties."""
         try:
             # Get numeric attributes only
             numeric_columns = self.db_manager.get_numeric_attributes()
             planned_wells = self.db_manager.get_uwis_by_status("Planned")
+        
+            # Get initial active wells list
             active_wells = self.db_manager.get_uwis_by_status("Active")
-
+        
+            # Filter active wells to only those with model properties
+            filtered_active_wells = []
+            for uwi in active_wells:
+                # Check if well has model properties in scenario 1 (reference scenario)
+                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                    scenario_id=1,
+                    uwi=uwi
+                )
+                if model_properties_df is not None and not model_properties_df.empty:
+                    filtered_active_wells.append(uwi)
+        
+            # Print debug info
+            print(f"Total active wells: {len(active_wells)}")
+            print(f"Active wells with model properties: {len(filtered_active_wells)}")
+            print(f"Wells filtered out: {len(active_wells) - len(filtered_active_wells)}")
+        
             # Populate lists
             self.planned_selector.add_items(planned_wells)
-            self.active_selector.add_items(active_wells)
+            self.active_selector.add_items(filtered_active_wells)  # Use filtered list
             self.attr_selector.add_items(sorted(numeric_columns))
-            
+        
         except Exception as e:
-            QMessageBox.critical(self, "Data Loading Error", str(e))
+            print(f"Error loading data: {e}")
 
 
-    def apply_decline_curve(self):
-        """Placeholder for applying a decline curve model."""
-        QMessageBox.information(self, "Decline Curve", "Decline curve applied successfully!")
+    def assign_type_curve(self):
+        """Assign type curves to selected planned wells, run DCA, and update production rates."""
 
+        # Step 1: Get scenario name from user
+        scenario_dialog = ScenarioNameDialog(self.db_manager, self)
+        if scenario_dialog.exec() == QDialog.Rejected:
+            return  # User canceled
+
+        scenario_name = scenario_dialog.get_selected_scenario().strip()
+
+        if not scenario_name:
+            QMessageBox.warning(self, "Invalid Scenario", "Please enter a valid scenario name.")
+            return
+
+        # Step 2: Check if scenario exists, else create it
+        self.scenario_id = self.db_manager.get_scenario_id(scenario_name)
+        print(self.scenario_id)
+        if self.scenario_id:
+            self.db_manager.set_active_scenario(self.scenario_id)
+        else:
+            # 🔹 Scenario doesn't exist, so create it
+            self.scenario_id = self.db_manager.insert_scenario_name(scenario_name)
+            if self.scenario_id:
+                self.db_manager.set_active_scenario(self.scenario_id)
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to create scenario '{scenario_name}'.")
+                return  # ⛔ Exit if creation failed
+
+      # Update active scenario
+
+        # Step 3: Get selected wells from planned list
+        selected_planned_wells = self.planned_selector.get_selected_items()
+
+        if not selected_planned_wells:
+            QMessageBox.warning(self, "No Selection", "Please select at least one planned well.")
+            return
+
+        # Step 2: Get well pad properties for selected planned wells
+        well_pads_df = self.db_manager.get_well_pads_for_wells(self.scenario_id, selected_planned_wells)
+        well_pad_dict = well_pads_df.set_index("uwi").to_dict(orient="index")
+
+        total_wells = len(selected_planned_wells)
+        processed_wells = 0
+        skipped_wells = 0
+        error_wells = []
+
+        # Step 3: Iterate only over planned wells that exist in the model
+        for uwi_planned in selected_planned_wells:
+            try:
+                # Step 4: Get the best-matched active well from the comparison table
+                matched_uwi = self._get_matched_uwi_from_table(uwi_planned)
+                print(f"Matched UWI for {uwi_planned}: {matched_uwi}")
+
+                if not matched_uwi:
+                    skipped_wells += 1
+                    continue  # Skip if no match found
+
+                # Step 5: Retrieve model properties for the matched UWI
+                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                    scenario_id=1,  # Use reference scenario for UWI lookup
+                    uwi=matched_uwi
+                )
+
+                if model_properties_df is None or model_properties_df.empty:
+                    skipped_wells += 1
+                    continue  # Skip if no model properties found
+
+                model_properties = model_properties_df.iloc[0].to_dict()  # Convert DataFrame row to dict
+
+                # Step 6: Delete old model properties & production rates **ONLY IF the well has a decline curve**
+                self.db_manager.delete_model_properties_for_wells(self.scenario_id, [uwi_planned])
+                self.db_manager.delete_production_rates_for_wells(self.scenario_id, [uwi_planned])
+
+                # Step 7: Get well pad data for this planned UWI (if available)
+                well_pad_data = well_pad_dict.get(uwi_planned, {})
+                print(well_pad_data)
+
+                # Step 8: Map well pad fields to model properties
+                # Step 8: Map well pad fields to model properties
+                field_mapping = {
+                    'max_oil_production_date': 'start_date',
+                    'max_gas_production_date': 'start_date',
+                    'capital_expenditures': 'total_capex_cost',
+                    'operating_expenditures': 'total_opex_cost'
+                }
+
+                # Apply field mapping from well pad data
+                for target_field, source_field in field_mapping.items():
+                    if source_field in well_pad_data and well_pad_data[source_field] not in [None, np.nan, ""]:
+                        model_properties[target_field] = well_pad_data[source_field]
+                    else:
+                        print(f"Skipping {target_field} - No valid data found in well pad.")
+
+                # 🔹 Force overwrite critical values to ensure planned well's data is always used
+                model_properties["max_oil_production_date"] = well_pad_data.get("start_date", model_properties.get("max_oil_production_date", "Unknown"))
+                model_properties["max_gas_production_date"] = well_pad_data.get("start_date", model_properties.get("max_gas_production_date", "Unknown"))
+
+                # 🔹 Force overwrite CAPEX and OPEX values
+                model_properties["capital_expenditures"] = well_pad_data.get("total_capex_cost", model_properties.get("capital_expenditures", 0))
+                model_properties["operating_expenditures"] = well_pad_data.get("total_opex_cost", model_properties.get("operating_expenditures", 0))
+
+                # 🔹 Ensure UWI is always the planned well
+                model_properties["uwi"] = uwi_planned
+                model_properties['scenario_id'] = self.scenario_id
+
+                # Step 9: Ensure required columns exist
+                required_columns = [
+                    "scenario_id", "uwi",  # UWI should now reference the planned well
+                    "max_oil_production", "max_gas_production",
+                    "max_oil_production_date", "max_gas_production_date",
+                    "one_year_oil_production", "one_year_gas_production",
+                    "di_oil", "di_gas",
+                    "oil_b_factor", "gas_b_factor",
+                    "min_dec_oil", "min_dec_gas",
+                    "model_oil", "model_gas",
+                    "economic_limit_type", "economic_limit_date",
+                    "oil_price", "gas_price",
+                    "oil_price_dif", "gas_price_dif",
+                    "discount_rate", "working_interest",
+                    "royalty", "tax_rate",
+                    "capital_expenditures", "operating_expenditures",
+                    "net_price_oil", "net_price_gas",
+                    "gas_model_status", "oil_model_status",
+                    "q_oil_eur", "q_gas_eur",
+                    "EFR_oil", "EFR_gas",
+                    "EUR_oil_remaining", "EUR_gas_remaining",
+                    "npv", "npv_discounted"
+                ]
+
+                # Step 10: Convert dictionary to DataFrame for storage
+                df_uwi_model_data = pd.DataFrame([model_properties])[required_columns]
+                print(df_uwi_model_data)
+
+                # Step 11: Convert date columns to formatted strings
+                date_columns = ['max_oil_production_date', 'max_gas_production_date', 'economic_limit_date']
+                for col in date_columns:
+                    if col in df_uwi_model_data.columns:
+                        df_uwi_model_data[col] = pd.to_datetime(df_uwi_model_data[col], errors='coerce').dt.strftime('%Y-%m-%d')
+
+
+                self.db_manager.update_well_pad_decline_curve(uwi_planned, self.scenario_id, matched_uwi)
+
+                # Step 12: Save model properties to DB
+                self.db_manager.overwrite_model_properties(df_uwi_model_data, self.scenario_id)
+
+                # Step 13: Run Decline Curve Analysis (DCA)
+                self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(df_uwi_model_data)
+
+                # Step 14: Save production rates to DB
+                self.db_manager.update_uwi_prod_rates(self.uwi_production_rates_data, self.scenario_id)
+
+                # Step 15: Save error tracking
+                self.uwi_error = pd.DataFrame({
+                    'uwi': [uwi_planned],  # Use planned well for tracking
+                    'sum_error_oil': [0],
+                    'sum_error_gas': [0]
+                })
+                self.db_manager.update_uwi_errors(self.uwi_error, self.scenario_id)
+
+
+                processed_wells += 1
+
+            except Exception as e:
+                error_wells.append((uwi_planned, str(e)))
+                continue
+
+        # Step 16: Show Results Summary
+        if error_wells:
+            error_msg = "\n".join([f"UWI: {uwi_planned} - Error: {error}" for uwi_planned, error in error_wells])
+            QMessageBox.warning(
+                self,
+                "Type Curve Assignment Complete",
+                f"Assigned type curves for {processed_wells}/{total_wells} wells.\n"
+                f"Skipped {skipped_wells} wells (no matching model properties or decline curve).\n"
+                f"{len(error_wells)} wells had errors:\n{error_msg}"
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "Type Curve Assignment Complete",
+                f"Successfully assigned type curves to {processed_wells}/{total_wells} wells!\n"
+                f"Skipped {skipped_wells} wells (no matching model properties or decline curve)."
+            )
+
+
+    def _get_matched_uwi_from_table(self, planned_uwi):
+        """
+        Retrieve the matched UWI from the results table for a given planned UWI.
+        """
+        for row in range(self.results_table.rowCount()):
+            table_planned_uwi = self.results_table.item(row, 0).text()  # Column 0 = Planned Well
+            if table_planned_uwi == planned_uwi:
+                matched_uwi = self.results_table.item(row, 1).text()  # Column 1 = Matched Well
+                return matched_uwi if matched_uwi and matched_uwi != "No Match" else None
+        return None  # If not found
     def export_to_excel(self):
         """Exports the comparison results to an Excel file."""
         file_path, _ = QFileDialog.getSaveFileName(self, "Save as Excel", "", "Excel Files (*.xlsx)")

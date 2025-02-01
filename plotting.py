@@ -11,13 +11,13 @@ class Plotting(QObject):
 
     def __init__(self):
         super().__init__()
-
+        self.html_content = ""  # Initialize attribute
 
     def generate_plot_html(self, uwi_prod_rates_all, current_uwi, data_type, distribution_type, uwi_model_data):
 
 
         if uwi_prod_rates_all.empty:
-            html_content = "<h1>No data to display.</h1>"
+            self.html_content = "<h1>No data to display.</h1>"
         else:
             if data_type == "Decline Curve":
                 self.generate_decline_curve(uwi_prod_rates_all, current_uwi, distribution_type)
@@ -38,7 +38,7 @@ class Plotting(QObject):
 
             
         if uwi_prod_rates_all.empty:
-            html_content = "<h1>No data to display.</h1>"
+            self.html_content = "<h1>No data to display.</h1>"
         else:
             data_column = ['oil_volume', 'gas_volume']
   

@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from PySide6.QtWidgets import (
     QApplication, QDialog, QHBoxLayout, QVBoxLayout, QPushButton, QMenuBar, 
-    QMessageBox, QMainWindow, QTableWidgetItem, QFileDialog, QWidget, QInputDialog
+    QMessageBox, QMainWindow, QTableWidgetItem, QFileDialog, QWidget, QInputDialog, QMenu
 )
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import QDateTime, QDate, QTime, QObject, QEvent, Qt
@@ -120,6 +120,8 @@ class MainWindow(QMainWindow):
         self.ui.oil_price_dif.editingFinished.connect(self.ui.calculate_net_price)
         self.ui.gas_price_dif.editingFinished.connect(self.ui.calculate_net_price)
         self.ui.tax_rate.editingFinished.connect(self.ui.calculate_net_price)
+        self.ui.model_properties.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.model_properties.customContextMenuRequested.connect(self.show_context_menu)
         
 
 
@@ -521,6 +523,31 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print("Error populating tab 2:", e)
         print("pop2 end")
+
+    def show_context_menu(self, position):
+        """
+        Show context menu for the model properties table when right-clicked.
+        """
+        context_menu = QMenu(self)
+        save_decline_action = context_menu.addAction("Save Decline Curve Parameters")
+    
+        action = context_menu.exec_(self.ui.model_properties.viewport().mapToGlobal(position))
+    
+        if action == save_decline_action:
+            # Collect UWIs from all selected rows
+            selected_uwis = []
+            selected_ranges = self.ui.model_properties.selectedRanges()
+        
+            for selected_range in selected_ranges:
+                for row in range(selected_range.topRow(), selected_range.bottomRow() + 1):
+                    uwi_item = self.ui.model_properties.item(row, 0)  # UWI is in first column
+                    if uwi_item and uwi_item.text():
+                        selected_uwis.append(uwi_item.text())
+        
+            if selected_uwis:
+                # Call save_dc with context menu parameters
+                self.save_dc(from_context_menu=True, selected_uwis=selected_uwis)
+
 
     def updateTable3(self):
             # Clear the current data and sorting in the table
@@ -1286,31 +1313,46 @@ class MainWindow(QMainWindow):
        self.ui.gas_model.setIcon(QIcon(gas_icon))
 
 
-    def save_dc(self):
-        # Assume self.uwis contains the list of available uwis
-        dialog = SaveDeclineCurveDialog(self, uwis=self.uwi_list)
-        if dialog.exec_() == QDialog.Accepted:
-            curve_name = dialog.get_curve_name()
-            if not curve_name:  # Check if the curve name is blank
-                QMessageBox.warning(self, "No Curve Name", "Please provide a name for the decline curve.")
-                return
-
-            selected_option = dialog.get_selected_option()
-            
-            if selected_option == "Current Well":
-                # Save the current uwi_model_data to the database with the provided name
-                self.db_manager.save_decline_curve_to_db(curve_name, self.uwi_model_data)
-            elif selected_option == "Average":
-                selected_uwis = dialog.get_selected_uwis()
-                if not selected_uwis:
-                    QMessageBox.warning(self, "No UWI Selected", "Please select at least one UWI to average.")
+    def save_dc(self, from_context_menu=False, selected_uwis=None):
+        if from_context_menu and selected_uwis:
+            # Simplified dialog for context menu - only need name
+            dialog = SaveDeclineCurveDialog(self, uwis=selected_uwis, from_context_menu=True)
+            dialog.options.setCurrentText("Average")  # Force Average option
+            dialog.options.setEnabled(False)  # Disable changing the option
+        
+            if dialog.exec_() == QDialog.Accepted:
+                curve_name = dialog.get_curve_name()
+                if not curve_name:
+                    QMessageBox.warning(self, "No Curve Name", "Please provide a name for the decline curve.")
                     return
+            
+                # Process the average directly since we know that's what we want
                 averaged_data = self.average_uwis(selected_uwis)
                 self.db_manager.save_decline_curve_to_db(curve_name, averaged_data)
-            elif selected_option == "Manual":
-                manual_data = dialog.get_manual_data()
-                manual_df = pd.DataFrame([manual_data])
-                self.db_manager.save_decline_curve_to_db(curve_name, manual_df)
+            
+        else:
+            # Original save_dc functionality
+            dialog = SaveDeclineCurveDialog(self, uwis=self.uwi_list)
+            if dialog.exec_() == QDialog.Accepted:
+                curve_name = dialog.get_curve_name()
+                if not curve_name:
+                    QMessageBox.warning(self, "No Curve Name", "Please provide a name for the decline curve.")
+                    return
+                selected_option = dialog.get_selected_option()
+            
+                if selected_option == "Current Well":
+                    self.db_manager.save_decline_curve_to_db(curve_name, self.uwi_model_data)
+                elif selected_option == "Average":
+                    selected_uwis = dialog.get_selected_uwis()
+                    if not selected_uwis:
+                        QMessageBox.warning(self, "No UWI Selected", "Please select at least one UWI to average.")
+                        return
+                    averaged_data = self.average_uwis(selected_uwis)
+                    self.db_manager.save_decline_curve_to_db(curve_name, averaged_data)
+                elif selected_option == "Manual":
+                    manual_data = dialog.get_manual_data()
+                    manual_df = pd.DataFrame([manual_data])
+                    self.db_manager.save_decline_curve_to_db(curve_name, manual_df)
 
     def save_scenario(self):
         pass

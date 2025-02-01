@@ -1,4 +1,4 @@
-from pickle import TRUE
+﻿from pickle import TRUE
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QToolBar, QTableWidget, QComboBox,
     QSizePolicy, QTableWidgetItem, QMessageBox, QStyledItemDelegate,
@@ -14,7 +14,7 @@ from ScenarioNameDialog import ScenarioNameDialog
 import pandas as pd
 from DeclineCurveAnalysis import DeclineCurveAnalysis
 from LaunchCombinedCashflow import LaunchCombinedCashflow
-
+from datetime import datetime
 
 
 class DateDelegate(QStyledItemDelegate):
@@ -59,6 +59,48 @@ class PUDPropertiesDialog(QDialog):
         self.active_scenario_name = None
         self.scenario_id = None
         self.tab_index = 3  # Default tab index
+
+        self.TABLE_HEADERS = [
+            "Pad Name",           # maps to uwi
+            "Start Date",         # maps to start_date
+            "Decline Curve Type", # maps to decline_curve_type
+            "Decline Curve",      # maps to decline_curve
+            "Total Depth",        # maps to total_depth
+            "Total CAPEX Cost",   # maps to total_capex_cost
+            "Total OPEX Cost",    # maps to total_opex_cost
+            "Drill Time",         # maps to drill_time
+            "Prod Type",          # maps to prod_type
+            "Oil Model Status",   # maps to oil_model_status
+            "Gas Model Status",   # maps to gas_model_status
+            "Pad Cost",          # maps to pad_cost
+            "Exploration Cost",   # maps to exploration_cost
+            "Cost per Foot",     # maps to cost_per_foot
+            "Distance to Pipe",   # maps to distance_to_pipe
+            "Cost per Foot to Pipe" # maps to cost_per_foot_to_pipe
+        ]
+    
+        # Update key mapping to match headers exactly
+        self.key_mapping = {
+            "Pad Name": "uwi",
+            "Start Date": "start_date",
+            "Decline Curve Type": "decline_curve_type",
+            "Decline Curve": "decline_curve",
+            "Total Depth": "total_depth",
+            "Total CAPEX Cost": "total_capex_cost",
+            "Total OPEX Cost": "total_opex_cost",
+            "Drill Time": "drill_time",
+            "Prod Type": "prod_type",
+            "Oil Model Status": "oil_model_status",
+            "Gas Model Status": "gas_model_status",
+            "Pad Cost": "pad_cost",
+            "Exploration Cost": "exploration_cost",
+            "Cost per Foot": "cost_per_foot",
+            "Distance to Pipe": "distance_to_pipe",
+            "Cost per Foot to Pipe": "cost_per_foot_to_pipe"
+        }
+
+
+
         
         self.setup_ui()
         self.setup_connections()
@@ -74,25 +116,7 @@ class PUDPropertiesDialog(QDialog):
         self.has_unsaved_changes = False # Alternatively, track by UWI
 
 
-        self.key_mapping = {
-            "Pad Name": "uwi",
-            "Start Date": "start_date",
-            "Decline Curve Type": "decline_curve_type",
-            "Decline Curve": "decline_curve",
-            "Total Depth": "total_depth",
-            "Total CAPEX Cost": "total_capex_cost",
-            "Total OPEX Cost": "total_opex_cost",
-            "Drill Time": "drill_time",
-            "Prod Type": "prod_type",  # Changed from "Production Type"
-            "Oil Model Status": "oil_model_status",
-            "Gas Model Status": "gas_model_status",
-            "Pad Cost": "pad_cost",
-            "Exploration Cost": "exploration_cost",
-            "Cost per Foot": "cost_per_foot",
-            "Distance to Pipe": "distance_to_pipe",
-            "Cost per Foot to Pipe": "cost_per_foot_to_pipe"
-        }
-    
+ 
         
     def setup_logging(self):
         """Configure logging for the dialog"""
@@ -178,28 +202,20 @@ class PUDPropertiesDialog(QDialog):
         try:
             self.well_pads_table = QTableWidget()
             self.well_pads_table.setObjectName("WellPadsTable")
+    
+            print("Setup Table Headers:", self.TABLE_HEADERS)  # Debug print
         
-            # Set up columns with exact headers
-            headers = [
-                "Pad Name", "Start Date", "Decline Curve Type", "Decline Curve", "Total Lateral",
-                "Total CAPEX Cost", "Total OPEX Cost", "Drill Time",
-                "Prod Type", "Oil Model Status", "Gas Model Status", "Pad Cost",
-                "Exploration Cost", "Cost per Foot", "Distance to Pipe",
-                "Cost per Foot to Pipe"  # Make sure this matches exactly
-            ]
-            print("Setup Table Headers:", headers)  # Debug print
-            
-            self.well_pads_table.setColumnCount(len(headers))
-            self.well_pads_table.setHorizontalHeaderLabels(headers)
+            self.well_pads_table.setColumnCount(len(self.TABLE_HEADERS))
+            self.well_pads_table.setHorizontalHeaderLabels(self.TABLE_HEADERS)
             self.well_pads_table.verticalHeader().setVisible(False)
-            
+        
             # Set up delegates
             date_delegate = DateDelegate(self.well_pads_table)
             self.well_pads_table.setItemDelegateForColumn(1, date_delegate)
-            
+        
             self.main_layout.addWidget(self.well_pads_table, 1, 0, 1, 11)
             logging.debug("Table setup completed")
-            
+        
         except Exception as e:
             logging.error(f"Error in setup_table: {e}")
             raise
@@ -411,36 +427,30 @@ class PUDPropertiesDialog(QDialog):
         try:
             with QSignalBlocker(self.well_pads_table):
                 self.well_pads_table.clear()
-
-                # Reset table headers
-                headers = [
-                    "Pad Name", "Start Date", "Decline Curve Type", "Decline Curve", "Total Lateral",
-                    "Total CAPEX Cost", "Total OPEX Cost", "Drill Time",
-                    "Prod Type", "Oil Model Status", "Gas Model Status", "Pad Cost",
-                    "Exploration Cost", "Cost per Foot", "Distance to Pipe",
-                    "Cost per Foot to Pipe"
-                ]
-                self.well_pads_table.setColumnCount(len(headers))
-                self.well_pads_table.setHorizontalHeaderLabels(headers)
-
-
+            
+                # Use class variable for headers
+                self.well_pads_table.setColumnCount(len(self.TABLE_HEADERS))
+                self.well_pads_table.setHorizontalHeaderLabels(self.TABLE_HEADERS)
+            
                 # Get well pad data for the active scenario
                 well_pads = self.db_manager.get_well_pads(self.scenario_id)
-                print(well_pads)
-                self.well_pads_table.setRowCount(len(well_pads))
-
-                # Temporarily disable sorting for performance
-                self.well_pads_table.setSortingEnabled(False)
-
-                # Populate rows
-                for row_idx, pad in enumerate(well_pads):
-                    self.populate_table_row(row_idx, pad)
-
-                # Enable sorting after the table is populated
-                self.well_pads_table.setSortingEnabled(True)
-
-            logging.info("Well pads table populated successfully.")
-
+                print("Well pads data:", well_pads)  # Debug print
+            
+                if well_pads:
+                    self.well_pads_table.setRowCount(len(well_pads))
+                
+                    # Temporarily disable sorting for performance
+                    self.well_pads_table.setSortingEnabled(False)
+                
+                    # Populate rows
+                    for row_idx, pad in enumerate(well_pads):
+                        self.populate_table_row(row_idx, pad)
+                
+                    # Enable sorting after the table is populated
+                    self.well_pads_table.setSortingEnabled(True)
+            
+                logging.info("Well pads table populated successfully.")
+        
         except Exception as e:
             logging.error(f"Error populating well pads table: {e}")
             QMessageBox.critical(self, "Error", "Failed to populate well pads table")
@@ -482,24 +492,7 @@ class PUDPropertiesDialog(QDialog):
                 decline_curve_combo.setCurrentText(decline_curve)
 
                     # Update tracking when widgets change
-            def on_type_changed():
-                selected_type = decline_curve_type_combo.currentText()
-                decline_curve_combo.clear()
-                new_options = self.get_decline_curve_options(selected_type)
-                decline_curve_combo.addItems(new_options)
-                if new_options:
-                    decline_curve_combo.setCurrentText(new_options[0])
-                self.track_widget_change(row_idx, 2, selected_type)
-                self.track_widget_change(row_idx, 3, decline_curve_combo.currentText())
 
-            def on_curve_changed():
-                self.track_widget_change(row_idx, 3, decline_curve_combo.currentText())
-
-                decline_curve_type_combo.currentTextChanged.connect(on_type_changed)
-                decline_curve_combo.currentTextChanged.connect(on_curve_changed)
-
-                self.well_pads_table.setCellWidget(row_idx, 2, decline_curve_type_combo)
-                self.well_pads_table.setCellWidget(row_idx, 3, decline_curve_combo)
 
 
             # Update tracking when Decline Curve Type changes
@@ -510,13 +503,13 @@ class PUDPropertiesDialog(QDialog):
                 decline_curve_combo.addItems(new_options)
                 if new_options:
                     decline_curve_combo.setCurrentText(new_options[0])  # Default to the first option
-                self.modified_rows.add(row_idx)  # Track modified row
-                self.modified_uwis.add(uwi)     # Track modified UWI
+                self.modified_rows.add(row_idx)  # Track modified row only
 
-            # Update tracking when Decline Curve changes
             def update_decline_curve():
-                self.modified_rows.add(row_idx)  # Track modified row
-                self.modified_uwis.add(uwi)     # Track modified UWI
+                self.modified_rows.add(row_idx)  # Track modified row only
+
+            decline_curve_type_combo.currentTextChanged.connect(update_decline_curve_options)
+            decline_curve_combo.currentTextChanged.connect(update_decline_curve)
 
             decline_curve_type_combo.currentTextChanged.connect(update_decline_curve_options)
             decline_curve_combo.currentTextChanged.connect(update_decline_curve)
@@ -652,16 +645,12 @@ class PUDPropertiesDialog(QDialog):
        
             
     def run_scenario(self):
-        """Run scenario for all wells, handling different decline curve types"""
+        """Run scenario for all wells, ensuring oil_model_status and gas_model_status are taken from scenario_wells_df."""
         try:
-            # Get all wells associated with this scenario
             self.db_manager.delete_model_properties_for_scenario(self.scenario_id)
             self.db_manager.delete_production_rates_for_scenario(self.scenario_id)
-            scenario_wells_df = self.db_manager.get_scenario_wells(self.scenario_id)
-            
 
-            # Print for verification
-            print(scenario_wells_df)
+            scenario_wells_df = self.db_manager.get_scenario_wells(self.scenario_id)
 
             if scenario_wells_df is None or scenario_wells_df.empty:
                 logging.warning("No wells found for this scenario.")
@@ -671,67 +660,74 @@ class PUDPropertiesDialog(QDialog):
             total_wells = len(scenario_wells_df)
             processed_wells = 0
             error_wells = []
-            print(scenario_wells_df)
-            for index, well_data in scenario_wells_df.iterrows():
+
+            for _, well_data in scenario_wells_df.iterrows():
                 try:
-                    # Access data directly
+                    uwi = well_data['uwi']
                     decline_curve_type = well_data['decline_curve_type']
                     decline_curve_name = well_data['decline_curve']
-
-                    uwi = well_data['uwi']
                     start_date = well_data.get('start_date', None)
-  
-                    logging.info(f"Processing well {uwi} with {decline_curve_type}: {decline_curve_name}")
 
-                    # Step 1: Get decline curve data
+                    decline_curve_data = None
+
                     if decline_curve_type == 'UWI':
                         decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
-                            scenario_id=1,  # Fixed scenario_id for reference UWIs
+                            scenario_id=1,  
                             uwi=decline_curve_name
                         )
-                    
-                        if decline_curve_df is None or decline_curve_df.empty:
+
+                        if decline_curve_df is not None and not decline_curve_df.empty:
+                            decline_curve_data = decline_curve_df.iloc[0].to_dict()
+                        else:
                             logging.warning(f"No model properties found for reference UWI: {decline_curve_name}")
                             error_wells.append((uwi, "No model properties found"))
                             continue
-                        
-                        decline_curve_data = decline_curve_df.iloc[0].to_dict()
-                    
+
                     elif decline_curve_type == 'Saved DC':
-                        decline_curve_data = self.db_manager.get_decline_curve_data(decline_curve_name)
-                    
+                        decline_curve_data = self.db_manager.get_saved_decline_curve_data(decline_curve_name)
+
                         if decline_curve_data is None:
                             logging.warning(f"No saved decline curve found: {decline_curve_name}")
                             error_wells.append((uwi, "No saved decline curve found"))
                             continue
+
                     else:
                         logging.error(f"Unknown decline curve type: {decline_curve_type}")
                         error_wells.append((uwi, f"Unknown decline curve type: {decline_curve_type}"))
                         continue
 
-                    # Step 2: Start with decline curve data as base
-                    updated_well_data = decline_curve_data.copy()
-                    # Map specific fields from well_data
-                    field_mapping = {
-                        'max_oil_production_date': 'start_date',
-                        'max_gas_production_date': 'start_date',
-                        'capital_expenditures': 'total_capex_cost',
-                        'operating_expenditures': 'total_opex_cost'
-                    }
-                    print(well_data)
-                    for target_field, source_field in field_mapping.items():
-                        if source_field in well_data and not pd.isna(well_data[source_field]):
-                            updated_well_data[target_field] = well_data[source_field]
+                    # Ensure all required fields exist in decline_curve_data
+                    required_fields = [
+                        "max_oil_production", "max_gas_production", "max_oil_production_date",
+                        "max_gas_production_date", "one_year_oil_production", "one_year_gas_production",
+                        "di_oil", "di_gas", "oil_b_factor", "gas_b_factor", "min_dec_oil", "min_dec_gas",
+                        "model_oil", "model_gas", "economic_limit_type", "economic_limit_date",
+                        "oil_price", "gas_price", "oil_price_dif", "gas_price_dif", "discount_rate",
+                        "working_interest", "royalty", "tax_rate", "capital_expenditures", "operating_expenditures",
+                        "net_price_oil", "net_price_gas", "gas_model_status", "oil_model_status"
+                    ]
 
-                    print(updated_well_data)
-                    # Make sure the UWI and scenario_id are set correctly
-                    updated_well_data['uwi'] = uwi
-                    updated_well_data['scenario_id'] = self.scenario_id
+                    for field in required_fields:
+                        if field not in decline_curve_data:
+                            decline_curve_data[field] = None  # Fill missing fields
 
-                    # Handle the scenario for this well
-                    self.handle_scenario(self.scenario_id, updated_well_data)
+                    # Ensure `oil_model_status` and `gas_model_status` come from `scenario_wells_df`
+                    decline_curve_data['oil_model_status'] = well_data.get('oil_model_status', None)
+                    decline_curve_data['gas_model_status'] = well_data.get('gas_model_status', None)
+                    decline_curve_data['max_oil_production_date'] = well_data.get('start_date', None)
+
+                    decline_curve_data['max_gas_production_date'] = well_data.get('start_date', None)
+                    
+                    
+
+                    # Assign UWI and scenario ID
+                    decline_curve_data['uwi'] = uwi
+                    decline_curve_data['scenario_id'] = self.scenario_id
+
+                    # Process the scenario with updated decline curve data
+                    self.handle_scenario(self.scenario_id, decline_curve_data)
                     processed_wells += 1
-                
+
                     if processed_wells % 5 == 0:
                         logging.info(f"Processed {processed_wells}/{total_wells} wells")
 
@@ -741,7 +737,7 @@ class PUDPropertiesDialog(QDialog):
                     error_wells.append((well_data.get('uwi', 'unknown'), error_msg))
                     continue
 
-            # Show final results
+            # Show results
             success_count = processed_wells - len(error_wells)
             if error_wells:
                 error_msg = "\n".join([f"UWI: {uwi} - Error: {error}" for uwi, error in error_wells])
@@ -761,6 +757,8 @@ class PUDPropertiesDialog(QDialog):
         except Exception as e:
             logging.error(f"Error in run_scenario: {e}")
             QMessageBox.critical(self, "Error", f"Failed to run scenario: {str(e)}")
+
+
 
 
     def handle_scenario(self, scenario_id, well_data):
@@ -791,15 +789,12 @@ class PUDPropertiesDialog(QDialog):
             "royalty", "tax_rate", 
             "capital_expenditures", "operating_expenditures",
             "net_price_oil", "net_price_gas",
-            "gas_model_status", "oil_model_status",
-            "q_oil_eur", "q_gas_eur",
-            "EFR_oil", "EFR_gas",
-            "EUR_oil_remaining", "EUR_gas_remaining",
-            "npv", "npv_discounted"
+            "gas_model_status", "oil_model_status"
         ]
 
         # Reorder columns to match the database schema
         df_uwi_model_data = df_uwi_model_data[required_columns]
+        print(df_uwi_model_data)
     
         self.db_manager.update_model_properties(df_uwi_model_data, scenario_id)
     
@@ -881,98 +876,162 @@ class PUDPropertiesDialog(QDialog):
                 logging.info("No modifications to update")
                 return
 
-            logging.info(f"Updating scenario with {len(self.modified_rows)} modified rows")
+            # Retrieve the latest well data from the database
+            scenario_wells_df = self.db_manager.get_scenario_wells(self.scenario_id)
 
-            for row in self.modified_rows:
-                try:
-                    # Get the UWI for this row
-                    uwi_item = self.well_pads_table.item(row, 0)
-                    if not uwi_item:
-                        continue
-                    uwi = uwi_item.text()
-                    print(f"Processing UWI: {uwi}")  # Debug print
+            if scenario_wells_df is None or scenario_wells_df.empty:
+                logging.warning("No wells found for this scenario.")
+                QMessageBox.warning(self, "Warning", "No wells found for this scenario.")
+                return
 
-                    # Collect the updated data for this row
-                    updated_data = {}
+            # Get column indices from headers
+            headers = [self.well_pads_table.horizontalHeaderItem(col).text() 
+                      for col in range(self.well_pads_table.columnCount())]
+        
+            # Map the actual table headers to the columns we need
+            uwi_idx = headers.index('Pad Name')  # "Pad Name" contains UWI
+            start_date_idx = headers.index('Start Date')
+            decline_curve_type_idx = headers.index('Decline Curve Type')
+            decline_curve_idx = headers.index('Decline Curve')
 
-                    # Get header labels and print them
-                    headers = []
-                    for col in range(self.well_pads_table.columnCount()):
-                        header_item = self.well_pads_table.horizontalHeaderItem(col)
-                        if header_item:
-                            headers.append(header_item.text())
-                    print(f"Table headers: {headers}")  # Debug print
-                    print(f"Key mapping: {self.key_mapping}")  # Debug print
-
-                    # Collect data for each column
-                    for col, header in enumerate(headers):
-                        # Debug print for header processing
-                        print(f"Processing column {col}: {header}")
-                    
-                        if header in self.key_mapping:
-                            db_field = self.key_mapping[header]
-                            print(f"Found mapping for {header} -> {db_field}")  # Debug print
-                        
-                            # Handle special cases for different column types
-                            if header == "Start Date":
-                                date_widget = self.well_pads_table.cellWidget(row, col)
-                                if date_widget:
-                                    updated_data[db_field] = date_widget.date().toString("yyyy-MM-dd")
-                                    print(f"Date value: {updated_data[db_field]}")  # Debug print
-                                
-                            elif header in ["Decline Curve Type", "Decline Curve"]:
-                                combo_widget = self.well_pads_table.cellWidget(row, col)
-                                if combo_widget:
-                                    updated_data[db_field] = combo_widget.currentText()
-                                    print(f"Combo value: {updated_data[db_field]}")  # Debug print
-                                
-                            else:
-                                item = self.well_pads_table.item(row, col)
-                                if item:
-                                    value = item.text()
-                                    if '$' in value:
-                                        value = value.replace('$', '').replace(',', '')
-                                    try:
-                                        updated_data[db_field] = float(value)
-                                    except ValueError:
-                                        updated_data[db_field] = value
-                                    print(f"Cell value: {updated_data[db_field]}")  # Debug print
-
-                    print(f"Final updated data: {updated_data}")  # Debug print
-
-                    # Update the well pad data in the database
-                    well_pad_id = self.db_manager.get_well_pad_id(uwi, self.scenario_id)
-                    if well_pad_id:
-                        print(f"Updating well pad ID: {well_pad_id}")  # Debug print
-                        self.db_manager.update_well_pad(well_pad_id, updated_data)
-
-                        # Delete and regenerate model and production data
-                        self.db_manager.delete_model_properties_for_uwi(self.scenario_id, uwi)
-                        self.db_manager.delete_production_rates_for_uwi(self.scenario_id, uwi)
-
-                        well_data = self.db_manager.get_well_pad_data(well_pad_id)
-                        if well_data:
-                            self.handle_scenario(self.scenario_id, well_data)
-
-                    logging.info(f"Successfully updated UWI: {uwi}")
-
-                except Exception as e:
-                    logging.error(f"Error updating row {row}: {e}")
-                    print(f"Exception details: {str(e)}")  # Debug print
+            modified_well_data = []
+        
+            # Convert set to list for iteration
+            modified_row_list = list(self.modified_rows)
+        
+            for row_idx in modified_row_list:
+                logging.info(f"Processing row index: {row_idx}")
+            
+                # Verify row index is valid
+                if row_idx >= self.well_pads_table.rowCount():
+                    logging.error(f"Row index {row_idx} is out of bounds")
                     continue
 
-            # Clear tracking sets after successful update
+                # Get UWI from table item
+                uwi_item = self.well_pads_table.item(row_idx, uwi_idx)
+                if not uwi_item:
+                    logging.warning(f"Missing UWI (Pad Name) in row {row_idx}")
+                    continue
+                uwi = uwi_item.text()
+
+                # Get Start Date from QDateEdit widget
+                date_widget = self.well_pads_table.cellWidget(row_idx, start_date_idx)
+                start_date = date_widget.date().toString('yyyy-MM-dd') if date_widget else None
+
+                # Get Decline Curve Type from QComboBox widget
+                dc_type_widget = self.well_pads_table.cellWidget(row_idx, decline_curve_type_idx)
+                decline_curve_type = dc_type_widget.currentText() if dc_type_widget else None
+
+                # Get Decline Curve from QComboBox widget
+                dc_widget = self.well_pads_table.cellWidget(row_idx, decline_curve_idx)
+                decline_curve = dc_widget.currentText() if dc_widget else None
+
+                logging.info(f"Row {row_idx} values:")
+                logging.info(f"UWI: {uwi}")
+                logging.info(f"Start Date: {start_date}")
+                logging.info(f"DC Type: {decline_curve_type}")
+                logging.info(f"DC: {decline_curve}")
+
+                # Find the well pad ID and save basic updates
+                well_pad_row = scenario_wells_df[scenario_wells_df["uwi"] == uwi]
+                if not well_pad_row.empty:
+                    well_pad_id = well_pad_row.iloc[0]["id"]
+                
+                    # Save the basic column updates first
+                    self.db_manager.update_well_pad_decline_data(
+                        well_pad_id=well_pad_id,
+                        start_date=start_date,
+                        decline_curve_type=decline_curve_type,
+                        decline_curve=decline_curve
+                    )
+                
+                    # Build well data dictionary for decline curve processing
+                    well_pad_data = {
+                        "id": well_pad_id,
+                        "uwi": uwi,
+                        "start_date": start_date,
+                        "decline_curve_type": decline_curve_type,
+                        "decline_curve": decline_curve,
+                        "oil_model_status": well_pad_row.iloc[0].get('oil_model_status', 0),
+                        "gas_model_status": well_pad_row.iloc[0].get('gas_model_status', 0)
+                    }
+                    modified_well_data.append(well_pad_data)
+                
+                    logging.info(f"Updated basic data for UWI {uwi}")
+                else:
+                    logging.warning(f"No well pad ID found for UWI: {uwi}")
+
+            if not modified_well_data:
+                logging.info("No valid well pad data to update.")
+                return
+
+            # Step 2: Process each modified well with its decline curve data
+            for well_pad_data in modified_well_data:
+                try:
+                    uwi = well_pad_data["uwi"]
+                    decline_curve_type = well_pad_data["decline_curve_type"]
+                    decline_curve_name = well_pad_data["decline_curve"]
+                    start_date = well_pad_data["start_date"]
+
+                    decline_curve_data = None
+
+                    if decline_curve_type == "UWI":
+                        decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                            scenario_id=self.scenario_id,
+                            uwi=decline_curve_name
+                        )
+                        decline_curve_data = decline_curve_df.iloc[0].to_dict() if not decline_curve_df.empty else None
+
+                    elif decline_curve_type == "Saved DC":
+                        decline_curve_data = self.db_manager.get_saved_decline_curve_data(decline_curve_name)
+
+                    if decline_curve_data is None:
+                        logging.warning(f"No valid decline curve found for {uwi}")
+                        continue
+
+                    # Step 3: Ensure all required fields exist in decline_curve_data
+                    required_fields = [
+                        "max_oil_production", "max_gas_production", "max_oil_production_date",
+                        "max_gas_production_date", "one_year_oil_production", "one_year_gas_production",
+                        "di_oil", "di_gas", "oil_b_factor", "gas_b_factor", "min_dec_oil", "min_dec_gas",
+                        "model_oil", "model_gas", "economic_limit_type", "economic_limit_date",
+                        "oil_price", "gas_price", "oil_price_dif", "gas_price_dif", "discount_rate",
+                        "working_interest", "royalty", "tax_rate", "capital_expenditures", 
+                        "operating_expenditures", "net_price_oil", "net_price_gas"
+                    ]
+
+                    for field in required_fields:
+                        decline_curve_data.setdefault(field, None)
+
+                    # Overwrite necessary values
+                    decline_curve_data["max_oil_production_date"] = start_date
+                    decline_curve_data["max_gas_production_date"] = start_date
+                
+                    # Preserve the model status from the well pad data
+                    decline_curve_data["oil_model_status"] = well_pad_data["oil_model_status"]
+                    decline_curve_data["gas_model_status"] = well_pad_data["gas_model_status"]
+
+                    # Assign UWI and scenario ID
+                    decline_curve_data["uwi"] = uwi
+                    decline_curve_data["scenario_id"] = self.scenario_id
+
+                    # Process the scenario with updated decline curve data
+                    self.handle_scenario(self.scenario_id, decline_curve_data)
+
+                except Exception as e:
+                    logging.error(f"Error processing well {uwi}: {str(e)}")
+
+            # Step 4: Final cleanup
             self.modified_rows.clear()
             self.has_unsaved_changes = False
             self.setWindowTitle("Pad Properties")
+            self.populate_well_pads_table()
 
             QMessageBox.information(self, "Success", "Scenario updated successfully!")
-            self.populate_well_pads_table()
 
         except Exception as e:
             logging.error(f"Error in update_scenario: {e}")
             QMessageBox.critical(self, "Error", f"Failed to update scenario: {str(e)}")
-
     def get_decline_curve_options(self, decline_curve_type):
         """
         Get options for the Decline Curve dropdown based on the selected Decline Curve Type.

@@ -2,11 +2,11 @@ from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButt
 from PySide6.QtCore import Qt
 
 class SaveDeclineCurveDialog(QDialog):
-    def __init__(self, parent=None, uwis=None):
+    def __init__(self, parent=None, uwis=None, from_context_menu=False):
         super().__init__(parent)
         if uwis is not None:
             self.uwis = [str(uwi) for uwi in uwis]
- # List of uwis for Average option
+        self.from_context_menu = from_context_menu
         self.setWindowTitle("Save Decline Curve Parameters")
 
         self.layout = QVBoxLayout()
@@ -16,6 +16,9 @@ class SaveDeclineCurveDialog(QDialog):
 
         self.options = QComboBox()
         self.options.addItems(["Current Well", "Average", "Manual"])
+        if self.from_context_menu:
+            self.options.setCurrentText("Average")
+            self.options.setEnabled(False)
         self.layout.addWidget(self.options)
         
         self.name_label = QLabel("Enter a name for the decline curve parameters:")
@@ -37,9 +40,11 @@ class SaveDeclineCurveDialog(QDialog):
             for uwi in self.uwis:
                 item = QListWidgetItem(uwi)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                item.setCheckState(Qt.Unchecked)
+                item.setCheckState(Qt.Checked if self.from_context_menu else Qt.Unchecked)
                 self.uwi_list.addItem(item)
         self.average_layout.addWidget(self.uwi_list)
+        
+        # Rest of your existing dialog code...
         
         # Manual Option
         self.economic_limit_type = QLineEdit()

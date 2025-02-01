@@ -25,12 +25,7 @@ from shapely.geometry import LineString
 from PySide6.QtCore import QDateTime, QDate, QTime
 from datetime import datetime, timedelta
 import platform
-print(platform.python_version_tuple())
-seisware_path = r"C:\Program Files\SeisWare SDK\11.0 BETA\py3\SeisWare"
-if seisware_path not in sys.path:
-    sys.path.append(seisware_path)
-import SeisWare
-print(SeisWare.__file__)
+from SeisWare import seisware_sdk_312 as SeisWare
 
 #from Exporting import ExportDialog
 from DataLoader import DataLoaderDialog
@@ -378,9 +373,10 @@ class Map(QMainWindow, Ui_MainWindow):
         selected_scenario = self.scenarioDropdown.currentText()
     
         # Update the active scenario in the database manager
-        self.senario_id = self.db_manager.get_scenario_id(selected_scenario)
+        self.scenario_id = self.db_manager.get_scenario_id(selected_scenario)
     
         # Update the local scenario ID
+        print(self.scenario_id)
         self.scenario_id = self.db_manager.set_active_scenario(self.scenario_id)
 
 
