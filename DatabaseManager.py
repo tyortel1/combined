@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import logging
 import re
+import numpy as np
 
 
 
@@ -1345,20 +1346,29 @@ class DatabaseManager:
       
         self.disconnect()
 
-    def retrieve_and_sum(self):
+    def retrieve_and_sum(self, scenario_id):
         try:
-            # Get column names
             self.connect()
+
+            # Get column names
             self.cursor.execute("PRAGMA table_info(prod_rates_all)")
             columns = [column[1] for column in self.cursor.fetchall()]
 
-            self.cursor.execute("SELECT * FROM prod_rates_all")
-        
+            # Define query to fetch data based on scenario_id
+            if scenario_id == 1:
+                self.cursor.execute("SELECT * FROM prod_rates_all WHERE scenario_id = ?", (scenario_id,))
+            else:
+                self.cursor.execute("SELECT * FROM prod_rates_all WHERE scenario_id IN (?, ?)", (1, scenario_id))
+
             rows = self.cursor.fetchall()
-        
+
             # Convert rows to DataFrame with column names
             df = pd.DataFrame(rows, columns=columns)
-            
+
+            if df.empty:
+                print(f"No production rate data found for scenario {scenario_id}")
+                return None, None
+
             # Ensure date column is in datetime format
             df['date'] = pd.to_datetime(df['date'])
 
@@ -1368,17 +1378,19 @@ class DatabaseManager:
                 'discounted_revenue': 'sum'
             }).reset_index()
 
-            # Retrieve the first date for each well
-            # Retrieve the first and last date for each well
             # Retrieve the first and last date for each well
             date_ranges = df.groupby('uwi')['date'].agg(['min', 'max']).reset_index()
             date_ranges.columns = ['uwi', 'first_date', 'last_date']
+
             return combined_data, date_ranges
+
         except sqlite3.Error as e:
             print("Error retrieving production rates:", e)
-            return None
+            return None, None
+
         finally:
             self.disconnect()
+
 
 
     def create_saved_dca_table(self):
@@ -3074,6 +3086,63 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def save_merged_zone(self, merged_data: pd.DataFrame, new_zone_name: str) -> bool:
+        """
+        Save the merged zone data to a new table named after the new zone
+        
+        Parameters:
+            merged_data (pd.DataFrame): The merged zone data
+            new_zone_name (str): Name for the new merged zone (will be table name)
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            self.db_manager.connect()
+            
+            # Create new table query
+            columns = merged_data.columns
+            create_query = f"""
+                CREATE TABLE IF NOT EXISTS {new_zone_name} (
+                    {', '.join(f"{col} {'TEXT' if col == 'UWI' else 'REAL'}" 
+                              for col in columns)}
+                )
+            """
+            self.db_manager.cursor.execute(create_query)
+            
+            # Insert data query
+            placeholders = ','.join(['?' for _ in columns])
+            insert_query = f"""
+                INSERT INTO {new_zone_name} 
+                ({','.join(columns)})
+                VALUES ({placeholders})
+            """
+            
+            # Convert DataFrame to list of tuples and insert
+            records = merged_data.to_records(index=False)
+            self.db_manager.cursor.executemany(insert_query, records)
+            
+            # Add the new zone to the Zones table if it exists
+            try:
+                self.db_manager.cursor.execute(
+                    "INSERT INTO Zones (ZoneName, Type) VALUES (?, 'Zone')",
+                    (new_zone_name,)
+                )
+            except sqlite3.Error:
+                # Zones table might not exist, skip this step
+                pass
+                
+            self.db_manager.commit()
+            return True
+            
+        except Exception as e:
+            print(f"Error saving merged zone: {e}")
+            self.db_manager.rollback()
+            return False
+        finally:
+            self.db_manager.disconnect()
+
+
     def fetch_correlation_data(self, table_name, column_name, uwis):
         """
         Fetch specific column data for selected UWIs.
@@ -3122,6 +3191,131 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+
+
+    def fetch_zone_depth_data(self, zone_name):
+        """
+        Fetches zone data as a DataFrame from the table named after the zone.
+        Cleans numeric columns before conversion to avoid errors.
+        """
+        self.connect()
+        if not self.connection:
+            print("Connection failed.")
+            return pd.DataFrame()
+
+        try:
+            # Ensure table name is formatted correctly
+            sanitized_zone_name = zone_name.replace(" ", "_")
+
+            # Fetch the data
+            query = f"SELECT * FROM {sanitized_zone_name}"
+            df = pd.read_sql_query(query, self.connection)
+
+            # Clean up column names - ensure consistent naming
+            df.columns = [col.strip() for col in df.columns]
+
+            # Rename depth columns if needed to match expected format
+            column_mapping = {
+                'TOP_DEPTH': 'Top_Depth',
+                'BASE_DEPTH': 'Base_Depth',
+                'Top Depth': 'Top_Depth',
+                'Base Depth': 'Base_Depth'
+            }
+            df.rename(columns=column_mapping, inplace=True)
+
+            # Convert empty strings and invalid numeric values to NaN
+            df.replace(["", "NULL", "null", "N/A", "n/a", "NaN", "nan"], np.nan, inplace=True)
+
+            # 🔹 1️⃣ Exclude Known Non-Numeric Columns
+            non_numeric_cols = ["well_depth_units"]  # Add any known non-numeric columns
+            numeric_cols = [col for col in df.columns if col not in non_numeric_cols]
+
+            # 🔹 2️⃣ Remove non-numeric characters & Convert only numeric columns
+            def clean_numeric(value):
+                if isinstance(value, str):
+                    cleaned = re.sub(r"[^\d.-]", "", value)  # Remove everything except digits, periods, negatives
+                    return cleaned if cleaned else np.nan
+                return value
+
+            for col in numeric_cols:
+                df[col] = df[col].astype(str).str.strip()  # Ensure it's a string before cleaning
+                df[col] = df[col].apply(clean_numeric)
+                df[col] = pd.to_numeric(df[col], errors='coerce')  # Convert only valid columns to numeric
+
+            # 🔹 3️⃣ Debug: Print rows with NaN values
+            print("DEBUG: Rows with NaN after conversion:")
+            print(df[df.isna().any(axis=1)])  # Print only rows with NaN values
+
+            # Sort by UWI and Top_Depth if they exist
+            if "UWI" in df.columns and "Top_Depth" in df.columns:
+                df.sort_values(['UWI', 'Top_Depth'], inplace=True)
+
+            return df
+
+        except Exception as e:
+            print(f"Error fetching zone data for table {zone_name}: {e}")
+            return pd.DataFrame()
+        finally:
+            self.disconnect()
+
+
+
+
+    def update_zone_data(self, zone_name, updated_data):
+        """Updates zone table with new attributes"""
+        self.connect()
+        if not self.connection:
+            return False
+        
+        try:
+            cursor = self.connection.cursor()
+            sanitized_zone_name = zone_name.replace(" ", "_")
+        
+            # Get existing columns
+            cursor.execute(f"PRAGMA table_info({sanitized_zone_name})")
+            existing_columns = [row[1] for row in cursor.fetchall()]
+        
+            # Find new columns
+            new_columns = [col for col in updated_data.columns 
+                          if col not in existing_columns and 
+                          col not in ['id', 'ID', 'UWI', 'Top_Depth', 'Base_Depth']]
+        
+            # Add new columns
+            for col in new_columns:
+                sanitized_col = col.replace(" ", "_")
+                cursor.execute(f"ALTER TABLE {sanitized_zone_name} ADD COLUMN {sanitized_col} REAL")
+        
+            # Update values
+            for _, row in updated_data.iterrows():
+                # Build update for just the new columns
+                set_clause = ", ".join([f"{col.replace(' ', '_')} = ?" for col in new_columns])
+                values = [float(row[col]) if pd.notnull(row[col]) else None for col in new_columns]
+            
+                # Match on UWI and depths
+                where_clause = """
+                    UWI = ? 
+                    AND ABS(Top_Depth - ?) < 0.001 
+                    AND ABS(Base_Depth - ?) < 0.001
+                """
+                values.extend([row['UWI'], float(row['Top_Depth']), float(row['Base_Depth'])])
+            
+                query = f"""
+                    UPDATE {sanitized_zone_name}
+                    SET {set_clause}
+                    WHERE {where_clause}
+                """
+                cursor.execute(query, values)
+        
+            self.connection.commit()
+            return True
+        
+        except Exception as e:
+            print(f"Error updating table: {e}")
+            self.connection.rollback()
+            return False
+        
+        finally:
+            self.disconnect()
 
     def fetch_zone_data(self, zone_name):
        self.connect()

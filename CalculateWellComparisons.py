@@ -15,10 +15,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from DeclineCurveAnalysis import DeclineCurveAnalysis
+from PUDProperties import PUDPropertiesDialog
 
 
 class ScenarioNameDialog(QDialog):
     """Dialog to select an existing scenario or create a new one."""
+    
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Scenario")
@@ -28,32 +30,47 @@ class ScenarioNameDialog(QDialog):
 
         layout = QVBoxLayout(self)
 
-
         # Step 1: Fetch existing scenario names
         self.scenario_names = self.db_manager.get_scenario_names()
 
         # Step 2: Create Dropdown for Existing Scenarios
         self.scenario_dropdown = QComboBox(self)
-        self.scenario_dropdown.addItems(self.scenario_names)
-        self.scenario_dropdown.setEditable(True)  # Allows users to type a new scenario
-        layout.addWidget(QLabel("Select or Type a Scenario Name:"))
-        layout.addWidget(self.scenario_dropdown)
+        layout.addWidget(QLabel("Select a Scenario:"))
+
+        if self.scenario_names:
+            self.scenario_dropdown.addItems(self.scenario_names)
+            layout.addWidget(self.scenario_dropdown)
+        else:
+            layout.addWidget(QLabel("No existing scenarios found. Please create one."))
 
         # Step 3: Buttons
         button_layout = QHBoxLayout()
-        self.ok_button = QPushButton("OK")
-        self.cancel_button = QPushButton("Cancel")
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-        layout.addLayout(button_layout)
 
-        # Connect buttons
-        self.ok_button.clicked.connect(self.accept)
+        if self.scenario_names:
+            self.ok_button = QPushButton("OK")
+            self.ok_button.clicked.connect(self.accept)
+            button_layout.addWidget(self.ok_button)
+        else:
+            self.create_button = QPushButton("Create Scenario")
+            self.create_button.clicked.connect(self.create_new_scenario)
+            button_layout.addWidget(self.create_button)
+
+        self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.cancel_button)
+
+        layout.addLayout(button_layout)
 
     def get_selected_scenario(self):
         """Return the selected scenario name."""
-        return self.scenario_dropdown.currentText().strip()
+        if self.scenario_names:
+            return self.scenario_dropdown.currentText().strip()
+        return None
+
+    def create_new_scenario(self):
+        # Assuming self.db_manager exists in the parent class
+        dialog = PUDPropertiesDialog(self.db_manager, parent=self)
+        dialog.exec_()
 
 
 class DualListSelector(QWidget):

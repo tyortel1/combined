@@ -68,6 +68,8 @@ from CalculatePC import PCDialog
 from LaunchCombinedCashflow import LaunchCombinedCashflow
 from CalculateCorrelationMatrix import GenerateCorrelationMatrix
 from CalculateWellComparisons import WellComparisonDialog
+from CalcMergeZones import CalcMergeZoneDialog
+from CalculateZoneAttributes import ZoneAttributeCalculator
 
 
 
@@ -234,6 +236,10 @@ class Map(QMainWindow, Ui_MainWindow):
         self.pc_dialog_action.triggered.connect(self.pc_dialog)
         self.correlation_matrix_action.triggered.connect(self.generate_correlation_matrix)
         self.well_comparison_action.triggered.connect(self.well_comparison)
+        self.merge_zones_action.triggered.connect(self.merge_zones)
+        self.calc_zone_attb_action.triggered.connect(self.calculate_zone_attributes)
+    
+   
         self.data_loader_menu_action.triggered.connect(self.dataloader)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
         self.dataload_segy_action.triggered.connect(self.dataload_segy)
@@ -614,7 +620,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         print(self.selected_zone)
 
-        if not self.selected_zone or self.selected_zone.strip() == "Select Zone":
+        if not self.selected_zone or self.selected_zone.strip() == "Select_Zone":
             # Clear the zones in the plotting area
             self.processed_data = []
             self.drawingArea.clearZones()
@@ -1230,6 +1236,7 @@ class Map(QMainWindow, Ui_MainWindow):
         else:
             # Use cached well zone data for other zones
             well_zone_df = self.cached_well_zone_df.copy()
+            print(well_zone_df)
 
         # Ensure the selected attribute exists in the DataFrame
         if selected_attribute not in well_zone_df.columns:
@@ -2262,17 +2269,61 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def launch_combined_cashflow(self):
         self.cashflow_window = LaunchCombinedCashflow()
-        # Example data
-        combined_data, date_ranges = self.db_manager.retrieve_and_sum()
-        model_data = self.db_manager.retrieve_model_data()
-        model_data_df = pd.DataFrame(model_data)
+
+        # Fetch combined_data and date_ranges for both scenario 1 and the active scenario
+        if self.scenario_id == 1:
+            combined_data, date_ranges = self.db_manager.retrieve_and_sum(self.scenario_id)
+        else:
+            # Fetch for both active scenario and scenario 1
+            combined_data_active_scenario, date_ranges_active_scenario = self.db_manager.retrieve_and_sum(self.scenario_id)
+            combined_data_scenario_1, date_ranges_scenario_1 = self.db_manager.retrieve_and_sum(1)
+
+            # Convert to DataFrames
+            df_combined_scenario_1 = pd.DataFrame(combined_data_scenario_1)
+            df_combined_active_scenario = pd.DataFrame(combined_data_active_scenario)
+
+            df_date_ranges_scenario_1 = pd.DataFrame(date_ranges_scenario_1)
+            df_date_ranges_active_scenario = pd.DataFrame(date_ranges_active_scenario)
+
+            # Combine both DataFrames (if the active scenario has data)
+            if not df_combined_active_scenario.empty:
+                combined_data = pd.concat([df_combined_scenario_1, df_combined_active_scenario], ignore_index=True)
+            else:
+                combined_data = df_combined_scenario_1
+
+            # Combine both date_ranges
+            if not df_date_ranges_active_scenario.empty:
+                date_ranges = pd.concat([df_date_ranges_scenario_1, df_date_ranges_active_scenario], ignore_index=True)
+            else:
+                date_ranges = df_date_ranges_scenario_1
+
+        # Fetch model data for both scenario 1 and the active scenario
+        if self.scenario_id == 1:
+            model_data = self.db_manager.retrieve_model_data_by_scenorio(self.scenario_id)
+            model_data_df = pd.DataFrame(model_data)
+        else:
+            model_data_active_scenario = self.db_manager.retrieve_model_data_by_scenorio(self.scenario_id)
+            model_data_scenario_1 = self.db_manager.retrieve_model_data_by_scenario(1)
+
+            df_scenario_1 = pd.DataFrame(model_data_scenario_1)
+            df_active_scenario = pd.DataFrame(model_data_active_scenario)
+
+            # Combine both DataFrames (if the active scenario has data)
+            if not df_active_scenario.empty:
+                model_data_df = pd.concat([df_scenario_1, df_active_scenario], ignore_index=True)
+            else:
+                model_data_df = df_scenario_1
+
+        print(model_data_df)
+        print(combined_data)
+        print(date_ranges)
+
+        # Merge combined data with model data
         merged_df = pd.merge(date_ranges, model_data_df, on='uwi', how='inner')
 
-        # Select only the uwi, first_date (start date), and capital_expenditures (CapEx) columns
-        capex_df = merged_df[['uwi', 'first_date', 'capital_expenditures']]
-       #printcapex_df)
+        # Call cashflow display method
+        self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df)
 
-        self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df )
         self.cashflow_window.show()
 
 
@@ -2436,6 +2487,17 @@ class Map(QMainWindow, Ui_MainWindow):
     def generate_correlation_matrix(self):
     
         dialog = GenerateCorrelationMatrix(self.db_manager)
+        dialog.exec()
+
+    def merge_zones(self):
+    
+        dialog = CalcMergeZoneDialog(self.db_manager)
+        dialog.exec()
+
+
+    def calculate_zone_attributes(self):
+    
+        dialog = ZoneAttributeCalculator(self.db_manager)
         dialog.exec()
 
     def well_comparison(self):

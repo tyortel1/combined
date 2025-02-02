@@ -209,7 +209,7 @@ class DataLoadWellZonesDialog(QDialog):
                 rename_map[base_depth_header] = "Base Depth"
 
             valid_df.rename(columns=rename_map, inplace=True)
-            print(valid_df.columns.tolist())
+
             if zone_type == "Zone":
           
                 # Add columns for angles
@@ -235,6 +235,7 @@ class DataLoadWellZonesDialog(QDialog):
                 #valid_df = valid_df[columns]
 
                 # Calculate angles
+          
                 valid_df = self.calculate_angles(valid_df)
 
             else:
@@ -282,13 +283,14 @@ class DataLoadWellZonesDialog(QDialog):
 
     def calculate_offsets(self, uwi, top_md, base_md):
         well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+        
         if well_data.empty:
             return None, None, None, None
 
         # Interpolate for top and base MDs
         top_x, top_y, _, _, _, _ = self.interpolate(top_md, well_data)
         base_x, base_y, _, _, _, _ = self.interpolate(base_md, well_data)
-
+        print(top_x, top_y, base_x, base_y )
         return top_x, top_y, base_x, base_y
 
     def interpolate(self, md, data):
@@ -319,8 +321,11 @@ class DataLoadWellZonesDialog(QDialog):
             last_row = uwi_data.iloc[-1]
 
             # Extract the corresponding X and Y offsets
-            x1, y1 = first_row['Top X Offset'], first_row['Top Y Offset']
-            x2, y2 = last_row['Base X Offset'], last_row['Base Y Offset']
+            x1, y1 = first_row.get('Top X Offset'), first_row.get('Top Y Offset')
+            x2, y2 = last_row.get('Base X Offset'), last_row.get('Base Y Offset')
+
+            # Print debug output
+            print(f"UWI: {uwi} - x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}")
 
             # Calculate the angle in radians
             dx, dy = x2 - x1, y1 - y2

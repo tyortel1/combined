@@ -279,6 +279,10 @@ class Ui_MainWindow:
         MainWindow.calculate_menu.addAction(MainWindow.correlation_matrix_action)
         MainWindow.well_comparison_action = QAction("Well Comparison Calculation", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.well_comparison_action)
+        MainWindow.merge_zones_action = QAction("Merge Zones", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.merge_zones_action)
+        MainWindow.calc_zone_attb_action = QAction("Calculate Zone Attributes", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.calc_zone_attb_action)
 
 
 

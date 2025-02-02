@@ -168,3 +168,6 @@
 [0130/115048.351:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 
 [0130/192128.829:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 
 [0130/230441.156:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 
+[0201/134957.360:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 
+[0201/135117.236:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 
+[0201/135910.218:WARNING:resource_bundle_qt.cpp(119)] locale_file_path.empty() for locale 

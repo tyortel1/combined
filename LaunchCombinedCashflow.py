@@ -2,9 +2,11 @@ import sys
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as py_offline
-from PySide6.QtWidgets import QApplication, QVBoxLayout,QCalendarWidget, QDialog, QGridLayout, QComboBox, QCheckBox, QLabel, QLineEdit, QPushButton, QHBoxLayout, QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QVBoxLayout,QCalendarWidget, QDialog, QTableWidget, QTableWidgetItem, QPushButton, QFileDialog, QGridLayout, QComboBox, QCheckBox, QLabel, QLineEdit, QHBoxLayout, QSizePolicy, QWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QSignalBlocker, QDate
+
+import openpyxl
 
 class LaunchCombinedCashflow(QDialog):
     def __init__(self, parent=None):
@@ -30,7 +32,6 @@ class LaunchCombinedCashflow(QDialog):
         
         # Checkboxes for traces
         self.trace_checkboxes = {}
-        
         traces = ['sum_revenue', 'sum_discounted_revenue', 'profit', 'discounted_profit', 'capex_sum', 'opex_sum']
         for trace in traces:
             self.trace_checkboxes[trace] = QCheckBox(trace)
@@ -46,6 +47,17 @@ class LaunchCombinedCashflow(QDialog):
         # Button to apply discount rate
         self.apply_discount_button = QPushButton("Apply Discount Rate")
         controls_layout.addWidget(self.apply_discount_button)
+        
+        # Add Export and Table buttons AFTER other controls
+        self.export_button = QPushButton("Export to Excel")
+        controls_layout.addWidget(self.export_button)
+        
+        self.show_table_button = QPushButton("Show Data Table")
+        controls_layout.addWidget(self.show_table_button)
+        
+        # Connect buttons
+        self.export_button.clicked.connect(self.export_to_excel)
+        self.show_table_button.clicked.connect(self.show_table)
         
         main_layout.addWidget(controls_widget)
         
@@ -69,17 +81,85 @@ class LaunchCombinedCashflow(QDialog):
         self.cash_flow_df = pd.DataFrame()
         
         self.plot_figure = None
+# Add these new methods to your class:
+    def export_to_excel(self):
+        try:
+            # Open file dialog for saving
+            file_name, _ = QFileDialog.getSaveFileName(
+                self, "Save Excel File", "", "Excel Files (*.xlsx)"
+            )
+            
+            if file_name:
+                # If no extension is provided, add .xlsx
+                if not file_name.endswith('.xlsx'):
+                    file_name += '.xlsx'
+                
+                # Export DataFrame to Excel
+                self.cash_flow_df.to_excel(file_name, index=False)
+                print(f"Data exported successfully to {file_name}")
+        except Exception as e:
+            print(f"Error exporting to Excel: {str(e)}")
 
+    def show_table(self):
+        # Create table window
+        self.table_window = QDialog(self)
+        self.table_window.setWindowTitle("Cash Flow Data")
+        self.table_window.setGeometry(200, 200, 1000, 600)
+        
+        # Create table widget
+        table = QTableWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(table)
+        self.table_window.setLayout(layout)
+        
+        # Set up table
+        df = self.cash_flow_df
+        table.setRowCount(len(df))
+        table.setColumnCount(len(df.columns))
+        table.setHorizontalHeaderLabels(df.columns)
+        
+        # Populate table
+        for i in range(len(df)):
+            for j in range(len(df.columns)):
+                value = str(df.iloc[i, j])
+                if df.columns[j] in ['profit', 'discounted_profit', 'sum_revenue', 
+                                   'sum_discounted_revenue', 'capex_sum', 'opex_sum']:
+                    # Format financial numbers
+                    try:
+                        value = f"${float(value):,.2f}"
+                    except ValueError:
+                        pass
+                item = QTableWidgetItem(value)
+                table.setItem(i, j, item)
+        
+        # Resize columns to content
+        table.resizeColumnsToContents()
+        
+        # Show the window
+        self.table_window.show()
     
     def apply_discount_rate(self):
         try:
             discount_rate = float(self.discount_rate_input.text()) / 100
-            self.combined_data['discounted_revenue'] = self.combined_data['total_revenue'] / (1 + discount_rate)
+        
+            # Recalculate discounted revenue
+            self.cash_flow_df['discounted_revenue'] = self.cash_flow_df['total_revenue'] / (1 + discount_rate)
+        
+            # Recalculate cumulative discounted revenue
+            self.cash_flow_df['sum_discounted_revenue'] = self.cash_flow_df['discounted_revenue'].cumsum()
+        
+            # Recalculate discounted profit using the new discounted revenue
+            self.cash_flow_df['discounted_profit'] = (self.cash_flow_df['sum_discounted_revenue'] + 
+                                                     self.cash_flow_df['cumsum_opex'] + 
+                                                     self.cash_flow_df['cumsum_capex'])
+        
+            # Update the plot
             self.update_plot()
+        
         except ValueError:
             print("Invalid discount rate entered.")
-    
     def update_plot(self):
+
         selected_date = self.start_date_calendar.selectedDate()
         start_date = pd.Timestamp(selected_date.year(), selected_date.month(), selected_date.day())
         filtered_data = self.cash_flow_df[self.cash_flow_df['date'] >= start_date.strftime('%Y-%m')]
@@ -152,6 +232,7 @@ class LaunchCombinedCashflow(QDialog):
                 continue
 
             if uwi in model_data.index:
+                print(f"Raw CapEx value for {uwi}:", model_data.loc[uwi, 'capital_expenditures'])
                 capex = -float(model_data.loc[uwi, 'capital_expenditures'])
                 opex_value = -float(model_data.loc[uwi, 'operating_expenditures'])
 
@@ -191,24 +272,53 @@ class LaunchCombinedCashflow(QDialog):
             'discounted_revenue': discounted_revenue_values
         })
 
+
+
+
+        revenue_df = pd.DataFrame({
+            'date': dates,
+            'total_revenue': total_revenue_values,
+            'discounted_revenue': discounted_revenue_values
+        })
+
+        # First create cash_flow_df
         self.cash_flow_df = revenue_df.merge(opex_sum, on='date', how='left').merge(capex_sum, on='date', how='left')
         self.cash_flow_df.fillna(0, inplace=True)
         self.cash_flow_df.rename(columns={'amount_x': 'opex_sum', 'amount_y': 'capex_sum'}, inplace=True)
 
-        # Print the resulting table
-        # Calculate cumulative sums for total and discounted revenues
+        # Now we can print because cash_flow_df exists
+        print("\nBefore calculations:")
+        print("Sample of total_revenue:", self.cash_flow_df['total_revenue'].head())
+        print("Sample of opex_sum:", self.cash_flow_df['opex_sum'].head())
+        print("Sample of capex_sum:", self.cash_flow_df['capex_sum'].head())
+
+        # Calculate cumulative sums
         self.cash_flow_df['sum_revenue'] = self.cash_flow_df['total_revenue'].cumsum()
         self.cash_flow_df['sum_discounted_revenue'] = self.cash_flow_df['discounted_revenue'].cumsum()
         self.cash_flow_df['cumsum_opex'] = self.cash_flow_df['opex_sum'].cumsum()
         self.cash_flow_df['cumsum_capex'] = self.cash_flow_df['capex_sum'].cumsum()
 
+        print("\nChecking values before profit calculation:")
+        print("\nRevenue values:")
+        print(self.cash_flow_df[['date', 'total_revenue', 'sum_revenue']].head())
+        print("\nOpEx values:")
+        print(self.cash_flow_df[['date', 'opex_sum', 'cumsum_opex']].head())
+        print("\nCapEx values:")
+        print(self.cash_flow_df[['date', 'capex_sum', 'cumsum_capex']].head())
+
         # Calculate profit and discounted profit
         self.cash_flow_df['profit'] = self.cash_flow_df['sum_revenue'] + self.cash_flow_df['cumsum_opex'] + self.cash_flow_df['cumsum_capex']
         self.cash_flow_df['discounted_profit'] = self.cash_flow_df['sum_discounted_revenue'] + self.cash_flow_df['cumsum_opex'] + self.cash_flow_df['cumsum_capex']
+        print("\nFinal profit calculations:")
+        print(self.cash_flow_df[['date', 'sum_revenue', 'cumsum_opex', 'cumsum_capex', 'profit']].head())
+
         self.cash_flow_df['date'] = self.cash_flow_df['date'].dt.strftime('%Y-%m')
 
  
-
+        print("\nAfter cumulative sums:")
+        print("Sample of sum_revenue:", self.cash_flow_df['sum_revenue'].head())
+        print("Sample of cumsum_opex:", self.cash_flow_df['cumsum_opex'].head())
+        print("Sample of cumsum_capex:", self.cash_flow_df['cumsum_capex'].head())
     
         # Print the resulting table
         pd.set_option('display.max_rows', None)
