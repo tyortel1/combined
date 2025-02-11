@@ -83,46 +83,46 @@ class ImageGUI:
         self.filter_label.place(relx=0.01, rely=0.035, relwidth=0.09)
 
 
-        self.uwi_listbox = tk.Listbox(self.top, selectmode=tk.MULTIPLE)
-        self.uwi_listbox.place(relx=0.01, rely=0.09, relwidth=0.44, relheight=0.6)
-        #self.uwi_listbox.bind('<<ListboxSelect>>', self.on_uwi_select)
+        self.UWI_listbox = tk.Listbox(self.top, selectmode=tk.MULTIPLE)
+        self.UWI_listbox.place(relx=0.01, rely=0.09, relwidth=0.44, relheight=0.6)
+        #self.UWI_listbox.bind('<<ListboxSelect>>', self.on_UWI_select)
 
-        self.selected_uwi_listbox = tk.Listbox(self.top, selectmode=tk.MULTIPLE)
-        self.selected_uwi_listbox.place(relx=0.53, rely=0.09, relwidth=0.44, relheight=0.6)
-        #self.selected_uwi_listbox.bind('<<ListboxSelect>>', self.on_selected_uwi_select)
+        self.selected_UWI_listbox = tk.Listbox(self.top, selectmode=tk.MULTIPLE)
+        self.selected_UWI_listbox.place(relx=0.53, rely=0.09, relwidth=0.44, relheight=0.6)
+        #self.selected_UWI_listbox.bind('<<ListboxSelect>>', self.on_selected_UWI_select)
         
         # Bind mouse events for moving items
-        self.uwi_listbox.bind("<ButtonPress-1>", self.on_uwi_listbox_click)
-        self.uwi_listbox.bind("<B1-Motion>", self.on_uwi_listbox_drag)
-        self.selected_uwi_listbox.bind("<ButtonPress-1>", self.on_selected_uwi_listbox_click)
-        self.selected_uwi_listbox.bind("<B1-Motion>", self.on_selected_uwi_listbox_drag)
+        self.UWI_listbox.bind("<ButtonPress-1>", self.on_UWI_listbox_click)
+        self.UWI_listbox.bind("<B1-Motion>", self.on_UWI_listbox_drag)
+        self.selected_UWI_listbox.bind("<ButtonPress-1>", self.on_selected_UWI_listbox_click)
+        self.selected_UWI_listbox.bind("<B1-Motion>", self.on_selected_UWI_listbox_drag)
 
-        # Create a vertical scrollbar for uwi_listbox
-        self.uwi_listbox_scrollbar = tk.Scrollbar(self.top, orient=tk.VERTICAL)
-        self.uwi_listbox_scrollbar.place(relx=0.44, rely=0.09, relheight=0.6)
-        self.uwi_listbox.config(yscrollcommand=self.uwi_listbox_scrollbar.set)
-        self.uwi_listbox_scrollbar.config(command=self.uwi_listbox.yview)
+        # Create a vertical scrollbar for UWI_listbox
+        self.UWI_listbox_scrollbar = tk.Scrollbar(self.top, orient=tk.VERTICAL)
+        self.UWI_listbox_scrollbar.place(relx=0.44, rely=0.09, relheight=0.6)
+        self.UWI_listbox.config(yscrollcommand=self.UWI_listbox_scrollbar.set)
+        self.UWI_listbox_scrollbar.config(command=self.UWI_listbox.yview)
 
 
-        # Create a vertical scrollbar for selected_uwi_listbox
-        self.selected_uwi_listbox_scrollbar = tk.Scrollbar(self.top, orient=tk.VERTICAL)
-        self.selected_uwi_listbox_scrollbar.place(relx=0.96, rely=0.09, relheight=0.6)
-        self.selected_uwi_listbox.config(yscrollcommand=self.selected_uwi_listbox_scrollbar.set)
-        self.selected_uwi_listbox_scrollbar.config(command=self.selected_uwi_listbox.yview)
+        # Create a vertical scrollbar for selected_UWI_listbox
+        self.selected_UWI_listbox_scrollbar = tk.Scrollbar(self.top, orient=tk.VERTICAL)
+        self.selected_UWI_listbox_scrollbar.place(relx=0.96, rely=0.09, relheight=0.6)
+        self.selected_UWI_listbox.config(yscrollcommand=self.selected_UWI_listbox_scrollbar.set)
+        self.selected_UWI_listbox_scrollbar.config(command=self.selected_UWI_listbox.yview)
 
-                # Create a button to move selected items from uwi_listbox to selected_uwi_listbox
+                # Create a button to move selected items from UWI_listbox to selected_UWI_listbox
         self.move_right_button = tk.Button(self.top, text=">", command=self.move_selected_right)
         self.move_right_button.place(relx=0.47, rely=0.35, relwidth=0.05)
 
-        # Create a button to move selected items from selected_uwi_listbox to uwi_listbox
+        # Create a button to move selected items from selected_UWI_listbox to UWI_listbox
         self.move_left_button = tk.Button(self.top, text="<", command=self.move_selected_left)
         self.move_left_button.place(relx=0.47, rely=0.4, relwidth=0.05)
 
-                # Create a button to move all items from uwi_listbox to selected_uwi_listbox
+                # Create a button to move all items from UWI_listbox to selected_UWI_listbox
         self.move_all_right_button = tk.Button(self.top, text=">>", command=self.move_all_right)
         self.move_all_right_button.place(relx=0.47, rely=0.3, relwidth=0.05)
 
-        # Create a button to move all items from selected_uwi_listbox to uwi_listbox
+        # Create a button to move all items from selected_UWI_listbox to UWI_listbox
         self.move_all_left_button = tk.Button(self.top, text="<<", command=self.move_all_left)
         self.move_all_left_button.place(relx=0.47, rely=0.45, relwidth=0.05)
         # Create a context menu for listboxes
@@ -130,8 +130,8 @@ class ImageGUI:
         self.context_menu.add_command(label="Copy", command=self.copy_selected_item)
 
         # Bind the right-click event to show the context menu
-        self.uwi_listbox.bind("<Button-3>", self.show_context_menu)
-        self.selected_uwi_listbox.bind("<Button-3>", self.show_context_menu)
+        self.UWI_listbox.bind("<Button-3>", self.show_context_menu)
+        self.selected_UWI_listbox.bind("<Button-3>", self.show_context_menu)
 
         #self.export_label = tk.Label(self.top, text="Export:")
         #self.export_label.configure(**self.label_config)
@@ -153,7 +153,7 @@ class ImageGUI:
         self.Grid_intersec_top = []
         self.Grid_intersec_bottom = []
         self.selected_item = None
-        self.uwis_and_offsets = []
+        self.UWIs_and_offsets = []
         self.line_segments = [] 
         self.drawing = False
         self.line = None
@@ -168,30 +168,30 @@ class ImageGUI:
         # Get the widget that triggered the event
         source_widget = event.widget
 
-        if source_widget == self.uwi_listbox:
-            # The event originated from self.uwi_listbox
+        if source_widget == self.UWI_listbox:
+            # The event originated from self.UWI_listbox
             # Deselect all items in both listboxes
-            self.uwi_listbox.selection_clear(0, tk.END)
-            self.selected_uwi_listbox.selection_clear(0, tk.END)
+            self.UWI_listbox.selection_clear(0, tk.END)
+            self.selected_UWI_listbox.selection_clear(0, tk.END)
 
-            # Find the closest item to the right-click position in self.uwi_listbox
-            nearest_index = self.uwi_listbox.nearest(event.y)
+            # Find the closest item to the right-click position in self.UWI_listbox
+            nearest_index = self.UWI_listbox.nearest(event.y)
 
-            # Select the closest item in self.uwi_listbox
-            self.uwi_listbox.selection_set(nearest_index)
-            self.selected_item = self.uwi_listbox.get(nearest_index)
-        elif source_widget == self.selected_uwi_listbox:
-            # The event originated from self.selected_uwi_listbox
+            # Select the closest item in self.UWI_listbox
+            self.UWI_listbox.selection_set(nearest_index)
+            self.selected_item = self.UWI_listbox.get(nearest_index)
+        elif source_widget == self.selected_UWI_listbox:
+            # The event originated from self.selected_UWI_listbox
             # Deselect all items in both listboxes
-            self.uwi_listbox.selection_clear(0, tk.END)
-            self.selected_uwi_listbox.selection_clear(0, tk.END)
+            self.UWI_listbox.selection_clear(0, tk.END)
+            self.selected_UWI_listbox.selection_clear(0, tk.END)
 
-            # Find the closest item to the right-click position in self.selected_uwi_listbox
-            nearest_index = self.selected_uwi_listbox.nearest(event.y)
+            # Find the closest item to the right-click position in self.selected_UWI_listbox
+            nearest_index = self.selected_UWI_listbox.nearest(event.y)
 
-            # Select the closest item in self.selected_uwi_listbox
-            self.selected_uwi_listbox.selection_set(nearest_index)
-            self.selected_item = self.selected_uwi_listbox.get(nearest_index)  # Corrected here
+            # Select the closest item in self.selected_UWI_listbox
+            self.selected_UWI_listbox.selection_set(nearest_index)
+            self.selected_item = self.selected_UWI_listbox.get(nearest_index)  # Corrected here
 
         # Display the context menu at the cursor position
         self.context_menu.post(event.x_root, event.y_root)
@@ -210,69 +210,69 @@ class ImageGUI:
 
 
 
-    def on_uwi_listbox_click(self, event):
-        index = self.uwi_listbox.nearest(event.y)
-        self.uwi_listbox.anchor = index
-        self.uwi_listbox.selection_clear(0, tk.END)
-        self.uwi_listbox.selection_set(index)
-    def on_uwi_listbox_drag(self, event):
-        if self.uwi_listbox.anchor is not None:
-            index = self.uwi_listbox.nearest(event.y)
-            self.uwi_listbox.selection_clear(0, tk.END)
-            self.uwi_listbox.selection_set(self.uwi_listbox.anchor, index)
-    def on_selected_uwi_listbox_click(self, event):
-        index = self.selected_uwi_listbox.nearest(event.y)
-        self.selected_uwi_listbox.anchor = index
-        self.selected_uwi_listbox.selection_clear(0, tk.END)
-        self.selected_uwi_listbox.selection_set(index)
-    def on_selected_uwi_listbox_drag(self, event):
-        if self.selected_uwi_listbox.anchor is not None:
-            index = self.selected_uwi_listbox.nearest(event.y)
-            self.selected_uwi_listbox.selection_clear(0, tk.END)
-            self.selected_uwi_listbox.selection_set(self.selected_uwi_listbox.anchor, index)
+    def on_UWI_listbox_click(self, event):
+        index = self.UWI_listbox.nearest(event.y)
+        self.UWI_listbox.anchor = index
+        self.UWI_listbox.selection_clear(0, tk.END)
+        self.UWI_listbox.selection_set(index)
+    def on_UWI_listbox_drag(self, event):
+        if self.UWI_listbox.anchor is not None:
+            index = self.UWI_listbox.nearest(event.y)
+            self.UWI_listbox.selection_clear(0, tk.END)
+            self.UWI_listbox.selection_set(self.UWI_listbox.anchor, index)
+    def on_selected_UWI_listbox_click(self, event):
+        index = self.selected_UWI_listbox.nearest(event.y)
+        self.selected_UWI_listbox.anchor = index
+        self.selected_UWI_listbox.selection_clear(0, tk.END)
+        self.selected_UWI_listbox.selection_set(index)
+    def on_selected_UWI_listbox_drag(self, event):
+        if self.selected_UWI_listbox.anchor is not None:
+            index = self.selected_UWI_listbox.nearest(event.y)
+            self.selected_UWI_listbox.selection_clear(0, tk.END)
+            self.selected_UWI_listbox.selection_set(self.selected_UWI_listbox.anchor, index)
     def move_selected_right(self):
-        selected_indices = self.uwi_listbox.curselection()
-        items_to_move = [self.uwi_listbox.get(index) for index in selected_indices]
+        selected_indices = self.UWI_listbox.curselection()
+        items_to_move = [self.UWI_listbox.get(index) for index in selected_indices]
 
         # Iterate over the items to move and delete them one by one
         for item in items_to_move:
-            self.uwi_listbox.delete(self.uwi_listbox.get(0, tk.END).index(item))
+            self.UWI_listbox.delete(self.UWI_listbox.get(0, tk.END).index(item))
 
-        # Insert the deleted items into the selected_uwi_listbox
+        # Insert the deleted items into the selected_UWI_listbox
         for item in items_to_move:
-            self.selected_uwi_listbox.insert(tk.END, item)
+            self.selected_UWI_listbox.insert(tk.END, item)
 
-        self.store_uwis_and_offsets()
+        self.store_UWIs_and_offsets()
     def move_selected_left(self):
-        selected_indices = self.selected_uwi_listbox.curselection()
-        items_to_move = [self.selected_uwi_listbox.get(index) for index in selected_indices]
+        selected_indices = self.selected_UWI_listbox.curselection()
+        items_to_move = [self.selected_UWI_listbox.get(index) for index in selected_indices]
 
         # Iterate over the items to move and delete them one by one
         for item in items_to_move:
-            self.selected_uwi_listbox.delete(self.selected_uwi_listbox.get(0, tk.END).index(item))
+            self.selected_UWI_listbox.delete(self.selected_UWI_listbox.get(0, tk.END).index(item))
 
-        # Insert the deleted items into the uwi_listbox
+        # Insert the deleted items into the UWI_listbox
         for item in items_to_move:
-            self.uwi_listbox.insert(tk.END, item)
+            self.UWI_listbox.insert(tk.END, item)
     def move_all_right(self):
-        items_to_move = list(self.uwi_listbox.get(0, tk.END))
+        items_to_move = list(self.UWI_listbox.get(0, tk.END))
 
-        # Delete all items from uwi_listbox
-        self.uwi_listbox.delete(0, tk.END)
+        # Delete all items from UWI_listbox
+        self.UWI_listbox.delete(0, tk.END)
 
-        # Insert all items into selected_uwi_listbox
+        # Insert all items into selected_UWI_listbox
         for item in items_to_move:
-            self.selected_uwi_listbox.insert(tk.END, item)
-        self.store_uwis_and_offsets()
+            self.selected_UWI_listbox.insert(tk.END, item)
+        self.store_UWIs_and_offsets()
     def move_all_left(self):
-        items_to_move = list(self.selected_uwi_listbox.get(0, tk.END))
+        items_to_move = list(self.selected_UWI_listbox.get(0, tk.END))
 
-        # Delete all items from selected_uwi_listbox
-        self.selected_uwi_listbox.delete(0, tk.END)
+        # Delete all items from selected_UWI_listbox
+        self.selected_UWI_listbox.delete(0, tk.END)
 
-        # Insert all items into uwi_listbox
+        # Insert all items into UWI_listbox
         for item in items_to_move:
-            self.uwi_listbox.insert(tk.END, item)
+            self.UWI_listbox.insert(tk.END, item)
 
         
     def connect_to_seisware(self):
@@ -305,12 +305,12 @@ class ImageGUI:
         self.project_dropdown.place(relx=0.15, rely=0.005, relwidth=0.2)
 
     def clear_widgets(self):
-        # Clear the uwi listbox and selected uwi listbox
-        if hasattr(self, 'uwi_listbox') and self.uwi_listbox:
-            self.uwi_listbox.delete(0, 'end')
+        # Clear the UWI listbox and selected UWI listbox
+        if hasattr(self, 'UWI_listbox') and self.UWI_listbox:
+            self.UWI_listbox.delete(0, 'end')
 
-        if hasattr(self, 'selected_uwi_listbox') and self.selected_uwi_listbox:
-            self.selected_uwi_listbox.delete(0, 'end')
+        if hasattr(self, 'selected_UWI_listbox') and self.selected_UWI_listbox:
+            self.selected_UWI_listbox.delete(0, 'end')
 
 
     def on_project_select(self, event):
@@ -330,9 +330,9 @@ class ImageGUI:
         except AttributeError:
             pass
 
-        # Clear the well uwi selection if it exists
+        # Clear the well UWI selection if it exists
         try:
-            self.planned_uwi.set("")
+            self.planned_UWI.set("")
         except AttributeError:
             pass
 
@@ -396,10 +396,10 @@ class ImageGUI:
             messagebox.showerror("Error", "Failed to get all the wells from the project: " + str(err))
 
 
-        # Retrieve uwis from the well_list
-       # Retrieve uwis from the well_list and sort them
-        uwi_list = [well.uwi() for well in self.well_list]
-        self.sorted_uwi_list = sorted(uwi_list, reverse=False)
+        # Retrieve UWIs from the well_list
+       # Retrieve UWIs from the well_list and sort them
+        UWI_list = [well.UWI() for well in self.well_list]
+        self.sorted_UWI_list = sorted(UWI_list, reverse=False)
 
                 # Get the grids from the project
         self.grid_list = SeisWare.GridList()
@@ -430,9 +430,9 @@ class ImageGUI:
         #self.login_instance.WellManager().GetKeysByFilter(filtered_well_filter[0], well_keys)
         #self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
     
-        ## Map uwis to Well IDs
-        #uwi_to_well_id = {well.uwi(): well.ID() for well in well_list}
-        #print(uwi_to_well_id)
+        ## Map UWIs to Well IDs
+        #UWI_to_well_id = {well.UWI(): well.ID() for well in well_list}
+        #print(UWI_to_well_id)
 
         production_keys = SeisWare.IDSet()
         failed_production_keys = SeisWare.IDSet()
@@ -473,9 +473,9 @@ class ImageGUI:
                     failed_well_keys = SeisWare.IDSet()
                     well_list = SeisWare.WellList()
                     self.login_instance.WellManager().GetByKeys(well_keys, well_list, failed_well_keys)
-                    # Map uwis to Well IDs
-                    uwi = {well.uwi() for well in well_list}
-                    print(uwi)
+                    # Map UWIs to Well IDs
+                    UWI = {well.UWI() for well in well_list}
+                    print(UWI)
                  
                     for volume in volume_list:
                         volume_date = volume.VolumeDate()
@@ -484,7 +484,7 @@ class ImageGUI:
 
                         production_volume_data.append({
                             "prod name": production.Name(),
-                            "uwi": uwi,
+                            "UWI": UWI,
                             "date": formatted_date,
                             "oil_volume": volume.OilVolume(),
                             "gas_volume": volume.GasVolume()
@@ -497,7 +497,7 @@ class ImageGUI:
         df = pd.DataFrame(all_production_volume_data)
 
         # Define the order of columns in the DataFrame
-        columns_order = ["prod name", "uwi", "date", "oil_volume", "gas_volume"]
+        columns_order = ["prod name", "UWI", "date", "oil_volume", "gas_volume"]
 
         # Reorder columns in the DataFrame
         df = df[columns_order]
@@ -515,35 +515,35 @@ class ImageGUI:
 
 
 
-    def load_uwi_list(self):
-        # Assuming uwi_list contains your data
-        uwi_list = self.well_list
-        sorted_uwi_list = sorted(uwi_list, reverse=False)
+    def load_UWI_list(self):
+        # Assuming UWI_list contains your data
+        UWI_list = self.well_list
+        sorted_UWI_list = sorted(UWI_list, reverse=False)
 
-        for uwi in sorted_uwi_list:
-            self.uwi_listbox.insert(tk.END, uwi)
-    def on_uwi_select(self, event):
-        selected_indices = self.uwi_listbox.curselection()
-        selected_uwis = [self.uwi_listbox.get(idx) for idx in selected_indices]
-        # Add the selected uwis to the selected listbox
-        for uwi in selected_uwis:
-            self.selected_uwi_listbox.insert(tk.END, uwi)
-        # Remove the selected uwis from the original listbox
+        for UWI in sorted_UWI_list:
+            self.UWI_listbox.insert(tk.END, UWI)
+    def on_UWI_select(self, event):
+        selected_indices = self.UWI_listbox.curselection()
+        selected_UWIs = [self.UWI_listbox.get(idx) for idx in selected_indices]
+        # Add the selected UWIs to the selected listbox
+        for UWI in selected_UWIs:
+            self.selected_UWI_listbox.insert(tk.END, UWI)
+        # Remove the selected UWIs from the original listbox
         for idx in reversed(selected_indices):
-            self.uwi_listbox.delete(idx)
+            self.UWI_listbox.delete(idx)
 
-        self.store_uwis_and_offsets()
-    def on_selected_uwi_select(self, event):
-        selected_indices = self.selected_uwi_listbox.curselection()
-        self.selected_uwis = [self.selected_uwi_listbox.get(idx) for idx in selected_indices]
-        # Add the selected uwis back to the original listbox
-        for uwi in self.selected_uwis:
-            self.uwi_listbox.insert(tk.END, uwi)
-        # Remove the selected uwis from the selected listbox
+        self.store_UWIs_and_offsets()
+    def on_selected_UWI_select(self, event):
+        selected_indices = self.selected_UWI_listbox.curselection()
+        self.selected_UWIs = [self.selected_UWI_listbox.get(idx) for idx in selected_indices]
+        # Add the selected UWIs back to the original listbox
+        for UWI in self.selected_UWIs:
+            self.UWI_listbox.insert(tk.END, UWI)
+        # Remove the selected UWIs from the selected listbox
         for idx in reversed(selected_indices):
-            self.selected_uwi_listbox.delete(idx)
+            self.selected_UWI_listbox.delete(idx)
 
-        self.store_uwis_and_offsets()
+        self.store_UWIs_and_offsets()
     def on_grid_select(self,event):
         
         grid_name = self.grid_combobox.get()
@@ -620,11 +620,11 @@ class ImageGUI:
         
 
 
-    def filter_uwi_values(self, event):
+    def filter_UWI_values(self, event):
         typed_text = event.widget.get().lower()
         
         # Filter the values based on the typed text
-        matching_items = [item for item in self.sorted_uwi_list if typed_text in item.lower()]
+        matching_items = [item for item in self.sorted_UWI_list if typed_text in item.lower()]
 
         # Update the Combobox values to show the filtered items
         event.widget['values'] = matching_items

@@ -4137,8 +4137,8 @@ class WellManager(object):
     def GetByKeys(self, keys, wellList, failedKeys):
         return _seisware_sdk_37.WellManager_GetByKeys(self, keys, wellList, failedKeys)
 
-    def GetByNaturalKeys(self, uwis, wellList, failedUWIs):
-        return _seisware_sdk_37.WellManager_GetByNaturalKeys(self, uwis, wellList, failedUWIs)
+    def GetByNaturalKeys(self, UWIs, wellList, failedUWIs):
+        return _seisware_sdk_37.WellManager_GetByNaturalKeys(self, UWIs, wellList, failedUWIs)
 
     def GetKeysByFilter(self, filter, keysInFilter):
         return _seisware_sdk_37.WellManager_GetKeysByFilter(self, filter, keysInFilter)

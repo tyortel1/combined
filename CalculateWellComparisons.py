@@ -1,7 +1,7 @@
 ﻿from PySide6.QtWidgets import (
     QDialog, QLabel, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
     QAbstractItemView, QGroupBox, QLineEdit, QMessageBox, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout, QSlider, QComboBox, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
+    QTableWidgetItem, QHeaderView, QWidget, QCheckBox, QHBoxLayout, QSlider, QComboBox, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -196,6 +196,15 @@ class WeightsDialog(QDialog):
         layout.addWidget(self.sensitivity_label)
         layout.addWidget(self.sensitivity_slider)
 
+        # Checkboxes
+        self.normalize_checkbox = QCheckBox("Normalize Values")
+        self.normalize_checkbox.setChecked(False)
+        layout.addWidget(self.normalize_checkbox)
+
+        self.zero_outliers_checkbox = QCheckBox("Set Outliers to Zero (instead of NaN)")
+        self.zero_outliers_checkbox.setChecked(False)
+        layout.addWidget(self.zero_outliers_checkbox)
+
         # Attribute Weights
         self.weights_group = QGroupBox("Attribute Weights")
         self.weights_layout = QFormLayout()
@@ -206,6 +215,19 @@ class WeightsDialog(QDialog):
         self.save_button = QPushButton("Apply")
         self.save_button.clicked.connect(self.accept)
         layout.addWidget(self.save_button)
+
+    def add_weight_sliders(self, attributes: List[str]):
+        for i in reversed(range(self.weights_layout.count())):
+            self.weights_layout.itemAt(i).widget().setParent(None)
+
+        self.weight_sliders = {}
+        for attr in attributes:
+            slider = QSlider(Qt.Horizontal)
+            slider.setMinimum(1)
+            slider.setMaximum(100)
+            slider.setValue(50)  # Default weight
+            self.weights_layout.addRow(f"{attr}:", slider)
+            self.weight_sliders[attr] = slider
 
     def add_weight_sliders(self, attributes: List[str]):
         """Dynamically create sliders for each selected attribute."""
@@ -227,8 +249,12 @@ class WellComparisonDialog(QDialog):
         self.db_manager = db_manager
         self.setup_ui()
         self.weight_sliders = {}
-        self.iqr_multiplier = 2.0  # Default value
+ 
         self.dca = DeclineCurveAnalysis()
+        self.normalize_values = False
+        self.zero_outliers = False
+        self.iqr_multiplier = 1.5
+     
 
     def setup_ui(self):
         self.setWindowTitle("Well Comparison")
@@ -337,21 +363,21 @@ class WellComparisonDialog(QDialog):
         try:
             # Get numeric attributes only
             numeric_columns = self.db_manager.get_numeric_attributes()
-            planned_wells = self.db_manager.get_uwis_by_status("Planned")
+            planned_wells = self.db_manager.get_UWIs_by_status("Planned")
         
             # Get initial active wells list
-            active_wells = self.db_manager.get_uwis_by_status("Active")
+            active_wells = self.db_manager.get_UWIs_by_status("Active")
         
             # Filter active wells to only those with model properties
             filtered_active_wells = []
-            for uwi in active_wells:
+            for UWI in active_wells:
                 # Check if well has model properties in scenario 1 (reference scenario)
-                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_UWI(
                     scenario_id=1,
-                    uwi=uwi
+                    UWI=UWI
                 )
                 if model_properties_df is not None and not model_properties_df.empty:
-                    filtered_active_wells.append(uwi)
+                    filtered_active_wells.append(UWI)
         
             # Print debug info
             print(f"Total active wells: {len(active_wells)}")
@@ -359,6 +385,7 @@ class WellComparisonDialog(QDialog):
             print(f"Wells filtered out: {len(active_wells) - len(filtered_active_wells)}")
         
             # Populate lists
+            print("Numeric columns:", numeric_columns)
             self.planned_selector.add_items(planned_wells)
             self.active_selector.add_items(filtered_active_wells)  # Use filtered list
             self.attr_selector.add_items(sorted(numeric_columns))
@@ -406,7 +433,7 @@ class WellComparisonDialog(QDialog):
 
         # Step 2: Get well pad properties for selected planned wells
         well_pads_df = self.db_manager.get_well_pads_for_wells(self.scenario_id, selected_planned_wells)
-        well_pad_dict = well_pads_df.set_index("uwi").to_dict(orient="index")
+        well_pad_dict = well_pads_df.set_index("UWI").to_dict(orient="index")
 
         total_wells = len(selected_planned_wells)
         processed_wells = 0
@@ -414,20 +441,20 @@ class WellComparisonDialog(QDialog):
         error_wells = []
 
         # Step 3: Iterate only over planned wells that exist in the model
-        for uwi_planned in selected_planned_wells:
+        for UWI_planned in selected_planned_wells:
             try:
                 # Step 4: Get the best-matched active well from the comparison table
-                matched_uwi = self._get_matched_uwi_from_table(uwi_planned)
-                print(f"Matched UWI for {uwi_planned}: {matched_uwi}")
+                matched_UWI = self._get_matched_UWI_from_table(UWI_planned)
+                print(f"Matched UWI for {UWI_planned}: {matched_UWI}")
 
-                if not matched_uwi:
+                if not matched_UWI:
                     skipped_wells += 1
                     continue  # Skip if no match found
 
                 # Step 5: Retrieve model properties for the matched UWI
-                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                model_properties_df = self.db_manager.retrieve_model_data_by_scenario_and_UWI(
                     scenario_id=1,  # Use reference scenario for UWI lookup
-                    uwi=matched_uwi
+                    UWI=matched_UWI
                 )
 
                 if model_properties_df is None or model_properties_df.empty:
@@ -437,11 +464,11 @@ class WellComparisonDialog(QDialog):
                 model_properties = model_properties_df.iloc[0].to_dict()  # Convert DataFrame row to dict
 
                 # Step 6: Delete old model properties & production rates **ONLY IF the well has a decline curve**
-                self.db_manager.delete_model_properties_for_wells(self.scenario_id, [uwi_planned])
-                self.db_manager.delete_production_rates_for_wells(self.scenario_id, [uwi_planned])
+                self.db_manager.delete_model_properties_for_wells(self.scenario_id, [UWI_planned])
+                self.db_manager.delete_production_rates_for_wells(self.scenario_id, [UWI_planned])
 
                 # Step 7: Get well pad data for this planned UWI (if available)
-                well_pad_data = well_pad_dict.get(uwi_planned, {})
+                well_pad_data = well_pad_dict.get(UWI_planned, {})
                 print(well_pad_data)
 
                 # Step 8: Map well pad fields to model properties
@@ -469,12 +496,12 @@ class WellComparisonDialog(QDialog):
                 model_properties["operating_expenditures"] = well_pad_data.get("total_opex_cost", model_properties.get("operating_expenditures", 0))
 
                 # 🔹 Ensure UWI is always the planned well
-                model_properties["uwi"] = uwi_planned
+                model_properties["UWI"] = UWI_planned
                 model_properties['scenario_id'] = self.scenario_id
 
                 # Step 9: Ensure required columns exist
                 required_columns = [
-                    "scenario_id", "uwi",  # UWI should now reference the planned well
+                    "scenario_id", "UWI",  # UWI should now reference the planned well
                     "max_oil_production", "max_gas_production",
                     "max_oil_production_date", "max_gas_production_date",
                     "one_year_oil_production", "one_year_gas_production",
@@ -497,45 +524,45 @@ class WellComparisonDialog(QDialog):
                 ]
 
                 # Step 10: Convert dictionary to DataFrame for storage
-                df_uwi_model_data = pd.DataFrame([model_properties])[required_columns]
-                print(df_uwi_model_data)
+                df_UWI_model_data = pd.DataFrame([model_properties])[required_columns]
+                print(df_UWI_model_data)
 
                 # Step 11: Convert date columns to formatted strings
                 date_columns = ['max_oil_production_date', 'max_gas_production_date', 'economic_limit_date']
                 for col in date_columns:
-                    if col in df_uwi_model_data.columns:
-                        df_uwi_model_data[col] = pd.to_datetime(df_uwi_model_data[col], errors='coerce').dt.strftime('%Y-%m-%d')
+                    if col in df_UWI_model_data.columns:
+                        df_UWI_model_data[col] = pd.to_datetime(df_UWI_model_data[col], errors='coerce').dt.strftime('%Y-%m-%d')
 
 
-                self.db_manager.update_well_pad_decline_curve(uwi_planned, self.scenario_id, matched_uwi)
+                self.db_manager.update_well_pad_decline_curve(UWI_planned, self.scenario_id, matched_UWI)
 
                 # Step 12: Save model properties to DB
-                self.db_manager.overwrite_model_properties(df_uwi_model_data, self.scenario_id)
+                self.db_manager.overwrite_model_properties(df_UWI_model_data, self.scenario_id)
 
                 # Step 13: Run Decline Curve Analysis (DCA)
-                self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(df_uwi_model_data)
+                self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.planned_prod_rate(df_UWI_model_data)
 
                 # Step 14: Save production rates to DB
-                self.db_manager.update_uwi_prod_rates(self.uwi_production_rates_data, self.scenario_id)
+                self.db_manager.update_UWI_prod_rates(self.UWI_production_rates_data, self.scenario_id)
 
                 # Step 15: Save error tracking
-                self.uwi_error = pd.DataFrame({
-                    'uwi': [uwi_planned],  # Use planned well for tracking
+                self.UWI_error = pd.DataFrame({
+                    'UWI': [UWI_planned],  # Use planned well for tracking
                     'sum_error_oil': [0],
                     'sum_error_gas': [0]
                 })
-                self.db_manager.update_uwi_errors(self.uwi_error, self.scenario_id)
+                self.db_manager.update_UWI_errors(self.UWI_error, self.scenario_id)
 
 
                 processed_wells += 1
 
             except Exception as e:
-                error_wells.append((uwi_planned, str(e)))
+                error_wells.append((UWI_planned, str(e)))
                 continue
 
         # Step 16: Show Results Summary
         if error_wells:
-            error_msg = "\n".join([f"UWI: {uwi_planned} - Error: {error}" for uwi_planned, error in error_wells])
+            error_msg = "\n".join([f"UWI: {UWI_planned} - Error: {error}" for UWI_planned, error in error_wells])
             QMessageBox.warning(
                 self,
                 "Type Curve Assignment Complete",
@@ -552,15 +579,15 @@ class WellComparisonDialog(QDialog):
             )
 
 
-    def _get_matched_uwi_from_table(self, planned_uwi):
+    def _get_matched_UWI_from_table(self, planned_UWI):
         """
         Retrieve the matched UWI from the results table for a given planned UWI.
         """
         for row in range(self.results_table.rowCount()):
-            table_planned_uwi = self.results_table.item(row, 0).text()  # Column 0 = Planned Well
-            if table_planned_uwi == planned_uwi:
-                matched_uwi = self.results_table.item(row, 1).text()  # Column 1 = Matched Well
-                return matched_uwi if matched_uwi and matched_uwi != "No Match" else None
+            table_planned_UWI = self.results_table.item(row, 0).text()  # Column 0 = Planned Well
+            if table_planned_UWI == planned_UWI:
+                matched_UWI = self.results_table.item(row, 1).text()  # Column 1 = Matched Well
+                return matched_UWI if matched_UWI and matched_UWI != "No Match" else None
         return None  # If not found
     def export_to_excel(self):
         """Exports the comparison results to an Excel file."""
@@ -588,21 +615,22 @@ class WellComparisonDialog(QDialog):
 
 
     def open_weights_dialog(self):
-        """Opens the Weights & Sensitivity dialog."""
         dialog = WeightsDialog(self)
         selected_attributes = self.attr_selector.get_selected_items()
-        
+
         if not selected_attributes:
             QMessageBox.warning(self, "No Attributes Selected", 
                               "Please select attributes before adjusting weights.")
             return
-            
+    
         dialog.add_weight_sliders(selected_attributes)
 
         if dialog.exec():
             self.iqr_multiplier = dialog.sensitivity_slider.value()
+            self.normalize_values = dialog.normalize_checkbox.isChecked()
+            self.zero_outliers = dialog.zero_outliers_checkbox.isChecked()
             self.weight_sliders = {
-                attr: slider.value() / 100.0  # Convert to 0-1 range
+                attr: slider.value() / 100.0
                 for attr, slider in dialog.weight_sliders.items()
             }
 
@@ -682,53 +710,42 @@ class WellComparisonDialog(QDialog):
         return True
 
     def mask_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Replaces outlier values with NaN using vectorized operations.
-        Only processes numeric columns and preserves non-numeric data.
-    
-        Args:
-            df: Input DataFrame
-        
-        Returns:
-            DataFrame with outliers masked as NaN
-        """
-        # Get numeric columns only
+        """Replaces outlier values with NaN or 0."""
         numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
         if numeric_cols.empty:
-            print("Warning: No numeric columns found for outlier detection")
             return df.copy()
-        
+    
         try:
             def apply_iqr_mask(col):
                 try:
                     Q1 = col.quantile(0.25)
                     Q3 = col.quantile(0.75)
                     IQR = Q3 - Q1
-                
+            
                     lower_bound = Q1 - (self.iqr_multiplier * IQR)
                     upper_bound = Q3 + (self.iqr_multiplier * IQR)
+            
+                    # Replace outliers with 0 or NaN based on checkbox
+                    replacement = 0 if hasattr(self, 'zero_outliers') and self.zero_outliers else np.nan
+                    masked = col.where((col >= lower_bound) & (col <= upper_bound), replacement)
                 
-                    masked = col.where((col >= lower_bound) & (col <= upper_bound), np.nan)
-                
-                    # Count and log outliers
-                    outlier_count = (masked.isna() & col.notna()).sum()
+                    outlier_count = ((col < lower_bound) | (col > upper_bound)).sum()
                     if outlier_count > 0:
                         print(f"Column {col.name}: {outlier_count} outliers masked")
-                    
-                    return masked
                 
+                    return masked
+            
                 except Exception as e:
                     print(f"Error processing column {col.name}: {str(e)}")
                     return col
-        
-            # Create copy and only process numeric columns
+    
             result = df.copy()
             result[numeric_cols] = result[numeric_cols].apply(apply_iqr_mask)
             return result
-        
+    
         except Exception as e:
             print(f"Error in outlier detection: {str(e)}")
-            return df.copy()  # Return original if error occurs
+            return df.copy()
 
     def _single_attribute_comparison(self, planned_data: pd.DataFrame, 
                                    active_data: pd.DataFrame) -> List[Dict]:
@@ -790,26 +807,35 @@ class WellComparisonDialog(QDialog):
 
             planned_data = planned_data[numeric_cols]
             active_data = active_data[numeric_cols]
+            print(planned_data)
+            print(active_data)
+
 
             # Mask outliers
+
+
             planned_data = self.mask_outliers(planned_data)
             active_data = self.mask_outliers(active_data)
 
-            # Normalize using robust scaling
-            normalized_planned = planned_data.copy()
-            normalized_active = active_data.copy()
+            if self.normalize_values:
+                for column in planned_data.columns:
+                    all_values = pd.concat([planned_data[column], active_data[column]])
+                    median_val = all_values.median()
+                    mad = (all_values - median_val).abs().median()
 
-            for column in planned_data.columns:
-                all_values = pd.concat([planned_data[column], active_data[column]])
-                median_val = all_values.median()
-                mad = (all_values - median_val).abs().median()
+                    if mad > 0:
+                        normalized_planned[column] = (planned_data[column] - median_val) / mad
+                        normalized_active[column] = (active_data[column] - median_val) / mad
+                    else:
+                        normalized_planned[column] = planned_data[column] - median_val
+                        normalized_active[column] = active_data[column] - median_val
 
-                if mad > 0:
-                    normalized_planned[column] = (planned_data[column] - median_val) / mad
-                    normalized_active[column] = (active_data[column] - median_val) / mad
-                else:
-                    normalized_planned[column] = planned_data[column] - median_val
-                    normalized_active[column] = active_data[column] - median_val
+                    # Moved print statements inside the loop
+                    print("Normalized planned:", normalized_planned[column].head())
+                    print("Normalized active:", normalized_active[column].head())
+            else:
+                normalized_planned = planned_data.copy()
+                normalized_active = active_data.copy()
 
             # Ensure we have weights for all attributes
             total_weight = sum(self.weight_sliders.values()) if self.weight_sliders else len(numeric_cols)

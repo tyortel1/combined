@@ -47,12 +47,12 @@ class SeisWareConnectDialog(QDialog):
         self.Grid_intersec_bottom = []
         self.selected_item = None
         self.well_data_df = pd.DataFrame()
-        self.uwis_and_offsets = []
-        self.uwi_to_well_dict = {}
-        self.uwi_list = []
+        self.UWIs_and_offsets = []
+        self.UWI_to_well_dict = {}
+        self.UWI_list = []
         self.filter_selection = None
         self.project_selection = None
-        self.selected_uwis = None
+        self.selected_UWIs = None
   
 
 
@@ -75,15 +75,15 @@ class SeisWareConnectDialog(QDialog):
         self.filter_dropdown.setEnabled(False)
         self.filter_dropdown.currentIndexChanged.connect(self.on_filter_select)
 
-        # Listboxes for uwis
-        self.uwi_listbox = QListWidget(self)
-        self.uwi_listbox.setGeometry(20, 100, 280, 500)  # x, y, width, height
+        # Listboxes for UWIs
+        self.UWI_listbox = QListWidget(self)
+        self.UWI_listbox.setGeometry(20, 100, 280, 500)  # x, y, width, height
 
-        self.selected_uwi_listbox = QListWidget(self)
-        self.selected_uwi_listbox.setGeometry(400, 100, 280, 500)  # x, y, width, height
+        self.selected_UWI_listbox = QListWidget(self)
+        self.selected_UWI_listbox.setGeometry(400, 100, 280, 500)  # x, y, width, height
 
-        self.uwi_listbox.setSelectionMode(QListWidget.MultiSelection)
-        self.selected_uwi_listbox.setSelectionMode(QListWidget.MultiSelection)
+        self.UWI_listbox.setSelectionMode(QListWidget.MultiSelection)
+        self.selected_UWI_listbox.setSelectionMode(QListWidget.MultiSelection)
 
         # Buttons for moving items between listboxes
         button_width = 50
@@ -202,10 +202,10 @@ class SeisWareConnectDialog(QDialog):
         #    QMessageBox.critical(self,"Error", "Failed to get all the wells from the project: " + str(err))
 
 
-        ## Retrieve uwis from the well_list
-        ## Retrieve uwis from the well_list and sort them
-        #uwi_list = [well.uwi() for well in self.well_list]
-        #self.sorted_uwi_list = sorted(uwi_list, reverse=False)
+        ## Retrieve UWIs from the well_list
+        ## Retrieve UWIs from the well_list and sort them
+        #UWI_list = [well.UWI() for well in self.well_list]
+        #self.sorted_UWI_list = sorted(UWI_list, reverse=False)
 
         #        # Get the grids from the project
         #self.grid_list = SeisWare.GridList()
@@ -258,36 +258,36 @@ class SeisWareConnectDialog(QDialog):
             QMessageBox.critical(self, "Failed to get all the wells from the project", str(err))
 
     
-        # Map uwis to Well IDs
+        # Map UWIs to Well IDs
         try:
-            uwi_to_well_id = {well.UWI(): well.ID() for well in self.well_list}  # Assuming Uwi is the correct attribute name
+            UWI_to_well_id = {well.UWI(): well.ID() for well in self.well_list}  # Assuming Uwi is the correct attribute name
         except AttributeError as e:
             print("Error:", e)
             return
-        print(uwi_to_well_id)
+        print(UWI_to_well_id)
 
 
-        self.uwi_to_well_dict = {}
+        self.UWI_to_well_dict = {}
 
 # Populate the dictionary with well objects and UWIs
         for well in self.well_list:
-            uwi = well.UWI()
-            self.uwi_to_well_dict[uwi] = well
-        for uwi, well in self.uwi_to_well_dict.items():
-            print(f"UWI: {uwi}, Well: {well}")
+            UWI = well.UWI()
+            self.UWI_to_well_dict[UWI] = well
+        for UWI, well in self.UWI_to_well_dict.items():
+            print(f"UWI: {UWI}, Well: {well}")
 
-        self.uwi_listbox.clear()
-        for uwi in uwi_to_well_id.keys():
-            self.uwi_listbox.addItem(uwi)
+        self.UWI_listbox.clear()
+        for UWI in UWI_to_well_id.keys():
+            self.UWI_listbox.addItem(UWI)
 
     
     def okay_clicked(self):
-        uwi_list = []
-        for index in range(self.selected_uwi_listbox.count()):
-            item = self.selected_uwi_listbox.item(index)
+        UWI_list = []
+        for index in range(self.selected_UWI_listbox.count()):
+            item = self.selected_UWI_listbox.item(index)
             if item is not None:
-                uwi_list.append(item.text())
-        print(uwi_list)
+                UWI_list.append(item.text())
+        print(UWI_list)
         production_keys = SeisWare.IDSet()
         failed_production_keys = SeisWare.IDSet()
         productions = SeisWare.ProductionList()
@@ -339,11 +339,11 @@ class SeisWareConnectDialog(QDialog):
                         # Iterate through the retrieved wells
                         for well in well_list:
                             # Assuming UWI is a method of the Well class
-                            uwi_str = well.UWI()  
-                            print(f"UWI: {uwi_str}")  
+                            UWI_str = well.UWI()  
+                            print(f"UWI: {UWI_str}")  
 
-                            if uwi_str in uwi_list:
-                                print(f"UWI {uwi_str} found in list.")
+                            if UWI_str in UWI_list:
+                                print(f"UWI {UWI_str} found in list.")
 
                                 # Now, retrieve production volume data for this well
                                 for volume in volume_list:
@@ -353,13 +353,13 @@ class SeisWareConnectDialog(QDialog):
                     
                                     # Append the production data to your list
                                     production_volume_data.append({
-                                        "uwi": uwi_str,
+                                        "UWI": UWI_str,
                                         "date": formatted_date,
                                         "oil_volume": volume.OilVolume(),
                                         "gas_volume": volume.GasVolume()
                                     })
                             else:
-                                print(f"{uwi_str} is not in the list.")
+                                print(f"{UWI_str} is not in the list.")
                     except Exception as e:
                         print(f"Failed to process production wells: {e}")
             
@@ -370,13 +370,13 @@ class SeisWareConnectDialog(QDialog):
         
         sorted_data = sorted(
             all_production_volume_data,
-            key=lambda x: (x["uwi"], x["date"], x["oil_volume"] + x["gas_volume"]),
+            key=lambda x: (x["UWI"], x["date"], x["oil_volume"] + x["gas_volume"]),
             reverse=True
 )
-# Create a dictionary to store the best row for each (uwi, date)
+# Create a dictionary to store the best row for each (UWI, date)
         seen = {}
         for row in sorted_data:
-            key = (row["uwi"], row["date"])
+            key = (row["UWI"], row["date"])
             if key not in seen:
                 seen[key] = row  # Keep the first occurrence (highest volumes due to sorting)
 
@@ -389,24 +389,24 @@ class SeisWareConnectDialog(QDialog):
 
 
         
-        return self.production_data, self.directional_survey_values, self.well_data_df, self.selected_uwis
+        return self.production_data, self.directional_survey_values, self.well_data_df, self.selected_UWIs
 
 
 
     def directional_surveys(self):
-        selected_uwis = [self.selected_uwi_listbox.item(i).text() for i in range(self.selected_uwi_listbox.count())]
-        print(selected_uwis)
-        self.selected_uwis = selected_uwis
+        selected_UWIs = [self.selected_UWI_listbox.item(i).text() for i in range(self.selected_UWI_listbox.count())]
+        print(selected_UWIs)
+        self.selected_UWIs = selected_UWIs
 
-        if not selected_uwis:
+        if not selected_UWIs:
             QMessageBox.information(self, "Info", "No wells selected for export.")
             return
 
         survey_data = []
         total_lat_data = []
 
-        for uwi in selected_uwis:
-            well = self.uwi_to_well_dict.get(uwi)
+        for UWI in selected_UWIs:
+            well = self.UWI_to_well_dict.get(UWI)
             print(well)
             if well:
                 depth_unit = SeisWare.Unit.Meter
@@ -455,7 +455,7 @@ class SeisWareConnectDialog(QDialog):
                     tvd_count = 0
 
                     for point in srvypoints:
-                        well_uwi = well.UWI()
+                        well_UWI = well.UWI()
                         x_offset = surfaceX + point.xOffset.Value(depth_unit)
                         y_offset = surfaceY + point.yOffset.Value(depth_unit)
                         tvd = surfaceDatum - point.tvd.Value(depth_unit)
@@ -485,7 +485,7 @@ class SeisWareConnectDialog(QDialog):
                             inclination = 0.0
 
                         # Store survey point data
-                        survey_data.append([well_uwi, x_offset, y_offset, md, tvd, cumulative_distance])
+                        survey_data.append([well_UWI, x_offset, y_offset, md, tvd, cumulative_distance])
 
                         # Update toe point (last valid point)
                         toe_x, toe_y = x_offset, y_offset
@@ -502,12 +502,12 @@ class SeisWareConnectDialog(QDialog):
 
                     if start_lat is not None:
                         total_lat = end_lat - start_lat
-                        total_lat_data.append((well_uwi, 'Active', surfaceX, surfaceY, total_lat, heel_x, heel_y, toe_x, toe_y, heel_md, end_lat, avg_tvd, end_lat, spud_date))
+                        total_lat_data.append((well_UWI, 'Active', surfaceX, surfaceY, total_lat, heel_x, heel_y, toe_x, toe_y, heel_md, end_lat, avg_tvd, end_lat, spud_date))
                     else:
-                        total_lat_data.append((well_uwi, 'Active', surfaceX, surfaceY, None, None, None, None, None, None, None, None, None, spud_date))
+                        total_lat_data.append((well_UWI, 'Active', surfaceX, surfaceY, None, None, None, None, None, None, None, None, None, spud_date))
 
                 else:
-                    QMessageBox.warning(self, "Warning", f"No directional survey found for well {uwi}.")
+                    QMessageBox.warning(self, "Warning", f"No directional survey found for well {UWI}.")
 
         # Create directional survey DataFrame
         self.directional_survey_values = pd.DataFrame(
@@ -520,7 +520,7 @@ class SeisWareConnectDialog(QDialog):
         # Create well data DataFrame with proper column order
         self.well_data_df = pd.DataFrame(
             total_lat_data,
-            columns=['uwi', 'status', 'surface_x', 'surface_y', 'lateral', 
+            columns=['UWI', 'status', 'surface_x', 'surface_y', 'lateral', 
                      'heel_x', 'heel_y', 'toe_x', 'toe_y', 'heel_md', 
                      'toe_md', 'average_tvd', 'total_length', 'spud_date']
         )
@@ -536,36 +536,36 @@ class SeisWareConnectDialog(QDialog):
 
     # Event handlers and methods to replicate the functionality of your original class
     def move_selected_right(self):
-        selected_items = self.uwi_listbox.selectedItems()
+        selected_items = self.UWI_listbox.selectedItems()
         for item in selected_items:
-            self.uwi_listbox.takeItem(self.uwi_listbox.row(item))
-            self.selected_uwi_listbox.addItem(item.text())
+            self.UWI_listbox.takeItem(self.UWI_listbox.row(item))
+            self.selected_UWI_listbox.addItem(item.text())
             
 
     def move_selected_left(self):
-        selected_items = self.selected_uwi_listbox.selectedItems()
+        selected_items = self.selected_UWI_listbox.selectedItems()
         for item in selected_items:
-            self.selected_uwi_listbox.takeItem(self.selected_uwi_listbox.row(item))
-            self.uwi_listbox.addItem(item.text())
+            self.selected_UWI_listbox.takeItem(self.selected_UWI_listbox.row(item))
+            self.UWI_listbox.addItem(item.text())
 
     def move_all_right(self):
-        for index in range(self.uwi_listbox.count()):
-            item = self.uwi_listbox.item(index)
-            self.selected_uwi_listbox.addItem(item.text())
-        self.uwi_listbox.clear()
+        for index in range(self.UWI_listbox.count()):
+            item = self.UWI_listbox.item(index)
+            self.selected_UWI_listbox.addItem(item.text())
+        self.UWI_listbox.clear()
 
     def move_all_left(self):
-        for index in range(self.selected_uwi_listbox.count()):
-            item = self.selected_uwi_listbox.item(index)
-            self.uwi_listbox.addItem(item.text())
-        self.selected_uwi_listbox.clear()
+        for index in range(self.selected_UWI_listbox.count()):
+            item = self.selected_UWI_listbox.item(index)
+            self.UWI_listbox.addItem(item.text())
+        self.selected_UWI_listbox.clear()
     def clear_widgets(self):
-        self.selected_uwi_listbox.clear()
+        self.selected_UWI_listbox.clear()
         with QSignalBlocker(self.filter_dropdown):
             self.filter_dropdown.clear() 
             self.filter_dropdown.setCurrentIndex(-1)
-        # Clear the selected_uwi_listbox
-        self.uwi_listbox.clear()
+        # Clear the selected_UWI_listbox
+        self.UWI_listbox.clear()
     
 # Main application logic
 

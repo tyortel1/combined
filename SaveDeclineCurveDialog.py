@@ -2,10 +2,10 @@ from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButt
 from PySide6.QtCore import Qt
 
 class SaveDeclineCurveDialog(QDialog):
-    def __init__(self, parent=None, uwis=None, from_context_menu=False):
+    def __init__(self, parent=None, UWIs=None, from_context_menu=False):
         super().__init__(parent)
-        if uwis is not None:
-            self.uwis = [str(uwi) for uwi in uwis]
+        if UWIs is not None:
+            self.UWIs = [str(UWI) for UWI in UWIs]
         self.from_context_menu = from_context_menu
         self.setWindowTitle("Save Decline Curve Parameters")
 
@@ -32,17 +32,17 @@ class SaveDeclineCurveDialog(QDialog):
         self.manual_layout = QFormLayout()
         
         # Average Option
-        self.uwi_list_label = QLabel("Select uwis to average:")
-        self.average_layout.addWidget(self.uwi_list_label)
+        self.UWI_list_label = QLabel("Select UWIs to average:")
+        self.average_layout.addWidget(self.UWI_list_label)
 
-        self.uwi_list = QListWidget()
-        if self.uwis:
-            for uwi in self.uwis:
-                item = QListWidgetItem(uwi)
+        self.UWI_list = QListWidget()
+        if self.UWIs:
+            for UWI in self.UWIs:
+                item = QListWidgetItem(UWI)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
                 item.setCheckState(Qt.Checked if self.from_context_menu else Qt.Unchecked)
-                self.uwi_list.addItem(item)
-        self.average_layout.addWidget(self.uwi_list)
+                self.UWI_list.addItem(item)
+        self.average_layout.addWidget(self.UWI_list)
         
         # Rest of your existing dialog code...
         
@@ -124,13 +124,13 @@ class SaveDeclineCurveDialog(QDialog):
     def get_selected_option(self):
         return self.options.currentText()
 
-    def get_selected_uwis(self):
-        selected_uwis = []
-        for index in range(self.uwi_list.count()):
-            item = self.uwi_list.item(index)
+    def get_selected_UWIs(self):
+        selected_UWIs = []
+        for index in range(self.UWI_list.count()):
+            item = self.UWI_list.item(index)
             if item.checkState() == Qt.Checked:
-                selected_uwis.append(item.text())
-        return selected_uwis
+                selected_UWIs.append(item.text())
+        return selected_UWIs
 
     def get_manual_data(self):
         return {

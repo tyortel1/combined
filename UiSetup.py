@@ -136,9 +136,9 @@ class Ui_MainWindow:
 
 
         # Checkbox to show/hide UWI labels
-        MainWindow.uwiCheckbox = QCheckBox("Show UWI Labels", MainWindow)
-        MainWindow.uwiCheckbox.setChecked(True)
-        MainWindow.optionsLayout.addWidget(MainWindow.uwiCheckbox)
+        MainWindow.UWICheckbox = QCheckBox("Show UWI Labels", MainWindow)
+        MainWindow.UWICheckbox.setChecked(True)
+        MainWindow.optionsLayout.addWidget(MainWindow.UWICheckbox)
 
                 # Checkbox to show/hide UWI labels
         MainWindow.ticksCheckbox = QCheckBox("Show Ticks", MainWindow)
@@ -169,15 +169,15 @@ class Ui_MainWindow:
         MainWindow.optionsLayout.addLayout(gradientLayout)
 
 
-        MainWindow.uwiWidthLabel = QLabel("UWI Size:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.uwiWidthLabel)
+        MainWindow.UWIWidthLabel = QLabel("UWI Size:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.UWIWidthLabel)
 
         # Slider to change the width of the lines
-        MainWindow.uwiWidthSlider = QSlider(Qt.Horizontal, MainWindow)
-        MainWindow.uwiWidthSlider.setMinimum(1)
-        MainWindow.uwiWidthSlider.setMaximum(100)
-        MainWindow.uwiWidthSlider.setValue(25)
-        MainWindow.optionsLayout.addWidget(MainWindow.uwiWidthSlider)
+        MainWindow.UWIWidthSlider = QSlider(Qt.Horizontal, MainWindow)
+        MainWindow.UWIWidthSlider.setMinimum(1)
+        MainWindow.UWIWidthSlider.setMaximum(100)
+        MainWindow.UWIWidthSlider.setValue(25)
+        MainWindow.optionsLayout.addWidget(MainWindow.UWIWidthSlider)
 
         # Label for the opacity slider
         MainWindow.opacityLabel = QLabel("UWI Label Opacity:", MainWindow)
@@ -267,14 +267,16 @@ class Ui_MainWindow:
         MainWindow.calculate_menu.setEnabled(False)
         MainWindow.calc_stage_action = QAction("Calculate Stages", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.calc_stage_action)
-        MainWindow.calc_zone_attribute_action = QAction("Calculate Zone Attributes", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_zone_attribute_action)
+        MainWindow.calc_grid_to_zone_action = QAction("Grid To Zone", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.calc_grid_to_zone_action)
         #MainWindow.calc_well_attribute_action = QAction("Calculate Well Attributes", MainWindow)
         #MainWindow.calculate_menu.addAction(MainWindow.calc_well_attribute_action)
         MainWindow.calc_inzone_action = QAction("Calculate in Zone", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
         MainWindow.pc_dialog_action = QAction("Calculate Parent Child", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.pc_dialog_action)
+        MainWindow.attribute_analyzer_action = QAction("Attribute Analyzer", MainWindow)
+        MainWindow.calculate_menu.addAction(MainWindow.attribute_analyzer_action)
         MainWindow.correlation_matrix_action = QAction("Well Correlation Matrix", MainWindow)
         MainWindow.calculate_menu.addAction(MainWindow.correlation_matrix_action)
         MainWindow.well_comparison_action = QAction("Well Comparison Calculation", MainWindow)

@@ -169,22 +169,22 @@ class ZoneAttributeCalculator(QDialog):
         
             # Convert directional survey rows to DataFrame with correct columns
             directional_data = pd.DataFrame(directional_rows, 
-                columns=['id', 'uwi', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance'])
+                columns=['id', 'UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance'])
             
-            # Make sure we're using 'uwi' consistently
+            # Make sure we're using 'UWI' consistently
             if 'UWI' in zone_data.columns:
-                zone_data = zone_data.rename(columns={'UWI': 'uwi'})
+                zone_data = zone_data.rename(columns={'UWI': 'UWI'})
             
-            print(zone_data['uwi'])
+            print(zone_data['UWI'])
 
 
 
-            zone_data['uwi'] = zone_data['uwi'].astype(str)
-            directional_data['uwi'] = directional_data['uwi'].astype(str)
+            zone_data['UWI'] = zone_data['UWI'].astype(str)
+            directional_data['UWI'] = directional_data['UWI'].astype(str)
 
         
             # Group by UWI
-            grouped = zone_data.groupby('uwi')
+            grouped = zone_data.groupby('UWI')
         
             # Calculate based on selected method
             calc_func = {
@@ -200,11 +200,11 @@ class ZoneAttributeCalculator(QDialog):
         
             # Calculate new values with offsets from directional surveys
             results = []
-            for uwi, group in grouped:
+            for UWI, group in grouped:
                 # Get directional data for this UWI
-                well_data = directional_data[directional_data['uwi'] == uwi]
+                well_data = directional_data[directional_data['UWI'] == UWI]
                 if well_data.empty:
-                    print(f"No directional survey data found for uwi: {uwi}")
+                    print(f"No directional survey data found for UWI: {UWI}")
                     continue
                 
                 # Get first and last entries from directional survey
@@ -212,7 +212,7 @@ class ZoneAttributeCalculator(QDialog):
                 last_entry = well_data.iloc[-1]
             
                 result = {
-                    'uwi': uwi,
+                    'UWI': UWI,
                     'Top_X_Offset': int(first_entry['X Offset']),
                     'Top_Y_Offset': int(first_entry['Y Offset']),
                     'Base_X_Offset': int(last_entry['X Offset']),

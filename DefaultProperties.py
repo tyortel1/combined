@@ -484,18 +484,18 @@ class DefaultProperties(QDialog):
 
 
     def calculate_total_reserves(self):
-        # Initialize dictionaries to store the total reserves for each uwi
-        uwi_oil_reserves = {}
-        uwi_gas_reserves = {}
+        # Initialize dictionaries to store the total reserves for each UWI
+        UWI_oil_reserves = {}
+        UWI_gas_reserves = {}
         
-        # Group the DataFrame by uwi and sum the oil and gas volumes for each group
-        for uwi, uwi_group in self.df_combined_all.groupby('uwi'):
-            total_oil_reserves = uwi_group['oil_volume'].sum()
-            total_gas_reserves = uwi_group['gas_volume'].sum()
-            uwi_oil_reserves[uwi] = total_oil_reserves
-            uwi_gas_reserves[uwi] = total_gas_reserves
+        # Group the DataFrame by UWI and sum the oil and gas volumes for each group
+        for UWI, UWI_group in self.df_combined_all.groupby('UWI'):
+            total_oil_reserves = UWI_group['oil_volume'].sum()
+            total_gas_reserves = UWI_group['gas_volume'].sum()
+            UWI_oil_reserves[UWI] = total_oil_reserves
+            UWI_gas_reserves[UWI] = total_gas_reserves
         
-        return uwi_oil_reserves, uwi_gas_reserves
+        return UWI_oil_reserves, UWI_gas_reserves
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

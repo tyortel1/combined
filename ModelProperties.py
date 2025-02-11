@@ -23,7 +23,7 @@ class  ModelProperties:
         self.default_properties = default_properties
  
 
-        for uwi, group in self.combined_df.groupby('uwi'):
+        for UWI, group in self.combined_df.groupby('UWI'):
             group = group.sort_values(by='date').reset_index(drop=True)
             max_oil_volume, max_gas_volume = 0, 0
             one_year_oil_volume, one_year_gas_volume = 0, 0
@@ -123,9 +123,9 @@ class  ModelProperties:
             gas_b_factor = round(gas_b_factor, 2)
             min_dec_oil = round(min_dec_oil, 2)
             min_dec_gas = round(min_dec_gas, 2)
-            # Store the data for the current uwi
-            uwi_data = {
-                        'uwi': uwi,
+            # Store the data for the current UWI
+            UWI_data = {
+                        'UWI': UWI,
                         'max_oil_production': max_oil_volume,
                         'max_gas_production': max_gas_volume,
                         'max_oil_production_date': max_oil_production_date,
@@ -166,7 +166,7 @@ class  ModelProperties:
                     }
 
             
-            # Append the uwi_data to the list
-            self.model_data.append(uwi_data)
+            # Append the UWI_data to the list
+            self.model_data.append(UWI_data)
 
         return self.model_data, self.iterate_di

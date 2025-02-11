@@ -132,9 +132,9 @@ class ExportDialog(QDialog):
             df = pd.DataFrame(self.grid_well_data)
             excel_file_path = os.path.join(self.output_directory, f'{self.name_ext}_directional_surveys.xlsx')
             with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
-                for uwi in df['UWI'].unique():
-                    df_uwi = df[df['UWI'] == uwi]
-                    df_uwi.to_excel(writer, sheet_name=uwi, index=False)
+                for UWI in df['UWI'].unique():
+                    df_UWI = df[df['UWI'] == UWI]
+                    df_UWI.to_excel(writer, sheet_name=UWI, index=False)
             print(f"Directional surveys data written to {excel_file_path}")
         except Exception as e:
             self.update_export_window()

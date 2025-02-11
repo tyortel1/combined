@@ -136,7 +136,7 @@ class InZoneDialog(QDialog):
 
         # Create DataFrame with well and grid data
         data = []
-        for uwi, group in self.directional_surveys_df.groupby('UWI'):
+        for UWI, group in self.directional_surveys_df.groupby('UWI'):
             for i, row in group.iterrows():
                 x = row['X Offset']
                 y = row['Y Offset']
@@ -157,7 +157,7 @@ class InZoneDialog(QDialog):
 
                 # Prepare row data
                 row_data = {
-                    'UWI': uwi,
+                    'UWI': UWI,
                     'X Offset': x,
                     'Y Offset': y,
                     'TVD': tvd,
@@ -210,8 +210,8 @@ class InZoneDialog(QDialog):
         self.total_laterals = []
 
         # Process each well
-        for uwi in df['UWI'].unique():
-            well_df = df[df['UWI'] == uwi].sort_values(by='MD').reset_index(drop=True)
+        for UWI in df['UWI'].unique():
+            well_df = df[df['UWI'] == UWI].sort_values(by='MD').reset_index(drop=True)
             well_df['Inclination'] = np.nan
 
             # Calculate inclination
@@ -230,7 +230,7 @@ class InZoneDialog(QDialog):
             # Calculate total lateral length
             total_lateral = well_df['MD'].max() - well_df['MD'].min()
             self.total_laterals.append({
-                'UWI': uwi,
+                'UWI': UWI,
                 'Total Lateral Length': total_lateral
             })
 
@@ -272,7 +272,7 @@ class InZoneDialog(QDialog):
 
             # Process intersections
             current_intersection = {
-                'UWI': uwi,
+                'UWI': UWI,
                 'Grid Name': initial_grid,
                 'Top X Offset': first_x_offset,
                 'Top Y Offset': first_y_offset,
@@ -335,7 +335,7 @@ class InZoneDialog(QDialog):
 
                             # Start new intersection
                             current_intersection = {
-                                'UWI': uwi,
+                                'UWI': UWI,
                                 'Grid Name': intersection_grid,
                                 'Top X Offset': x_offset_intersect,
                                 'Top Y Offset': y_offset_intersect,
@@ -371,11 +371,10 @@ class InZoneDialog(QDialog):
         # Save the zone name and type
         self.db_manager.add_zone_names(zone_name, zone_type)
 
-        # Create a table name dynamically
-        table_name = f"{zone_name.replace(' ', '').replace('-', '')}"
+
 
         # Save the percentage data into a new table in the database
-        self.db_manager.create_table_from_df(table_name, df_intersections)
+        self.db_manager.create_table_from_df(zone_name, df_intersections)
 
         return df_intersections
 
@@ -384,44 +383,40 @@ class InZoneDialog(QDialog):
         Create a DataFrame with percentage data for each well, ensuring zone name includes both name and type.
         """
         percentage_data = []
-
         # Construct the zone name and type
         base_zone_name = self.zone_name_combo.currentText().strip()
         if not base_zone_name:
             raise ValueError("Zone name cannot be empty.")
-
         zone_name = f"{base_zone_name}_Percentages"
         zone_type = "Well"  # Zone type fixed to 'Well'
-
         all_grids = df_intersections['Grid Name'].unique()
-
-        for uwi in df_intersections['UWI'].unique():
+    
+        for UWI in df_intersections['UWI'].unique():
             # Get the total lateral length
             total_lateral = next(
-                (item['Total Lateral Length'] for item in self.total_laterals if item['UWI'] == uwi),
+                (item['Total Lateral Length'] for item in self.total_laterals if item['UWI'] == UWI),
                 None
             )
-
             if total_lateral is None or total_lateral == 0:
                 continue  # Skip wells with no lateral length
-
+            
             # Calculate grid percentages
-            uwi_df = df_intersections[df_intersections['UWI'] == uwi]
+            UWI_df = df_intersections[df_intersections['UWI'] == UWI]
             grid_lengths = {grid: 0.0 for grid in all_grids}
-
-            for _, row in uwi_df.iterrows():
+        
+            for _, row in UWI_df.iterrows():
                 grid = row['Grid Name']
                 length = row['Base Depth'] - row['Top Depth']
                 grid_lengths[grid] += length
-
+            
             grid_percentages = {grid: (length / total_lateral) * 100 for grid, length in grid_lengths.items()}
-
+        
             # Get well location data
-            first_survey = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi].iloc[0]
-
+            first_survey = self.directional_surveys_df[self.directional_surveys_df['UWI'] == UWI].iloc[0]
+        
             # Create percentage row
             percentage_row = {
-                'UWI': uwi,
+                'UWI': UWI,
                 'Zone Name': base_zone_name,
                 'Zone Type': zone_type,
                 'Total Lateral Length': total_lateral,
@@ -432,20 +427,28 @@ class InZoneDialog(QDialog):
             }
             percentage_row.update(grid_percentages)
             percentage_data.append(percentage_row)
-
+        
         # Convert percentage data into a DataFrame
         percentage_df = pd.DataFrame(percentage_data)
-
+    
         # Save the zone name and type
         self.db_manager.add_zone_names(zone_name, zone_type)
+    
 
-        # Create a table name dynamically
-        table_name = f"{zone_name.replace(' ', '_').replace('-', '_')}"
-
+    
         # Save the percentage data into a new table in the database
-        self.db_manager.create_table_from_df(table_name, percentage_df)
+        self.db_manager.create_table_from_df(zone_name, percentage_df)
 
+
+        # Show completion message
+        QMessageBox.information(self, "Success", "Zone calculation completed successfully!")
+        
+        # Close the dialog
+        self.accept()
+    
         return percentage_df
+    
+ 
 
 
     def calculate_angle(self, x1, y1, x2, y2):

@@ -3701,33 +3701,33 @@
 2025-01-19 09:22:08,503 - root - INFO - Well pads table populated successfully.
 2025-01-19 09:22:08,504 - root - INFO - Initial data loaded successfully.
 2025-01-19 09:22:08,504 - root - INFO - PUDPropertiesDialog initialized
-2025-01-19 09:22:33,140 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP3L1Side1Leg1', 'total_depth': 2293.6551170391585, 'total_capex_cost': 118968.27558519579}
-2025-01-19 09:22:33,141 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP6L1Side1Leg2', 'total_depth': 2135.62512264325, 'total_capex_cost': 118178.12561321625}
-2025-01-19 09:22:33,142 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP4L1Side1Leg1', 'total_depth': 2293.6512076844724, 'total_capex_cost': 118968.25603842236}
-2025-01-19 09:22:33,143 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP9L1Side1Leg2', 'total_depth': 1324.589229096551, 'total_capex_cost': 114122.94614548275}
-2025-01-19 09:22:33,144 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP7L1Side1Leg3', 'total_depth': 2293.6514145538085, 'total_capex_cost': 118968.25707276905}
-2025-01-19 09:22:33,145 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP2L1Side1Leg3', 'total_depth': 2293.666789628998, 'total_capex_cost': 118968.333948145}
-2025-01-19 09:22:33,146 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP1L1Side1Leg1', 'total_depth': 2293.6468243157533, 'total_capex_cost': 118968.23412157877}
-2025-01-19 09:22:33,147 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP8L1Side1Leg3', 'total_depth': 1981.0509303119527, 'total_capex_cost': 117405.25465155976}
-2025-01-19 09:22:33,148 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP4L1Side1Leg2', 'total_depth': 2135.620000001043, 'total_capex_cost': 118178.10000000522}
-2025-01-19 09:22:33,149 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP1L1Side1Leg2', 'total_depth': 2135.6199999991804, 'total_capex_cost': 118178.0999999959}
-2025-01-19 09:22:33,150 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP9L1Side1Leg3', 'total_depth': 1479.3117373529258, 'total_capex_cost': 114896.55868676463}
-2025-01-19 09:22:33,151 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP2L1Side1Leg1', 'total_depth': 2293.6706563943662, 'total_capex_cost': 118968.35328197182}
-2025-01-19 09:22:33,152 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP6L1Side1Leg1', 'total_depth': 2293.6496792095327, 'total_capex_cost': 118968.24839604767}
-2025-01-19 09:22:33,152 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP9L1Side1Leg1', 'total_depth': 1517.895032891965, 'total_capex_cost': 115089.47516445983}
-2025-01-19 09:22:33,153 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP8L1Side1Leg1', 'total_depth': 1984.7328320827357, 'total_capex_cost': 117423.66416041368}
-2025-01-19 09:22:33,154 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP7L1Side1Leg1', 'total_depth': 2293.647812360794, 'total_capex_cost': 118968.23906180396}
-2025-01-19 09:22:33,155 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP5L1Side1Leg2', 'total_depth': 2135.631564266494, 'total_capex_cost': 118178.15782133247}
-2025-01-19 09:22:33,156 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP5L1Side1Leg3', 'total_depth': 2293.651857250609, 'total_capex_cost': 118968.25928625304}
-2025-01-19 09:22:33,158 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP6L1Side1Leg3', 'total_depth': 2293.651264769404, 'total_capex_cost': 118968.25632384702}
-2025-01-19 09:22:33,159 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP7L1Side1Leg2', 'total_depth': 2135.629250201506, 'total_capex_cost': 118178.14625100754}
-2025-01-19 09:22:33,160 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP2L1Side1Leg2', 'total_depth': 2135.6300000008196, 'total_capex_cost': 118178.1500000041}
-2025-01-19 09:22:33,161 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP4L1Side1Leg3', 'total_depth': 2293.6608739180033, 'total_capex_cost': 118968.30436959001}
-2025-01-19 09:22:33,162 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP3L1Side1Leg2', 'total_depth': 2135.627024426648, 'total_capex_cost': 118178.13512213324}
-2025-01-19 09:22:33,163 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP8L1Side1Leg2', 'total_depth': 1804.7923244225353, 'total_capex_cost': 116523.96162211268}
-2025-01-19 09:22:33,164 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP3L1Side1Leg3', 'total_depth': 2293.651246781898, 'total_capex_cost': 118968.25623390949}
-2025-01-19 09:22:33,165 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP1L1Side1Leg3', 'total_depth': 2293.656311244949, 'total_capex_cost': 118968.28155622474}
-2025-01-19 09:22:33,166 - root - INFO - Inserting new well pad for UWI: {'uwi': 'WP5L1Side1Leg1', 'total_depth': 2293.6518013130644, 'total_capex_cost': 118968.25900656532}
+2025-01-19 09:22:33,140 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP3L1Side1Leg1', 'total_depth': 2293.6551170391585, 'total_capex_cost': 118968.27558519579}
+2025-01-19 09:22:33,141 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP6L1Side1Leg2', 'total_depth': 2135.62512264325, 'total_capex_cost': 118178.12561321625}
+2025-01-19 09:22:33,142 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP4L1Side1Leg1', 'total_depth': 2293.6512076844724, 'total_capex_cost': 118968.25603842236}
+2025-01-19 09:22:33,143 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP9L1Side1Leg2', 'total_depth': 1324.589229096551, 'total_capex_cost': 114122.94614548275}
+2025-01-19 09:22:33,144 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP7L1Side1Leg3', 'total_depth': 2293.6514145538085, 'total_capex_cost': 118968.25707276905}
+2025-01-19 09:22:33,145 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP2L1Side1Leg3', 'total_depth': 2293.666789628998, 'total_capex_cost': 118968.333948145}
+2025-01-19 09:22:33,146 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP1L1Side1Leg1', 'total_depth': 2293.6468243157533, 'total_capex_cost': 118968.23412157877}
+2025-01-19 09:22:33,147 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP8L1Side1Leg3', 'total_depth': 1981.0509303119527, 'total_capex_cost': 117405.25465155976}
+2025-01-19 09:22:33,148 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP4L1Side1Leg2', 'total_depth': 2135.620000001043, 'total_capex_cost': 118178.10000000522}
+2025-01-19 09:22:33,149 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP1L1Side1Leg2', 'total_depth': 2135.6199999991804, 'total_capex_cost': 118178.0999999959}
+2025-01-19 09:22:33,150 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP9L1Side1Leg3', 'total_depth': 1479.3117373529258, 'total_capex_cost': 114896.55868676463}
+2025-01-19 09:22:33,151 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP2L1Side1Leg1', 'total_depth': 2293.6706563943662, 'total_capex_cost': 118968.35328197182}
+2025-01-19 09:22:33,152 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP6L1Side1Leg1', 'total_depth': 2293.6496792095327, 'total_capex_cost': 118968.24839604767}
+2025-01-19 09:22:33,152 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP9L1Side1Leg1', 'total_depth': 1517.895032891965, 'total_capex_cost': 115089.47516445983}
+2025-01-19 09:22:33,153 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP8L1Side1Leg1', 'total_depth': 1984.7328320827357, 'total_capex_cost': 117423.66416041368}
+2025-01-19 09:22:33,154 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP7L1Side1Leg1', 'total_depth': 2293.647812360794, 'total_capex_cost': 118968.23906180396}
+2025-01-19 09:22:33,155 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP5L1Side1Leg2', 'total_depth': 2135.631564266494, 'total_capex_cost': 118178.15782133247}
+2025-01-19 09:22:33,156 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP5L1Side1Leg3', 'total_depth': 2293.651857250609, 'total_capex_cost': 118968.25928625304}
+2025-01-19 09:22:33,158 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP6L1Side1Leg3', 'total_depth': 2293.651264769404, 'total_capex_cost': 118968.25632384702}
+2025-01-19 09:22:33,159 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP7L1Side1Leg2', 'total_depth': 2135.629250201506, 'total_capex_cost': 118178.14625100754}
+2025-01-19 09:22:33,160 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP2L1Side1Leg2', 'total_depth': 2135.6300000008196, 'total_capex_cost': 118178.1500000041}
+2025-01-19 09:22:33,161 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP4L1Side1Leg3', 'total_depth': 2293.6608739180033, 'total_capex_cost': 118968.30436959001}
+2025-01-19 09:22:33,162 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP3L1Side1Leg2', 'total_depth': 2135.627024426648, 'total_capex_cost': 118178.13512213324}
+2025-01-19 09:22:33,163 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP8L1Side1Leg2', 'total_depth': 1804.7923244225353, 'total_capex_cost': 116523.96162211268}
+2025-01-19 09:22:33,164 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP3L1Side1Leg3', 'total_depth': 2293.651246781898, 'total_capex_cost': 118968.25623390949}
+2025-01-19 09:22:33,165 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP1L1Side1Leg3', 'total_depth': 2293.656311244949, 'total_capex_cost': 118968.28155622474}
+2025-01-19 09:22:33,166 - root - INFO - Inserting new well pad for UWI: {'UWI': 'WP5L1Side1Leg1', 'total_depth': 2293.6518013130644, 'total_capex_cost': 118968.25900656532}
 2025-01-19 09:22:34,331 - root - INFO - Scenario 2 updated with 27 wells.
 2025-01-19 09:22:34,333 - root - INFO - Deleted model properties for scenario 2
 2025-01-19 09:22:34,334 - root - ERROR - Error deleting production rates: no such table: production_rates
@@ -5160,8 +5160,8 @@ Supported signatures:
 2025-01-21 14:53:28,081 - root - INFO - Well pads table populated successfully.
 2025-01-21 14:53:28,081 - root - INFO - Initial data loaded successfully.
 2025-01-21 14:53:28,081 - root - INFO - PUDPropertiesDialog initialized
-2025-01-21 14:53:29,547 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_uwis_with_properties'
-2025-01-21 14:53:34,604 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_uwis_with_properties'
+2025-01-21 14:53:29,547 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_UWIs_with_properties'
+2025-01-21 14:53:34,604 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_UWIs_with_properties'
 2025-01-21 15:00:06,123 - root - INFO - Dialog closed successfully
 2025-01-21 20:57:49,069 - root - DEBUG - Toolbar setup completed
 2025-01-21 20:57:49,077 - root - DEBUG - Scenario dropdown setup completed
@@ -5174,7 +5174,7 @@ Supported signatures:
 2025-01-21 20:57:49,093 - root - INFO - Well pads table populated successfully.
 2025-01-21 20:57:49,093 - root - INFO - Initial data loaded successfully.
 2025-01-21 20:57:49,094 - root - INFO - PUDPropertiesDialog initialized
-2025-01-21 20:57:51,050 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_uwis_with_properties'
+2025-01-21 20:57:51,050 - root - ERROR - Error in scenario_pud_select: 'DatabaseManager' object has no attribute 'get_active_UWIs_with_properties'
 2025-01-21 21:01:12,785 - root - DEBUG - Toolbar setup completed
 2025-01-21 21:01:12,787 - root - DEBUG - Scenario dropdown setup completed
 2025-01-21 21:01:12,790 - root - DEBUG - Table setup completed
@@ -5471,7 +5471,7 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-21 22:16:56,542 - root - DEBUG - UI updated for scenario: 111aaaa
 2025-01-21 22:16:56,543 - root - INFO - Well pads table populated successfully.
 2025-01-21 22:16:56,558 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
-2025-01-21 22:17:33,483 - root - ERROR - Error saving wells to database: cannot access local variable 'uwi' where it is not associated with a value
+2025-01-21 22:17:33,483 - root - ERROR - Error saving wells to database: cannot access local variable 'UWI' where it is not associated with a value
 2025-01-21 22:18:50,112 - root - DEBUG - Toolbar setup completed
 2025-01-21 22:18:50,116 - root - DEBUG - Scenario dropdown setup completed
 2025-01-21 22:18:50,119 - root - DEBUG - Table setup completed
@@ -5488,7 +5488,7 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-21 22:18:59,763 - root - DEBUG - UI updated for scenario: 2
 2025-01-21 22:18:59,764 - root - INFO - Well pads table populated successfully.
 2025-01-21 22:18:59,775 - matplotlib.pyplot - DEBUG - Loaded backend qtagg version 6.8.1.
-2025-01-21 22:21:01,080 - root - ERROR - Error saving wells to database: cannot access local variable 'uwi' where it is not associated with a value
+2025-01-21 22:21:01,080 - root - ERROR - Error saving wells to database: cannot access local variable 'UWI' where it is not associated with a value
 2025-01-21 22:23:23,949 - root - DEBUG - Toolbar setup completed
 2025-01-21 22:23:23,951 - root - DEBUG - Scenario dropdown setup completed
 2025-01-21 22:23:23,953 - root - DEBUG - Table setup completed
@@ -7215,14 +7215,14 @@ Name: scenario, dtype: object': Error binding parameter 1: type 'Series' is not 
 2025-01-31 15:54:01,685 - root - INFO - Well pads table populated successfully.
 2025-01-31 15:54:13,617 - root - INFO - Widget change tracked - Row: 1, Column: 1, Value: 2025-03-30
 2025-01-31 15:55:20,602 - root - INFO - Updating scenario with 2 modified rows
-2025-01-31 15:55:20,616 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
-2025-01-31 15:55:20,625 - root - ERROR - Error updating row 4: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:55:20,616 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_UWI'
+2025-01-31 15:55:20,625 - root - ERROR - Error updating row 4: 'DatabaseManager' object has no attribute 'delete_model_properties_for_UWI'
 2025-01-31 15:55:34,831 - root - INFO - Well pads table populated successfully.
 2025-01-31 15:55:47,688 - root - INFO - Updating scenario with 1 modified rows
-2025-01-31 15:55:47,690 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:55:47,690 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_UWI'
 2025-01-31 15:55:49,104 - root - INFO - Well pads table populated successfully.
 2025-01-31 15:56:39,190 - root - INFO - Updating scenario with 1 modified rows
-2025-01-31 15:56:39,192 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_uwi'
+2025-01-31 15:56:39,192 - root - ERROR - Error updating row 1: 'DatabaseManager' object has no attribute 'delete_model_properties_for_UWI'
 2025-01-31 15:56:41,004 - root - INFO - Well pads table populated successfully.
 2025-01-31 16:00:54,866 - root - DEBUG - Toolbar setup completed
 2025-01-31 16:00:54,867 - root - DEBUG - Scenario dropdown setup completed
@@ -8437,9 +8437,9 @@ Supported signatures:
 2025-01-31 20:18:27,339 - root - INFO - PUDPropertiesDialog initialized
 2025-01-31 20:18:30,798 - root - INFO - Widget change tracked - Row: 4, Column: 1, Value: 2026-01-06
 2025-01-31 20:18:34,713 - root - INFO - Updating scenario with 1 modified rows
-2025-01-31 20:18:34,735 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:18:34,735 - root - ERROR - Error in update_scenario: 'UWI'
 2025-01-31 20:19:30,231 - root - INFO - Updating scenario with 1 modified rows
-2025-01-31 20:19:30,257 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:19:30,257 - root - ERROR - Error in update_scenario: 'UWI'
 2025-01-31 20:20:28,586 - root - DEBUG - Toolbar setup completed
 2025-01-31 20:20:28,587 - root - DEBUG - Scenario dropdown setup completed
 2025-01-31 20:20:28,589 - root - DEBUG - Table setup completed
@@ -8466,7 +8466,7 @@ Supported signatures:
 2025-01-31 20:20:28,964 - root - INFO - Initial data loaded successfully.
 2025-01-31 20:20:28,964 - root - INFO - PUDPropertiesDialog initialized
 2025-01-31 20:20:32,700 - root - INFO - Updating scenario with 1 modified rows
-2025-01-31 20:20:32,724 - root - ERROR - Error in update_scenario: 'uwi'
+2025-01-31 20:20:32,724 - root - ERROR - Error in update_scenario: 'UWI'
 2025-01-31 20:24:42,038 - root - DEBUG - Toolbar setup completed
 2025-01-31 20:24:42,040 - root - DEBUG - Scenario dropdown setup completed
 2025-01-31 20:24:42,042 - root - DEBUG - Table setup completed
@@ -8899,3 +8899,106 @@ Supported signatures:
 2025-01-31 21:02:30,492 - root - INFO - Processed 20/27 wells
 2025-01-31 21:02:31,945 - root - INFO - Processed 25/27 wells
 2025-01-31 21:02:34,359 - root - INFO - Well pads table populated successfully.
+2025-02-03 11:26:34,239 - root - DEBUG - Toolbar setup completed
+2025-02-03 11:26:34,241 - root - DEBUG - Scenario dropdown setup completed
+2025-02-03 11:26:34,254 - root - DEBUG - Table setup completed
+2025-02-03 11:26:34,255 - root - DEBUG - UI setup completed successfully
+2025-02-03 11:26:34,256 - root - DEBUG - Signal connections established
+2025-02-03 11:26:34,259 - root - INFO - No scenarios to load.
+2025-02-03 11:26:34,259 - root - INFO - PUDPropertiesDialog initialized
+2025-02-03 11:26:43,855 - root - INFO - Dialog closed successfully
+2025-02-03 11:27:16,302 - root - DEBUG - Toolbar setup completed
+2025-02-03 11:27:16,302 - root - DEBUG - Scenario dropdown setup completed
+2025-02-03 11:27:16,304 - root - DEBUG - Table setup completed
+2025-02-03 11:27:16,304 - root - DEBUG - UI setup completed successfully
+2025-02-03 11:27:16,305 - root - DEBUG - Signal connections established
+2025-02-03 11:27:16,307 - root - INFO - No scenarios to load.
+2025-02-03 11:27:16,307 - root - INFO - PUDPropertiesDialog initialized
+2025-02-03 11:27:34,199 - root - INFO - Scenario 'Frist' added successfully with ID 2. Active: 0
+2025-02-03 11:27:34,250 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-02-03 11:27:34,258 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-02-03 11:27:34,265 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-02-03 11:27:34,272 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-02-03 11:27:34,279 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-02-03 11:27:34,286 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-02-03 11:27:34,292 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-02-03 11:27:34,300 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-02-03 11:27:34,308 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-02-03 11:27:34,316 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-02-03 11:27:34,322 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-02-03 11:27:34,328 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-02-03 11:27:34,334 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-02-03 11:27:34,341 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-02-03 11:27:34,347 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-02-03 11:27:34,353 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-02-03 11:27:34,360 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-02-03 11:27:34,367 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-02-03 11:27:34,373 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-02-03 11:27:34,378 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-02-03 11:27:34,384 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-02-03 11:27:34,390 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-02-03 11:27:34,396 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-02-03 11:27:34,402 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-02-03 11:27:34,409 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-02-03 11:27:34,414 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-02-03 11:27:34,420 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-02-03 11:27:35,975 - root - INFO - Scenario 2 updated with 27 wells.
+2025-02-03 11:27:37,385 - root - INFO - Processed 5/27 wells
+2025-02-03 11:27:38,779 - root - INFO - Processed 10/27 wells
+2025-02-03 11:27:40,156 - root - INFO - Processed 15/27 wells
+2025-02-03 11:27:41,544 - root - INFO - Processed 20/27 wells
+2025-02-03 11:27:42,925 - root - INFO - Processed 25/27 wells
+2025-02-03 11:27:45,784 - root - INFO - Well pads table populated successfully.
+2025-02-03 11:27:53,697 - root - INFO - Dialog closed successfully
+2025-02-03 13:18:37,519 - root - DEBUG - Toolbar setup completed
+2025-02-03 13:18:37,522 - root - DEBUG - Scenario dropdown setup completed
+2025-02-03 13:18:37,534 - root - DEBUG - Table setup completed
+2025-02-03 13:18:37,535 - root - DEBUG - UI setup completed successfully
+2025-02-03 13:18:37,536 - root - DEBUG - Signal connections established
+2025-02-03 13:18:37,611 - root - INFO - Well pads table populated successfully.
+2025-02-03 13:18:37,611 - root - INFO - Initial data loaded successfully.
+2025-02-03 13:18:37,611 - root - INFO - PUDPropertiesDialog initialized
+2025-02-03 13:18:38,815 - root - INFO - Dialog closed successfully
+2025-02-04 09:21:25,535 - root - DEBUG - Toolbar setup completed
+2025-02-04 09:21:25,537 - root - DEBUG - Scenario dropdown setup completed
+2025-02-04 09:21:25,539 - root - DEBUG - Table setup completed
+2025-02-04 09:21:25,539 - root - DEBUG - UI setup completed successfully
+2025-02-04 09:21:25,542 - root - DEBUG - Signal connections established
+2025-02-04 09:21:25,543 - root - INFO - No scenarios to load.
+2025-02-04 09:21:25,543 - root - INFO - PUDPropertiesDialog initialized
+2025-02-04 09:21:36,209 - root - INFO - Scenario 'Frist' added successfully with ID 2. Active: 0
+2025-02-04 09:21:36,269 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-02-04 09:21:36,274 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-02-04 09:21:36,282 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-02-04 09:21:36,290 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-02-04 09:21:36,298 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-02-04 09:21:36,305 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-02-04 09:21:36,313 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-02-04 09:21:36,319 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-02-04 09:21:36,326 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-02-04 09:21:36,333 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-02-04 09:21:36,342 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-02-04 09:21:36,350 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-02-04 09:21:36,357 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-02-04 09:21:36,363 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-02-04 09:21:36,368 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-02-04 09:21:36,374 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-02-04 09:21:36,381 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-02-04 09:21:36,386 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-02-04 09:21:36,394 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-02-04 09:21:36,400 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-02-04 09:21:36,406 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-02-04 09:21:36,412 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-02-04 09:21:36,418 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-02-04 09:21:36,423 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-02-04 09:21:36,428 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-02-04 09:21:36,435 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-02-04 09:21:36,439 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-02-04 09:21:38,245 - root - INFO - Scenario 2 updated with 27 wells.
+2025-02-04 09:21:39,790 - root - INFO - Processed 5/27 wells
+2025-02-04 09:21:41,220 - root - INFO - Processed 10/27 wells
+2025-02-04 09:21:42,653 - root - INFO - Processed 15/27 wells
+2025-02-04 09:21:44,085 - root - INFO - Processed 20/27 wells
+2025-02-04 09:21:45,519 - root - INFO - Processed 25/27 wells
+2025-02-04 09:21:49,345 - root - INFO - Well pads table populated successfully.
+2025-02-04 09:21:51,738 - root - INFO - Dialog closed successfully

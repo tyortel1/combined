@@ -192,14 +192,14 @@ class LaunchCombinedCashflow(QDialog):
 
     def display_cashflow(self, combined_data, date_ranges, model_data, frequency='M'):
         
-        # Ensure 'uwi' is the index of the DataFrame
-        if 'uwi' in model_data.columns:
-            model_data.set_index('uwi', inplace=True)
+        # Ensure 'UWI' is the index of the DataFrame
+        if 'UWI' in model_data.columns:
+            model_data.set_index('UWI', inplace=True)
 
         # Ensure the indexes are strings
         combined_data.index = combined_data.index.astype(str)
         model_data.index = model_data.index.astype(str)
-        date_ranges['uwi'] = date_ranges['uwi'].astype(str)
+        date_ranges['UWI'] = date_ranges['UWI'].astype(str)
         min_date = pd.to_datetime(date_ranges['first_date'].min(), errors='coerce')
 
         with QSignalBlocker(self.start_date_calendar):
@@ -221,24 +221,24 @@ class LaunchCombinedCashflow(QDialog):
         # Create a DataFrame to store the entries
         entries = []
 
-         # Loop over each uwi to create entries for CapEx and OpEx
+         # Loop over each UWI to create entries for CapEx and OpEx
         for _, row in date_ranges.iterrows():
-            uwi = row['uwi']
+            UWI = row['UWI']
             first_date = pd.to_datetime(row['first_date'], errors='coerce')
             last_date = pd.to_datetime(row['last_date'], errors='coerce')
 
             if pd.isnull(first_date) or pd.isnull(last_date):
-                print(f"Invalid date range for uwi {uwi}. Skipping...")
+                print(f"Invalid date range for UWI {UWI}. Skipping...")
                 continue
 
-            if uwi in model_data.index:
-                print(f"Raw CapEx value for {uwi}:", model_data.loc[uwi, 'capital_expenditures'])
-                capex = -float(model_data.loc[uwi, 'capital_expenditures'])
-                opex_value = -float(model_data.loc[uwi, 'operating_expenditures'])
+            if UWI in model_data.index:
+                print(f"Raw CapEx value for {UWI}:", model_data.loc[UWI, 'capital_expenditures'])
+                capex = -float(model_data.loc[UWI, 'capital_expenditures'])
+                opex_value = -float(model_data.loc[UWI, 'operating_expenditures'])
 
                 # Add CapEx entry for the first date
                 entries.append({
-                    'uwi': uwi,
+                    'UWI': UWI,
                     'date': first_date,
                     'type': 'CapEx',
                     'amount': capex
@@ -248,7 +248,7 @@ class LaunchCombinedCashflow(QDialog):
                 current_date = first_date
                 while current_date <= last_date:
                     entries.append({
-                        'uwi': uwi,
+                        'UWI': UWI,
                         'date': current_date,
                         'type': 'OpEx',
                         'amount': opex_value

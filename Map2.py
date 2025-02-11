@@ -70,6 +70,7 @@ from CalculateCorrelationMatrix import GenerateCorrelationMatrix
 from CalculateWellComparisons import WellComparisonDialog
 from CalcMergeZones import CalcMergeZoneDialog
 from CalculateZoneAttributes import ZoneAttributeCalculator
+from CalcAttributeAnalyzer import CalcAttributeAnalyzer
 
 
 
@@ -106,10 +107,10 @@ class Map(QMainWindow, Ui_MainWindow):
         self.grid_scaled_max_y = None
         self.drainage_width = 400
         self.kd_tree = None
-        self.uwi_points = []
+        self.UWI_points = []
 
         self.zone_ticks = []
-        self.uwi_map = {}
+        self.UWI_map = {}
         self.depth_grid_data_dict = {}
         self.kd_tree_wells = {}
         self.attribute_grid_data_dict = {}
@@ -130,8 +131,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.offset_y = 0
         self.line_width = 25
         self.line_opacity = .5
-        self.uwi_width = 80
-        self.uwi_opacity = .5
+        self.UWI_width = 80
+        self.UWI_opacity = .5
         self.min_x = None
         self.max_x = None
         self.min_y = None
@@ -209,10 +210,10 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-        self.uwiCheckbox.stateChanged.connect(self.toggle_uwi_labels)
+        self.UWICheckbox.stateChanged.connect(self.toggle_UWI_labels)
         self.ticksCheckbox.stateChanged.connect(self.toggle_ticks)
         self.gradientCheckbox.stateChanged.connect(self.toggle_drainage)
-        self.uwiWidthSlider.valueChanged.connect(self.change_uwi_width)
+        self.UWIWidthSlider.valueChanged.connect(self.change_UWI_width)
         self.opacitySlider.valueChanged.connect(self.change_opacity)
         self.lineWidthSlider.valueChanged.connect(self.change_line_width)
         self.lineOpacitySlider.valueChanged.connect(self.change_line_opacity)
@@ -231,10 +232,12 @@ class Map(QMainWindow, Ui_MainWindow):
         self.new_project_action.triggered.connect(self.create_new_project)
         self.open_action.triggered.connect(self.open_project)
         self.calc_stage_action.triggered.connect(self.open_stages_dialog)
-        self.calc_zone_attribute_action.triggered.connect(self.open_zone_attributes_dialog)
+        self.calc_grid_to_zone_action.triggered.connect(self.grid_to_zone)
         self.calc_inzone_action.triggered.connect(self.inzone_dialog)
         self.pc_dialog_action.triggered.connect(self.pc_dialog)
         self.correlation_matrix_action.triggered.connect(self.generate_correlation_matrix)
+        self.attribute_analyzer_action.triggered.connect(self.attribute_analyzer)
+     
         self.well_comparison_action.triggered.connect(self.well_comparison)
         self.merge_zones_action.triggered.connect(self.merge_zones)
         self.calc_zone_attb_action.triggered.connect(self.calculate_zone_attributes)
@@ -281,7 +284,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.connection = None
         if self.project_saver:
             self.project_saver.shutdown(
-                self.line_width, self.line_opacity, self.uwi_width, self.uwi_opacity,
+                self.line_width, self.line_opacity, self.UWI_width, self.UWI_opacity,
                 self.gridDropdown.currentText(), self.zoneDropdown.currentText()
             )
         QCoreApplication.quit()
@@ -302,23 +305,25 @@ class Map(QMainWindow, Ui_MainWindow):
         scenario = 1
         # Load or cache heel/toe data
         if not hasattr(self, 'heel_toe_data') or force_recalculate:
-            self.heel_toe_data = {item["uwi"]: item for item in self.db_manager.get_uwis_with_heel_toe()}
+            self.heel_toe_data = {item["UWI"]: item for item in self.db_manager.get_UWIs_with_heel_toe()}
 
         # Load EUR data
         eur_data = self.db_manager.get_model_properties(scenario)
         eur_data['EUR_oil_remaining'] = pd.to_numeric(eur_data['EUR_oil_remaining'], errors='coerce')
-        eur_dict = dict(zip(eur_data['uwi'], eur_data['EUR_oil_remaining'].fillna(0)))
+        eur_dict = dict(zip(eur_data['UWI'], eur_data['EUR_oil_remaining'].fillna(0)))
 
         # Reuse well_data if already calculated, unless forced to recalculate
         if not hasattr(self, 'well_data') or force_recalculate:
             self.well_data = {}
-            for uwi in self.directional_surveys_df['UWI'].unique():
-                df_uwi = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
-
-                x_offsets = df_uwi['X Offset'].tolist()
-                y_offsets = df_uwi['Y Offset'].tolist()
-                tvds = df_uwi['TVD'].tolist()
-                mds = df_uwi['MD'].tolist()
+            self.scaled_data = {}  # Add this back
+            self.scaled_data_md = {}  # Add this back
+        
+            for UWI in self.directional_surveys_df['UWI'].unique():
+                df_UWI = self.directional_surveys_df[self.directional_surveys_df['UWI'] == UWI]
+                x_offsets = df_UWI['X Offset'].tolist()
+                y_offsets = df_UWI['Y Offset'].tolist()
+                tvds = df_UWI['TVD'].tolist()
+                mds = df_UWI['MD'].tolist()
                 points = [QPointF(x, y) for x, y in zip(x_offsets, y_offsets)]
 
                 # Prepare static well data
@@ -331,22 +336,23 @@ class Map(QMainWindow, Ui_MainWindow):
                 }
 
                 # Add heel and toe data if available
-                if uwi in self.heel_toe_data:
+                if UWI in self.heel_toe_data:
                     well_data.update({
-                        'heel_x': self.heel_toe_data[uwi]['heel_x'],
-                        'heel_y': self.heel_toe_data[uwi]['heel_y'],
-                        'toe_x': self.heel_toe_data[uwi]['toe_x'],
-                        'toe_y': self.heel_toe_data[uwi]['toe_y']
+                        'heel_x': self.heel_toe_data[UWI]['heel_x'],
+                        'heel_y': self.heel_toe_data[UWI]['heel_y'],
+                        'toe_x': self.heel_toe_data[UWI]['toe_x'],
+                        'toe_y': self.heel_toe_data[UWI]['toe_y']
                     })
 
-                self.well_data[uwi] = well_data
-
+                self.well_data[UWI] = well_data
+                self.scaled_data[UWI] = list(zip(points, tvds))
+                self.scaled_data_md[UWI] = list(zip(points, mds))
         # Update dynamic data (e.g., drainage
         # 
         # 
         #  size)
-        for uwi, well_data in self.well_data.items():
-            eur_value = eur_dict.get(uwi, 1)
+        for UWI, well_data in self.well_data.items():
+            eur_value = eur_dict.get(UWI, 1)
             eur_multiplier = 1 - eur_value
             well_data['drainage_size'] = self.drainage_width * eur_multiplier
 
@@ -357,10 +363,10 @@ class Map(QMainWindow, Ui_MainWindow):
             self.min_x, self.max_x = min(all_x), max(all_x)
             self.min_y, self.max_y = min(all_y), max(all_y)
 
-            self.uwi_points = [(x, y) for well in self.well_data.values() for x, y in zip(well['x_offsets'], well['y_offsets'])]
-            self.uwi_map = {(x, y): uwi for uwi, well in self.well_data.items() for x, y in zip(well['x_offsets'], well['y_offsets'])}
+            self.UWI_points = [(x, y) for well in self.well_data.values() for x, y in zip(well['x_offsets'], well['y_offsets'])]
+            self.UWI_map = {(x, y): UWI for UWI, well in self.well_data.items() for x, y in zip(well['x_offsets'], well['y_offsets'])}
 
-            self.kd_tree_wells = KDTree(self.uwi_points)
+            self.kd_tree_wells = KDTree(self.UWI_points)
 
         # Pass the data to the drawing area
         self.drawingArea.setScaledData(self.well_data)
@@ -475,17 +481,17 @@ class Map(QMainWindow, Ui_MainWindow):
             results = dialog.results
         
             # Count occurrences of each target UWI
-            uwi_counts = {}
+            UWI_counts = {}
             for result in results:
-                uwi = result['target_uwi']
-                uwi_counts[uwi] = uwi_counts.get(uwi, 0) + 1
+                UWI = result['target_UWI']
+                UWI_counts[UWI] = UWI_counts.get(UWI, 0) + 1
         
-            # Convert to list of tuples (uwi, count)
-            uwi_count_list = [(uwi, count) for uwi, count in uwi_counts.items()]
-            print(uwi_count_list, scenario_id)    
+            # Convert to list of tuples (UWI, count)
+            UWI_count_list = [(UWI, count) for UWI, count in UWI_counts.items()]
+            print(UWI_count_list, scenario_id)    
             # Update parent well counts in database
             try:
-                self.db_manager.update_parent_well_counts(uwi_count_list, scenario_id)
+                self.db_manager.update_parent_well_counts(UWI_count_list, scenario_id)
             except Exception as e:
                 QMessageBox.warning(
                     self,
@@ -643,7 +649,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.plot_zones(self.selected_zone)
 
                 # Initialize well data with black colors
-                for uwi, well in self.well_data.items():
+                for UWI, well in self.well_data.items():
                     mds = well['mds']  # Get the list of measured depths
                     well['md_colors'] = [QColor(Qt.black)] * len(mds)
 
@@ -674,8 +680,8 @@ class Map(QMainWindow, Ui_MainWindow):
 
             elif self.selected_zone_attribute == "Select Zone Attribute":
                 # Change all colors for the selected zone to black
-                for uwi in self.well_data:
-                    well_data = self.well_data[uwi]
+                for UWI in self.well_data:
+                    well_data = self.well_data[UWI]
                     well_data['md_colors'] = [QColor(Qt.black) for _ in well_data['mds']]
                 # Update the drawing area with the blackened data
                 self.drawingArea.setScaledData(self.well_data)
@@ -695,11 +701,11 @@ class Map(QMainWindow, Ui_MainWindow):
             return
 
         # Create a color map for each UWI with top depth, base depth, and the associated color
-        uwi_color_map = {}
+        UWI_color_map = {}
 
         # Iterate through each zone and populate the color map
         for _, zone in zone_df.iterrows():
-            uwi = zone['UWI']
+            UWI = zone['UWI']
             grid_name = zone['Grid_Name']
             top_depth = zone['Top_Depth']
             base_depth = zone['Base_Depth']
@@ -713,15 +719,15 @@ class Map(QMainWindow, Ui_MainWindow):
                 qcolor = QColor(*rgb_values)
 
             # If the UWI is not already in the color map, add it
-            if uwi not in uwi_color_map:
-                uwi_color_map[uwi] = []
+            if UWI not in UWI_color_map:
+                UWI_color_map[UWI] = []
 
             # Add the top depth, base depth, and color as a tuple
-            uwi_color_map[uwi].append(( top_depth, base_depth, qcolor))
+            UWI_color_map[UWI].append(( top_depth, base_depth, qcolor))
   
 
         for _, zone in zone_df.iterrows():
-            uwi = zone['UWI']
+            UWI = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
             top_depth = zone['Top_Depth']
             base_depth = zone['Base_Depth']
@@ -734,14 +740,14 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
             # Insert top depth data
-            self.well_data[uwi]['x_offsets'].append(top_x_offset)
-            self.well_data[uwi]['y_offsets'].append(top_y_offset)
-            self.well_data[uwi]['mds'].append(top_depth)
-            self.well_data[uwi]['points'].append(top_point)
+            self.well_data[UWI]['x_offsets'].append(top_x_offset)
+            self.well_data[UWI]['y_offsets'].append(top_y_offset)
+            self.well_data[UWI]['mds'].append(top_depth)
+            self.well_data[UWI]['points'].append(top_point)
 
         # After adding all points, sort each well's data by MD
-        for uwi in self.well_data:
-            well_data = self.well_data[uwi]
+        for UWI in self.well_data:
+            well_data = self.well_data[UWI]
             sorted_indices = sorted(range(len(well_data['mds'])), key=lambda i: well_data['mds'][i])
             well_data['x_offsets'] = [well_data['x_offsets'][i] for i in sorted_indices]
             well_data['y_offsets'] = [well_data['y_offsets'][i] for i in sorted_indices]
@@ -749,12 +755,12 @@ class Map(QMainWindow, Ui_MainWindow):
             well_data['points'] = [well_data['points'][i] for i in sorted_indices]
 
         # Apply the colors to the well data
-        for uwi, well_data in self.well_data.items():
+        for UWI, well_data in self.well_data.items():
             mds = well_data['mds']
             well_data['md_colors'] = []  # Clear and prepare the list for new colors
 
-            if uwi in uwi_color_map:
-                depth_color_list = uwi_color_map[uwi]
+            if UWI in UWI_color_map:
+                depth_color_list = UWI_color_map[UWI]
                
 
                 # Iterate through the measured depths and assign colors
@@ -824,27 +830,27 @@ class Map(QMainWindow, Ui_MainWindow):
         max_value = zone_df[self.selected_zone_attribute].max()
 
         # Create a dictionary for quick lookup
-        uwi_color_map = {}
+        UWI_color_map = {}
 
         for _, zone in zone_df.iterrows():
-            uwi = zone['UWI']
+            UWI = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
             top_depth = zone['Top_Depth']
             base_depth = zone['Base_Depth']
 
-            if uwi not in self.well_data or pd.isna(attribute_value):
+            if UWI not in self.well_data or pd.isna(attribute_value):
                 continue
 
             color = self.map_value_to_color(attribute_value, min_value, max_value, color_palette)
 
-            if uwi not in uwi_color_map:
-                uwi_color_map[uwi] = []
+            if UWI not in UWI_color_map:
+                UWI_color_map[UWI] = []
 
-            uwi_color_map[uwi].append((top_depth, base_depth, color))
+            UWI_color_map[UWI].append((top_depth, base_depth, color))
           
 
         for _, zone in zone_df.iterrows():
-            uwi = zone['UWI']
+            UWI = zone['UWI']
             attribute_value = zone[self.selected_zone_attribute]
             top_depth = zone['Top_Depth']
             base_depth = zone['Base_Depth']
@@ -857,15 +863,15 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
             # Insert top depth data
-            self.well_data[uwi]['x_offsets'].append(top_x_offset)
-            self.well_data[uwi]['y_offsets'].append(top_y_offset)
-            self.well_data[uwi]['mds'].append(top_depth)
-            self.well_data[uwi]['points'].append(top_point)
+            self.well_data[UWI]['x_offsets'].append(top_x_offset)
+            self.well_data[UWI]['y_offsets'].append(top_y_offset)
+            self.well_data[UWI]['mds'].append(top_depth)
+            self.well_data[UWI]['points'].append(top_point)
     
         
         # After adding all points, sort each well's data by MD
-        for uwi in self.well_data:
-            well_data = self.well_data[uwi]
+        for UWI in self.well_data:
+            well_data = self.well_data[UWI]
             sorted_indices = sorted(range(len(well_data['mds'])), key=lambda i: well_data['mds'][i])
             well_data['x_offsets'] = [well_data['x_offsets'][i] for i in sorted_indices]
             well_data['y_offsets'] = [well_data['y_offsets'][i] for i in sorted_indices]
@@ -873,12 +879,12 @@ class Map(QMainWindow, Ui_MainWindow):
             well_data['points'] = [well_data['points'][i] for i in sorted_indices]
 
         # Apply the colors to the well data
-        for uwi, well in self.well_data.items():
+        for UWI, well in self.well_data.items():
             mds = well['mds']
             well['md_colors'] = []  # Clear and prepare the list for new colors
 
-            if uwi in uwi_color_map:
-                depth_color_list = uwi_color_map[uwi]
+            if UWI in UWI_color_map:
+                depth_color_list = UWI_color_map[UWI]
               
                 for md in mds:
                     assigned_color = QColor(Qt.black)  # Default color
@@ -920,13 +926,13 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-    def get_color_for_md(self, uwi, md):
+    def get_color_for_md(self, UWI, md):
         """Get color for a specific UWI and MD from well_data."""
-        if uwi not in self.well_data or 'md_colors' not in self.well_data[uwi]:
+        if UWI not in self.well_data or 'md_colors' not in self.well_data[UWI]:
             return QColor(Qt.black)  # Default color if UWI does not exist or has no MD color mappings
 
         # Return the color associated with the specific MD
-        return self.well_data[uwi]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
+        return self.well_data[UWI]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
 
     
     def draw_grid_on_map(self, grid_df):
@@ -958,13 +964,13 @@ class Map(QMainWindow, Ui_MainWindow):
        print(self.zone_data_df)
 
        if self.zone_data_df['Angle_Top'].isnull().any():
-           for uwi in self.zone_data_df['UWI'].unique():
-               uwi_data = self.zone_data_df[self.zone_data_df['UWI'] == uwi]
+           for UWI in self.zone_data_df['UWI'].unique():
+               UWI_data = self.zone_data_df[self.zone_data_df['UWI'] == UWI]
            
-               x1 = uwi_data.iloc[0]['Top_X_Offset']
-               y1 = uwi_data.iloc[0]['Top_Y_Offset']
-               x2 = uwi_data.iloc[-1]['Base_X_Offset'] 
-               y2 = uwi_data.iloc[-1]['Base_Y_Offset']
+               x1 = UWI_data.iloc[0]['Top_X_Offset']
+               y1 = UWI_data.iloc[0]['Top_Y_Offset']
+               x2 = UWI_data.iloc[-1]['Base_X_Offset'] 
+               y2 = UWI_data.iloc[-1]['Base_Y_Offset']
 
                dx = x2 - x1
                dy = y1 - y2
@@ -976,17 +982,17 @@ class Map(QMainWindow, Ui_MainWindow):
                rounded_angle = min(target_angles, key=lambda x: abs(x - angle))
                rotated_angle = (rounded_angle + np.pi/2) % (2 * np.pi)
 
-               self.zone_data_df.loc[self.zone_data_df['UWI'] == uwi, ['Angle_Top', 'Angle_Base']] = rotated_angle
-               self.db_manager.update_zone_angles(zone_name, uwi, rotated_angle, rotated_angle)
+               self.zone_data_df.loc[self.zone_data_df['UWI'] == UWI, ['Angle_Top', 'Angle_Base']] = rotated_angle
+               self.db_manager.update_zone_angles(zone_name, UWI, rotated_angle, rotated_angle)
 
        self.plot_all_zones()
 
-    def calculate_offsets(self, uwi, top_md_ft, base_md_ft):
+    def calculate_offsets(self, UWI, top_md_ft, base_md_ft):
         # Convert top and base MD from feet to meters
         top_md_m = top_md_ft 
         base_md_m = base_md_ft 
 
-        well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == uwi]
+        well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == UWI]
 
         if well_data.empty:
             return None, None, None, None, None, None
@@ -1101,6 +1107,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         if self.selected_well_zone == "Select Well Zone":
             # Reset well attribute dropdown and clear the plotting area
+            self.populate_well_zone_dropdown()
             self.WellAttributeDropdown.setEnabled(False)
             self.cached_well_zone_df = None
             self.cached_well_zone_name = None
@@ -1108,17 +1115,20 @@ class Map(QMainWindow, Ui_MainWindow):
             try:
                 # Load the entire table into memory for the selected well zone
                 if not hasattr(self, 'cached_well_zone_df') or self.cached_well_zone_name != self.selected_well_zone:
-                    self.cached_well_zone_df = self.db_manager.fetch_table_data(self.selected_well_zone)
-                    self.cached_well_zone_name = self.selected_well_zone
+                    # First get the actual table name from the Zones table
+                    table_name = self.db_manager.get_table_name_from_zone(self.selected_well_zone)
+                    if table_name:
+                        self.cached_well_zone_df = self.db_manager.fetch_table_data(table_name)
+                        self.cached_well_zone_name = self.selected_well_zone
+                    else:
+                        raise ValueError(f"No table found for zone: {self.selected_well_zone}")
                 else:
                     print(f"Using cached data for well zone: {self.selected_well_zone}")
-
+        
                 # Populate the well attribute dropdown
                 self.populate_well_attribute_dropdown()
-
                 # Enable the dropdown
                 self.WellAttributeDropdown.setEnabled(True)
-
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load data for well zone '{self.selected_well_zone}': {e}")
 
@@ -1313,20 +1323,20 @@ class Map(QMainWindow, Ui_MainWindow):
         print("DataFrame head:\n", well_zone_df.head())
 
         # Map UWI coordinates to colors
-        uwi_coordinates = {
-            row["uwi"]: (row["surface_x"], row["surface_y"]) for row in self.db_manager.get_uwis_with_surface_xy()
+        UWI_coordinates = {
+            row["UWI"]: (row["surface_x"], row["surface_y"]) for row in self.db_manager.get_UWIs_with_surface_xy()
         }
-        if 'uwi' in well_zone_df.columns:
-            well_zone_df.rename(columns={'uwi': 'UWI'}, inplace=True)
+        if 'UWI' in well_zone_df.columns:
+            well_zone_df.rename(columns={'UWI': 'UWI'}, inplace=True)
 
         # Prepare data with XY coordinates and colors
         points_with_colors = []
         for _, row in well_zone_df.iterrows():
-            uwi = row['UWI']
+            UWI = row['UWI']
 
             # Get coordinates for the current UWI
-            if uwi in uwi_coordinates:
-                surface_x, surface_y = uwi_coordinates[uwi]
+            if UWI in UWI_coordinates:
+                surface_x, surface_y = UWI_coordinates[UWI]
             else:
                 # Fallback if coordinates are not found
                 surface_x, surface_y = 0, 0
@@ -1505,7 +1515,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.drawingArea.setOffset(QPointF(-x, -y))
 
 
-    def toggle_uwi_labels(self, state):
+    def toggle_UWI_labels(self, state):
         state == Qt.Checked
         self.drawingArea.toggleTextItemsVisibility(state)
 
@@ -1523,13 +1533,13 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-    def change_uwi_width(self, value=80):
-        self.uwi_width = value
+    def change_UWI_width(self, value=80):
+        self.UWI_width = value
         self.drawingArea.updateUWIWidth(value)
 
     def change_opacity(self, value):
-        self.uwi_opacity = value / 100.0
-        self.drawingArea.setUWIOpacity(self.uwi_opacity)
+        self.UWI_opacity = value / 100.0
+        self.drawingArea.setUWIOpacity(self.UWI_opacity)
 
     def change_line_width(self, value):
        
@@ -1549,7 +1559,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.depth_grid_data_df = pd.DataFrame()
         self.attribute_grid_data_df = pd.DataFrame()
         self.import_options_df = pd.DataFrame()
-        self.selected_uwis = []
+        self.selected_UWIs = []
         self.grid_info_df = pd.DataFrame()
         self.well_list = []
         self.master_df = pd.DataFrame()
@@ -1558,8 +1568,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.zone_names = []
         self.line_width = 2
         self.line_opacity = 0.8
-        self.uwi_width = 80
-        self.uwi_opacity = 1.0
+        self.UWI_width = 80
+        self.UWI_opacity = 1.0
 
         # Reset KD-Trees and other computed structures
         self.kd_tree_depth_grids = None
@@ -1641,7 +1651,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.project_data = {
                 'project_name': project_name,
                 'filter_name': '',
-                'selected_uwis': [],
+                'selected_UWIs': [],
                 'top_grid': '',
                 'bottom_grid': '',
                 'number_of_zones': 0,
@@ -1689,8 +1699,8 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager = DatabaseManager(self.db_path)
                 self.db_manager.connect()
 
-            # Create the uwis table
-                self.db_manager.create_uwi_table()
+            # Create the UWIs table
+                self.db_manager.create_UWI_table()
                 self.db_manager.create_prod_rates_all_table()
                 self.db_manager.create_well_pads_table()
                 self.db_manager.create_saved_dca_table()
@@ -1700,6 +1710,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 
                 self.db_manager.create_directional_surveys_table()
                 self.db_manager.create_zones_table()
+                self.db_manager.create_regression_table()
                 
                 # Additional database initialization if needed
                 # For example, creating tables or setting up initial data
@@ -1775,11 +1786,11 @@ class Map(QMainWindow, Ui_MainWindow):
 
         dialog = SeisWareConnectDialog()
         if dialog.exec() == QDialog.Accepted:
-            production_data, directional_survey_values, well_data_df, self.selected_uwis = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df, dialog.selected_uwis
+            production_data, directional_survey_values, well_data_df, self.selected_UWIs = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df, dialog.selected_UWIs
             self.prepare_and_update(production_data, directional_survey_values, well_data_df)
 
 
-            self.well_list = well_data_df['uwi'].tolist()
+            self.well_list = well_data_df['UWI'].tolist()
             print(self.well_list)
             # Assign well_data_df only if it's valid
             if not well_data_df.empty:
@@ -1815,11 +1826,11 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
         print('Data Prepared')
-        self.production_data = sorted(production_data, key=lambda x: (x['uwi'], x['date']))
+        self.production_data = sorted(production_data, key=lambda x: (x['UWI'], x['date']))
         print(self.production_data)
         if production_data:
             load_productions = LoadProductions()
-            self.combined_df, self.uwi_list = load_productions.prepare_data(production_data,self.db_path) 
+            self.combined_df, self.UWI_list = load_productions.prepare_data(production_data,self.db_path) 
             #print(self.combined_df)
             self.handle_default_parameters()
             self.decline_analysis()
@@ -1833,7 +1844,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.directional_surveys_df = directional_survey_values
                 self.setData(True)
                 print(well_data_df)
-                self.db_manager.save_uwi_data(well_data_df)
+                self.db_manager.save_UWI_data(well_data_df)
 
             else:
                 print("No directional survey data to insert.")
@@ -1863,13 +1874,13 @@ class Map(QMainWindow, Ui_MainWindow):
    
 
     def dataload_well_zones(self):
-        if not self.selected_uwis:
+        if not self.selected_UWIs:
             # Show error message if no UWI is selected
             QMessageBox.warning(self, "Error", "Load Wells First")
             return
 
-        self.selected_uwis = self.db_manager.get_uwis()
-        dialog = DataLoadWellZonesDialog(self.selected_uwis, self.directional_surveys_df)
+        self.selected_UWIs = self.db_manager.get_UWIs()
+        dialog = DataLoadWellZonesDialog(self.selected_UWIs, self.directional_surveys_df)
         print(self.directional_surveys_df)
         if dialog.exec() == QDialog.Accepted:
             result = dialog.import_data()
@@ -1883,20 +1894,14 @@ class Map(QMainWindow, Ui_MainWindow):
                         QMessageBox.information(self, "Info", f"Zone '{zone_name}' already exists.")
                         return
 
-                    # Create the table name
-                    table_name = f"{zone_name.replace(' ', '_').replace('-', '_').lower()}"
-
-                    # Ensure the table name starts with a valid character
-                    if not table_name[0].isalpha():
-                        table_name = f"z_{table_name}"
 
                     # Create the table and check if it already exists
-                    table_created = self.db_manager.create_table_from_df(table_name, df)
+                    table_created = self.db_manager.create_table_from_df(zone_name, df)
                     if not table_created:
-                        QMessageBox.information(self, "Info", f"Table '{table_name}' already exists.")
+                        QMessageBox.information(self, "Info", f"Table '{zone_name}' already exists.")
                         return
 
-                    QMessageBox.information(self, "Success", f"Zone '{zone_name}' and table '{table_name}' saved successfully.")
+                    QMessageBox.information(self, "Success", f"Zone '{zone_name}' and table '{zone_name}' saved successfully.")
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Failed to save zone '{zone_name}': {str(e)}")
 
@@ -1982,7 +1987,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.model_data_df = pd.DataFrame(self.model_data)
 
          
-        self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.uwi_list)
+        self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.UWI_list)
         self.prod_rates_all, self.sum_of_errors, self.model_data = self.dca.calculate_production_rates()
         self.model_data_df = pd.DataFrame(self.model_data)
         print(self.model_data)
@@ -2023,11 +2028,11 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-    def handle_well_attributes(self, df, uwi_header):
+    def handle_well_attributes(self, df, UWI_header):
         # Implement logic to handle well attributes
         pass
 
-    def handle_zone_attributes(self, df, uwi_header, top_depth_header, base_depth_header, zone_name, zone_type):
+    def handle_zone_attributes(self, df, UWI_header, top_depth_header, base_depth_header, zone_name, zone_type):
         # Implement logic to handle zone attributes
         pass
 
@@ -2086,11 +2091,11 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def handle_right_click(self, position):
         if not self.drawing:
-            closest_uwi = self.find_closest_uwi(QPointF(position))
-            if closest_uwi:
-                print(closest_uwi)
-                self.plot_data(closest_uwi)
-                self.drawingArea.updateHoveredUWI(closest_uwi)  
+            closest_UWI = self.find_closest_UWI(QPointF(position))
+            if closest_UWI:
+                print(closest_UWI)
+                self.plot_data(closest_UWI)
+                self.drawingArea.updateHoveredUWI(closest_UWI)  
                 self.drawingArea.update()
         else:
 
@@ -2123,7 +2128,7 @@ class Map(QMainWindow, Ui_MainWindow):
                     last_x, last_y = new_line_coords[i + 1]
                     segment = LineString([(first_x, first_y), (last_x, last_y)])
 
-                    for uwi, scaled_offsets in self.scaled_data.items():
+                    for UWI, scaled_offsets in self.scaled_data.items():
                         well_line_points = [(point.x(), point.y(), tvd) for point, tvd in scaled_offsets]
                         well_line_coords = [(x, y) for x, y, tvd in well_line_points]
                         well_line = LineString(well_line_coords)
@@ -2161,10 +2166,10 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
                                 if not np.isfinite(tvd_value):
-                                    print(f"Warning: Non-finite TVD Value encountered for UWI: {uwi}, Point: ({point.x}, {point.y})")
+                                    print(f"Warning: Non-finite TVD Value encountered for UWI: {UWI}, Point: ({point.x}, {point.y})")
 
                                 cumulative_distance = total_cumulative_distance + math.sqrt((point.x - first_x) ** 2 + (point.y - first_y) ** 2)
-                                self.intersections.append((uwi, point.x, point.y, tvd_value, cumulative_distance))
+                                self.intersections.append((UWI, point.x, point.y, tvd_value, cumulative_distance))
 
                     total_cumulative_distance += segment_lengths[i]
                     segment_number += 1
@@ -2174,6 +2179,7 @@ class Map(QMainWindow, Ui_MainWindow):
             for action in actions_to_toggle:
                 action.setEnabled(True)
             self.drawingArea.setIntersectionPoints(self.originalIntersectionPoints)
+            print(self.intersections)
             self.plot_gun_barrel()
 
     def map_to_data_coords(self, point):
@@ -2224,18 +2230,18 @@ class Map(QMainWindow, Ui_MainWindow):
 
         return True
 
-    def find_closest_uwi(self, point):
+    def find_closest_UWI(self, point):
 
         if self.kd_tree_wells is None:
             return None
 
         point_array = np.array([point.x(), point.y()])
         distance, index = self.kd_tree_wells.query(point_array)
-        closest_point = self.uwi_points[index]
-        closest_uwi = self.uwi_map[closest_point]
-        print(f"Found closest UWI: {closest_uwi} with distance: {distance}")
+        closest_point = self.UWI_points[index]
+        closest_UWI = self.UWI_map[closest_point]
+        print(f"Found closest UWI: {closest_UWI} with distance: {distance}")
 
-        return closest_uwi
+        return closest_UWI
 
     def toggleDrawing(self):
         self.drawing = True
@@ -2319,7 +2325,7 @@ class Map(QMainWindow, Ui_MainWindow):
         print(date_ranges)
 
         # Merge combined data with model data
-        merged_df = pd.merge(date_ranges, model_data_df, on='uwi', how='inner')
+        merged_df = pd.merge(date_ranges, model_data_df, on='UWI', how='inner')
 
         # Call cashflow display method
         self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df)
@@ -2381,23 +2387,23 @@ class Map(QMainWindow, Ui_MainWindow):
             self.zone_criteria_df = criteria_df
             self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
 
-    def plot_data(self, uwi=None):
+    def plot_data(self, UWI=None):
     
         if not self.directional_surveys_df.empty and not self.depth_grid_data_df.empty:
             try:
-                if uwi:
+                if UWI:
                     # Select data for the specified UWI
-                    current_uwi = uwi
+                    current_UWI = UWI
 
                 else:
                     # Select data for the first UWI in the list (assuming this is the "current" UWI)
-                    current_uwi = self.well_list[0]
+                    current_UWI = self.well_list[0]
                 
 
-                if current_uwi not in self.well_list:
-                    raise ValueError(f"UWI {current_uwi} not found in well list.")
+                if current_UWI not in self.well_list:
+                    raise ValueError(f"UWI {current_UWI} not found in well list.")
                 
-                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_uwi, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, self.db_manager, parent=self)
+                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_UWI, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, self.db_manager, parent=self)
                 self.open_windows.append(navigator)
                 
                 navigator.show()
@@ -2419,6 +2425,7 @@ class Map(QMainWindow, Ui_MainWindow):
             return
 
         self.plot_gb = PlotGB(
+            self.db_manager,
             self.depth_grid_data_df,
             self.grid_info_df,
             new_line_coords,
@@ -2472,9 +2479,9 @@ class Map(QMainWindow, Ui_MainWindow):
         for window in self.plot_gb_windows:  # Fixed this to use the correct list
             window.update_data(self.grid_info_df)
 
-    def handle_hover_event(self, uwi):
-        print(uwi)
-        self.drawingArea.updateHoveredUWI(uwi)
+    def handle_hover_event(self, UWI):
+        print(UWI)
+        self.drawingArea.updateHoveredUWI(UWI)
 
             
 ##################################Map############################################
@@ -2495,6 +2502,12 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.exec()
 
 
+    def attribute_analyzer(self):
+    
+        dialog = CalcAttributeAnalyzer(self.db_manager)
+        dialog.exec()
+
+
     def calculate_zone_attributes(self):
     
         dialog = ZoneAttributeCalculator(self.db_manager)
@@ -2507,55 +2520,31 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def open_stages_dialog(self):
-        dialog = StagesCalculationDialog(self.master_df, self.directional_surveys_df, self.zone_names)
+        dialog = StagesCalculationDialog(self.db_manager)
+        result = dialog.exec()
+    
+        if result == QDialog.Accepted:
+            # Update the zone names list with any new zones that were added
+            self.zone_names = dialog.zone_names
         
-        dialog.exec()
-        self.master_df = dialog.master_df
-      
-
-        self.zone_names = dialog.zone_names
-
-        self.populate_zone_dropdown()
-        self.project_saver.save_master_df(self.master_df)
-    
-        self.project_saver.save_zone_names(self.zone_names)
-
-        self.populate_zone_dropdown()
+            # Refresh the UI with updated zone data
+            self.populate_zone_dropdown()
 
 
-        save_dir = os.path.dirname(os.path.abspath(__file__))
-        master_file_path = os.path.join(save_dir, 'master_data.csv')
-
-
-        # Ensure the directory exists
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-    
-        # Save the updated master_df to a CSV file
-        self.master_df.to_csv(master_file_path, index=False)
-        #print(f"Master DataFrame saved to '{master_file_path}'")
-        #if hasattr(self, 'selected_zone') and self.selected_zone:
-        #    self.zone_selected()
-   
-
-
-    def open_zone_attributes_dialog(self):
+    def grid_to_zone(self):
         print(self.zone_names)
         dialog = ZoneAttributesDialog(
-            self.master_df,
-            self.directional_surveys_df,
+            self.db_manager,
             self.grid_info_df,
             self.kd_tree_depth_grids,
             self.kd_tree_att_grids,
-            self.zone_names,
             self.depth_grid_data_dict,
             self.attribute_grid_data_dict
         )
         dialog.exec()
         if dialog.result() == QDialog.Accepted:
-            self.master_df = dialog.updated_master
             self.populate_zone_attributes()
-            self.save_master_df()
+
 
     def open_well_attributes_dialog(self):
         dialog = WellAttributesDialog(self)
@@ -2596,8 +2585,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.project_saver.shutdown(
         self.line_width, 
         self.line_opacity, 
-        self.uwi_width, 
-        self.uwi_opacity, 
+        self.UWI_width, 
+        self.UWI_opacity, 
         selected_grid, 
         selected_zone,
         selected_zone_attribute, 
@@ -2713,12 +2702,12 @@ class Map(QMainWindow, Ui_MainWindow):
         #zone_map = {zone.Name(): zone for zone in zone_list}
 
         #for index, row in self.zonein_info_df.iterrows():
-        #    well_uwi = row['UWI']
-        #    if well_uwi not in well_map:
-        #        print(f"No well was found for UWI {well_uwi} in row {index}")
+        #    well_UWI = row['UWI']
+        #    if well_UWI not in well_map:
+        #        print(f"No well was found for UWI {well_UWI} in row {index}")
         #        continue
 
-        #    well = well_map[well_uwi]
+        #    well = well_map[well_UWI]
         #    well_id = well.ID()
 
         #    zone_name = row['Zone Name']
@@ -2742,9 +2731,9 @@ class Map(QMainWindow, Ui_MainWindow):
           
         #    try:
         #        well_zone_manager.Add(new_well_zone)
-        #        print(f"Successfully added well zone for UWI {well_uwi}")
+        #        print(f"Successfully added well zone for UWI {well_UWI}")
         #    except SeisWare.SDKException as e:
-        #        print(f"Failed to add well zone for UWI {well_uwi}")
+        #        print(f"Failed to add well zone for UWI {well_UWI}")
         #        print(e)
         #        continue
 
@@ -2754,7 +2743,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def well_properties(self):
         """Launch the Well Properties dialog."""
-        self.well_data_df = self.db_manager.get_all_uwis()
+        self.well_data_df = self.db_manager.get_all_UWIs()
 
 
         dialog = WellPropertiesDialog(self.well_data_df)
@@ -2766,7 +2755,7 @@ class Map(QMainWindow, Ui_MainWindow):
             )
 
             # Save the updated data to the database
-            self.db_manager.save_uwi_data(self.well_data_df)
+            self.db_manager.save_UWI_data(self.well_data_df)
             print("Well data saved to the database.")
 
     def pud_properties(self):

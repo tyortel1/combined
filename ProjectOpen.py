@@ -29,7 +29,7 @@ class ProjectLoader:
             self.parent.depth_grid_data_df = pd.DataFrame(data_loaded.get('depth_grid_data', {}))
             self.parent.attribute_grid_data_df = pd.DataFrame(data_loaded.get('attribute_grid_data', {}))
             self.parent.import_options_df = pd.DataFrame(data_loaded.get('import_options', {}))
-            self.parent.selected_uwis = data_loaded.get('selected_uwis', [])
+            self.parent.selected_UWIs = data_loaded.get('selected_UWIs', [])
             self.parent.grid_info_df = pd.DataFrame(data_loaded.get('grid_info', {}))
             self.parent.well_list = data_loaded.get('well_list', [])
             self.parent.master_df = pd.DataFrame(data_loaded.get('master_df', {}))
@@ -77,8 +77,8 @@ class ProjectLoader:
 
             self.parent.line_width = data_loaded.get('line_width', 2)
             self.parent.line_opacity = data_loaded.get('line_opacity', 0.8)
-            self.parent.uwi_width = data_loaded.get('uwi_width', 80)
-            self.parent.uwi_opacity = data_loaded.get('uwi_opacity', 1.0)
+            self.parent.UWI_width = data_loaded.get('UWI_width', 80)
+            self.parent.UWI_opacity = data_loaded.get('UWI_opacity', 1.0)
     
 
 
@@ -221,10 +221,10 @@ class ProjectLoader:
                 self.parent.db_path = db_file_path 
                 print(f"Database loaded successfully from: {db_file_path}")
                 self.load_directional_surveys_from_db()
-                self.parent.selected_uwis = self.parent.db_manager.get_uwis()
-                self.parent.well_data_df = self.parent.db_manager.get_all_uwis()
+                self.parent.selected_UWIs = self.parent.db_manager.get_UWIs()
+                self.parent.well_data_df = self.parent.db_manager.get_all_UWIs()
                 print(self.parent.well_data_df)
-                self.parent.well_list = self.parent.well_data_df['uwi'].tolist()
+                self.parent.well_list = self.parent.well_data_df['UWI'].tolist()
                 self.scneario_id = 1
                 self.parent.model_data = self.parent.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
 

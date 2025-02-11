@@ -49,18 +49,18 @@ class MainWindow(QMainWindow):
         self.dca = None
         self.last_sorted_column = 0
         self.last_sort_order = Qt.AscendingOrder
-        self.uwi_df =[]
+        self.UWI_df =[]
         self.model_data = [] 
         self.combined_df = None  # Assuming combined_df will be set later
-        self.current_uwi_index = 0 
-        self.uwi_list = [] 
-        self.total_items = len(self.uwi_list)# Store the list of uwis
-        self.current_uwi = None
+        self.current_UWI_index = 0 
+        self.UWI_list = [] 
+        self.total_items = len(self.UWI_list)# Store the list of UWIs
+        self.current_UWI = None
         self.dialog_changed_flag = False
         self.prod_rates_errors = None
         self.prod_rates_all = None
         self.prod_rates_ag = None
-        self.uwi_prod_and_rates = None
+        self.UWI_prod_and_rates = None
         self.df_combined_all = None
         #self.ui.connect_parameters_triggers(self) 
         self.default_properties = None
@@ -88,13 +88,13 @@ class MainWindow(QMainWindow):
         self.open = False
         self.load_oil = True
         self.load_oil = True
-        self.html_content_by_uwi = {}
+        self.html_content_by_UWI = {}
         self.project_name = None
         self.db_path = None
         self.last_directory_path = None
         self.model_data_df = pd.DataFrame()
-        self.uwi_production_rates_data = pd.DataFrame()
-        self.uwi_error = pd.DataFrame()
+        self.UWI_production_rates_data = pd.DataFrame()
+        self.UWI_error = pd.DataFrame()
         self.db_manager = DatabaseManager(None)
         self.dca = DeclineCurveAnalysis()
         self.eur_npv = EurNpv(self.db_manager, self.db_path)
@@ -146,15 +146,15 @@ class MainWindow(QMainWindow):
             print(self.scenario_id)
             self.scenario_name = self.db_manager.get_active_scenario_name()
             self.prod_rates_all = self.db_manager.retrieve_prod_rates_all() 
-            self.uwi_list  = self.db_manager.get_uwis_by_scenario_id(self.scenario_id)
-            print(self.uwi_list)
+            self.UWI_list  = self.db_manager.get_UWIs_by_scenario_id(self.scenario_id)
+            print(self.UWI_list)
             self.scenario_names = self.db_manager.get_all_scenario_names()
             self.ui.activate_icons()
 
-            if self.uwi_list:
-                self.ui.well_dropdown.setEnabled(bool(self.uwi_list))
-                self.current_uwi_index = 0  # Start at the beginning of the list
-                self.current_uwi = self.uwi_list[0]
+            if self.UWI_list:
+                self.ui.well_dropdown.setEnabled(bool(self.UWI_list))
+                self.current_UWI_index = 0  # Start at the beginning of the list
+                self.current_UWI = self.UWI_list[0]
 
                 # Populate the well dropdown
                 self.populate_well_dropdown()
@@ -169,12 +169,12 @@ class MainWindow(QMainWindow):
                 self.check_model_status_and_set_icon
              
                 
-               #printself.uwi_list)
+               #printself.UWI_list)
                 
                 
             else:
-                self.current_uwi_index = -1
-                self.current_uwi = None
+                self.current_UWI_index = -1
+                self.current_UWI = None
                 QMessageBox.information(self, "No Wells", "No wells available for the selected scenario.")
                 # Clear the graph
                 self.ui.graph_area.setHtml("<html><body><h1>No Data Available</h1></body></html>")
@@ -196,11 +196,11 @@ class MainWindow(QMainWindow):
 
 
         print('Data Prepared')
-        self.production_data = sorted(production_data, key=lambda x: (x['uwi'], x['date']))
+        self.production_data = sorted(production_data, key=lambda x: (x['UWI'], x['date']))
         
         if production_data:
             load_productions = LoadProductions()
-            self.combined_df, self.uwi_list = load_productions.prepare_data(production_data,self.db_path) 
+            self.combined_df, self.UWI_list = load_productions.prepare_data(production_data,self.db_path) 
             #print(self.combined_df)
             self.handle_default_parameters()
             self.ui.activate_icons() 
@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
             if not directional_survey_values.empty:
 
                 self.db_manager.insert_survey_dataframe_into_db(directional_survey_values, )
-                self.db_manager.save_uwi_data(well_data_df)
+                self.db_manager.save_UWI_data(well_data_df)
             else:
                 print("No directional survey data to insert.")
 
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
         self.model_data_df = pd.DataFrame(self.model_data)
 
          
-        self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.uwi_list)
+        self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.UWI_list)
         self.prod_rates_all, self.sum_of_errors, self.model_data = self.dca.calculate_production_rates()
         self.model_data_df = pd.DataFrame(self.model_data)
        #printself.model_data)
@@ -298,13 +298,13 @@ class MainWindow(QMainWindow):
         self.ui.activate_icons()
         self.db_manager.connect() 
         self.iterate_di = False
-        if not self.current_uwi_index:
-            self.current_uwi = self.uwi_list[0]
-        self.current_uwi = self.uwi_list[self.current_uwi_index]
-       #printself.current_uwi)
+        if not self.current_UWI_index:
+            self.current_UWI = self.UWI_list[0]
+        self.current_UWI = self.UWI_list[self.current_UWI_index]
+       #printself.current_UWI)
         
-        self.uwi_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_uwi, self.scenario_id)
-        print(self.uwi_prod_rates_all)
+        self.UWI_prod_rates_all = self.db_manager.retrieve_prod_rates_all(self.current_UWI, self.scenario_id)
+        print(self.UWI_prod_rates_all)
         self.model_data = self.db_manager.retrieve_model_data_by_scenorio(self.scenario_id)
         self.update_excel_widget()
         self.model_parameters()
@@ -319,12 +319,12 @@ class MainWindow(QMainWindow):
         self.ui.excel_widget.clearContents()
 
         # Set the number of rows in the Excel widget to match the length of the DataFrame
-        self.ui.excel_widget.setRowCount(len(self.uwi_prod_rates_all))
+        self.ui.excel_widget.setRowCount(len(self.UWI_prod_rates_all))
        
 
         # Update the Excel widget with the production data and cumulative volumes
                         # Update the Excel widget with the production data, cumulative volumes, and additional columns
-        for row_index, (_, row_data) in enumerate(self.uwi_prod_rates_all.iterrows()):
+        for row_index, (_, row_data) in enumerate(self.UWI_prod_rates_all.iterrows()):
             date_str = row_data['date'] 
             self.ui.excel_widget.setItem(row_index, 0, QTableWidgetItem(date_str))
 
@@ -362,24 +362,24 @@ class MainWindow(QMainWindow):
     def on_scenario_changed_tab1(self):
         self.scenario_name = self.ui.scenario_dropdown1.currentText()
         self.scenario_id = self.db_manager.get_scenario_id(self.scenario_name)
-        self.uwi_list = self.db_manager.get_uwis_by_scenario_id(self.scenario_id)
+        self.UWI_list = self.db_manager.get_UWIs_by_scenario_id(self.scenario_id)
 
         # Reset the current index and UWI
-        if self.uwi_list:
-            self.ui.well_dropdown.setEnabled(bool(self.uwi_list))
-            self.current_uwi_index = 0  # Start at the beginning of the list
-            self.current_uwi = self.uwi_list[0]
+        if self.UWI_list:
+            self.ui.well_dropdown.setEnabled(bool(self.UWI_list))
+            self.current_UWI_index = 0  # Start at the beginning of the list
+            self.current_UWI = self.UWI_list[0]
 
             # Populate the well dropdown
             self.populate_well_dropdown()
 
-            # Perform the updates only if uwi_list is not empty
+            # Perform the updates only if UWI_list is not empty
             self.update_displays()
             self.update_navigation_buttons()
             self.check_model_status_and_set_icon()
         else:
-            self.current_uwi_index = -1
-            self.current_uwi = None
+            self.current_UWI_index = -1
+            self.current_UWI = None
             QMessageBox.information(self, "No Wells", "No wells available for the selected scenario.")
             # Clear the graph
             self.ui.graph_area.setHtml("<html><body><h1>No Data Available</h1></body></html>")
@@ -390,8 +390,8 @@ class MainWindow(QMainWindow):
 
 
     def on_scenario_changed2(self):
-                #print(df_uwi_model_data)
-        #print(df_uwi_model_data.dtypes)
+                #print(df_UWI_model_data)
+        #print(df_UWI_model_data.dtypes)
         self.scenario_name = self.ui.scenario_dropdown2.currentText()
         self.scenario_id = self.db_manager.get_scenario_id(self.scenario_name)
         self.model_data = self.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
@@ -469,7 +469,7 @@ class MainWindow(QMainWindow):
 
             # Define headers based on the keys of the dictionaries
             headers = [
-                "uwi", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
+                "UWI", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
                 "one_year_oil_production", "one_year_gas_production", "di_oil", "di_gas", "oil_b_factor", "gas_b_factor",
                 "min_dec_oil", "min_dec_gas", "model_oil", "model_gas", "oil_price", "gas_price", "oil_price_dif", "gas_price_dif",
                 "discount_rate", "working_interest", "royalty", "tax_rate", "capital_expenditures", "operating_expenditures",
@@ -493,7 +493,7 @@ class MainWindow(QMainWindow):
                     item = QTableWidgetItem()
                     
                     # Handle UWI and other large numbers to avoid scientific notation
-                    if header == "uwi":
+                    if header == "UWI":
                         item.setData(Qt.EditRole, str(col_data))
                     elif "date" in header or "model" in header or "type" in header:
                         # Treat these fields as strings
@@ -535,18 +535,18 @@ class MainWindow(QMainWindow):
     
         if action == save_decline_action:
             # Collect UWIs from all selected rows
-            selected_uwis = []
+            selected_UWIs = []
             selected_ranges = self.ui.model_properties.selectedRanges()
         
             for selected_range in selected_ranges:
                 for row in range(selected_range.topRow(), selected_range.bottomRow() + 1):
-                    uwi_item = self.ui.model_properties.item(row, 0)  # UWI is in first column
-                    if uwi_item and uwi_item.text():
-                        selected_uwis.append(uwi_item.text())
+                    UWI_item = self.ui.model_properties.item(row, 0)  # UWI is in first column
+                    if UWI_item and UWI_item.text():
+                        selected_UWIs.append(UWI_item.text())
         
-            if selected_uwis:
+            if selected_UWIs:
                 # Call save_dc with context menu parameters
-                self.save_dc(from_context_menu=True, selected_uwis=selected_uwis)
+                self.save_dc(from_context_menu=True, selected_UWIs=selected_UWIs)
 
 
     def updateTable3(self):
@@ -594,10 +594,10 @@ class MainWindow(QMainWindow):
         self.prod_rates_ag['date'] = pd.to_datetime(self.prod_rates_ag['date']).dt.normalize()
 
         # Ensure UWI is treated as a string
-        self.prod_rates_ag['uwi'] = self.prod_rates_ag['uwi'].astype(str)
+        self.prod_rates_ag['UWI'] = self.prod_rates_ag['UWI'].astype(str)
 
         # Extract unique UWIs and determine the min and max dates
-        unique_uwis = self.prod_rates_ag['uwi'].unique()
+        unique_UWIs = self.prod_rates_ag['UWI'].unique()
 
         min_date = pd.Timestamp.today().normalize()  # Current date normalized
         max_date = self.prod_rates_ag['date'].max()
@@ -620,7 +620,7 @@ class MainWindow(QMainWindow):
 
         # Update the horizontal and vertical headers
         self.ui.data_table3.setColumnCount(len(date_range) + 2)  # +2 for UWI and Total columns
-        self.ui.data_table3.setRowCount(len(unique_uwis) + 1)  # +1 for totals row
+        self.ui.data_table3.setRowCount(len(unique_UWIs) + 1)  # +1 for totals row
 
         # Set the horizontal header labels
         header_labels = ["UWI", "NPV"] + date_labels
@@ -633,29 +633,29 @@ class MainWindow(QMainWindow):
                 item.setFont(header_font)
 
         # Create a pivoted DataFrame for each column and fill NaN with 0
-        pivoted_data = {column: self.prod_rates_ag.pivot(index='uwi', columns='date', values=column).fillna(0) for column in columns}
+        pivoted_data = {column: self.prod_rates_ag.pivot(index='UWI', columns='date', values=column).fillna(0) for column in columns}
 
         # Ensure pivoted data indices are strings
         for column in columns:
             pivoted_data[column].index = pivoted_data[column].index.astype(str)
 
         # Initialize arrays to store row totals and grand total
-        row_totals = np.zeros(len(unique_uwis))
+        row_totals = np.zeros(len(unique_UWIs))
         column_totals = np.zeros(len(date_range))
 
         # Populate the QTableWidget with well data and calculate totals
-        for row, uwi in enumerate(unique_uwis, start=1):
-            uwi = str(uwi)
+        for row, UWI in enumerate(unique_UWIs, start=1):
+            UWI = str(UWI)
 
-            if uwi not in pivoted_data[columns[0]].index:
+            if UWI not in pivoted_data[columns[0]].index:
                 continue
 
             # UWI
-            uwi_item = QTableWidgetItem(uwi)
-            self.ui.data_table3.setItem(row, 0, uwi_item)
+            UWI_item = QTableWidgetItem(UWI)
+            self.ui.data_table3.setItem(row, 0, UWI_item)
 
             # Fetch row data for all dates and columns at once
-            row_data = sum(pivoted_data[column].loc[uwi, date_range].values for column in columns)
+            row_data = sum(pivoted_data[column].loc[UWI, date_range].values for column in columns)
             row_totals[row - 1] = row_data.sum()
             column_totals += row_data
 
@@ -816,7 +816,7 @@ class MainWindow(QMainWindow):
 
     def model_table_update(self):
         headers = [
-            "uwi", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
+            "UWI", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
             "one_year_oil_production", "one_year_gas_production", "di_oil", "di_gas", "oil_b_factor", "gas_b_factor",
             "min_dec_oil", "min_dec_gas", "model_oil", "model_gas", "oil_price", "gas_price", "oil_price_dif", "gas_price_dif",
             "discount_rate", "working_interest", "royalty", "tax_rate", "capital_expenditures", "operating_expenditures",
@@ -832,8 +832,8 @@ class MainWindow(QMainWindow):
             
             # Create a DataFrame from the row data
             df_model_properties = pd.DataFrame([row_data])
-            uwi = df_model_properties['uwi'].iloc[0]
-            status = self.db_manager.get_uwi_status(uwi)
+            UWI = df_model_properties['UWI'].iloc[0]
+            status = self.db_manager.get_UWI_status(UWI)
            # print(status)
             # Update the model properties with the retrieved DataFrame
             self.db_manager.update_model_properties(df_model_properties, self.scenario_id)
@@ -841,17 +841,17 @@ class MainWindow(QMainWindow):
             
 
             # Retrieve the updated model properties
-            updated_model_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(self.scenario_id, row_data['uwi'])
+            updated_model_df = self.db_manager.retrieve_model_data_by_scenario_and_UWI(self.scenario_id, row_data['UWI'])
 
 
             # Run planned production rate calculations
             if status == False:
                 iterate = False
-                self.uwi_combined_df = self.db_manager.retrieve_prod_rates_by_uwi(uwi)
-                self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.update_prod_rate(updated_model_df, self.uwi_combined_df, iterate)
-                self.uwi_error = self.dca.uwi_error
+                self.UWI_combined_df = self.db_manager.retrieve_prod_rates_by_UWI(UWI)
+                self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.update_prod_rate(updated_model_df, self.UWI_combined_df, iterate)
+                self.UWI_error = self.dca.UWI_error
             else:
-                self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(updated_model_df)
+                self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.planned_prod_rate(updated_model_df)
         
         # Clear the edited rows after updating
         self.edited_model_rows.clear()
@@ -907,29 +907,29 @@ class MainWindow(QMainWindow):
             pass  # Handle invalid input
 
     def model_parameters(self):
-        # Get current uwi index
+        # Get current UWI index
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
 
-        self.uwi_model_data = self.db_manager.retrieve_model_data_by_scenario_and_uwi( self.scenario_id, self.current_uwi)
-        print(self.uwi_model_data)
-       #printself.uwi_model_data)
+        self.UWI_model_data = self.db_manager.retrieve_model_data_by_scenario_and_UWI( self.scenario_id, self.current_UWI)
+        print(self.UWI_model_data)
+       #printself.UWI_model_data)
 
-        self.current_error_row = self.db_manager.retrieve_error_row(self.current_uwi, self.scenario_id)
+        self.current_error_row = self.db_manager.retrieve_error_row(self.current_UWI, self.scenario_id)
         print(self.current_error_row)
  
 
-        initial_gas_prod_rate = float(self.uwi_model_data['max_gas_production'])
+        initial_gas_prod_rate = float(self.UWI_model_data['max_gas_production'])
         self.ui.initial_gas_production_rate_input.setText(str(initial_gas_prod_rate))
-        initial_gas_decline_rate = float(self.uwi_model_data['di_gas'])
+        initial_gas_decline_rate = float(self.UWI_model_data['di_gas'])
         self.ui.initial_gas_decline_rate_input.setText(str(initial_gas_decline_rate))
-        gas_b_factor = float(self.uwi_model_data['gas_b_factor'])
+        gas_b_factor = float(self.UWI_model_data['gas_b_factor'])
         self.ui.gas_b_factor_input.setText(str(gas_b_factor))
     
         #gas_hyperbolic_exponent = current_data.get('hyperbolic_exponent_gas', 0.5)  # Default to 0.5 if not available
         #self.ui.gas_hyperbolic_exponent_input.setText(str(gas_hyperbolic_exponent))
 
-        gas_start_date = self.uwi_model_data['max_gas_production_date'].iloc[0] 
+        gas_start_date = self.UWI_model_data['max_gas_production_date'].iloc[0] 
         
         # Parse the string date into a datetime object
         gas_start_datetime = datetime.strptime(gas_start_date, '%Y-%m-%d')
@@ -941,16 +941,16 @@ class MainWindow(QMainWindow):
         gas_start_qdate = QDate(gas_start_date_only)
         self.ui.gas_time_input.setDate(gas_start_qdate)
 
-        min_dec_gas = float(self.uwi_model_data['min_dec_gas'])
+        min_dec_gas = float(self.UWI_model_data['min_dec_gas'])
         self.ui.min_dec_gas.setText(str(min_dec_gas))
 
 
 
         # Set oil parameters
-        initial_oil_prod_rate = float(self.uwi_model_data['max_oil_production'])
+        initial_oil_prod_rate = float(self.UWI_model_data['max_oil_production'])
         self.ui.initial_oil_production_rate_input.setText(str(initial_oil_prod_rate))
 
-        oil_start_date = self.uwi_model_data['max_oil_production_date'].iloc[0] 
+        oil_start_date = self.UWI_model_data['max_oil_production_date'].iloc[0] 
         
         # Parse the string date into a datetime object
         oil_start_datetime = datetime.strptime(oil_start_date, '%Y-%m-%d')
@@ -963,13 +963,13 @@ class MainWindow(QMainWindow):
         self.ui.oil_time_input.setDate(oil_start_qdate)
 
 
-        initial_oil_decline_rate = float(self.uwi_model_data['di_oil'])
+        initial_oil_decline_rate = float(self.UWI_model_data['di_oil'])
         self.ui.initial_oil_decline_rate_input.setText(str(initial_oil_decline_rate))
 
-        oil_b_factor = float(self.uwi_model_data['oil_b_factor'])
+        oil_b_factor = float(self.UWI_model_data['oil_b_factor'])
         self.ui.oil_b_factor_input.setText(str(oil_b_factor))
 
-        min_dec_oil = float(self.uwi_model_data['min_dec_oil'])
+        min_dec_oil = float(self.UWI_model_data['min_dec_oil'])
         self.ui.min_dec_oil.setText(str(min_dec_oil))
 
  
@@ -1025,7 +1025,7 @@ class MainWindow(QMainWindow):
         if self.open:
 
             # Set values for each parameter
-            economic_limit_type = self.uwi_model_data.get("economic_limit_type", "").iloc[0]
+            economic_limit_type = self.UWI_model_data.get("economic_limit_type", "").iloc[0]
 
             if economic_limit_type == "Net Dollars":  # Economic Limit selected
                 self.ui.ecl_date.setEnabled(False)  # Disable date input
@@ -1035,24 +1035,24 @@ class MainWindow(QMainWindow):
                 self.ui.ecl_date.setEnabled(False)  # Adjust as needed for GOR
             self.ui.end_forecast_type.setCurrentText(economic_limit_type)
 
-            economic_limit_date_value = self.uwi_model_data.get("economic_limit_date", QDateTime.currentDateTime().toString("yyyy-MM-dd"))
+            economic_limit_date_value = self.UWI_model_data.get("economic_limit_date", QDateTime.currentDateTime().toString("yyyy-MM-dd"))
             economic_limit_date_str = str(economic_limit_date_value)
             self.ui.ecl_date.setDateTime(QDateTime.fromString(economic_limit_date_str, "yyyy-MM-dd"))
 
 
-            self.ui.oil_price.setText(str(self.uwi_model_data.get("oil_price", "").iloc[0]))
-            self.ui.gas_price.setText(str(self.uwi_model_data.get("gas_price", "").iloc[0]))
-            self.ui.oil_price_dif.setText(str(self.uwi_model_data.get("oil_price_dif", "").iloc[0]))
-            self.ui.gas_price_dif.setText(str(self.uwi_model_data.get("gas_price_dif", "").iloc[0]))
+            self.ui.oil_price.setText(str(self.UWI_model_data.get("oil_price", "").iloc[0]))
+            self.ui.gas_price.setText(str(self.UWI_model_data.get("gas_price", "").iloc[0]))
+            self.ui.oil_price_dif.setText(str(self.UWI_model_data.get("oil_price_dif", "").iloc[0]))
+            self.ui.gas_price_dif.setText(str(self.UWI_model_data.get("gas_price_dif", "").iloc[0]))
             #self.ui.discount_rate_input.setText(str(current_data.get("discount_rate", "")))
-            self.ui.working_interest.setText(str(self.uwi_model_data.get("working_interest", "").iloc[0]))
-            self.ui.royalty.setText(str(self.uwi_model_data.get("royalty", "").iloc[0]))
-            self.ui.discount_rate.setText(str(self.uwi_model_data.get("discount_rate", "").iloc[0]))
-            self.ui.tax_rate.setText(str(self.uwi_model_data.get("tax_rate", "").iloc[0]))
-            self.ui.capital_expenditures.setText(str(self.uwi_model_data.get("capital_expenditures", "").iloc[0]))
-            self.ui.operating_expenditures.setText(str(self.uwi_model_data.get("operating_expenditures", "").iloc[0]))
-            self.ui.net_price_oil.setText(str(self.uwi_model_data.get("net_price_oil", "").iloc[0]))
-            self.ui.net_price_gas.setText(str(self.uwi_model_data.get("net_price_gas", "").iloc[0]))
+            self.ui.working_interest.setText(str(self.UWI_model_data.get("working_interest", "").iloc[0]))
+            self.ui.royalty.setText(str(self.UWI_model_data.get("royalty", "").iloc[0]))
+            self.ui.discount_rate.setText(str(self.UWI_model_data.get("discount_rate", "").iloc[0]))
+            self.ui.tax_rate.setText(str(self.UWI_model_data.get("tax_rate", "").iloc[0]))
+            self.ui.capital_expenditures.setText(str(self.UWI_model_data.get("capital_expenditures", "").iloc[0]))
+            self.ui.operating_expenditures.setText(str(self.UWI_model_data.get("operating_expenditures", "").iloc[0]))
+            self.ui.net_price_oil.setText(str(self.UWI_model_data.get("net_price_oil", "").iloc[0]))
+            self.ui.net_price_gas.setText(str(self.UWI_model_data.get("net_price_gas", "").iloc[0]))
 
 
 
@@ -1064,7 +1064,7 @@ class MainWindow(QMainWindow):
 
     def update_graph(self):
         plotting = Plotting()
-        plotting.generate_plot_html(self.uwi_prod_rates_all, self.current_uwi, self.graph_type, self.distribution_type, self.uwi_model_data)
+        plotting.generate_plot_html(self.UWI_prod_rates_all, self.current_UWI, self.graph_type, self.distribution_type, self.UWI_model_data)
         html_content = plotting.html_content
         self.ui.graph_area.setHtml(html_content)
         
@@ -1075,9 +1075,9 @@ class MainWindow(QMainWindow):
 
 
         self.ui.calculate_net_price()
-        uwi_model_data = []
-        # Get the current indexed uwi
-        self.current_uwi = self.uwi_list[self.current_uwi_index]
+        UWI_model_data = []
+        # Get the current indexed UWI
+        self.current_UWI = self.UWI_list[self.current_UWI_index]
 
         # Get model parameters from the UI
         max_oil_production = self.ui.initial_oil_production_rate_input.text()
@@ -1116,13 +1116,13 @@ class MainWindow(QMainWindow):
 
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
-        oil_model_status = self.db_manager.get_model_status(self.current_uwi, 'oil')
-        gas_model_status = self.db_manager.get_model_status(self.current_uwi, 'gas')
+        oil_model_status = self.db_manager.get_model_status(self.current_UWI, 'oil')
+        gas_model_status = self.db_manager.get_model_status(self.current_UWI, 'gas')
 
                 # Create a dictionary with the model parameters
         # Create a dictionary with the model parameters
         updated_model_data = {
-            'uwi': self.current_uwi,
+            'UWI': self.current_UWI,
             'max_oil_production': float(max_oil_production),
             'max_gas_production': float(max_gas_production),
             'max_oil_production_date': pd.to_datetime(max_oil_production_date),
@@ -1152,37 +1152,37 @@ class MainWindow(QMainWindow):
             
         }
         self.ui.calculate_net_price()
-        uwi_model_data.append(updated_model_data)
+        UWI_model_data.append(updated_model_data)
      
         # Convert the list of dictionaries to a DataFrame
-        df_uwi_model_data = pd.DataFrame(uwi_model_data)
-       #printdf_uwi_model_data)
+        df_UWI_model_data = pd.DataFrame(UWI_model_data)
+       #printdf_UWI_model_data)
         
         self.db_manager = DatabaseManager(self.db_path)
         self.db_manager.connect()
         self.scenario_id = 1
-        self.db_manager.update_model_properties(df_uwi_model_data, self.scenario_id)
-        print(df_uwi_model_data)
+        self.db_manager.update_model_properties(df_UWI_model_data, self.scenario_id)
+        print(df_UWI_model_data)
         self.scenario_id = 1
 
-        self.uwi_model_data  = self.db_manager.retrieve_model_data_by_scenario_and_uwi(self.scenario_id, self.current_uwi )
-        print(self.uwi_model_data)
+        self.UWI_model_data  = self.db_manager.retrieve_model_data_by_scenario_and_UWI(self.scenario_id, self.current_UWI )
+        print(self.UWI_model_data)
 
 
 
-        current_uwi_status = self.db_manager.get_uwi_status(self.current_uwi)  # Get the status of the current UWI
-       #printcurrent_uwi_status)
-        if current_uwi_status == True:
-            self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(self.uwi_model_data)
+        current_UWI_status = self.db_manager.get_UWI_status(self.current_UWI)  # Get the status of the current UWI
+       #printcurrent_UWI_status)
+        if current_UWI_status == True:
+            self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.planned_prod_rate(self.UWI_model_data)
         else:
-            self.uwi_combined_df = self.db_manager.retrieve_prod_rates_by_uwi(self.current_uwi)
-            self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.update_prod_rate(self.uwi_model_data, self.uwi_combined_df, iterate)
+            self.UWI_combined_df = self.db_manager.retrieve_prod_rates_by_UWI(self.current_UWI)
+            self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.update_prod_rate(self.UWI_model_data, self.UWI_combined_df, iterate)
            
-            self.db_manager.update_model_properties(self.uwi_model_data, self.scenario_id)
-            self.uwi_error = self.dca.uwi_error
+            self.db_manager.update_model_properties(self.UWI_model_data, self.scenario_id)
+            self.UWI_error = self.dca.UWI_error
 
 
-        #self.regenerate_html_for_uwi(self.current_uwi)
+        #self.regenerate_html_for_UWI(self.current_UWI)
         self.update_db()
         self.eur_npv = EurNpv(self.db_manager, self.scenario_id) 
         self.eur_npv.calculate_eur()
@@ -1198,16 +1198,16 @@ class MainWindow(QMainWindow):
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
     
-        #df_uwi_model_data = pd.DataFrame([self.uwi_model_data], index=[0])
+        #df_UWI_model_data = pd.DataFrame([self.UWI_model_data], index=[0])
 
 
-        #print(self.uwi_production_rates_data)
-        self.db_manager.update_uwi_prod_rates(self.uwi_production_rates_data, self.scenario_id)
+        #print(self.UWI_production_rates_data)
+        self.db_manager.update_UWI_prod_rates(self.UWI_production_rates_data, self.scenario_id)
         
 
-        self.db_manager.update_uwi_errors(self.uwi_error, self.scenario_id)
+        self.db_manager.update_UWI_errors(self.UWI_error, self.scenario_id)
         
-        #print(self.uwi_error)
+        #print(self.UWI_error)
 
 
     def iterate_curve(self):
@@ -1243,13 +1243,13 @@ class MainWindow(QMainWindow):
 
     
         # Get the current status of the gas model from the database
-        gas_model_status = int(self.db_manager.get_model_status(self.current_uwi, 'gas'))
+        gas_model_status = int(self.db_manager.get_model_status(self.current_UWI, 'gas'))
     
         # Toggle the status
         new_status = 0 if gas_model_status == 1 else 1
 
     # Update the database with the new status
-        self.db_manager.update_model_status(self.current_uwi, new_status, 'gas')
+        self.db_manager.update_model_status(self.current_UWI, new_status, 'gas')
 
         
         icon_name = f"gas_{'on' if new_status == 1 else 'off'}"  # Assuming your icon names are "gas_on.png" and "gas_off.png"
@@ -1258,14 +1258,14 @@ class MainWindow(QMainWindow):
         self.update_decline_curve()
 
     def oil_model(self):
-       oil_model_status = int(self.db_manager.get_model_status(self.current_uwi, 'oil'))
+       oil_model_status = int(self.db_manager.get_model_status(self.current_UWI, 'oil'))
 
    
        # Convert to integers for consistent comparison
        oil_model_status = int(oil_model_status)
        new_status = 0 if oil_model_status == 1 else 1
    
-       self.db_manager.update_model_status(self.current_uwi, new_status, 'oil')
+       self.db_manager.update_model_status(self.current_UWI, new_status, 'oil')
 
        icon_name = f"oil_{'on' if new_status == 1 else 'off'}"
        icon_path = os.path.join(self.script_dir, "Icons", f"{icon_name}.png")
@@ -1278,18 +1278,18 @@ class MainWindow(QMainWindow):
         
     
         # Check if there are wells to delete
-        if self.uwi_list:
+        if self.UWI_list:
             try:
-                # Remove uwi from all relevant tables in the database
-               #printself.current_uwi)
-                self.db_manager.delete_uwi_records(self.current_uwi)
+                # Remove UWI from all relevant tables in the database
+               #printself.current_UWI)
+                self.db_manager.delete_UWI_records(self.current_UWI)
 
-                # Remove uwi from uwi_list
-                del self.uwi_list[self.current_uwi_index]
+                # Remove UWI from UWI_list
+                del self.UWI_list[self.current_UWI_index]
 
                  #Update current index and displays
-                if self.current_uwi_index >= len(self.uwi_list):
-                    self.current_uwi_index = len(self.uwi_list) - 1
+                if self.current_UWI_index >= len(self.UWI_list):
+                    self.current_UWI_index = len(self.UWI_list) - 1
                 self.update_displays()
                 self.update_navigation_buttons()
 
@@ -1303,8 +1303,8 @@ class MainWindow(QMainWindow):
 
 
     def check_model_status_and_set_icon(self):
-       oil_status = int(self.db_manager.get_model_status(self.current_uwi, 'oil'))
-       gas_status = int(self.db_manager.get_model_status(self.current_uwi, 'gas'))
+       oil_status = int(self.db_manager.get_model_status(self.current_UWI, 'oil'))
+       gas_status = int(self.db_manager.get_model_status(self.current_UWI, 'gas'))
    
        oil_icon = os.path.join(self.script_dir, "Icons", f"oil_{'on' if oil_status == 1 else 'off'}.png")
        gas_icon = os.path.join(self.script_dir, "Icons", f"gas_{'on' if gas_status == 1 else 'off'}.png") 
@@ -1313,10 +1313,10 @@ class MainWindow(QMainWindow):
        self.ui.gas_model.setIcon(QIcon(gas_icon))
 
 
-    def save_dc(self, from_context_menu=False, selected_uwis=None):
-        if from_context_menu and selected_uwis:
+    def save_dc(self, from_context_menu=False, selected_UWIs=None):
+        if from_context_menu and selected_UWIs:
             # Simplified dialog for context menu - only need name
-            dialog = SaveDeclineCurveDialog(self, uwis=selected_uwis, from_context_menu=True)
+            dialog = SaveDeclineCurveDialog(self, UWIs=selected_UWIs, from_context_menu=True)
             dialog.options.setCurrentText("Average")  # Force Average option
             dialog.options.setEnabled(False)  # Disable changing the option
         
@@ -1327,12 +1327,12 @@ class MainWindow(QMainWindow):
                     return
             
                 # Process the average directly since we know that's what we want
-                averaged_data = self.average_uwis(selected_uwis)
+                averaged_data = self.average_UWIs(selected_UWIs)
                 self.db_manager.save_decline_curve_to_db(curve_name, averaged_data)
             
         else:
             # Original save_dc functionality
-            dialog = SaveDeclineCurveDialog(self, uwis=self.uwi_list)
+            dialog = SaveDeclineCurveDialog(self, UWIs=self.UWI_list)
             if dialog.exec_() == QDialog.Accepted:
                 curve_name = dialog.get_curve_name()
                 if not curve_name:
@@ -1341,13 +1341,13 @@ class MainWindow(QMainWindow):
                 selected_option = dialog.get_selected_option()
             
                 if selected_option == "Current Well":
-                    self.db_manager.save_decline_curve_to_db(curve_name, self.uwi_model_data)
+                    self.db_manager.save_decline_curve_to_db(curve_name, self.UWI_model_data)
                 elif selected_option == "Average":
-                    selected_uwis = dialog.get_selected_uwis()
-                    if not selected_uwis:
+                    selected_UWIs = dialog.get_selected_UWIs()
+                    if not selected_UWIs:
                         QMessageBox.warning(self, "No UWI Selected", "Please select at least one UWI to average.")
                         return
-                    averaged_data = self.average_uwis(selected_uwis)
+                    averaged_data = self.average_UWIs(selected_UWIs)
                     self.db_manager.save_decline_curve_to_db(curve_name, averaged_data)
                 elif selected_option == "Manual":
                     manual_data = dialog.get_manual_data()
@@ -1361,16 +1361,16 @@ class MainWindow(QMainWindow):
 
         pass
     
-    def average_uwis(self, selected_uwis):
+    def average_UWIs(self, selected_UWIs):
         if isinstance(self.model_data, list):
             self.model_data_df = pd.DataFrame(self.model_data)
-        # Filter self.model_data based on the selected uwis
-        filtered_data = self.model_data_df[self.model_data_df['uwi'].isin(selected_uwis)]
+        # Filter self.model_data based on the selected UWIs
+        filtered_data = self.model_data_df[self.model_data_df['UWI'].isin(selected_UWIs)]
 
         
         # Check if filtered_data is empty
         if filtered_data.empty:
-            QMessageBox.warning(self, "No Data", "No data found for the selected uwis.")
+            QMessageBox.warning(self, "No Data", "No data found for the selected UWIs.")
             return pd.DataFrame()
 
         # Calculate the average for each column, ignoring non-numeric columns
@@ -1389,14 +1389,14 @@ class MainWindow(QMainWindow):
         #if value == "Planned":
         #    self.displayed_status = "Planned"
         #    # Fetch UWIs with planned status
-        #    self.uwi_list = self.db_manager.get_uwis_by_status("Planned")
+        #    self.UWI_list = self.db_manager.get_UWIs_by_status("Planned")
         
-        #    if not self.uwi_list:
+        #    if not self.UWI_list:
         #        # Show a message box indicating no planned wells
         #        QMessageBox.information(self, "No Planned Wells", "No planned wells available. Switching to Active wells.")
         #        # Switch back to Active wells
         #        self.displayed_status = "Active"
-        #        self.uwi_list = self.db_manager.get_uwis_by_status("Active")
+        #        self.UWI_list = self.db_manager.get_UWIs_by_status("Active")
         #        # Disable the scenario dropdown for Active wells
         #        self.ui.option1_dropdown.setEnabled(False)
         #        self.ui.scenarios_dropdown1.setEnabled(False)
@@ -1415,11 +1415,11 @@ class MainWindow(QMainWindow):
         #        # Get the current scenario ID
         #        self.scenario_id = self.db_manager.get_scenario_id(self.ui.scenarios_dropdown1.currentText())
         #        # Filter wells based on the scenario ID
-        #        self.uwi_list = self.db_manager.get_uwis_by_scenario_id(self.scenario_id)
+        #        self.UWI_list = self.db_manager.get_UWIs_by_scenario_id(self.scenario_id)
         #elif value == "Active":
         #    self.displayed_status = "Active"
         #    # Fetch UWIs with active status
-        #    self.uwi_list = self.db_manager.get_uwis_by_status("Active")
+        #    self.UWI_list = self.db_manager.get_UWIs_by_status("Active")
         #    # Disable the scenario dropdown for Active wells
         #    self.ui.option1_dropdown.setEnabled(False)
         #    self.ui.scenarios_dropdown1.setEnabled(False)
@@ -1428,15 +1428,15 @@ class MainWindow(QMainWindow):
         #    self.scenario_name = self.db_manager.get_active_scenario_name()
 
         ## Enable or disable the well dropdown based on UWI list
-        #self.ui.well_dropdown.setEnabled(bool(self.uwi_list))
+        #self.ui.well_dropdown.setEnabled(bool(self.UWI_list))
 
         ## Reset the current index and UWI
-        #if self.uwi_list:
-        #    self.current_uwi_index = 0  # Start at the beginning of the list
-        #    self.current_uwi = self.uwi_list[0]
+        #if self.UWI_list:
+        #    self.current_UWI_index = 0  # Start at the beginning of the list
+        #    self.current_UWI = self.UWI_list[0]
         #else:
-        #    self.current_uwi_index = -1
-        #    self.current_uwi = None
+        #    self.current_UWI_index = -1
+        #    self.current_UWI = None
 
         #self.update_displays()
         #self.update_navigation_buttons()
@@ -1449,10 +1449,10 @@ class MainWindow(QMainWindow):
         
 #Window Navigation
         #self.ui.disconnect_parameters_triggers(self)
-        if self.current_uwi_index < len(self.uwi_list) - 1:
-            self.current_uwi_index += 1
+        if self.current_UWI_index < len(self.UWI_list) - 1:
+            self.current_UWI_index += 1
             self.update_displays()
-            self.current_uwi = self.uwi_list[self.current_uwi_index]
+            self.current_UWI = self.UWI_list[self.current_UWI_index]
             self.update_dropdown() 
             self.update_navigation_buttons()
             self.check_model_status_and_set_icon()
@@ -1460,23 +1460,23 @@ class MainWindow(QMainWindow):
     def navigate_back(self):
         # Window Navigation
         # self.ui.disconnect_parameters_triggers(self)
-        if self.current_uwi_index > 0:
-            self.current_uwi_index -= 1
+        if self.current_UWI_index > 0:
+            self.current_UWI_index -= 1
             self.update_displays()
-            self.current_uwi = self.uwi_list[self.current_uwi_index]
+            self.current_UWI = self.UWI_list[self.current_UWI_index]
             self.update_dropdown()
             self.update_navigation_buttons()
             self.check_model_status_and_set_icon()
 
     def update_navigation_buttons(self):
-        # Check if at the first uwi
-        if self.current_uwi_index == 0:
+        # Check if at the first UWI
+        if self.current_UWI_index == 0:
             self.ui.back_button.setEnabled(False)
         else:
             self.ui.back_button.setEnabled(True)
 
-        # Check if at the last uwi
-        if self.current_uwi_index >= len(self.uwi_list) - 1:
+        # Check if at the last UWI
+        if self.current_UWI_index >= len(self.UWI_list) - 1:
 
             
             self.ui.forward_button.setEnabled(False)
@@ -1488,15 +1488,15 @@ class MainWindow(QMainWindow):
         self.ui.well_dropdown.blockSignals(True)  # Temporarily block signals
         self.ui.well_dropdown.clear()
     
-       #printself.uwi_list)
+       #printself.UWI_list)
     
         # Add well names to the dropdown
-        for well_name in self.uwi_list:
+        for well_name in self.UWI_list:
             self.ui.well_dropdown.addItem(str(well_name))
     
-        # Find the index of self.current_uwi and set it
-        if self.current_uwi in self.uwi_list:
-            index = self.uwi_list.index(self.current_uwi)
+        # Find the index of self.current_UWI and set it
+        if self.current_UWI in self.UWI_list:
+            index = self.UWI_list.index(self.current_UWI)
             self.ui.well_dropdown.setCurrentIndex(index)
     
         self.ui.well_dropdown.blockSignals(False) 
@@ -1504,8 +1504,8 @@ class MainWindow(QMainWindow):
 
     def on_well_selected(self, index):
         # Update the current UWI and index based on the selected item
-        self.current_uwi_index = index
-        self.current_uwi = self.uwi_list[index]
+        self.current_UWI_index = index
+        self.current_UWI = self.UWI_list[index]
         self.update_displays()
         self.update_dropdown()
         self.update_navigation_buttons()
@@ -1513,7 +1513,7 @@ class MainWindow(QMainWindow):
 
     def update_dropdown(self):
         self.ui.well_dropdown.blockSignals(True)  # Temporarily block signals
-        self.ui.well_dropdown.setCurrentText(self.current_uwi) 
+        self.ui.well_dropdown.setCurrentText(self.current_UWI) 
         self.ui.well_dropdown.blockSignals(False) 
 
 
@@ -1524,10 +1524,10 @@ class MainWindow(QMainWindow):
         combined_data, date_ranges = self.db_manager.retrieve_and_sum()
         model_data = self.db_manager.retrieve_model_data()
         model_data_df = pd.DataFrame(model_data)
-        merged_df = pd.merge(date_ranges, model_data_df, on='uwi', how='inner')
+        merged_df = pd.merge(date_ranges, model_data_df, on='UWI', how='inner')
 
-        # Select only the uwi, first_date (start date), and capital_expenditures (CapEx) columns
-        capex_df = merged_df[['uwi', 'first_date', 'capital_expenditures']]
+        # Select only the UWI, first_date (start date), and capital_expenditures (CapEx) columns
+        capex_df = merged_df[['UWI', 'first_date', 'capital_expenditures']]
        #printcapex_df)
 
         self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df )

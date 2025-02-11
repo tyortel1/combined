@@ -27,16 +27,16 @@ from scipy.ndimage import gaussian_filter
 class Plot(QDialog):
     closed = Signal()
     
-    def __init__(self, uwi_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_uwi, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree,db_manager, parent=None):
+    def __init__(self, UWI_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_UWI, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree,db_manager, parent=None):
         super().__init__(parent)
         self.main_app = parent
-        self.uwi_list = uwi_list
+        self.UWI_list = UWI_list
         self.directional_surveys_df = directional_surveys_df
         self.depth_grid_data_df = depth_grid_data_df
         self.grid_info_df = grid_info_df
         self.kd_tree_depth_grids = kd_tree_depth_grids
-        self.current_index = self.uwi_list.index(current_uwi)
-        self.current_uwi = current_uwi
+        self.current_index = self.UWI_list.index(current_UWI)
+        self.current_UWI = current_UWI
         self.depth_grid_data_dict = depth_grid_data_dict
         self.seismic_data = seismic_data
         self.master_df = master_df
@@ -46,7 +46,7 @@ class Plot(QDialog):
         self.tick_traces = [] 
         self.tvd_values = []
         self.attributes_names = []
-        self.uwi_att_data = pd.DataFrame()
+        self.UWI_att_data = pd.DataFrame()
         self.selected_zone_df = pd.DataFrame()
         self.current_well_data = pd.DataFrame()
         self.selected_attribute = None
@@ -85,12 +85,12 @@ class Plot(QDialog):
 
     def init_ui(self):
 
-        self.uwi_list = sorted(self.uwi_list)
+        self.UWI_list = sorted(self.UWI_list)
         # Create the dropdown for well selection
         self.well_selector = QComboBox()
-        self.well_selector.addItems(self.uwi_list)
+        self.well_selector.addItems(self.UWI_list)
 
-        current_index = self.uwi_list.index(self.current_uwi)
+        current_index = self.UWI_list.index(self.current_UWI)
         self.well_selector.setCurrentIndex(current_index)
         self.well_selector.currentIndexChanged.connect(self.on_well_selected)
 
@@ -464,11 +464,11 @@ class Plot(QDialog):
         fig = go.Figure()
         try:
             # Extract data for the selected well
-            self.current_well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == self.current_uwi]
+            self.current_well_data = self.directional_surveys_df[self.directional_surveys_df['UWI'] == self.current_UWI]
             self.current_well_data = self.current_well_data.reset_index(drop=True)
 
             if self.current_well_data.empty:
-                print(f"No data found for UWI: {self.current_uwi}")
+                print(f"No data found for UWI: {self.current_UWI}")
                 return
 
             self.tvd_values = self.current_well_data['TVD'].tolist()
@@ -508,7 +508,7 @@ class Plot(QDialog):
                 seismic_time_axis = np.tile(self.seismic_data['time_axis'], len(cumulative_distances))
                 seismic_amplitude_flattened = seismic_trace_amplitudes.flatten()
 
-                uwi_seismic_data = np.column_stack((
+                UWI_seismic_data = np.column_stack((
                     np.repeat(well_coords[:, 0], len(self.seismic_data['time_axis'])),
                     np.repeat(well_coords[:, 1], len(self.seismic_data['time_axis'])),
                     np.repeat(cumulative_distances, len(self.seismic_data['time_axis'])),
@@ -516,7 +516,7 @@ class Plot(QDialog):
                     seismic_amplitude_flattened
                 ))
 
-                seismic_df = pd.DataFrame(uwi_seismic_data, columns=['x', 'y', 'cumulative_distance', 'time', 'amplitude'])
+                seismic_df = pd.DataFrame(UWI_seismic_data, columns=['x', 'y', 'cumulative_distance', 'time', 'amplitude'])
                 seismic_df = seismic_df.drop_duplicates(subset=['time', 'cumulative_distance'])
                 seismic_df = seismic_df.sort_values(['cumulative_distance', 'time'])
 
@@ -563,7 +563,7 @@ class Plot(QDialog):
 
             # Now plot the grid data over the seismic data (optimized with vectorization)
             well_coords_grid = np.column_stack((self.current_well_data['X Offset'], self.current_well_data['Y Offset']))
-            uwi_grid_data = []
+            UWI_grid_data = []
 
             for i, (x2, y2) in enumerate(well_coords_grid):
                 # Batch query for grid data using KDTree
@@ -575,15 +575,15 @@ class Plot(QDialog):
                             closest_z_values[grid] = self.depth_grid_data_dict[grid][indices]
 
                 entry = [x2, y2, self.combined_distances[i]] + [closest_z_values[grid] for grid in self.kd_tree_depth_grids.keys()]
-                uwi_grid_data.append(entry)
+                UWI_grid_data.append(entry)
 
             valid_grids = [grid for grid in self.kd_tree_depth_grids.keys() if grid in set(self.grid_info_df['Grid']) & set(self.depth_grid_data_df['Grid'])]
             columns = ['x', 'y', 'combined_distance'] + valid_grids
 
-            if all(len(entry) == len(columns) for entry in uwi_grid_data):
-                df = pd.DataFrame(uwi_grid_data, columns=columns)
+            if all(len(entry) == len(columns) for entry in UWI_grid_data):
+                df = pd.DataFrame(UWI_grid_data, columns=columns)
             else:
-                print("Error: Length of entries in uwi_grid_data does not match the length of columns")
+                print("Error: Length of entries in UWI_grid_data does not match the length of columns")
                 return
 
             grid_values = {grid_name: df[grid_name].tolist() for grid_name in valid_grids}
@@ -748,13 +748,13 @@ class Plot(QDialog):
 
 
             # Filter the master_df for the current UWI and selected zone
-            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_uwi]
+            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI]
 
             print(zone_data)
 
 
             if zone_data.empty:
-                print(f"No data found for UWI {self.current_uwi} and zone {self.selected_zone}")
+                print(f"No data found for UWI {self.current_UWI} and zone {self.selected_zone}")
                 return
 
 
@@ -841,22 +841,22 @@ class Plot(QDialog):
 
     def on_well_selected(self, index):
         try:
-            selected_uwi = self.well_selector.currentText()  # Get UWI directly from the selector
-            if selected_uwi in self.uwi_list:
-                self.current_uwi = selected_uwi
+            selected_UWI = self.well_selector.currentText()  # Get UWI directly from the selector
+            if selected_UWI in self.UWI_list:
+                self.current_UWI = selected_UWI
                 self.plot_current_well()  # Update the plot for the selected UWI
             else:
-                print(f"Selected UWI {selected_uwi} not found in UWI list.")
+                print(f"Selected UWI {selected_UWI} not found in UWI list.")
         except Exception as e:
             print(f"Error in on_well_selected: {e}")
 
     def on_next(self):
         """Navigate to the next well in alphabetical order."""
         try:
-            current_index = self.uwi_list.index(self.current_uwi)
-            next_index = (current_index + 1) % len(self.uwi_list)  # Ensure it wraps around
-            self.current_uwi = self.uwi_list[next_index]
-            self.update_well_selector_to_current_uwi()
+            current_index = self.UWI_list.index(self.current_UWI)
+            next_index = (current_index + 1) % len(self.UWI_list)  # Ensure it wraps around
+            self.current_UWI = self.UWI_list[next_index]
+            self.update_well_selector_to_current_UWI()
             self.plot_current_well()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the next well: {str(e)}")
@@ -864,33 +864,33 @@ class Plot(QDialog):
     def on_prev(self):
         """Navigate to the previous well in alphabetical order."""
         try:
-            current_index = self.uwi_list.index(self.current_uwi)
-            prev_index = (current_index - 1) % len(self.uwi_list)  # Ensure it wraps around
-            self.current_uwi = self.uwi_list[prev_index]
-            self.update_well_selector_to_current_uwi()
+            current_index = self.UWI_list.index(self.current_UWI)
+            prev_index = (current_index - 1) % len(self.UWI_list)  # Ensure it wraps around
+            self.current_UWI = self.UWI_list[prev_index]
+            self.update_well_selector_to_current_UWI()
             self.plot_current_well()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the previous well: {str(e)}")
-    def update_well_selector_to_current_uwi(self):
+    def update_well_selector_to_current_UWI(self):
         """Set the dropdown to the current UWI."""
         try:
-            current_index = self.uwi_list.index(self.current_uwi)
+            current_index = self.UWI_list.index(self.current_UWI)
             self.well_selector.blockSignals(True)
             self.well_selector.setCurrentIndex(current_index)
             self.well_selector.blockSignals(False)
         except ValueError:
-            QMessageBox.critical(self, "Error", f"UWI '{self.current_uwi}' not found in the list.")
+            QMessageBox.critical(self, "Error", f"UWI '{self.current_UWI}' not found in the list.")
 
 
-    def update_well_selector_to_current_uwi(self):
+    def update_well_selector_to_current_UWI(self):
         """Set the dropdown to the current UWI."""
         try:
-            current_index = self.uwi_list.index(self.current_uwi)
+            current_index = self.UWI_list.index(self.current_UWI)
             self.well_selector.blockSignals(True)
             self.well_selector.setCurrentIndex(current_index)
             self.well_selector.blockSignals(False)
         except ValueError:
-            QMessageBox.critical(self, "Error", f"UWI '{self.current_uwi}' not found in the list.")
+            QMessageBox.critical(self, "Error", f"UWI '{self.current_UWI}' not found in the list.")
 
     def update_well_related_data(self):
         # Re-populate dropdowns and plots based on the newly selected UWI
@@ -904,9 +904,9 @@ class Plot(QDialog):
         self.grid_info_df = grid_info_df
         self.plot_current_well()
 
-    def receive_uwi(self):
+    def receive_UWI(self):
       
-        self.main_app.handle_hover_event(self.current_uwi)
+        self.main_app.handle_hover_event(self.current_UWI)
 
     def on_well_selected(self, index):
         try:

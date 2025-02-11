@@ -146,8 +146,8 @@ class PCDialog(QDialog):
             
             # Retrieve model and well data
             model_data = self.db_manager.retrieve_model_data_by_scenorio(scenario_id)
-            wells = self.db_manager.get_uwis_with_heel_toe()
-            tvd_data = self.db_manager.get_uwis_with_average_tvd()
+            wells = self.db_manager.get_UWIs_with_heel_toe()
+            tvd_data = self.db_manager.get_UWIs_with_average_tvd()
             
             if not model_data or not wells:
                 QMessageBox.warning(self, "No Data", "No model or well data found.")
@@ -160,19 +160,19 @@ class PCDialog(QDialog):
             max_tvd_diff = self.tvd_spinbox.value()
 
             # Map wells and TVD data for quick lookup
-            well_map = {well['uwi']: well for well in wells}
-            tvd_map = {well['uwi']: well['average_tvd'] for well in tvd_data}
+            well_map = {well['UWI']: well for well in wells}
+            tvd_map = {well['UWI']: well['average_tvd'] for well in tvd_data}
 
             self.results = []
 
             for target_well in model_data:
-                target_uwi = target_well['uwi']
+                target_UWI = target_well['UWI']
                 
                 # Skip if no TVD data
-                if target_uwi not in tvd_map:
+                if target_UWI not in tvd_map:
                     continue
 
-                target_tvd = tvd_map[target_uwi]
+                target_tvd = tvd_map[target_UWI]
                 
                 # Rest of the existing checks...
                 target_date_str = max(
@@ -184,10 +184,10 @@ class PCDialog(QDialog):
 
                 target_date = datetime.strptime(target_date_str, "%Y-%m-%d")
 
-                if target_uwi not in well_map:
+                if target_UWI not in well_map:
                     continue
 
-                target_well_geometry = well_map[target_uwi]
+                target_well_geometry = well_map[target_UWI]
                 target_line = LineString([
                     (target_well_geometry['heel_x'], target_well_geometry['heel_y']),
                     (target_well_geometry['toe_x'], target_well_geometry['toe_y'])
@@ -199,14 +199,14 @@ class PCDialog(QDialog):
                 )
 
                 for parent_well in model_data:
-                    if parent_well['uwi'] == target_uwi:
+                    if parent_well['UWI'] == target_UWI:
                         continue
                         
                     # Skip if no TVD data
-                    if parent_well['uwi'] not in tvd_map:
+                    if parent_well['UWI'] not in tvd_map:
                         continue
 
-                    parent_tvd = tvd_map[parent_well['uwi']]
+                    parent_tvd = tvd_map[parent_well['UWI']]
                     
                     # Check TVD difference
                     tvd_difference = abs(target_tvd - parent_tvd)
@@ -226,10 +226,10 @@ class PCDialog(QDialog):
                     if parent_date >= target_date or (target_date - parent_date).days < (min_months * 30):
                         continue
 
-                    if parent_well['uwi'] not in well_map:
+                    if parent_well['UWI'] not in well_map:
                         continue
 
-                    parent_well_geometry = well_map[parent_well['uwi']]
+                    parent_well_geometry = well_map[parent_well['UWI']]
                     parent_point = Point(
                         parent_well_geometry['heel_x'], 
                         parent_well_geometry['heel_y']
@@ -246,9 +246,9 @@ class PCDialog(QDialog):
                     if (lateral_distance <= max_lateral_distance and 
                         angle <= max_angle):
                         self.results.append({
-                            'target_uwi': target_uwi,
+                            'target_UWI': target_UWI,
                             'target_date': target_date_str,
-                            'parent_uwi': parent_well['uwi'],
+                            'parent_UWI': parent_well['UWI'],
                             'parent_date': parent_date_str,
                             'lateral_distance': round(lateral_distance, 2),
                             'angle': round(angle, 2),
@@ -265,9 +265,9 @@ class PCDialog(QDialog):
         """Display results in the table"""
         self.results_table.setRowCount(len(self.results))
         for row, result in enumerate(self.results):
-            self.results_table.setItem(row, 0, QTableWidgetItem(str(result['target_uwi'])))
+            self.results_table.setItem(row, 0, QTableWidgetItem(str(result['target_UWI'])))
             self.results_table.setItem(row, 1, QTableWidgetItem(result['target_date']))
-            self.results_table.setItem(row, 2, QTableWidgetItem(str(result['parent_uwi'])))
+            self.results_table.setItem(row, 2, QTableWidgetItem(str(result['parent_UWI'])))
             self.results_table.setItem(row, 3, QTableWidgetItem(result['parent_date']))
             self.results_table.setItem(row, 4, QTableWidgetItem(str(result['lateral_distance'])))
             self.results_table.setItem(row, 5, QTableWidgetItem(str(result['angle'])))

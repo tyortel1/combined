@@ -10,44 +10,44 @@ class LoadProductions:
         self.db_path = None
 
         self.data_to_insert = []
-        self.uwi_list = None
+        self.UWI_list = None
 
 
     def prepare_data(self, production_data, db_path):
         self.db_path = db_path
-        # Initialize an empty list to store combined data and uwis
+        # Initialize an empty list to store combined data and UWIs
         combined_data = []
         self.model_data = []
-        self.uwi_list = []
+        self.UWI_list = []
 
         # Iterate over each entry in production data
         for entry in production_data:
-            # Extract uwi (Well ID)
-            uwi = entry['uwi']
+            # Extract UWI (Well ID)
+            UWI = entry['UWI']
             oil_volume = entry.get('oil_volume', 0)
             gas_volume = entry.get('gas_volume', 0)
             
-            ## Add uwi to uwi_list if not already present
-            #if uwi not in self.uwi_list:
-            #    self.uwi_list.append(uwi)
+            ## Add UWI to UWI_list if not already present
+            #if UWI not in self.UWI_list:
+            #    self.UWI_list.append(UWI)
 
             # Append the data to combined_data list
             combined_data.append({
-                'uwi': uwi,
+                'UWI': UWI,
                 'date': pd.to_datetime(entry['date']).date(), 
                 'oil_volume': oil_volume,
                 'gas_volume': gas_volume
             })
         self.combined_df = pd.DataFrame(combined_data)
-        self.combined_df = self.combined_df.sort_values(by=['uwi', 'date'])
-        self.uwi_list = self.combined_df['uwi'].unique().tolist()
+        self.combined_df = self.combined_df.sort_values(by=['UWI', 'date'])
+        self.UWI_list = self.combined_df['UWI'].unique().tolist()
 
         # Ensure 'date' is in datetime format
         self.combined_df['date'] = pd.to_datetime(self.combined_df['date'], errors='coerce')
 
-        # Calculate cumulative days grouped by 'uwi'
+        # Calculate cumulative days grouped by 'UWI'
         self.combined_df['cumulative_days'] = (
-            self.combined_df.groupby('uwi')['date']
+            self.combined_df.groupby('UWI')['date']
             .transform(lambda x: (x - x.min()).dt.days / 365))
 
 
@@ -82,34 +82,34 @@ class LoadProductions:
 
 
         #self.prepare_data_for_insertion()
-        #self.save_uwi_list_to_database()
+        #self.save_UWI_list_to_database()
         #print(self.combined_df)
         print("loaddone")
 
 
 
-        if self.db_path and self.uwi_list:
+        if self.db_path and self.UWI_list:
             try:
                 # Create a DatabaseManager instance and connect to the database
                 db_manager = DatabaseManager(self.db_path)
                 db_manager.connect()
 
-                # Create or connect to the 'uwis' table
-                db_manager.create_uwi_table()
+                # Create or connect to the 'UWIs' table
+                db_manager.create_UWI_table()
 
-                # Insert uwis into the 'uwis' table
-                for uwi in self.uwi_list:
-                    db_manager.insert_uwi(uwi)
+                # Insert UWIs into the 'UWIs' table
+                for UWI in self.UWI_list:
+                    db_manager.insert_UWI(UWI)
                 # Commit changes and disconnect from the database
 
                 print("Data Loaded Succesfully")
             except Exception as e:
-                print("Error saving uwis to the database:", e)
+                print("Error saving UWIs to the database:", e)
         else:
-            print("Database path or uwi list is not specified.")
+            print("Database path or UWI list is not specified.")
     
-        return self.combined_df, self.uwi_list
-        #####print(self.uwi_list)  # Print uwi_list for verification
+        return self.combined_df, self.UWI_list
+        #####print(self.UWI_list)  # Print UWI_list for verification
 
     #def prepare_data_for_insertion(self):
     #    self.combined_df['date'] = pd.to_datetime(self.combined_df['date'])
@@ -122,19 +122,19 @@ class LoadProductions:
     #    # Convert structured array to a list of tuples if needed (some database APIs accept records directly)
     #    self.data_to_insert = [tuple(rec) for rec in data_records]
  
-    #def save_uwi_list_to_database(self):
-    #    if self.db_path and self.uwi_list:
+    #def save_UWI_list_to_database(self):
+    #    if self.db_path and self.UWI_list:
     #        try:
     #            # Create a DatabaseManager instance and connect to the database
     #            db_manager = DatabaseManager(self.db_path)
     #            db_manager.connect()
 
-    #            # Create or connect to the 'uwis' table
-    #            db_manager.create_uwi_table()
+    #            # Create or connect to the 'UWIs' table
+    #            db_manager.create_UWI_table()
 
-    #            # Insert uwis into the 'uwis' table
-    #            for uwi in self.uwi_list:
-    #                db_manager.insert_uwi(uwi)
+    #            # Insert UWIs into the 'UWIs' table
+    #            for UWI in self.UWI_list:
+    #                db_manager.insert_UWI(UWI)
 
 
     #            db_manager.insert_production_data(self.data_to_insert)  # Assuming this method matches your updated schema and data
@@ -146,7 +146,7 @@ class LoadProductions:
     #            db_manager.disconnect()
     #            print("Data Loaded Succesfully")
     #        except Exception as e:
-    #            print("Error saving uwis to the database:", e)
+    #            print("Error saving UWIs to the database:", e)
     #    else:
-    #        print("Database path or uwi list is not specified.")
+    #        print("Database path or UWI list is not specified.")
 

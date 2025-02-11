@@ -26,28 +26,28 @@ class DatabaseManager:
 
 
 
-    def insert_uwi(self, uwi, status=None):
+    def insert_UWI(self, UWI, status=None):
         self.connect()
 
         # Modify SQL query to include the status column
-        insert_uwi_sql = "INSERT INTO uwis (uwi, status) VALUES (?, ?)"
+        insert_UWI_sql = "INSERT INTO UWIs (UWI, status) VALUES (?, ?)"
         if status is None:
             status = 'Active'
         try:
-            # Execute the query with both uwi and status
-            self.cursor.execute(insert_uwi_sql, (uwi, status))
+            # Execute the query with both UWI and status
+            self.cursor.execute(insert_UWI_sql, (UWI, status))
             self.connection.commit()
-            print("uwi '{}' with status '{}' inserted successfully.".format(uwi, status))
+            print("UWI '{}' with status '{}' inserted successfully.".format(UWI, status))
         except sqlite3.Error as e:
-            print("Error inserting uwi:", e)
+            print("Error inserting UWI:", e)
         finally:
             self.disconnect()
 
-    def create_uwi_table(self):
+    def create_UWI_table(self):
         self.connect()
         create_table_sql = """
-        CREATE TABLE IF NOT EXISTS uwis (
-            uwi TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS UWIs (
+            UWI TEXT PRIMARY KEY,
             status TEXT DEFAULT 'Active',
             surface_x REAL DEFAULT NULL,
             surface_y REAL DEFAULT NULL,
@@ -66,13 +66,13 @@ class DatabaseManager:
         try:
             self.cursor.execute(create_table_sql)
             self.connection.commit()
-            print("uwis table created successfully.")
+            print("UWIs table created successfully.")
         except sqlite3.Error as e:
-            print("Error creating uwis table:", e)
+            print("Error creating UWIs table:", e)
         finally:
             self.disconnect()
 
-    def save_uwi_data(self, total_lat_data):
+    def save_UWI_data(self, total_lat_data):
         if not isinstance(total_lat_data, pd.DataFrame):
             print("Input data must be a pandas DataFrame.")
             return
@@ -85,40 +85,40 @@ class DatabaseManager:
 
         try:
             expected_columns = [
-                'uwi', 'status', 'surface_x', 'surface_y', 'lateral',
+                'UWI', 'status', 'surface_x', 'surface_y', 'lateral',
                 'heel_x', 'heel_y', 'toe_x', 'toe_y', 'heel_md',
                 'toe_md', 'average_tvd', 'total_length', 'spud_date'
             ]
             total_lat_data = total_lat_data[expected_columns]  # Enforce correct column order
 
             for _, row in total_lat_data.iterrows():
-                uwi = row['uwi']
-                update_columns = [col for col in row.index if col != 'uwi']
+                UWI = row['UWI']
+                update_columns = [col for col in row.index if col != 'UWI']
                 set_clause = ", ".join([f"{col} = COALESCE(?, {col})" for col in update_columns])
 
                 sql_update = f"""
-                UPDATE uwis
+                UPDATE UWIs
                 SET {set_clause}
-                WHERE uwi = ?
+                WHERE UWI = ?
                 """
 
                 update_values = [row[col] for col in update_columns]
-                update_values.append(uwi)
+                update_values.append(UWI)
 
                 print(f"Executing SQL Update: {sql_update}")
                 print(f"Values: {update_values}")
                 self.cursor.execute(sql_update, update_values)
 
                 if self.cursor.rowcount == 0:
-                    columns = ['uwi'] + update_columns
+                    columns = ['UWI'] + update_columns
                     placeholders = ", ".join(["?" for _ in columns])
 
                     sql_insert = f"""
-                    INSERT INTO uwis ({', '.join(columns)})
+                    INSERT INTO UWIs ({', '.join(columns)})
                     VALUES ({placeholders})
                     """
 
-                    # Correct insert values to avoid duplicating 'uwi'
+                    # Correct insert values to avoid duplicating 'UWI'
                     insert_values = [row[col] for col in columns]
 
                     print(f"Executing SQL Insert: {sql_insert}")
@@ -136,13 +136,13 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def get_uwis_with_surface_xy(self):
+    def get_UWIs_with_surface_xy(self):
         """Fetches all UWIs along with their surface X and Y coordinates from the database."""
         try:
             self.connect()
-            self.cursor.execute("SELECT uwi, surface_x, surface_y FROM uwis")
+            self.cursor.execute("SELECT UWI, surface_x, surface_y FROM UWIs")
             results = self.cursor.fetchall()
-            return [{"uwi": str(row[0]), "surface_x": row[1], "surface_y": row[2]} for row in results]
+            return [{"UWI": str(row[0]), "surface_x": row[1], "surface_y": row[2]} for row in results]
         except sqlite3.Error as e:
             print("Error retrieving UWIs with surface XY coordinates:", e)
             return []
@@ -153,14 +153,14 @@ class DatabaseManager:
 
 
 
-    def get_uwis_with_heel_toe(self):
+    def get_UWIs_with_heel_toe(self):
         """
         Fetches all UWIs along with their heel and toe coordinates from the database.
         Handles None or missing values gracefully.
         """
         try:
             self.connect()
-            self.cursor.execute("SELECT uwi, heel_x, heel_y, toe_x, toe_y FROM uwis")
+            self.cursor.execute("SELECT UWI, heel_x, heel_y, toe_x, toe_y FROM UWIs")
             results = self.cursor.fetchall()
             formatted_results = []
             for row in results:
@@ -171,7 +171,7 @@ class DatabaseManager:
 
                 try:
                     formatted_results.append({
-                        "uwi": str(row[0]),
+                        "UWI": str(row[0]),
                         "heel_x": float(row[1]),
                         "heel_y": float(row[2]),
                         "toe_x": float(row[3]),
@@ -188,14 +188,14 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def get_uwis_with_average_tvd(self):
+    def get_UWIs_with_average_tvd(self):
         """
         Fetches all UWIs along with their average TVD from the database.
         Handles None or missing values gracefully.
         """
         try:
             self.connect()
-            self.cursor.execute("SELECT uwi, average_tvd FROM uwis")
+            self.cursor.execute("SELECT UWI, average_tvd FROM UWIs")
             results = self.cursor.fetchall()
             formatted_results = []
         
@@ -207,7 +207,7 @@ class DatabaseManager:
             
                 try:
                     formatted_results.append({
-                        "uwi": str(row[0]),
+                        "UWI": str(row[0]),
                         "average_tvd": float(row[1])
                     })
                 except ValueError as ve:
@@ -224,18 +224,18 @@ class DatabaseManager:
 
 
 
-    def update_uwi_revenue_and_efr(self, uwi, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
+    def update_UWI_revenue_and_efr(self, UWI, npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, scenario_id=1):
         self.connect()
         update_sql = """
         UPDATE model_properties
         SET npv = ?, npv_discounted = ?, EFR_oil = ?, EFR_gas = ?, EUR_oil_remaining = ?, EUR_gas_remaining = ?
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
         try:
             # Execute the update query with the new parameters
-            self.cursor.execute(update_sql, (npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, uwi, scenario_id))
+            self.cursor.execute(update_sql, (npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, UWI, scenario_id))
             self.connection.commit()
-            print(f"UWI '{uwi}' (Scenario {scenario_id}) updated with NPV '{npv}', NPV Discounted '{npv_discounted}', "
+            print(f"UWI '{UWI}' (Scenario {scenario_id}) updated with NPV '{npv}', NPV Discounted '{npv_discounted}', "
                   f"EFR Oil '{EFR_oil}', EFR Gas '{EFR_gas}', EUR Oil Remaining '{EUR_oil_remaining}', "
                   f"EUR Gas Remaining '{EUR_gas_remaining}' successfully.")
         except sqlite3.Error as e:
@@ -248,7 +248,7 @@ class DatabaseManager:
         """Insert production data into the prod_rates_all table."""
         insert_sql = '''
         INSERT INTO prod_rates_all
-        (uwi, date, oil_volume, gas_volume, cumulative_oil_volume, cumulative_gas_volume, q_gas, error_gas, q_oil, error_oil, oil_revenue, gas_revenue, total_revenue, discounted_revenue, cumulative_days)
+        (UWI, date, oil_volume, gas_volume, cumulative_oil_volume, cumulative_gas_volume, q_gas, error_gas, q_oil, error_oil, oil_revenue, gas_revenue, total_revenue, discounted_revenue, cumulative_days)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         try:
@@ -269,7 +269,7 @@ class DatabaseManager:
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS prod_rates_all (
             scenario_id INTEGER NOT NULL,
-            uwi TEXT NOT NULL,
+            UWI TEXT NOT NULL,
             date TEXT,
             gas_volume REAL,
             q_gas REAL,
@@ -284,7 +284,7 @@ class DatabaseManager:
             total_revenue REAL,
             discounted_revenue REAL,
             cumulative_days REAL,
-            FOREIGN KEY (scenario_id) REFERENCES uwis(scenario_id)
+            FOREIGN KEY (scenario_id) REFERENCES UWIs(scenario_id)
         )
         """
         try:
@@ -316,29 +316,29 @@ class DatabaseManager:
 
     def update_prod_rates(self, dataframe, scenario_id):
         """
-        Update oil and gas production rates along with revenue data in the 'prod_rates_all' table using the uwi and scenario_id specified in the DataFrame.
+        Update oil and gas production rates along with revenue data in the 'prod_rates_all' table using the UWI and scenario_id specified in the DataFrame.
         """
         try:
             # Ensure dataframe has the necessary columns
-            required_columns = ['uwi', 'date', 'q_oil', 'q_gas', 'total_revenue', 'discounted_revenue', 'gas_revenue', 'oil_revenue']
+            required_columns = ['UWI', 'date', 'q_oil', 'q_gas', 'total_revenue', 'discounted_revenue', 'gas_revenue', 'oil_revenue']
             if not all(column in dataframe.columns for column in required_columns):
                 raise ValueError("DataFrame is missing required columns.")
 
-            uwi = dataframe['uwi'].iloc[0]  # Assumes all rows have the same uwi
+            UWI = dataframe['UWI'].iloc[0]  # Assumes all rows have the same UWI
             dataframe['date'] = dataframe['date'].dt.strftime('%Y-%m-%d')  # Format the date column
             self.connection.execute('BEGIN')  # Start a transaction
 
             # Delete existing records for the specified UWI and scenario_id
-            delete_query = "DELETE FROM prod_rates_all WHERE uwi = ? AND scenario_id = ?"
-            self.cursor.execute(delete_query, (uwi, scenario_id))
+            delete_query = "DELETE FROM prod_rates_all WHERE UWI = ? AND scenario_id = ?"
+            self.cursor.execute(delete_query, (UWI, scenario_id))
             deleted_rows = self.cursor.rowcount
-            print(f"Deleted {deleted_rows} rows for UWI {uwi} and scenario_id {scenario_id}")
+            print(f"Deleted {deleted_rows} rows for UWI {UWI} and scenario_id {scenario_id}")
 
             # Insert new data
             insert_query = """
-            INSERT INTO prod_rates_all (uwi, date, q_oil, q_gas, total_revenue, discounted_revenue, gas_revenue, oil_revenue, scenario_id)
+            INSERT INTO prod_rates_all (UWI, date, q_oil, q_gas, total_revenue, discounted_revenue, gas_revenue, oil_revenue, scenario_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(uwi, date, scenario_id) DO UPDATE SET
+            ON CONFLICT(UWI, date, scenario_id) DO UPDATE SET
             q_oil = excluded.q_oil,
             q_gas = excluded.q_gas,
             total_revenue = excluded.total_revenue,
@@ -349,17 +349,17 @@ class DatabaseManager:
     
             for index, row in dataframe.iterrows():
                 self.cursor.execute(insert_query, (
-                    uwi, row['date'], row['q_oil'], row['q_gas'],
+                    UWI, row['date'], row['q_oil'], row['q_gas'],
                     row['total_revenue'], row['discounted_revenue'],
                     row['gas_revenue'], row['oil_revenue'], scenario_id
                 ))
 
             self.connection.commit()
-            print(f"Data updated successfully in prod_rates_all for uwi {uwi} and scenario_id {scenario_id}")
+            print(f"Data updated successfully in prod_rates_all for UWI {UWI} and scenario_id {scenario_id}")
         except Exception as e:
             self.connection.rollback()
             print(f"Error updating data in prod_rates_all: {e}")
-            logging.error(f"Error updating data in prod_rates_all for uwi {uwi} and scenario_id {scenario_id}: {e}")
+            logging.error(f"Error updating data in prod_rates_all for UWI {UWI} and scenario_id {scenario_id}: {e}")
 
 
     def rollback(self):
@@ -380,10 +380,10 @@ class DatabaseManager:
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS sum_of_errors (
             scenario_id INTEGER NOT NULL,
-            uwi TEXT NOT NULL,
+            UWI TEXT NOT NULL,
             sum_error_oil REAL DEFAULT NULL,
             sum_error_gas REAL DEFAULT NULL,
-            PRIMARY KEY (scenario_id, uwi)
+            PRIMARY KEY (scenario_id, UWI)
         )
         """
         try:
@@ -407,9 +407,9 @@ class DatabaseManager:
 
                 # Create an upsert query (update if exists, insert if not)
                 upsert_query = """
-                INSERT INTO sum_of_errors (scenario_id, uwi, sum_error_oil, sum_error_gas)
+                INSERT INTO sum_of_errors (scenario_id, UWI, sum_error_oil, sum_error_gas)
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT(scenario_id, uwi) DO UPDATE SET
+                ON CONFLICT(scenario_id, UWI) DO UPDATE SET
                     sum_error_oil = excluded.sum_error_oil,
                     sum_error_gas = excluded.sum_error_gas
                 """
@@ -417,7 +417,7 @@ class DatabaseManager:
                 # Execute the query
                 self.cursor.execute(upsert_query, (
                     row_dict['scenario_id'],
-                    row_dict['uwi'],
+                    row_dict['UWI'],
                     row_dict['sum_error_oil'],
                     row_dict['sum_error_gas']
                 ))
@@ -438,7 +438,7 @@ class DatabaseManager:
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS model_properties (
             scenario_id INTEGER NOT NULL,
-            uwi TEXT NOT NULL,
+            UWI TEXT NOT NULL,
             max_oil_production REAL DEFAULT 0,
             max_gas_production REAL DEFAULT 0,
             max_oil_production_date TEXT DEFAULT '0000-00-00',
@@ -481,7 +481,7 @@ class DatabaseManager:
             npv_discounted REAL DEFAULT 0,  
             payback_months REAL DEFAULT 0,  
             parent_wells REAL DEFAULT 0,  
-            PRIMARY KEY (scenario_id, uwi)
+            PRIMARY KEY (scenario_id, UWI)
         )
         """
     
@@ -540,41 +540,41 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def delete_model_properties_for_wells(self, scenario_id, well_uwis):
+    def delete_model_properties_for_wells(self, scenario_id, well_UWIs):
         """Delete model properties for a list of wells within a specific scenario."""
-        if not well_uwis:
+        if not well_UWIs:
             return  # No wells provided, nothing to delete
 
         try:
             self.connect()
-            query = f"DELETE FROM model_properties WHERE scenario_id = ? AND uwi IN ({','.join(['?'] * len(well_uwis))})"
-            self.cursor.execute(query, (scenario_id, *well_uwis))
+            query = f"DELETE FROM model_properties WHERE scenario_id = ? AND UWI IN ({','.join(['?'] * len(well_UWIs))})"
+            self.cursor.execute(query, (scenario_id, *well_UWIs))
             self.connection.commit()
         except sqlite3.Error as e:
-            print(f"Error deleting model properties for scenario {scenario_id}, wells {well_uwis}: {e}")
+            print(f"Error deleting model properties for scenario {scenario_id}, wells {well_UWIs}: {e}")
             self.connection.rollback()
         finally:
             self.disconnect()
 
-    def delete_production_rates_for_wells(self, scenario_id, well_uwis):
+    def delete_production_rates_for_wells(self, scenario_id, well_UWIs):
         """Delete production rates for a list of wells within a specific scenario."""
-        if not well_uwis:
+        if not well_UWIs:
             return  # No wells provided, nothing to delete
 
         try:
             self.connect()
-            query = f"DELETE FROM prod_rates_all WHERE scenario_id = ? AND uwi IN ({','.join(['?'] * len(well_uwis))})"
-            self.cursor.execute(query, (scenario_id, *well_uwis))
+            query = f"DELETE FROM prod_rates_all WHERE scenario_id = ? AND UWI IN ({','.join(['?'] * len(well_UWIs))})"
+            self.cursor.execute(query, (scenario_id, *well_UWIs))
             self.connection.commit()
         except sqlite3.Error as e:
-            print(f"Error deleting production rates for scenario {scenario_id}, wells {well_uwis}: {e}")
+            print(f"Error deleting production rates for scenario {scenario_id}, wells {well_UWIs}: {e}")
             self.connection.rollback()
         finally:
             self.disconnect()
 
 
 
-    def save_eur_to_model_properties(self, uwi, q_oil_eur, q_gas_eur, q_oil_eur_normalized=None, q_gas_eur_normalized=None, scenario_id=1):
+    def save_eur_to_model_properties(self, UWI, q_oil_eur, q_gas_eur, q_oil_eur_normalized=None, q_gas_eur_normalized=None, scenario_id=1):
         """
         Update the EUR values in the model_properties table for the given UWI and scenario_id.
         """
@@ -588,32 +588,32 @@ class DatabaseManager:
             q_oil_eur_normalized = ?, 
             q_gas_eur_normalized = ?
         WHERE 
-            scenario_id = ? AND uwi = ?;
+            scenario_id = ? AND UWI = ?;
         """
 
         try:
-            self.cursor.execute(query, (q_oil_eur, q_gas_eur, q_oil_eur_normalized, q_gas_eur_normalized, scenario_id, uwi))
+            self.cursor.execute(query, (q_oil_eur, q_gas_eur, q_oil_eur_normalized, q_gas_eur_normalized, scenario_id, UWI))
             if self.cursor.rowcount == 0:
-                print(f"No matching row found for UWI: {uwi} and Scenario ID: {scenario_id}.")
+                print(f"No matching row found for UWI: {UWI} and Scenario ID: {scenario_id}.")
             self.connection.commit()
         except Exception as e:
-            print(f"Error updating EUR values for UWI {uwi}: {e}")
+            print(f"Error updating EUR values for UWI {UWI}: {e}")
         finally:
             self.disconnect()
 
 
     #keep
-    def retrieve_model_data_by_scenario_and_uwi(self, scenario_id, uwi):
+    def retrieve_model_data_by_scenario_and_UWI(self, scenario_id, UWI):
         try:
             self.connect()
             print(f"Connected to database at {self.db_path}")
         
-            query = "SELECT * FROM model_properties WHERE scenario_id = ? AND uwi = ?"
-            self.cursor.execute(query, (scenario_id, uwi))
+            query = "SELECT * FROM model_properties WHERE scenario_id = ? AND UWI = ?"
+            self.cursor.execute(query, (scenario_id, UWI))
             data = self.cursor.fetchall()
         
             if not data:
-                print(f"No data found for scenario_id: {scenario_id} and uwi: {uwi}")
+                print(f"No data found for scenario_id: {scenario_id} and UWI: {UWI}")
                 return None
             
             columns = [description[0] for description in self.cursor.description]
@@ -648,11 +648,11 @@ class DatabaseManager:
 
 
     
-    def update_payback_months(self, uwi, payback_months, scenario_id):
+    def update_payback_months(self, UWI, payback_months, scenario_id):
         """
         Updates the payback_months column in model_properties for a given UWI and scenario.
         
-        :param uwi: Unique Well Identifier
+        :param UWI: Unique Well Identifier
         :param payback_months: Number of months required for payback
         :param scenario_id: Scenario identifier
         """
@@ -662,34 +662,34 @@ class DatabaseManager:
             query = """
                 UPDATE model_properties 
                 SET payback_months = ? 
-                WHERE uwi = ? AND scenario_id = ?
+                WHERE UWI = ? AND scenario_id = ?
             """
-            cursor.execute(query, (payback_months, uwi, scenario_id))
+            cursor.execute(query, (payback_months, UWI, scenario_id))
             self.connection.commit()
-            print(f"Updated payback months for UWI {uwi} in scenario {scenario_id}: {payback_months}")
+            print(f"Updated payback months for UWI {UWI} in scenario {scenario_id}: {payback_months}")
         except Exception as e:
-            print(f"Error updating payback months for UWI {uwi}: {e}")
+            print(f"Error updating payback months for UWI {UWI}: {e}")
         finally:
             self.disconnect()
 
 
 
 
-    def retrieve_prod_rates_all(self, current_uwi=None, scenario_id=None):
+    def retrieve_prod_rates_all(self, current_UWI=None, scenario_id=None):
         try:
             self.connect()
             # Get column names
             self.cursor.execute("PRAGMA table_info(prod_rates_all)")
             columns = [column[1] for column in self.cursor.fetchall()]
 
-            if current_uwi and scenario_id:
-                # Select data for the specified uwi and scenario_id
-                query = "SELECT * FROM prod_rates_all WHERE uwi = ? AND scenario_id = ?"
-                self.cursor.execute(query, (current_uwi, scenario_id))
-            elif current_uwi:
-                # Select data for the specified uwi
-                query = "SELECT * FROM prod_rates_all WHERE uwi = ?"
-                self.cursor.execute(query, (current_uwi,))
+            if current_UWI and scenario_id:
+                # Select data for the specified UWI and scenario_id
+                query = "SELECT * FROM prod_rates_all WHERE UWI = ? AND scenario_id = ?"
+                self.cursor.execute(query, (current_UWI, scenario_id))
+            elif current_UWI:
+                # Select data for the specified UWI
+                query = "SELECT * FROM prod_rates_all WHERE UWI = ?"
+                self.cursor.execute(query, (current_UWI,))
             elif scenario_id:
                 # Select data for the specified scenario_id
                 query = "SELECT * FROM prod_rates_all WHERE scenario_id = ?"
@@ -856,11 +856,11 @@ class DatabaseManager:
 
 
 
-    def get_all_uwis(self):
+    def get_all_UWIs(self):
         import pandas as pd
         try:
             self.connect()
-            self.cursor.execute("SELECT * FROM uwis")  # Fetch all rows and columns
+            self.cursor.execute("SELECT * FROM UWIs")  # Fetch all rows and columns
             rows = self.cursor.fetchall()
 
             # Extract column names
@@ -870,32 +870,32 @@ class DatabaseManager:
             return pd.DataFrame(rows, columns=column_names)
 
         except sqlite3.Error as e:
-            print("Error retrieving all uwis:", e)
+            print("Error retrieving all UWIs:", e)
             return pd.DataFrame()  # Return an empty DataFrame on error
 
         finally:
             self.disconnect()
 
 
-    def get_uwis(self):
+    def get_UWIs(self):
         try:
             self.connect()
-            self.cursor.execute("SELECT uwi FROM uwis")
-            uwis = self.cursor.fetchall()
-            return [str(uwi[0]) for uwi in uwis]
+            self.cursor.execute("SELECT UWI FROM UWIs")
+            UWIs = self.cursor.fetchall()
+            return [str(UWI[0]) for UWI in UWIs]
         except sqlite3.Error as e:
-            print("Error retrieving uwis:", e)
+            print("Error retrieving UWIs:", e)
             return []
 
         finally:
             self.disconnect()
 
-    def get_capex_for_uwi(self, uwi, scenario_id):
+    def get_capex_for_UWI(self, UWI, scenario_id):
         """
         Retrieve capital expenditures (CapEx) for a given UWI and scenario.
     
         Args:
-            uwi (str): Unique Well Identifier.
+            UWI (str): Unique Well Identifier.
             scenario_id (int): Scenario ID.
     
         Returns:
@@ -904,24 +904,24 @@ class DatabaseManager:
         self.connect()
         query = """
         SELECT capital_expenditures FROM model_properties
-        WHERE scenario_id = ? AND uwi = ?
+        WHERE scenario_id = ? AND UWI = ?
         """
         try:
-            self.cursor.execute(query, (scenario_id, uwi))
+            self.cursor.execute(query, (scenario_id, UWI))
             result = self.cursor.fetchone()
             return result[0] if result else 0
         except Exception as e:
-            print(f"Error retrieving CapEx for UWI {uwi}: {e}")
+            print(f"Error retrieving CapEx for UWI {UWI}: {e}")
             return 0
         finally:
             self.disconnect()
 
-    def get_opex_for_uwi(self, uwi, scenario_id):
+    def get_opex_for_UWI(self, UWI, scenario_id):
         """
         Retrieve operating expenditures (OpEx) for a given UWI and scenario.
     
         Args:
-            uwi (str): Unique Well Identifier.
+            UWI (str): Unique Well Identifier.
             scenario_id (int): Scenario ID.
     
         Returns:
@@ -930,14 +930,14 @@ class DatabaseManager:
         self.connect()
         query = """
         SELECT operating_expenditures FROM model_properties
-        WHERE scenario_id = ? AND uwi = ?
+        WHERE scenario_id = ? AND UWI = ?
         """
         try:
-            self.cursor.execute(query, (scenario_id, uwi))
+            self.cursor.execute(query, (scenario_id, UWI))
             result = self.cursor.fetchone()
             return result[0] if result else 0
         except Exception as e:
-            print(f"Error retrieving OpEx for UWI {uwi}: {e}")
+            print(f"Error retrieving OpEx for UWI {UWI}: {e}")
             return 0
         finally:
             self.disconnect()
@@ -948,11 +948,11 @@ class DatabaseManager:
         Retrieve lateral lengths for all UWIs from the database.
     
         Returns:
-            pd.DataFrame: DataFrame with columns ['uwi', 'lateral']
+            pd.DataFrame: DataFrame with columns ['UWI', 'lateral']
         """
         self.connect()
         try:
-            query = "SELECT uwi, lateral FROM uwis WHERE lateral IS NOT NULL"
+            query = "SELECT UWI, lateral FROM UWIs WHERE lateral IS NOT NULL"
             df = pd.read_sql(query, self.connection)
             return df
         except Exception as e:
@@ -966,8 +966,8 @@ class DatabaseManager:
         try:
             self.connect()
             query = """
-            SELECT uwi 
-            FROM uwis 
+            SELECT UWI 
+            FROM UWIs 
             WHERE status = 'Planned'
             """
             self.cursor.execute(query)
@@ -978,21 +978,21 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def get_uwis_by_status(self, status):
+    def get_UWIs_by_status(self, status):
         try:
             self.connect()
-            self.cursor.execute("SELECT uwi FROM uwis WHERE status = ?", (status,))
-            uwis = self.cursor.fetchall()
-            return [str(uwi[0]) for uwi in uwis]
+            self.cursor.execute("SELECT UWI FROM UWIs WHERE status = ?", (status,))
+            UWIs = self.cursor.fetchall()
+            return [str(UWI[0]) for UWI in UWIs]
         except sqlite3.Error as e:
-            print(f"Error retrieving {status} uwis:", e)
+            print(f"Error retrieving {status} UWIs:", e)
             return []
         finally:
             self.disconnect()
     def retrieve_tab2(self, today_date):
         try:
             self.connect()
-            self.cursor.execute("SELECT date, uwi, discounted_revenue FROM prod_rates_all WHERE date >= ?", (today_date,))
+            self.cursor.execute("SELECT date, UWI, discounted_revenue FROM prod_rates_all WHERE date >= ?", (today_date,))
             rows = self.cursor.fetchall()
             return rows
         except sqlite3.Error as e:
@@ -1001,13 +1001,13 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def get_active_uwis_with_properties(self):
+    def get_active_UWIs_with_properties(self):
         try:
             self.connect()
             query = """
-            SELECT DISTINCT u.uwi 
-            FROM uwis u 
-            JOIN model_properties mp ON u.uwi = mp.uwi 
+            SELECT DISTINCT u.UWI 
+            FROM UWIs u 
+            JOIN model_properties mp ON u.UWI = mp.UWI 
             WHERE u.status = 'Active'
             """
     
@@ -1017,24 +1017,24 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def get_uwis_by_scenario_id(self, scenario_id):
+    def get_UWIs_by_scenario_id(self, scenario_id):
         try:
             self.connect()
-            query = "SELECT DISTINCT uwi FROM model_properties WHERE scenario_id = ?"
+            query = "SELECT DISTINCT UWI FROM model_properties WHERE scenario_id = ?"
             self.cursor.execute(query, (scenario_id,))
-            uwis = self.cursor.fetchall()
-            return [str(uwi[0]) for uwi in uwis]
+            UWIs = self.cursor.fetchall()
+            return [str(UWI[0]) for UWI in UWIs]
         except sqlite3.Error as e:
             print(f"Error retrieving UWIs for scenario_id {scenario_id}: {e}")
             return []
         finally:
             self.disconnect()
 
-    def retrieve_error_row(self,  current_uwi, scenario_id):
+    def retrieve_error_row(self,  current_UWI, scenario_id):
         try:
             self.connect()
-            query = "SELECT * FROM sum_of_errors WHERE scenario_id = ? AND uwi = ?"
-            self.cursor.execute(query, (scenario_id, current_uwi))
+            query = "SELECT * FROM sum_of_errors WHERE scenario_id = ? AND UWI = ?"
+            self.cursor.execute(query, (scenario_id, current_UWI))
             error_row = self.cursor.fetchone()
             if error_row:
                 # Extract column names from the cursor description
@@ -1058,16 +1058,16 @@ class DatabaseManager:
             df_model_properties = df_model_properties.copy()
             df_model_properties['scenario_id'] = scenario_id
 
-            uwi_planned = df_model_properties['uwi'].iloc[0]
+            UWI_planned = df_model_properties['UWI'].iloc[0]
 
-            print(f" Overwriting model properties for UWI: {uwi_planned}, Scenario ID: {scenario_id}")
+            print(f" Overwriting model properties for UWI: {UWI_planned}, Scenario ID: {scenario_id}")
 
             self.connect()
 
             # Step 1: Delete existing record for this planned UWI
-            delete_sql = "DELETE FROM model_properties WHERE scenario_id = ? AND uwi = ?"
-            self.cursor.execute(delete_sql, (scenario_id, uwi_planned))
-            print(f" Deleted existing model properties for UWI: {uwi_planned}")
+            delete_sql = "DELETE FROM model_properties WHERE scenario_id = ? AND UWI = ?"
+            self.cursor.execute(delete_sql, (scenario_id, UWI_planned))
+            print(f" Deleted existing model properties for UWI: {UWI_planned}")
 
             # Step 2: Ensure all fields are correctly formatted
             for col in ['oil_model_status', 'gas_model_status']:
@@ -1086,7 +1086,7 @@ class DatabaseManager:
                                        dtype={'oil_model_status': 'INTEGER',
                                               'gas_model_status': 'INTEGER'})
             self.connection.commit()
-            print(f" Inserted new model properties for UWI: {uwi_planned}")
+            print(f" Inserted new model properties for UWI: {UWI_planned}")
 
         except sqlite3.Error as e:
             print(f" Error overwriting model properties: {e}")
@@ -1103,16 +1103,16 @@ class DatabaseManager:
            df_model_properties['oil_model_status'] = df_model_properties['oil_model_status'].astype(int)
            df_model_properties['gas_model_status'] = df_model_properties['gas_model_status'].astype(int)
 
-           uwi = df_model_properties['uwi'].iloc[0]
+           UWI = df_model_properties['UWI'].iloc[0]
            self.connect()
 
-           self.cursor.execute("SELECT COUNT(*) FROM model_properties WHERE scenario_id = ? AND uwi = ?", 
-                             (scenario_id, uwi))
+           self.cursor.execute("SELECT COUNT(*) FROM model_properties WHERE scenario_id = ? AND UWI = ?", 
+                             (scenario_id, UWI))
            exists = self.cursor.fetchone()[0] > 0
 
            if exists:
-               update_cols = [col for col in df_model_properties.columns if col not in ['uwi', 'scenario_id']]
-               update_sql = f"UPDATE model_properties SET {', '.join(f'{col} = ?' for col in update_cols)} WHERE scenario_id = ? AND uwi = ?"
+               update_cols = [col for col in df_model_properties.columns if col not in ['UWI', 'scenario_id']]
+               update_sql = f"UPDATE model_properties SET {', '.join(f'{col} = ?' for col in update_cols)} WHERE scenario_id = ? AND UWI = ?"
            
                values = []
                for col in update_cols:
@@ -1127,7 +1127,7 @@ class DatabaseManager:
                        value = int(value)
                    values.append(value)
 
-               values.extend([scenario_id, uwi])
+               values.extend([scenario_id, UWI])
                self.cursor.execute(update_sql, values)
            else:
                # For new records, ensure integer types before insertion
@@ -1147,32 +1147,32 @@ class DatabaseManager:
 
 
 
-    def update_uwi_errors(self, dataframe, scenario_id):
+    def update_UWI_errors(self, dataframe, scenario_id):
         """Update or insert UWI errors in the sum_of_errors table."""
         print(scenario_id)
         try:
             self.connect()
 
             for index, row in dataframe.iterrows():
-                uwi = row['uwi']
+                UWI = row['UWI']
                 sum_error_oil = row['sum_error_oil']
                 sum_error_gas = row['sum_error_gas']
 
                 # Check if the scenario_id and UWI combination exists in the table
-                self.cursor.execute("SELECT COUNT(*) FROM sum_of_errors WHERE scenario_id = ? AND uwi = ?", (scenario_id, uwi))
+                self.cursor.execute("SELECT COUNT(*) FROM sum_of_errors WHERE scenario_id = ? AND UWI = ?", (scenario_id, UWI))
                 count = self.cursor.fetchone()[0]
 
                 if count > 0:
                     # If the combination exists, update the corresponding row
                     self.cursor.execute(
-                        "UPDATE sum_of_errors SET sum_error_oil = ?, sum_error_gas = ? WHERE scenario_id = ? AND uwi = ?",
-                        (sum_error_oil, sum_error_gas, scenario_id, uwi)
+                        "UPDATE sum_of_errors SET sum_error_oil = ?, sum_error_gas = ? WHERE scenario_id = ? AND UWI = ?",
+                        (sum_error_oil, sum_error_gas, scenario_id, UWI)
                     )
                 else:
                     # If the combination does not exist, insert a new row
                     self.cursor.execute(
-                        "INSERT INTO sum_of_errors (scenario_id, uwi, sum_error_oil, sum_error_gas) VALUES (?, ?, ?, ?)",
-                        (scenario_id, uwi, sum_error_oil, sum_error_gas)
+                        "INSERT INTO sum_of_errors (scenario_id, UWI, sum_error_oil, sum_error_gas) VALUES (?, ?, ?, ?)",
+                        (scenario_id, UWI, sum_error_oil, sum_error_gas)
                     )
 
             # Commit the changes
@@ -1185,7 +1185,7 @@ class DatabaseManager:
             self.disconnect()
 
 
-    def update_uwi_prod_rates(self, df_production_rates, scenario_id=0):
+    def update_UWI_prod_rates(self, df_production_rates, scenario_id=0):
         print(scenario_id)
         try:
             self.connect()
@@ -1195,13 +1195,13 @@ class DatabaseManager:
                 print("Error: Database connection or cursor is not initialized.")
                 return
 
-            # Extract the uwi from the DataFrame
-            if 'uwi' not in df_production_rates.columns:
-                print("Error: 'uwi' column not found in the DataFrame")
+            # Extract the UWI from the DataFrame
+            if 'UWI' not in df_production_rates.columns:
+                print("Error: 'UWI' column not found in the DataFrame")
                 return
 
-            uwi = df_production_rates['uwi'].iloc[0]
-            print(f"Updating production rates for UWI: {uwi} and Scenario ID: {scenario_id}")
+            UWI = df_production_rates['UWI'].iloc[0]
+            print(f"Updating production rates for UWI: {UWI} and Scenario ID: {scenario_id}")
 
             # Convert date to string format
             if 'date' not in df_production_rates.columns:
@@ -1214,10 +1214,10 @@ class DatabaseManager:
             self.connection.execute('BEGIN')
 
             # Delete existing records for the specified UWI and Scenario ID
-            delete_query = "DELETE FROM prod_rates_all WHERE uwi = ? AND scenario_id = ?"
-            self.cursor.execute(delete_query, (uwi, scenario_id))
+            delete_query = "DELETE FROM prod_rates_all WHERE UWI = ? AND scenario_id = ?"
+            self.cursor.execute(delete_query, (UWI, scenario_id))
             deleted_rows = self.cursor.rowcount
-            print(f"Deleted {deleted_rows} rows for UWI {uwi} and Scenario ID {scenario_id}")
+            print(f"Deleted {deleted_rows} rows for UWI {UWI} and Scenario ID {scenario_id}")
 
             # Retrieve columns of the prod_rates_all table
             self.cursor.execute("PRAGMA table_info(prod_rates_all)")
@@ -1252,7 +1252,7 @@ class DatabaseManager:
 
             # Commit the transaction
             self.connection.commit()
-            print(f"Data updated successfully in prod_rates_all for UWI: {uwi} and Scenario ID: {scenario_id}")
+            print(f"Data updated successfully in prod_rates_all for UWI: {UWI} and Scenario ID: {scenario_id}")
         except Exception as e:
             # Rollback the transaction in case of an error
             self.connection.rollback()
@@ -1264,17 +1264,17 @@ class DatabaseManager:
 
 
 
-    def retrieve_prod_rates_by_uwi(self, current_uwi=None):
+    def retrieve_prod_rates_by_UWI(self, current_UWI=None):
         try:
             self.connect()
             # Get column names
             self.cursor.execute("PRAGMA table_info(prod_rates_all)")
             columns = [column[1] for column in self.cursor.fetchall()]
 
-            if current_uwi:
-                # Select data for the specified uwi
-                query = "SELECT * FROM prod_rates_all WHERE uwi = ?"
-                self.cursor.execute(query, (current_uwi,))
+            if current_UWI:
+                # Select data for the specified UWI
+                query = "SELECT * FROM prod_rates_all WHERE UWI = ?"
+                self.cursor.execute(query, (current_UWI,))
             else:
                 # Select all data from the table
                 self.cursor.execute("SELECT * FROM prod_rates_all")
@@ -1304,12 +1304,12 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def get_model_status(self, current_uwi, model_type):
-        # Query the database to get the model status for the specified type and uwi
+    def get_model_status(self, current_UWI, model_type):
+        # Query the database to get the model status for the specified type and UWI
         try:
             self.connect()
-            query = f"SELECT {model_type}_model_status FROM model_properties WHERE uwi = ?"
-            self.cursor.execute(query, (current_uwi,))
+            query = f"SELECT {model_type}_model_status FROM model_properties WHERE UWI = ?"
+            self.cursor.execute(query, (current_UWI,))
             result = self.cursor.fetchone()
             if result:
                 return result[0]  # Assuming the model status is the first column in the result
@@ -1321,25 +1321,25 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def update_model_status(self, current_uwi, new_status, model_type):
+    def update_model_status(self, current_UWI, new_status, model_type):
         try:
             self.connect()
-            query = f"UPDATE model_properties SET {model_type}_model_status = CAST(? AS INTEGER) WHERE uwi = ?"
-            self.cursor.execute(query, (int(new_status), current_uwi))
+            query = f"UPDATE model_properties SET {model_type}_model_status = CAST(? AS INTEGER) WHERE UWI = ?"
+            self.cursor.execute(query, (int(new_status), current_UWI))
             self.connection.commit()
         except sqlite3.Error as e:
             print(f"Error updating {model_type} model status:", e)
 
-    def delete_uwi_records(self, uwi):
+    def delete_UWI_records(self, UWI):
         # Ensure there's an active database connection
         self.connect()  # Assuming this method sets up self.connection if not already connected
 
             # List of tables from which to delete records
-        tables = ['model_properties', 'prod_rates_all', 'sum_of_errors', 'uwis']
+        tables = ['model_properties', 'prod_rates_all', 'sum_of_errors', 'UWIs']
         for table in tables:
-            # SQL query that deletes rows where the uwi matches the given uwi
-            query = f"DELETE FROM {table} WHERE uwi = ?"
-            self.cursor.execute(query, (uwi,))  # Execute the query with the uwi parameter
+            # SQL query that deletes rows where the UWI matches the given UWI
+            query = f"DELETE FROM {table} WHERE UWI = ?"
+            self.cursor.execute(query, (UWI,))  # Execute the query with the UWI parameter
 
             # Commit the changes to the database
         self.connection.commit()
@@ -1379,8 +1379,8 @@ class DatabaseManager:
             }).reset_index()
 
             # Retrieve the first and last date for each well
-            date_ranges = df.groupby('uwi')['date'].agg(['min', 'max']).reset_index()
-            date_ranges.columns = ['uwi', 'first_date', 'last_date']
+            date_ranges = df.groupby('UWI')['date'].agg(['min', 'max']).reset_index()
+            date_ranges.columns = ['UWI', 'first_date', 'last_date']
 
             return combined_data, date_ranges
 
@@ -1398,7 +1398,7 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS saved_dca (
             id INTEGER PRIMARY KEY,
             curve_name TEXT NOT NULL,
-            uwi TEXT,
+            UWI TEXT,
             max_oil_production REAL NULL,
             max_gas_production REAL NULL,
             max_oil_production_date TEXT DEFAULT NULL,
@@ -1441,13 +1441,13 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def save_decline_curve_to_db(self, curve_name, uwi_model_data):
-        if not isinstance(uwi_model_data, pd.DataFrame):
-            print("Error: uwi_model_data is not a DataFrame")
+    def save_decline_curve_to_db(self, curve_name, UWI_model_data):
+        if not isinstance(UWI_model_data, pd.DataFrame):
+            print("Error: UWI_model_data is not a DataFrame")
             return
 
         # Add curve_name column to the DataFrame
-        uwi_model_data['curve_name'] = curve_name
+        UWI_model_data['curve_name'] = curve_name
 
         try:
             self.connect()
@@ -1459,18 +1459,18 @@ class DatabaseManager:
 
             # Ensure the DataFrame has the same columns as the table
             for col in saved_dca_columns:
-                if col not in uwi_model_data.columns:
-                    uwi_model_data[col] = None
+                if col not in UWI_model_data.columns:
+                    UWI_model_data[col] = None
 
             # Reorder DataFrame columns to match the table columns
-            uwi_model_data = uwi_model_data[saved_dca_columns]
+            UWI_model_data = UWI_model_data[saved_dca_columns]
 
             # Delete existing rows with the same curve_name
             delete_sql = "DELETE FROM saved_dca WHERE curve_name = ?"
             self.cursor.execute(delete_sql, (curve_name,))
 
             # Insert data into the main table
-            for index, row in uwi_model_data.iterrows():
+            for index, row in UWI_model_data.iterrows():
                 insert_sql = """
                 INSERT INTO saved_dca ({})
                 VALUES ({})
@@ -1546,7 +1546,7 @@ class DatabaseManager:
         self.connect()
         try:
             query = """
-            SELECT curve_name, uwi, max_oil_production, max_gas_production,
+            SELECT curve_name, UWI, max_oil_production, max_gas_production,
                    max_oil_production_date, max_gas_production_date, one_year_oil_production,
                    one_year_gas_production, di_oil, di_gas, oil_b_factor, gas_b_factor,
                    min_dec_oil, min_dec_gas, model_oil, model_gas, economic_limit_type,
@@ -1573,11 +1573,11 @@ class DatabaseManager:
 
 
 
-    def get_uwi_status(self, current_uwi):
+    def get_UWI_status(self, current_UWI):
         try:
             self.connect()
             # Define the query to check the status of the current UWI
-            self.cursor.execute("SELECT status FROM uwis WHERE uwi = ?", (current_uwi,))
+            self.cursor.execute("SELECT status FROM UWIs WHERE UWI = ?", (current_UWI,))
             result = self.cursor.fetchone()
         
             print(result[0])  # Debug print to show the result
@@ -1587,7 +1587,7 @@ class DatabaseManager:
             else:
                 return False
         except Exception as e:
-            print(f"Error retrieving status for UWI {current_uwi}: {e}")
+            print(f"Error retrieving status for UWI {current_UWI}: {e}")
         finally:
             # Ensure the database connection is closed
             self.disconnect()
@@ -1597,10 +1597,10 @@ class DatabaseManager:
         print(columns)
         self.connect()
         query = f"""
-        SELECT uwi, strftime('%Y-%m', date) as date, {', '.join(columns)}
+        SELECT UWI, strftime('%Y-%m', date) as date, {', '.join(columns)}
         FROM prod_rates_all
         WHERE scenario_id = ?
-        GROUP BY uwi, date
+        GROUP BY UWI, date
         """
         try:
             df = pd.read_sql_query(query, self.connection, params=(scenario_id,))
@@ -1614,7 +1614,7 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS well_pads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             pad_name VARCHAR(255) UNIQUE,
-            uwi VARCHAR(255),
+            UWI VARCHAR(255),
             scenario_id INTEGER,
             start_date DATE,
             decline_curve_type VARCHAR(255),
@@ -1631,7 +1631,7 @@ class DatabaseManager:
             cost_per_foot DECIMAL(10, 2),
             distance_to_pipe DECIMAL(10, 2),
             cost_per_foot_to_pipe DECIMAL(10, 2),
-            FOREIGN KEY (uwi) REFERENCES uwis (uwi),
+            FOREIGN KEY (UWI) REFERENCES UWIs (UWI),
             FOREIGN KEY (scenario_id) REFERENCES scenario_names (id)
         )
         """
@@ -1644,18 +1644,18 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def delete_pad(self, scenario_id, uwi):
+    def delete_pad(self, scenario_id, UWI):
         """Delete a pad from the database based on scenario ID and UWI."""
         query = """
         DELETE FROM well_pads
-        WHERE scenario_id = ? AND uwi = ?
+        WHERE scenario_id = ? AND UWI = ?
         """
         try:
             self.connect()
             cursor = self.connection.cursor()
-            cursor.execute(query, (scenario_id, uwi))
+            cursor.execute(query, (scenario_id, UWI))
             self.connection.commit()
-            logging.info(f"Deleted pad: Scenario ID={scenario_id}, UWI={uwi}")
+            logging.info(f"Deleted pad: Scenario ID={scenario_id}, UWI={UWI}")
         except sqlite3.Error as e:
             logging.error(f"Error deleting pad: {e}")
             self.connection.rollback()
@@ -1692,25 +1692,25 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def remove_well_pad_for_scenario(self, uwi, scenario_id):
+    def remove_well_pad_for_scenario(self, UWI, scenario_id):
         """
         Remove a well pad from the well_pads table for the given UWI and scenario_id.
 
-        :param uwi: The unique well identifier (UWI) to remove.
+        :param UWI: The unique well identifier (UWI) to remove.
         :param scenario_id: The scenario ID associated with the well pad to remove.
         """
         query = """
         DELETE FROM well_pads
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
         try:
             self.connect()
             cursor = self.connection.cursor()
-            cursor.execute(query, (uwi, scenario_id))
+            cursor.execute(query, (UWI, scenario_id))
             self.connection.commit()
-            print(f"Well pad with UWI '{uwi}' removed from scenario ID {scenario_id}.")
+            print(f"Well pad with UWI '{UWI}' removed from scenario ID {scenario_id}.")
         except sqlite3.Error as e:
-            print(f"Error removing well pad for UWI '{uwi}' and scenario ID {scenario_id}:", e)
+            print(f"Error removing well pad for UWI '{UWI}' and scenario ID {scenario_id}:", e)
             self.connection.rollback()
         finally:
             cursor.close()
@@ -1725,12 +1725,12 @@ class DatabaseManager:
         :param well_pad_data: A dictionary containing well pad data.
         """
         # Validate required keys
-        if 'uwi' not in well_pad_data or 'scenario_id' not in well_pad_data:
-            raise ValueError("Both 'uwi' and 'scenario_id' are required fields.")
+        if 'UWI' not in well_pad_data or 'scenario_id' not in well_pad_data:
+            raise ValueError("Both 'UWI' and 'scenario_id' are required fields.")
 
         query = """
         INSERT INTO well_pads (
-            uwi,
+            UWI,
             scenario_id,
             total_depth,
             total_capex_cost,
@@ -1755,7 +1755,7 @@ class DatabaseManager:
 
             # Use .get() for optional fields to provide default value (None) if they are missing
             cursor.execute(query, (
-                well_pad_data['uwi'],                           # Required
+                well_pad_data['UWI'],                           # Required
                 well_pad_data['scenario_id'],                  # Required
                 well_pad_data.get('total_depth'),            # Optional
                 well_pad_data.get('total_capex_cost'),         # Optional
@@ -1785,20 +1785,20 @@ class DatabaseManager:
             cursor.close()
             self.disconnect()
 
-    def update_well_pad_decline_curve(self, planned_uwi, scenario_id, matched_uwi):
+    def update_well_pad_decline_curve(self, planned_UWI, scenario_id, matched_UWI):
         """
         Update the decline_curve for a planned well in a specific scenario.
         Only updates if the well exists in the given scenario.
     
-        :param planned_uwi: The UWI of the planned well
+        :param planned_UWI: The UWI of the planned well
         :param scenario_id: The scenario ID to check/update
-        :param matched_uwi: The matched UWI to set as decline_curve
+        :param matched_UWI: The matched UWI to set as decline_curve
         """
         # First check if well exists in this scenario
         check_query = """
-        SELECT uwi 
+        SELECT UWI 
         FROM well_pads 
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
     
         # Update query to run if match found
@@ -1808,7 +1808,7 @@ class DatabaseManager:
             decline_curve = ?,
             decline_curve_type = 'UWI'
         WHERE
-            uwi = ? 
+            UWI = ? 
             AND scenario_id = ?
         """
     
@@ -1817,20 +1817,20 @@ class DatabaseManager:
             cursor = self.connection.cursor()
         
             # Check for existing well in scenario
-            cursor.execute(check_query, (planned_uwi, scenario_id))
+            cursor.execute(check_query, (planned_UWI, scenario_id))
             result = cursor.fetchone()
         
             if result:
                 # Well exists in scenario, proceed with update
-                # Fixed parameter order to ensure matched_uwi goes into decline_curve
-                cursor.execute(update_query, (matched_uwi, planned_uwi, scenario_id))
+                # Fixed parameter order to ensure matched_UWI goes into decline_curve
+                cursor.execute(update_query, (matched_UWI, planned_UWI, scenario_id))
                 self.connection.commit()
             
                 # Updated print statement to show actual values being set
-                print(f"✅ Well pad for UWI {planned_uwi} updated:")
-                print(f"   → decline_curve = {matched_uwi}, decline_curve_type = 'UWI', scenario_id = {scenario_id}")
+                print(f"✅ Well pad for UWI {planned_UWI} updated:")
+                print(f"   → decline_curve = {matched_UWI}, decline_curve_type = 'UWI', scenario_id = {scenario_id}")
             else:
-                print(f"❌ No matching well found for UWI {planned_uwi} in Scenario {scenario_id}")
+                print(f"❌ No matching well found for UWI {planned_UWI} in Scenario {scenario_id}")
             
         except sqlite3.Error as e:
             print(f"❌ Error updating decline curve: {e}")
@@ -1841,26 +1841,26 @@ class DatabaseManager:
 
 
 
-    def update_well_pad_decline_curve(self, planned_uwi, scenario_id, matched_uwi):
+    def update_well_pad_decline_curve(self, planned_UWI, scenario_id, matched_UWI):
         """
         Update the decline_curve for a planned well in a specific scenario.
         Only updates if the well exists in the given scenario.
     
-        :param planned_uwi: The UWI of the planned well
+        :param planned_UWI: The UWI of the planned well
         :param scenario_id: The scenario ID to check/update
-        :param matched_uwi: The matched UWI to set as decline_curve
+        :param matched_UWI: The matched UWI to set as decline_curve
         """
         check_query = """
-        SELECT uwi 
+        SELECT UWI 
         FROM well_pads 
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
     
         update_query = """
         UPDATE well_pads
         SET decline_curve = ?,
             decline_curve_type = 'UWI'
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
     
         try:
@@ -1868,24 +1868,24 @@ class DatabaseManager:
             cursor = self.connection.cursor()
         
             print("DEBUG - Input values:")
-            print(f"planned_uwi: {planned_uwi}")
+            print(f"planned_UWI: {planned_UWI}")
             print(f"scenario_id: {scenario_id}")
-            print(f"matched_uwi: {matched_uwi}")
+            print(f"matched_UWI: {matched_UWI}")
         
-            cursor.execute(check_query, (planned_uwi, scenario_id))
+            cursor.execute(check_query, (planned_UWI, scenario_id))
             result = cursor.fetchone()
         
             if result:
-                cursor.execute(update_query, (matched_uwi, planned_uwi, scenario_id))
+                cursor.execute(update_query, (matched_UWI, planned_UWI, scenario_id))
                 self.connection.commit()
             
                 print("\nDEBUG - After update:")
-                print(f"SET decline_curve = {matched_uwi}")
-                print(f"WHERE uwi = {planned_uwi}")
+                print(f"SET decline_curve = {matched_UWI}")
+                print(f"WHERE UWI = {planned_UWI}")
                 print(f"AND scenario_id = {scenario_id}")
             
             else:
-                print(f"No matching well found for UWI {planned_uwi} in Scenario {scenario_id}")
+                print(f"No matching well found for UWI {planned_UWI} in Scenario {scenario_id}")
             
         except sqlite3.Error as e:
             print(f"Error updating decline curve: {e}")
@@ -1978,11 +1978,11 @@ class DatabaseManager:
             self.connect()
             query = """
             INSERT OR REPLACE INTO well_pads (
-                uwi, scenario_id, start_date, decline_curve
+                UWI, scenario_id, start_date, decline_curve
             ) VALUES (?, ?, ?, ?)
             """
             self.cursor.execute(query, (
-                well_scenario_data['uwi'], 
+                well_scenario_data['UWI'], 
                 well_scenario_data['scenario_id'], 
                 well_scenario_data['start_date'], 
                 well_scenario_data['decline_curve']
@@ -2010,14 +2010,14 @@ class DatabaseManager:
 
                 # Create an insert or replace query
                 insert_or_replace_query = """
-                INSERT OR REPLACE INTO sum_of_errors (scenario_id, uwi, sum_error_oil, sum_error_gas)
+                INSERT OR REPLACE INTO sum_of_errors (scenario_id, UWI, sum_error_oil, sum_error_gas)
                 VALUES (?, ?, ?, ?)
                 """
 
                 # Execute the query
                 self.cursor.execute(insert_or_replace_query, (
                     row_dict['scenario_id'],
-                    row_dict['uwi'],
+                    row_dict['UWI'],
                     row_dict['sum_error_oil'],
                     row_dict['sum_error_gas']
                 ))
@@ -2086,9 +2086,9 @@ class DatabaseManager:
         """
         try:
             self.connect()  # Ensure your database connection method is functional
-            self.cursor.execute("SELECT uwi, total_length FROM uwis")
+            self.cursor.execute("SELECT UWI, total_length FROM UWIs")
             results = self.cursor.fetchall()  # Fetch all results
-            return [{"uwi": str(row[0]), "total_length": row[1]} for row in results]
+            return [{"UWI": str(row[0]), "total_length": row[1]} for row in results]
         except sqlite3.Error as e:
             print("Error retrieving UWIs and total lengths:", e)
             return []
@@ -2155,7 +2155,7 @@ class DatabaseManager:
         query = """
         SELECT 
             id, 
-            uwi, 
+            UWI, 
             start_date,
             decline_curve_type,
             decline_curve,
@@ -2211,7 +2211,7 @@ class DatabaseManager:
         query = """
         SELECT 
             id, 
-            uwi, 
+            UWI, 
             start_date,
             decline_curve_type,
             decline_curve,
@@ -2251,28 +2251,28 @@ class DatabaseManager:
         finally:
             cursor.close()
             self.disconnect()
-    def get_well_pads_for_wells(self, scenario_id, well_uwis):
+    def get_well_pads_for_wells(self, scenario_id, well_UWIs):
         """
         Retrieve well pad data for specific wells in a given scenario.
 
         :param scenario_id: Scenario ID to filter well pads.
-        :param well_uwis: List of UWIs to filter the well pads.
+        :param well_UWIs: List of UWIs to filter the well pads.
         :return: DataFrame containing well pad data for the specified wells.
         """
-        if not well_uwis:
+        if not well_UWIs:
             return pd.DataFrame()  # Return an empty DataFrame if no wells are selected
 
         query = """
-        SELECT id, uwi, total_depth, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
+        SELECT id, UWI, total_depth, total_capex_cost, total_opex_cost, drill_time, prod_type, oil_model_status, gas_model_status,
                pad_cost, exploration_cost, cost_per_foot, distance_to_pipe, cost_per_foot_to_pipe, start_date
         FROM well_pads
-        WHERE scenario_id = ? AND uwi IN ({})
-        """.format(",".join("?" * len(well_uwis)))
+        WHERE scenario_id = ? AND UWI IN ({})
+        """.format(",".join("?" * len(well_UWIs)))
 
         try:
             self.connect()
             cursor = self.connection.cursor()
-            cursor.execute(query, [scenario_id] + well_uwis)
+            cursor.execute(query, [scenario_id] + well_UWIs)
             rows = cursor.fetchall()
 
             # Get the column names
@@ -2386,7 +2386,7 @@ class DatabaseManager:
         """Retrieve all UIWs associated with a specific scenario."""
         try:
             self.connect()
-            query = "SELECT uwi FROM well_pads WHERE scenario_id = ?"
+            query = "SELECT UWI FROM well_pads WHERE scenario_id = ?"
             self.cursor.execute(query, (scenario_id,))
             rows = self.cursor.fetchall()
             return [row[0] for row in rows]  # Extract UIWs
@@ -2558,22 +2558,22 @@ class DatabaseManager:
             print("Error fetching scenario ID:", e)
             return None
 
-    def get_well_pad_id(self, uwi, scenario_id):
+    def get_well_pad_id(self, UWI, scenario_id):
         """
         Retrieve the well pad ID for a given UWI and scenario ID.
 
-        :param uwi: The unique well identifier (UWI).
+        :param UWI: The unique well identifier (UWI).
         :param scenario_id: The scenario ID associated with the well pad.
         :return: The well pad ID if found, otherwise None.
         """
         query = """
         SELECT id
         FROM well_pads
-        WHERE uwi = ? AND scenario_id = ?
+        WHERE UWI = ? AND scenario_id = ?
         """
         try:
             self.connect()
-            self.cursor.execute(query, (uwi, scenario_id))
+            self.cursor.execute(query, (UWI, scenario_id))
             result = self.cursor.fetchone()
             return result[0] if result else None
         except sqlite3.Error as e:
@@ -2607,13 +2607,13 @@ class DatabaseManager:
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS directional_surveys (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            uwi TEXT NOT NULL,
+            UWI TEXT NOT NULL,
             md REAL NOT NULL,  -- Measured Depth
             tvd REAL NOT NULL,  -- True Vertical Depth
             "X Offset" REAL NOT NULL,
             "Y Offset" REAL NOT NULL,
             "Cumulative Distance" REAL NOT NULL,
-            FOREIGN KEY (uwi) REFERENCES uwis(uwi)
+            FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
         );
         """
         try:
@@ -2625,14 +2625,14 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def insert_directional_survey(self, uwi, x_offset, y_offset, md_depth, tvd_depth, inclination):
+    def insert_directional_survey(self, UWI, x_offset, y_offset, md_depth, tvd_depth, inclination):
         self.connect()
         insert_sql = """
-        INSERT INTO directional_surveys (uwi, x_offset, y_offset, md_depth, tvd_depth, inclination)
+        INSERT INTO directional_surveys (UWI, x_offset, y_offset, md_depth, tvd_depth, inclination)
         VALUES (?, ?, ?, ?, ?, ?)
         """
         try:
-            self.cursor.execute(insert_sql, (uwi, x_offset, y_offset, md_depth, tvd_depth, inclination))
+            self.cursor.execute(insert_sql, (UWI, x_offset, y_offset, md_depth, tvd_depth, inclination))
             self.connection.commit()
             print("Directional survey inserted successfully.")
         except sqlite3.Error as e:
@@ -2659,7 +2659,46 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def update_parent_well_counts(self, uwi_counts, scenario_id):
+
+
+    def get_directional_surveys_dataframe(self):
+        """
+        Fetches directional survey data from the database and returns it as a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the directional survey data.
+        """
+        self.connect()
+        query_sql = "SELECT * FROM directional_surveys"  # Modify table name if needed
+
+        try:
+            self.cursor.execute(query_sql)
+            rows = self.cursor.fetchall()  # Fetch all rows
+
+            # Get column names from cursor.description
+            column_names = [desc[0] for desc in self.cursor.description]
+
+            # Convert to DataFrame
+            df = pd.DataFrame(rows, columns=column_names)
+
+            # Debugging: Print first few rows to verify correctness
+            print(f"🔹 Retrieved {len(df)} rows from directional_surveys")
+            print(df.head())
+
+            return df  # Return the DataFrame directly
+
+        except sqlite3.Error as e:
+            print("Error querying directional surveys:", e)
+            return pd.DataFrame()  # Return an empty DataFrame on error
+
+        finally:
+            self.disconnect()
+
+
+
+
+
+    def update_parent_well_counts(self, UWI_counts, scenario_id):
         """
         Update parent_wells in model_properties for matching UWI and scenario_id
         Takes a list of counts
@@ -2668,14 +2707,14 @@ class DatabaseManager:
             self.connect()
         
             # Direct update for each count in the list
-            for entry in uwi_counts:  # Now iterating over list
-                uwi = entry[0]  # First item is UWI
+            for entry in UWI_counts:  # Now iterating over list
+                UWI = entry[0]  # First item is UWI
                 count = entry[1]  # Second item is count
                 self.cursor.execute("""
                     UPDATE model_properties 
                     SET parent_wells = ?
-                    WHERE uwi = ? AND scenario_id = ?
-                """, (count, uwi, scenario_id))
+                    WHERE UWI = ? AND scenario_id = ?
+                """, (count, UWI, scenario_id))
             
             self.connection.commit()
         
@@ -2720,7 +2759,7 @@ class DatabaseManager:
             for attr in attributes:
                 # Split attribute into table and column name
                 table, column = attr.split('.')
-        
+                print(table, column)
                 try:
                     # Try uppercase UWI first
                     try:
@@ -2733,14 +2772,14 @@ class DatabaseManager:
                         df_attr.set_index('UWI', inplace=True)
                 
                     except:
-                        # If that fails, try lowercase uwi
+                        # If that fails, try lowercase UWI
                         query = f"""
-                        SELECT uwi, "{column}" 
+                        SELECT UWI, "{column}" 
                         FROM "{table}" 
-                        WHERE uwi IN ({','.join(['?']*len(wells))})
+                        WHERE UWI IN ({','.join(['?']*len(wells))})
                         """
                         df_attr = pd.read_sql(query, self.connection, params=wells)
-                        df_attr.set_index('uwi', inplace=True)
+                        df_attr.set_index('UWI', inplace=True)
             
                     # Add to result DataFrame
                     result_df[attr] = df_attr[column]
@@ -2764,6 +2803,7 @@ class DatabaseManager:
         Returns True only if ALL non-NULL values are numeric.
         """
         try:
+            self.connect()
             for row in data:
                 if row[col_idx] is not None and row[col_idx] != '':
                     # Try converting to float to check if numeric
@@ -2776,70 +2816,60 @@ class DatabaseManager:
             return False
 
     def get_numeric_attributes(self):
-        """
-        Discover and return strictly numeric attributes from zone tables.
-        Excludes any columns with mixed types or string values.
-        """
         try:
             self.connect()
             numeric_columns = set()
             well_zones = self.fetch_zone_names_by_type("Well")
-        
+            print("Well zones:", well_zones)
             for zone_tuple in well_zones:
                 zone_name = zone_tuple[0]
                 try:
-                    # Fetch zone table data
-                    data, columns = self.fetch_zone_table_data(zone_name)
+                    zone_table_name = self.get_table_name_from_zone(zone_name)
+                    print(zone_table_name)
+                    data, columns = self.fetch_zone_table_data(zone_table_name)
                 
-                    # Process each column except UWI
                     for col in columns[1:]:  # Skip UWI column
                         col_idx = columns.index(col)
                     
-                        # Enhanced numeric check
                         if self._is_numeric_column(data, col_idx):
-                            # Additional validation: check for consistent data type
                             sample_values = [row[col_idx] for row in data 
                                            if row[col_idx] is not None and row[col_idx] != '']
                         
-                            if sample_values:  # Only process if we have non-null values
+                            if sample_values:
                                 try:
-                                    # Convert all values to float to ensure consistency
                                     all_numeric = all(isinstance(float(val), float) 
                                                    for val in sample_values)
                                     if all_numeric:
-                                        numeric_columns.add(f"{zone_name}.{col}")
+                                        numeric_columns.add(f"{zone_table_name}.{col}")
                                 except (ValueError, TypeError):
                                     continue
-                            
+                        
                 except Exception as zone_error:
                     print(f"Skipping zone {zone_name}: {zone_error}")
                     continue
-
+                
             return sorted(list(numeric_columns))
-        
+    
         except Exception as e:
             print(f"Error discovering numeric attributes: {e}")
             return []
-        
+    
         finally:
             self.disconnect()
 
     def create_zones_table(self):
-        """
-        Create the Zones table to store zone names and types if it does not already exist.
-        """
+        """Create the Zones tracking table if it doesn't exist."""
         self.connect()
         try:
-            query = """
-            CREATE TABLE IF NOT EXISTS Zones (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ZoneName TEXT UNIQUE NOT NULL,
-                Type TEXT NOT NULL
-            )
-            """
-            self.cursor.execute(query)
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Zones (
+                    ZoneName TEXT PRIMARY KEY,
+                    Type TEXT NOT NULL,
+                    TableName TEXT NOT NULL,  -- Add this column
+                    UNIQUE(TableName)  -- Ensure table names are unique
+                )
+            """)
             self.connection.commit()
-            print("Zones table created successfully.")
         except sqlite3.Error as e:
             print(f"Error creating Zones table: {e}")
             raise
@@ -2857,148 +2887,128 @@ class DatabaseManager:
         else:
             return "TEXT"  # Default to TEXT for other types
 
-    def create_table_from_df(self, table_name, df):
+    def sanitize_name(self, name):
         """
-        Creates a SQLite table from a pandas DataFrame with sanitized table and column names.
-        Skips columns that fail sanitization or validation.
+        Sanitize names for database use (tables, columns, etc.)
+        """
+        replacements = {
+            '³': '3', '²': '2', '.': '_', '/': '_', '[': '', ']': '',
+            '(': '', ')': '', ' ': '_', '-': '_', '#': '_', '$': '_',
+            '%': '_', '^': '_', '&': '_', '!': '_', '@': '_'
+        }
+        # Apply replacements
+        for old, new in replacements.items():
+            name = name.replace(old, new)
+    
+        # Replace remaining invalid characters
+        name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
+    
+        # Ensure name starts with a letter
+        if not name[0].isalpha():
+            name = f"t_{name}"
+        
+        return name
 
+
+
+    def create_table_from_df(self, zone_name, df):
+        """
+        Creates a SQLite table from a pandas DataFrame for a specific zone.
+    
         Parameters:
-            table_name (str): Desired name of the table.
-            df (pd.DataFrame): The DataFrame to be converted into a table.
-
-        Returns:
-            bool: True if the table was created successfully, False if the table already exists.
+            zone_name (str): The zone name this table is for
+            df (pd.DataFrame): The DataFrame to be converted into a table
         """
-        import re  # Ensure re module is imported
         self.connect()
         try:
-            # Validate and sanitize the table name
-            table_name = table_name.lower().replace(' ', '_').replace('-', '_')
-            if not table_name.isidentifier():
-                table_name = f"t_{table_name}"
-            if not table_name.isidentifier():
-                raise ValueError("Invalid table name after sanitization")
-
-            # Check if the table already exists
-            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-            if self.cursor.fetchone():
-                return False
-
-            # Sanitize column names
-            def sanitize_column(col):
-                replacements = {
-                    '³': '3', '²': '2', '.': '_', '/': '_', '[': '', ']': '',
-                    '(': '', ')': '', ' ': '_', '-': '_', '#': '_', '$': '_',
-                    '%': '_', '^': '_', '&': '_', '!': '_', '@': '_'
-                }
-                for old, new in replacements.items():
-                    col = col.replace(old, new)
-
-                # Replace remaining invalid characters
-                col = re.sub(r'[^a-zA-Z0-9_]', '_', col)
-
-                # Ensure the column name starts with a valid character
-                if not col[0].isalpha():
-                    col = f"c_{col}"
-
-                # Validate column name length
-                if not col:
-                    return None  # Skip invalid column names
-                return col
-
-            # Debug original columns
-            print("Original DataFrame columns:", df.columns.tolist())
-
-            # Sanitize column names and track valid columns
-            valid_columns = []
-            sanitized_columns = []
+            # Get the table name from Zones table
+            self.cursor.execute("SELECT TableName FROM Zones WHERE ZoneName = ?", (zone_name,))
+            result = self.cursor.fetchone()
+            if not result:
+                raise ValueError(f"No zone found with name {zone_name}")
+        
+            table_name = result[0]
+        
+            # Create column definitions
+            columns = []
             for col in df.columns:
-                sanitized_col = sanitize_column(col)
-                if sanitized_col:
-                    valid_columns.append(col)
-                    sanitized_columns.append(sanitized_col)
-                else:
-                    print(f"Skipping invalid column: {col}")
-
-            # Filter DataFrame to include only valid columns
-            df = df[valid_columns]
-            df.columns = sanitized_columns
-
-            # Debug sanitized columns
-            print("Sanitized DataFrame columns:", sanitized_columns)
-
-            # Validate and define column data types
-            columns = ["id INTEGER PRIMARY KEY AUTOINCREMENT"]
-            for col, sanitized_col in zip(valid_columns, sanitized_columns):
-                try:
-                    col_type = self.get_sqlite_type(df[sanitized_col].dtype)
-                    columns.append(f"`{sanitized_col}` {col_type}")
-                except Exception as e:
-                    print(f"Skipping column '{col}' due to error: {e}")
-
-            # Create table query
-            create_query = f"""CREATE TABLE `{table_name}` ({', '.join(columns)})"""
-            print("Create Table Query:", create_query)
-            self.cursor.execute(create_query)
-
-            # Insert data if DataFrame is not empty
-            if not df.empty:
-                df = df.where(pd.notnull(df), None)  # Replace NaN with None
-                placeholders = ','.join(['?' for _ in sanitized_columns])
-                insert_query = f"INSERT INTO `{table_name}` (`{'`,`'.join(sanitized_columns)}`) VALUES ({placeholders})"
-                print("Insert Query:", insert_query)
-                self.cursor.executemany(insert_query, df.to_records(index=False).tolist())
-
-            # Commit the transaction
+                sql_type = self.get_sqlite_type(df[col].dtype)
+                safe_col_name = self.sanitize_name(col)
+                columns.append(f"{safe_col_name} {sql_type}")
+        
+            # Create the table
+            create_table_sql = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                {', '.join(columns)}
+            )
+            """
+            self.cursor.execute(create_table_sql)
+        
+            # Insert the data
+            # Convert column names to their sanitized versions
+            sanitized_columns = [self.sanitize_name(col) for col in df.columns]
+        
+            # Create the INSERT statement
+            placeholders = ', '.join(['?' for _ in sanitized_columns])
+            column_names = ', '.join(sanitized_columns)
+            insert_sql = f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"
+        
+            # Convert DataFrame to list of tuples for insertion
+            # Replace NaN with None for SQLite compatibility
+            data = df.replace({np.nan: None}).values.tolist()
+        
+            # Execute the insert
+            self.cursor.executemany(insert_sql, data)
             self.connection.commit()
-            print(f"Table '{table_name}' created and data inserted successfully.")
+        
             return True
-
+        
         except Exception as e:
-            # Rollback on error and log the exception
             self.connection.rollback()
-            print(f"Error creating table '{table_name}': {e}")
+            print(f"Error creating table for zone '{zone_name}': {e}")
             raise
         finally:
-            # Disconnect from the database
             self.disconnect()
-
 
 
     def add_zone_names(self, zone_name, zone_type):
         """
         Add a zone entry with a specific type to the database.
-
-        Parameters:
-            zone_name (str): The name of the zone to add.
-            zone_type (str): The type of the zone (must be one of 'Zones', 'Intersections', 'Well').
-
-        Returns:
-            bool: True if the zone name was added, False if it already exists.
         """
+        if not zone_name or not zone_name.strip():
+            raise ValueError("Zone name cannot be empty")
+        
+        zone_name = zone_name.strip()
         valid_types = {'Zone', 'Intersections', 'Well'}
         if zone_type not in valid_types:
             raise ValueError(f"Invalid zone type '{zone_type}'. Must be one of {valid_types}.")
-
+    
+        # Sanitize the table name
+        table_name = self.sanitize_name(zone_name)
+    
         self.connect()
         try:
-            # Check if the zone name already exists
-            self.cursor.execute("SELECT COUNT(*) FROM Zones WHERE ZoneName = ? AND Type = ?", (zone_name, zone_type))
-            if self.cursor.fetchone()[0] > 0:
-                print(f"Zone '{zone_name}' with type '{zone_type}' already exists.")
-                return False  # Zone name already exists
 
-            # Insert the zone name with the given type
+        
+            # Check if the zone name already exists
+            self.cursor.execute("SELECT COUNT(*) FROM Zones WHERE ZoneName = ? OR TableName = ?", 
+                              (zone_name, table_name))
+            if self.cursor.fetchone()[0] > 0:
+                print(f"Zone '{zone_name}' or table '{table_name}' already exists.")
+                return False
+
+            # Insert the zone name with the given type and sanitized table name
             self.cursor.execute("""
-                INSERT INTO Zones (ZoneName, Type)
-                VALUES (?, ?)
-            """, (zone_name, zone_type))
+                INSERT INTO Zones (ZoneName, Type, TableName)
+                VALUES (?, ?, ?)
+            """, (zone_name, zone_type, table_name))
+    
             self.connection.commit()
-            print(f"Zone '{zone_name}' with type '{zone_type}' added successfully.")
             return True
-        except sqlite3.Error as e:
-            print(f"Error adding zone name '{zone_name}' with type '{zone_type}': {e}")
+        
+        except Exception as e:
             self.connection.rollback()
+            print(f"Error adding zone '{zone_name}': {e}")
             raise
         finally:
             self.disconnect()
@@ -3086,6 +3096,90 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def append_zone_data(self, zone_name, new_data):
+        """
+        Appends new UWI data to an existing zone table while preserving existing records.
+    
+        Args:
+            zone_name (str): Name of the zone table
+            new_data (pd.DataFrame): DataFrame containing new UWI records to be added
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        print(f"\n🔹 Appending new UWIs to table: {zone_name}")
+        print(f"Number of new records to append: {len(new_data)}")
+        print(f"Column types of new data: {new_data.dtypes}")
+    
+        self.connect()
+        if not self.connection:
+            return False
+        
+        try:
+            # Ensure the table exists by creating it if necessary
+            dtype_mapping = {
+                'UWI': 'TEXT',
+                'Zone_Name': 'TEXT',
+                'Top_Depth': 'REAL',
+                'Base_Depth': 'REAL',
+                'Top_X_Offset': 'REAL',
+                'Top_Y_Offset': 'REAL',
+                'Base_X_Offset': 'REAL',
+                'Base_Y_Offset': 'REAL',
+                'Angle_Top': 'REAL',
+                'Angle_Base': 'REAL'
+            }
+        
+            # Clean column names to match database convention
+            new_data.columns = [col.replace(' ', '_') for col in new_data.columns]
+        
+            # If table doesn't exist, create it with the new data
+            cursor = self.connection.cursor()
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{zone_name}'")
+            table_exists = cursor.fetchone() is not None
+        
+            if not table_exists:
+                new_data.to_sql(
+                    zone_name,
+                    self.connection,
+                    if_exists='replace',
+                    index=False,
+                    dtype=dtype_mapping
+                )
+            else:
+                # Append only new records
+                new_data.to_sql(
+                    zone_name,
+                    self.connection,
+                    if_exists='append',
+                    index=False,
+                    dtype=dtype_mapping
+                )
+        
+            # Verify the append operation
+            cursor.execute(f"SELECT COUNT(*) FROM {zone_name}")
+            total_records = cursor.fetchone()[0]
+            print(f"\n✅ Successfully appended new records!")
+            print(f"Total records in table: {total_records}")
+        
+            # Verify column types
+            cursor.execute(f"PRAGMA table_info({zone_name})")
+            table_info = cursor.fetchall()
+            print("\nColumn types in database:")
+            for col in table_info:
+                print(f"{col[1]}: {col[2]}")
+            
+            return True
+        
+        except Exception as e:
+            print(f"❌ Error appending to table: {e}")
+            self.connection.rollback()
+            return False
+        
+        finally:
+            self.disconnect()
+
+
     def save_merged_zone(self, merged_data: pd.DataFrame, new_zone_name: str) -> bool:
         """
         Save the merged zone data to a new table named after the new zone
@@ -3143,7 +3237,7 @@ class DatabaseManager:
             self.db_manager.disconnect()
 
 
-    def fetch_correlation_data(self, table_name, column_name, uwis):
+    def fetch_correlation_data(self, table_name, column_name, UWIs):
         """
         Fetch specific column data for selected UWIs.
         Parameters:
@@ -3152,7 +3246,7 @@ class DatabaseManager:
             The name of the zone/table
         column_name : str
             The specific column to fetch
-        uwis : list
+        UWIs : list
             List of UWIs to fetch data for
         Returns:
         --------
@@ -3175,11 +3269,11 @@ class DatabaseManager:
             actual_table = matching_tables[0]
         
             # Create placeholders for SQL IN clause
-            placeholders = ','.join('?' * len(uwis))
+            placeholders = ','.join('?' * len(UWIs))
         
             # Fetch just the specific column for the selected UWIs
             query = f"SELECT UWI, {column_name} FROM {actual_table} WHERE UWI IN ({placeholders})"
-            self.cursor.execute(query, uwis)
+            self.cursor.execute(query, UWIs)
         
             # Convert to DataFrame
             results = self.cursor.fetchall()
@@ -3262,58 +3356,52 @@ class DatabaseManager:
 
 
     def update_zone_data(self, zone_name, updated_data):
-        """Updates zone table with new attributes"""
+        """Overwrites the entire zone table with new data instead of updating row-by-row."""
+        print(f"\n🔹 Overwriting Table: {zone_name}")
+        print(f"Column types before save: {updated_data.dtypes}")  # Log types before save
+    
         self.connect()
         if not self.connection:
             return False
-        
+    
         try:
+            # Drop the existing table if it exists
             cursor = self.connection.cursor()
-            sanitized_zone_name = zone_name.replace(" ", "_")
-        
-            # Get existing columns
-            cursor.execute(f"PRAGMA table_info({sanitized_zone_name})")
-            existing_columns = [row[1] for row in cursor.fetchall()]
-        
-            # Find new columns
-            new_columns = [col for col in updated_data.columns 
-                          if col not in existing_columns and 
-                          col not in ['id', 'ID', 'UWI', 'Top_Depth', 'Base_Depth']]
-        
-            # Add new columns
-            for col in new_columns:
-                sanitized_col = col.replace(" ", "_")
-                cursor.execute(f"ALTER TABLE {sanitized_zone_name} ADD COLUMN {sanitized_col} REAL")
-        
-            # Update values
-            for _, row in updated_data.iterrows():
-                # Build update for just the new columns
-                set_clause = ", ".join([f"{col.replace(' ', '_')} = ?" for col in new_columns])
-                values = [float(row[col]) if pd.notnull(row[col]) else None for col in new_columns]
-            
-                # Match on UWI and depths
-                where_clause = """
-                    UWI = ? 
-                    AND ABS(Top_Depth - ?) < 0.001 
-                    AND ABS(Base_Depth - ?) < 0.001
-                """
-                values.extend([row['UWI'], float(row['Top_Depth']), float(row['Base_Depth'])])
-            
-                query = f"""
-                    UPDATE {sanitized_zone_name}
-                    SET {set_clause}
-                    WHERE {where_clause}
-                """
-                cursor.execute(query, values)
-        
+            cursor.execute(f"DROP TABLE IF EXISTS {zone_name}")
             self.connection.commit()
+        
+            # Define SQLite data types explicitly for critical columns
+            dtype_mapping = {
+                'UWI': 'TEXT',  # Store UWI as TEXT since it's a string
+                'Top_Depth': 'REAL',
+                'Base_Depth': 'REAL'
+                # Add any other columns that need specific types
+            }
+        
+            # Save the updated DataFrame back to the database with explicit dtypes
+            updated_data.to_sql(
+                zone_name, 
+                self.connection, 
+                if_exists="replace", 
+                index=False,
+                dtype=dtype_mapping
+            )
+        
+            # Verify the types after save
+            cursor = self.connection.cursor()
+            cursor.execute(f"PRAGMA table_info({zone_name})")
+            table_info = cursor.fetchall()
+            print("\n✅ Table successfully overwritten!")
+            print("Column types in database:")
+            for col in table_info:
+                print(f"{col[1]}: {col[2]}")  # col[1] is name, col[2] is type
+            
             return True
         
         except Exception as e:
-            print(f"Error updating table: {e}")
+            print(f"❌ Error overwriting table: {e}")
             self.connection.rollback()
             return False
-        
         finally:
             self.disconnect()
 
@@ -3338,7 +3426,7 @@ class DatabaseManager:
        zone_data_df = pd.read_sql(query, self.db_manager.connection)
        return zone_data_df
 
-    def update_zone_angles(self, zone_name, uwi, angle_top, angle_base):
+    def update_zone_angles(self, zone_name, UWI, angle_top, angle_base):
        """Update angles for a specific UWI in a zone table."""
        self.connect()
        try:
@@ -3347,7 +3435,7 @@ class DatabaseManager:
            SET Angle_Top = ?, Angle_Base = ?
            WHERE UWI = ?
            """
-           self.cursor.execute(query, (angle_top, angle_base, uwi))
+           self.cursor.execute(query, (angle_top, angle_base, UWI))
            self.connection.commit()
        finally:
            self.disconnect()
@@ -3359,6 +3447,26 @@ class DatabaseManager:
             return pd.read_sql(f"SELECT * FROM {table_name}", self.connection)
         finally:
             self.disconnect()
+
+    def get_table_name_from_zone(self, zone_name):
+        """
+        Get the associated table name for a given zone name.
+    
+        Parameters:
+            zone_name (str): The name of the zone
+        
+        Returns:
+            str: The associated table name, or None if not found
+        """
+        self.connect()
+        try:
+            self.cursor.execute("SELECT TableName FROM Zones WHERE ZoneName = ?", (zone_name,))
+            result = self.cursor.fetchone()
+            return result[0] if result else None
+        except Exception as e:
+            print(f"Error getting table name for zone '{zone_name}': {e}")
+            return None
+
 
     def fetch_table_columns(self, table_name):
         """
@@ -3451,4 +3559,368 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
+    def create_regression_attributes_table(self):
+        self.connect()
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS regression_attributes (
+            id INTEGER PRIMARY KEY,
+            UWI TEXT,
+            attribute_name TEXT,
+            attribute_value REAL,
+            source_table TEXT,
+            source_column TEXT,
+            FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
+        )
+        """
+        try:
+            self.cursor.execute(create_table_sql)
+            self.connection.commit()
+            print("Regression attributes table created successfully.")
+        except sqlite3.Error as e:
+            print("Error creating regression attributes table:", e)
+        finally:
+            self.disconnect()
 
+    def create_regression_table(self):
+        self.connect()
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS regression_tables (
+            table_name TEXT PRIMARY KEY,
+            description TEXT,
+            date_created TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    
+        try:
+            self.cursor.execute(create_table_sql)
+            self.connection.commit()
+            print("Regression tables catalog created successfully.")
+        except sqlite3.Error as e:
+            print("Error creating regression tables catalog:", e)
+        finally:
+            self.disconnect()
+
+    def delete_regression_table(self, table_name, within_transaction=False):
+        """Delete a regression table and its catalog entry"""
+        if not within_transaction:
+            self.connect()
+        try:
+            # First delete the actual table
+            drop_table_sql = f"""
+            DROP TABLE IF EXISTS {table_name}
+            """
+        
+            # Then delete from the catalog
+            delete_from_catalog_sql = """
+            DELETE FROM regression_tables
+            WHERE table_name = ?
+            """
+        
+            self.cursor.execute(drop_table_sql)
+            self.cursor.execute(delete_from_catalog_sql, (table_name,))
+        
+            if not within_transaction:
+                self.connection.commit()
+                print(f"Table '{table_name}' deleted successfully.")
+        except sqlite3.Error as e:
+            if not within_transaction:
+                self.connection.rollback()
+            print(f"Error deleting table '{table_name}': {e}")
+            raise e
+        finally:
+            if not within_transaction:
+                self.disconnect()
+
+    def add_regression_table(self, table_name, description, within_transaction=False):
+        """Add a table to the regression tables catalog"""
+        if not within_transaction:
+            self.connect()
+        try:
+            insert_sql = """
+            INSERT INTO regression_tables (table_name, description)
+            VALUES (?, ?)
+            """
+        
+            self.cursor.execute(insert_sql, (table_name, description))
+        
+            if not within_transaction:
+                self.connection.commit()
+                print(f"Table '{table_name}' added to catalog.")
+        except sqlite3.Error as e:
+            if not within_transaction:
+                self.connection.rollback()
+            print(f"Error adding table '{table_name}' to catalog: {e}")
+            raise e
+        finally:
+            if not within_transaction:
+                self.disconnect()
+
+    def save_correlation_to_regression(self, table_name, data_matrix, description=None, replace_mode=True):
+        """
+        Save selected attribute data to a regression table
+        Args:
+            table_name: Name of the regression table to create/update
+            data_matrix: Pandas DataFrame containing the raw data (indexed by UWI)
+            description: Optional description for the table
+            replace_mode: If True, replaces existing data, if False, adds to it
+        """
+        self.connect()
+        try:
+            # Start transaction
+            self.connection.execute("BEGIN")
+    
+            if replace_mode:
+                # Delete existing table if it exists
+                self.delete_regression_table(table_name, within_transaction=True)
+        
+                # Add to regression tables catalog
+                self.add_regression_table(table_name, description, within_transaction=True)
+        
+                # Create the new regression table
+                create_table_sql = f"""
+                CREATE TABLE {table_name} (
+                    id INTEGER PRIMARY KEY,
+                    attribute_name TEXT,
+                    attribute_value REAL,
+                    UWI TEXT,
+                    source_table TEXT,
+                    source_column TEXT,
+                    FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
+                )
+                """
+                self.cursor.execute(create_table_sql)
+            else:
+                # If table doesn't exist, create it
+                create_table_sql = f"""
+                CREATE TABLE IF NOT EXISTS {table_name} (
+                    id INTEGER PRIMARY KEY,
+                    attribute_name TEXT,
+                    attribute_value REAL,
+                    UWI TEXT,
+                    source_table TEXT,
+                    source_column TEXT,
+                    FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
+                )
+                """
+                self.cursor.execute(create_table_sql)
+        
+                # Update catalog if needed
+                if not self.get_regression_table_by_name(table_name, within_transaction=True):
+                    self.add_regression_table(table_name, description, within_transaction=True)
+    
+            # Insert data
+            insert_sql = f"""
+            INSERT INTO {table_name} 
+            (attribute_name, attribute_value, UWI, source_table, source_column)
+            VALUES (?, ?, ?, ?, ?)
+            """
+    
+            # Insert the raw data values
+            data_matrix = data_matrix.reset_index()  # Make UWI a column
+    
+            for col in data_matrix.columns:
+                if col != 'UWI':  # Skip the UWI column
+                    source_table, source_column = col.split('.')
+            
+                    if not replace_mode:
+                        # Delete existing entries for this attribute if in add mode
+                        self.cursor.execute(f"""
+                            DELETE FROM {table_name}
+                            WHERE attribute_name = ?
+                        """, (str(col),))
+            
+                    # Add new values
+                    for index, row in data_matrix.iterrows():
+                        value = row[col]
+                        UWI = row['UWI']
+                
+                        # Only insert if value is not null/NaN
+                        if isinstance(value, (int, float)) and not pd.isna(value):
+                            self.cursor.execute(insert_sql, 
+                                (str(col), float(value), str(UWI), str(source_table), str(source_column)))
+    
+            self.connection.commit()
+            print(f"Data saved to regression table: {table_name}")
+    
+        except sqlite3.Error as e:
+            self.connection.rollback()
+            print(f"Error saving to regression table: {e}")
+            raise e
+        finally:
+            self.disconnect()
+
+    def get_regression_tables(self):
+        """Get list of all regression tables and their descriptions"""
+        self.connect()
+        try:
+            self.cursor.execute("SELECT table_name, description FROM regression_tables")
+            tables = self.cursor.fetchall()
+            return tables
+        except sqlite3.Error as e:
+            print(f"Error fetching regression tables: {e}")
+            return []
+        finally:
+            self.disconnect()
+
+    def get_regression_table_by_name(self, table_name, within_transaction=False):
+        """Get specific regression table info"""
+        if not within_transaction:
+            self.connect()
+        try:
+            self.cursor.execute("""
+                SELECT table_name, description 
+                FROM regression_tables 
+                WHERE table_name = ?
+            """, (table_name,))
+            return self.cursor.fetchone()
+        except sqlite3.Error as e:
+            print(f"Error fetching regression table info: {e}")
+            return None
+        finally:
+            if not within_transaction:
+                self.disconnect()
+
+
+    def fetch_correlation_data(self, UWIs, selected_attrs):
+        """Fetch well attribute data for correlation analysis."""
+        try:
+            if not UWIs or not selected_attrs:
+                raise ValueError("No UWIs or attributes selected.")
+
+            attr_selects = []
+            tables = set()
+
+            # Extract table and column names
+            for attr in selected_attrs:
+                table_name, col_name = attr.split('.')
+                tables.add(table_name)
+                if col_name.upper() == 'UWI':
+                    continue  # Skip UWI column
+                attr_selects.append(f'"{table_name}"."{col_name}"')  # Double Quotes for SQL safety
+
+            if not tables:
+                raise ValueError("No valid tables found for the selected attributes.")
+
+            base_table = list(tables)[0]
+            joins = []
+
+            # Create JOINs for multiple tables
+            for table in tables:
+                if table != base_table:
+                    joins.append(f"""
+                        LEFT JOIN {table} ON 
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM pragma_table_info('{table}') WHERE name = 'UWI')
+                            THEN {base_table}.UWI = {table}.UWI
+                            ELSE {base_table}.UWI = {table}.UWI
+                        END
+                    """)
+
+            # SQL IN clause placeholders
+            UWI_placeholders = ', '.join(['?'] * len(UWIs))
+
+            # Build final SQL query
+            query = f"""
+            SELECT 
+                CASE 
+                    WHEN EXISTS (SELECT 1 FROM pragma_table_info('{base_table}') WHERE name = 'UWI')
+                    THEN {base_table}.UWI
+                    ELSE {base_table}.UWI
+                END as UWI,
+                {', '.join(attr_selects)}
+            FROM {base_table}
+            {' '.join(joins)}
+            WHERE {base_table}.UWI IN ({UWI_placeholders})
+               OR {base_table}.UWI IN ({UWI_placeholders})
+            """
+
+            # Execute query
+            self.connect()
+            self.cursor.execute(query, UWIs + UWIs)
+            results = self.cursor.fetchall()
+            self.disconnect()
+
+            return results
+
+        except Exception as e:
+            print(f"Database Query Error: {e}")
+            return None
+
+
+
+
+
+    def get_regression_data(self, table_name, UWIs):
+        """
+        Retrieve regression data for selected UWIs.
+    
+        Parameters:
+        -----------
+        table_name : str
+            The name of the regression table to query.
+        UWIs : list
+            List of UWIs to filter.
+    
+        Returns:
+        --------
+        pandas.DataFrame
+            DataFrame containing the regression data filtered by UWIs.
+        """
+        if not UWIs:
+            print("No UWIs provided.")
+            return None  # Exit early if no UWIs selected
+
+        try:
+            self.connect()
+
+            # Format UWIs for SQL query
+            placeholders = ', '.join(['?'] * len(UWIs))
+
+            query = f"""
+                SELECT * FROM {table_name}
+                WHERE UWI IN ({placeholders})
+            """
+
+            df = pd.read_sql_query(query, self.connection, params=UWIs)
+
+            if df.empty:
+                print(f"No data found for selected UWIs in {table_name}.")
+                return None
+        
+            return df
+
+        except sqlite3.Error as e:
+            print(f"Error fetching regression data: {e}")
+            return None
+        finally:
+            self.disconnect()
+
+
+    def get_unique_attributes(self, table_name):
+        """
+        Retrieve unique attribute names from a regression table.
+    
+        Parameters:
+        -----------
+        table_name : str
+            The name of the regression table to query.
+        
+        Returns:
+        --------
+        list
+            List of unique attribute names.
+        """
+        try:
+            self.connect()
+            query = f"""
+                SELECT DISTINCT attribute_name 
+                FROM {table_name}
+                ORDER BY attribute_name
+            """
+            df = pd.read_sql_query(query, self.connection)
+            return df['attribute_name'].tolist()
+        except sqlite3.Error as e:
+            print(f"Error fetching unique attributes: {e}")
+            return []
+        finally:
+            self.disconnect()

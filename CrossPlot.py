@@ -96,7 +96,7 @@ class CrossPlot3D(QDialog):
                 df = pd.DataFrame(data, columns=columns)
 
                 # Standardize UWI column name
-                df.rename(columns={col: "UWI" for col in df.columns if col.lower() == "uwi"}, inplace=True)
+                df.rename(columns={col: "UWI" for col in df.columns if col.lower() == "UWI"}, inplace=True)
 
                 # Prefix attributes to avoid conflicts (e.g., Value1 -> ZoneA_Value1)
                 df = df.add_prefix(f"{zone_name}_")
@@ -128,7 +128,7 @@ class CrossPlot3D(QDialog):
 
             # Find numeric attributes
             attributes = self.master_df.select_dtypes(include=['float64', 'int64']).columns.tolist()
-            filtered_attributes = [col for col in attributes if col.lower() != "uwi"]
+            filtered_attributes = [col for col in attributes if col.lower() != "UWI"]
 
             # Clear dropdowns & keep them blank
             self.x_attr_dropdown.clear()

@@ -61,9 +61,9 @@ class BulkZoneTicks(QGraphicsItem):
             print(f"Error in paint: {e}")
 
 class WellAttributeBox(QGraphicsRectItem):
-    def __init__(self, uwi, position, color, size=10):
+    def __init__(self, UWI, position, color, size=10):
         super().__init__(-size / 2, -size / 2, size, size)
-        self.uwi = uwi  # Store the UWI associated with this box
+        self.UWI = UWI  # Store the UWI associated with this box
         self.setBrush(QBrush(color))
         self.setPen(Qt.NoPen)  # No border
         self.setPos(position)
@@ -97,9 +97,9 @@ class DrawingArea(QGraphicsView):
         self.intersectionPoints = []
         self.clickPoints = []
         self.rectangles = []
-        self.hovered_uwi = None
-        self.show_uwis = True
-        self.uwi_opacity = 0.5
+        self.hovered_UWI = None
+        self.show_UWIs = True
+        self.UWI_opacity = 0.5
         self.gridPoints = []
         self.gridGroup = None
         self.zoneTicks = []
@@ -107,12 +107,12 @@ class DrawingArea(QGraphicsView):
         self.lineItemPool = []
         self.pixmap_item_pool = []
         self.textItemPool = []
-        self.uwi_items = {}
+        self.UWI_items = {}
         self.well_attribute_boxes = {}
         self.line_items = {}
         self.view_adjusted = False
         self.initial_fit_in_view_done = False 
-        self.show_uwis = True
+        self.show_UWIs = True
         self.show_ticks = True
         self.drainage_size = 400
 
@@ -126,8 +126,8 @@ class DrawingArea(QGraphicsView):
     def reset_boundaries(self):
         self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = self.max_z = 0
         self.bin_size_x = self.bin_size_y = 1
-        self.uwi_width = 80
-        self.uwi_opacity = 1
+        self.UWI_width = 80
+        self.UWI_opacity = 1
         self.line_width = 80
         self.line_opacity = 1.0
         self.scale_factor = 1.0
@@ -156,7 +156,7 @@ class DrawingArea(QGraphicsView):
         self.min_x, self.max_x = min(all_x), max(all_x)
         self.min_y, self.max_y = min(all_y), max(all_y)
 
-        for uwi, well in well_data.items():
+        for UWI, well in well_data.items():
             # Check for heel and toe coordinates
             if 'heel_x' in well and 'heel_y' in well and 'toe_x' in well and 'toe_y' in well and \
                well['heel_x'] is not None and well['toe_x'] is not None:
@@ -172,7 +172,7 @@ class DrawingArea(QGraphicsView):
                     toe_x = float(well['toe_x'])
                     toe_y = float(well['toe_y'])
                 except (ValueError, TypeError):
-                    print(f"Skipping UWI {uwi} due to invalid coordinates")
+                    print(f"Skipping UWI {UWI} due to invalid coordinates")
                     continue
 
                 # Calculate angle between heel and toe
@@ -247,7 +247,7 @@ class DrawingArea(QGraphicsView):
 
                     # Get line color
                     color = md_colors[i] if i < len(md_colors) else QColor(Qt.black)
-                    color.setAlphaF(self.uwi_opacity)
+                    color.setAlphaF(self.UWI_opacity)
 
                     # Create a QGraphicsLineItem
                     line = QGraphicsLineItem(QLineF(adjusted_start_point, adjusted_end_point))
@@ -256,32 +256,32 @@ class DrawingArea(QGraphicsView):
                     pen.setCapStyle(Qt.FlatCap)
                     line.setPen(pen)
                     line.setZValue(5)
-                    line.setData(0, 'uwiline')
+                    line.setData(0, 'UWIline')
                     new_items.append(line)
 
                     # Store the line item by UWI and MD
-                    if uwi not in self.line_items:
-                        self.line_items[uwi] = {}
-                    self.line_items[uwi][md] = line
+                    if UWI not in self.line_items:
+                        self.line_items[UWI] = {}
+                    self.line_items[UWI][md] = line
 
                 # Add UWI text label if enabled
-                if self.show_uwis:
-                    self.add_text_item(uwi, points[0])
+                if self.show_UWIs:
+                    self.add_text_item(UWI, points[0])
 
             # Handle well attribute values if provided
-            if well_attribute_values and uwi in well_attribute_values:
-                color = well_attribute_values[uwi]['color']
+            if well_attribute_values and UWI in well_attribute_values:
+                color = well_attribute_values[UWI]['color']
                 box_position = points[0] + QPointF(0, 20)
 
-                if uwi in self.well_attribute_boxes:
-                    self.well_attribute_boxes[uwi].setPos(box_position)
-                    self.well_attribute_boxes[uwi].update_color(color)
+                if UWI in self.well_attribute_boxes:
+                    self.well_attribute_boxes[UWI].setPos(box_position)
+                    self.well_attribute_boxes[UWI].update_color(color)
                 else:
-                    well_attribute_box = WellAttributeBox(uwi, box_position, color, size=20)
+                    well_attribute_box = WellAttributeBox(UWI, box_position, color, size=20)
                     self.scene.addItem(well_attribute_box)
-                    self.well_attribute_boxes[uwi] = well_attribute_box
+                    self.well_attribute_boxes[UWI] = well_attribute_box
 
-                new_items.append(self.well_attribute_boxes[uwi])
+                new_items.append(self.well_attribute_boxes[UWI])
 
         # Add new items to the scene
         for item in new_items:
@@ -313,10 +313,10 @@ class DrawingArea(QGraphicsView):
 
         flattened_data = []
 
-        for uwi, data in well_data.items():
+        for UWI, data in well_data.items():
             # Debugging: Ensure data is valid
             if not isinstance(data, dict):
-                print(f"Invalid data for UWI {uwi}. Skipping.")
+                print(f"Invalid data for UWI {UWI}. Skipping.")
                 continue
 
   
@@ -330,7 +330,7 @@ class DrawingArea(QGraphicsView):
 
             for i in range(len(mds)):
                 row = {
-                    "UWI": uwi,
+                    "UWI": UWI,
                     "MD": mds[i] if i < len(mds) else None,
                     "X Offset": x_offsets[i] if i < len(x_offsets) else None,
                     "Y Offset": y_offsets[i] if i < len(y_offsets) else None,
@@ -351,15 +351,15 @@ class DrawingArea(QGraphicsView):
 
         print(f"Well data exported successfully to {output_file_path}")
     def clearWellAttributeBoxes(self):
-        for uwi, box in self.well_attribute_boxes.items():
+        for UWI, box in self.well_attribute_boxes.items():
             self.scene.removeItem(box)
         self.well_attribute_boxes.clear()
 
-    def add_text_item(self, uwi_times, position):
+    def add_text_item(self, UWI_times, position):
         try:
-            text_item = QGraphicsTextItem(uwi_times)
-            text_item.setFont(QFont("Arial", self.uwi_width))
-            text_item.setDefaultTextColor(QColor(0, 0, 0, int(255 * self.uwi_opacity)))
+            text_item = QGraphicsTextItem(UWI_times)
+            text_item.setFont(QFont("Arial", self.UWI_width))
+            text_item.setDefaultTextColor(QColor(0, 0, 0, int(255 * self.UWI_opacity)))
             text_item.setPos(position)
 
             transform = QTransform()
@@ -370,13 +370,13 @@ class DrawingArea(QGraphicsView):
             text_item.setZValue(2)
             text_item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
                     # Add a tag or metadata
-            text_item.setData(0, "uwi_label")  # Key 0 with value "uwi_label"
-            text_item.setData(1, uwi_times)   # Key 1 with UWI identifier
+            text_item.setData(0, "UWI_label")  # Key 0 with value "UWI_label"
+            text_item.setData(1, UWI_times)   # Key 1 with UWI identifier
             self.scene.addItem(text_item)
-            self.uwi_items[uwi_times] = text_item
+            self.UWI_items[UWI_times] = text_item
 
         except Exception as e:
-            print(f"Error adding text item for UWI {uwi_times}: {e}")
+            print(f"Error adding text item for UWI {UWI_times}: {e}")
 
     def is_point_in_range(self, start_point, end_point, md):
         return start_point.x() <= md <= end_point.x()
@@ -592,20 +592,20 @@ class DrawingArea(QGraphicsView):
         self.setSceneRect(self.scene.itemsBoundingRect())
         self.centerOn(new_offset)
 
-    def updateHoveredUWI(self, uwi):
-        self.hovered_uwi = uwi
+    def updateHoveredUWI(self, UWI):
+        self.hovered_UWI = UWI
         for item in self.scene.items():
             if isinstance(item, QGraphicsTextItem):
-                if item.toPlainText() == uwi:
-                    item.setFont(QFont("Arial", self.map_instance.uwi_width * 2, QFont.Bold))
+                if item.toPlainText() == UWI:
+                    item.setFont(QFont("Arial", self.map_instance.UWI_width * 2, QFont.Bold))
                     item.setDefaultTextColor(QColor(255, 0, 0))
                 else:
-                    item.setFont(QFont("Arial", self.map_instance.uwi_width))
-                    item.setDefaultTextColor(QColor(0, 0, 0, int(255 * self.map_instance.uwi_opacity)))
+                    item.setFont(QFont("Arial", self.map_instance.UWI_width))
+                    item.setDefaultTextColor(QColor(0, 0, 0, int(255 * self.map_instance.UWI_opacity)))
         self.scene.update()
 
     def updateUWIWidth(self, width):
-        self.uwi_width = width
+        self.UWI_width = width
         for item in self.scene.items():
             if isinstance(item, QGraphicsTextItem):
                 font = item.font()
@@ -618,7 +618,7 @@ class DrawingArea(QGraphicsView):
     def updateLineWidth(self, width):
         self.line_width = width
         for item in self.scene.items():
-            if isinstance(item, QGraphicsLineItem) and item.data(0) == 'uwiline':
+            if isinstance(item, QGraphicsLineItem) and item.data(0) == 'UWIline':
                 pen = item.pen()
                 pen.setWidth(width)
                 item.setPen(pen)
@@ -630,7 +630,7 @@ class DrawingArea(QGraphicsView):
     def updateLineOpacity(self, opacity):
         self.line_opacity = opacity
         for item in self.scene.items():
-            if isinstance(item, QGraphicsLineItem) and item.data(0) == 'uwiline':
+            if isinstance(item, QGraphicsLineItem) and item.data(0) == 'UWIline':
                 pen = item.pen()
                 color = pen.color()
                 color.setAlphaF(opacity)
@@ -686,11 +686,11 @@ class DrawingArea(QGraphicsView):
   
 
     def clearZones(self):
-        print("Clearing 'uwiline', tick data, and 'BulkZoneTicks' items from the scene.")
+        print("Clearing 'UWIline', tick data, and 'BulkZoneTicks' items from the scene.")
 
-        # Remove 'uwiline' items
-        uwilines_to_remove = [item for item in self.scene.items() if item.data(0) == 'uwiline']
-        for item in uwilines_to_remove:
+        # Remove 'UWIline' items
+        UWIlines_to_remove = [item for item in self.scene.items() if item.data(0) == 'UWIline']
+        for item in UWIlines_to_remove:
             if item.scene() is not None:
                 self.scene.removeItem(item)
 
@@ -719,7 +719,7 @@ class DrawingArea(QGraphicsView):
     #        if isinstance(item, QGraphicsPathItem) and item.data(0) == 'colored_segment':
     #            self.scene.removeItem(item)
 
-    #    for uwi, points in self.processed_data.items():
+    #    for UWI, points in self.processed_data.items():
     #        if len(points) > 1:
     #            for i in range(len(points) - 1):
     #                segment_path = QPainterPath()
@@ -739,8 +739,8 @@ class DrawingArea(QGraphicsView):
     def toggleTextItemsVisibility(self, visible):
         print(visible)
         try:
-            # Iterate through all text items in the scene with the tag "uwi_label"
-            text_items = [item for item in self.scene.items() if item.data(0) == "uwi_label"]
+            # Iterate through all text items in the scene with the tag "UWI_label"
+            text_items = [item for item in self.scene.items() if item.data(0) == "UWI_label"]
 
             if visible == 0:
                 # Hide text items by setting opacity to 0
@@ -749,7 +749,7 @@ class DrawingArea(QGraphicsView):
             else:
                 # Show text items with the desired opacity
                 for item in text_items:
-                    item.setOpacity(self.uwi_opacity)  # Use the configured opacity value (0.0 to 1.0)
+                    item.setOpacity(self.UWI_opacity)  # Use the configured opacity value (0.0 to 1.0)
 
             # Optionally update the scene and viewport
             self.scene.update()
@@ -761,7 +761,7 @@ class DrawingArea(QGraphicsView):
     def togglegradientVisibility(self, visible):
         print(visible)
         try:
-            # Iterate through all text items in the scene with the tag "uwi_label"
+            # Iterate through all text items in the scene with the tag "UWI_label"
             text_items = [item for item in self.scene.items() if item.data(0) == "drainage"]
 
             if visible == 0:
@@ -771,7 +771,7 @@ class DrawingArea(QGraphicsView):
             else:
                 # Show text items with the desired opacity
                 for item in text_items:
-                    item.setOpacity(self.uwi_opacity)  # Use the configured opacity value (0.0 to 1.0)
+                    item.setOpacity(self.UWI_opacity)  # Use the configured opacity value (0.0 to 1.0)
 
             # Optionally update the scene and viewport
             self.scene.update()
@@ -788,9 +788,9 @@ class DrawingArea(QGraphicsView):
         if not (0.0 <= opacity <= 1.0):
             print("Invalid opacity value. Must be between 0.0 and 1.0.")
             return
-        text_items = [item for item in self.scene.items() if item.data(0) == "uwi_label"]
+        text_items = [item for item in self.scene.items() if item.data(0) == "UWI_label"]
         # Store the new opacity value
-        self.uwi_opacity = opacity
+        self.UWI_opacity = opacity
         for item in text_items:
             item.setOpacity(opacity)
 
@@ -832,10 +832,10 @@ class DrawingArea(QGraphicsView):
         self.viewport().update()
 
 
-    def get_point_by_md(self, uwi, md):
-        if uwi not in self.scaled_data:
+    def get_point_by_md(self, UWI, md):
+        if UWI not in self.scaled_data:
             return None
-        for point, point_md in self.scaled_data[uwi]:
+        for point, point_md in self.scaled_data[UWI]:
             if point_md >= md:
                 return point
         return None
@@ -849,6 +849,6 @@ class DrawingArea(QGraphicsView):
 
     def clearUWILines(self):
         for item in self.scene.items():
-            if item.data(0) == 'uwiline':
+            if item.data(0) == 'UWIline':
                 if item.scene() is not None:
                     self.scene.removeItem(item)

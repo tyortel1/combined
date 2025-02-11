@@ -47,9 +47,9 @@ class ProgressBarDialog(QDialog):
             self.accept()  
 
 class DeclineCurveAnalysis:
-    def __init__(self, combined_df, model_data, iterate_di, iterate_bfactor, load_gas, load_oil, uwi_list):
+    def __init__(self, combined_df, model_data, iterate_di, iterate_bfactor, load_gas, load_oil, UWI_list):
         self.model_data = model_data
-        self.uwi_model_data = None
+        self.UWI_model_data = None
         self.combined_df = combined_df
         self.combined_df_extended = None
         self.production_rates_data = pd.DataFrame()
@@ -61,7 +61,7 @@ class DeclineCurveAnalysis:
         self.sum_of_errors = pd.DataFrame()
         self.best_params = None
         self.results = []
-        self.uwi_list = uwi_list
+        self.UWI_list = UWI_list
  
         self.iterate_di = iterate_di
         self.iterate_di = iterate_di.lower() == 'true'
@@ -69,7 +69,7 @@ class DeclineCurveAnalysis:
 
         self.economic_limit_oil = 250
         self.economic_limit_gas = 1000
-        self.uwi_error = pd.DataFrame()
+        self.UWI_error = pd.DataFrame()
 
         self.best_di = False
         self.best_error_oil = None  # Initialize with positive infinity
@@ -77,8 +77,8 @@ class DeclineCurveAnalysis:
         self.best_di_oil = None  # Initialize as None
         self.best_di_gas = None
         self.iterate_bfactor = False
-        self.uwi_combined_df = pd.DataFrame()
-        self.uwi_production_rates = None
+        self.UWI_combined_df = pd.DataFrame()
+        self.UWI_production_rates = None
         self.load_oil = load_oil
         self.load_gas = load_gas
         #print(load_oil, load_gas)
@@ -95,30 +95,30 @@ class DeclineCurveAnalysis:
         self.prod_rates_all = self.combined_df.copy()  # Make a copy to avoid modifying the original DataFrame
         
 
-        for uwi, group in self.prod_rates_all.groupby('uwi'):
+        for UWI, group in self.prod_rates_all.groupby('UWI'):
             group = group.sort_values(by='date').reset_index(drop=True)
-            self.uwi_model_data = next((data for data in self.model_data if data['uwi'] == uwi), None)
+            self.UWI_model_data = next((data for data in self.model_data if data['UWI'] == UWI), None)
     
-            if self.uwi_model_data:
+            if self.UWI_model_data:
                 # Calculate production rates for the current 
-                self.uwi_combined_df = group.sort_values(by='date')
-                self.iterate_nominal_di(self.uwi_model_data, uwi)
+                self.UWI_combined_df = group.sort_values(by='date')
+                self.iterate_nominal_di(self.UWI_model_data, UWI)
                 
                 # Convert the list of dictionaries to a DataFrame
-                production_rates_df = pd.DataFrame(self.uwi_production_rates)
+                production_rates_df = pd.DataFrame(self.UWI_production_rates)
 
                 # Add production rate columns to the combined DataFrame
-                self.prod_rates_all.loc[self.prod_rates_all['uwi'] == uwi, 'q_oil'] = production_rates_df['q_oil'].values
-                self.prod_rates_all.loc[self.prod_rates_all['uwi'] == uwi, 'q_gas'] = production_rates_df['q_gas'].values
-                self.prod_rates_all.loc[self.prod_rates_all['uwi'] == uwi, 'error_oil'] = abs((self.prod_rates_all['oil_volume']-self.prod_rates_all['q_oil'])/self.prod_rates_all['oil_volume'])*100
-                self.prod_rates_all.loc[self.prod_rates_all['uwi'] == uwi, 'error_gas'] = abs((self.prod_rates_all['gas_volume']-self.prod_rates_all['q_gas'])/self.prod_rates_all['gas_volume'])*100
-            #print(self.uwi_error)
-            self.sum_of_errors = self.sum_of_errors.append(self.uwi_error, ignore_index=True)
+                self.prod_rates_all.loc[self.prod_rates_all['UWI'] == UWI, 'q_oil'] = production_rates_df['q_oil'].values
+                self.prod_rates_all.loc[self.prod_rates_all['UWI'] == UWI, 'q_gas'] = production_rates_df['q_gas'].values
+                self.prod_rates_all.loc[self.prod_rates_all['UWI'] == UWI, 'error_oil'] = abs((self.prod_rates_all['oil_volume']-self.prod_rates_all['q_oil'])/self.prod_rates_all['oil_volume'])*100
+                self.prod_rates_all.loc[self.prod_rates_all['UWI'] == UWI, 'error_gas'] = abs((self.prod_rates_all['gas_volume']-self.prod_rates_all['q_gas'])/self.prod_rates_all['gas_volume'])*100
+            #print(self.UWI_error)
+            self.sum_of_errors = self.sum_of_errors.append(self.UWI_error, ignore_index=True)
    
 
         # Convert the list of dictionaries to a DataFrame
         self.sum_of_errors = pd.DataFrame(self.sum_of_errors)
-        print(uwi)
+        print(UWI)
         #self.iterate()
         
         return self.prod_rates_all, self.sum_of_errors
@@ -127,29 +127,29 @@ class DeclineCurveAnalysis:
         #print(self.sum_of_errors)
         self.prod_rates_all = prod_rates_all
 
-        self.uwi_model_data = updated_model[0]  # Assuming updated_model is a list of dictionaries
+        self.UWI_model_data = updated_model[0]  # Assuming updated_model is a list of dictionaries
 
-        # Assuming only one uwi in the updated_model_data list
-        uwi = self.uwi_model_data['uwi']
-        uwi_combined_df = self.prod_rates_all[self.prod_rates_all['uwi'] == uwi]
+        # Assuming only one UWI in the updated_model_data list
+        UWI = self.UWI_model_data['UWI']
+        UWI_combined_df = self.prod_rates_all[self.prod_rates_all['UWI'] == UWI]
 
         # Calculate updated production rates
-        updated_production_rates_data = self._calculate_production_rates_for_uwi_individual(self.uwi_model_data, uwi_combined_df, uwi)
+        updated_production_rates_data = self._calculate_production_rates_for_UWI_individual(self.UWI_model_data, UWI_combined_df, UWI)
         updated_production_rates_df = pd.DataFrame(updated_production_rates_data)
 
-        # Update production rates and errors for the specific uwi
+        # Update production rates and errors for the specific UWI
         for index, row in updated_production_rates_df.iterrows():
-            mask = (self.prod_rates_all['uwi'] == row['uwi']) & (self.prod_rates_all['date'] == row['date'])
+            mask = (self.prod_rates_all['UWI'] == row['UWI']) & (self.prod_rates_all['date'] == row['date'])
             self.prod_rates_all.loc[mask, 'q_oil'] = row['q_oil']
             self.prod_rates_all.loc[mask, 'q_gas'] = row['q_gas']
             self.prod_rates_all.loc[mask, 'error_oil'] = row['error_oil']
             self.prod_rates_all.loc[mask, 'error_gas'] = row['error_gas']
 
-        #print(self.uwi_error)
+        #print(self.UWI_error)
        #print(self.sum_of_errors)
-        for index, row in self.uwi_error.iterrows():
-            # Find the index in self.sum_of_errors corresponding to the current 'uwi'
-            index_to_update = self.sum_of_errors.index[self.sum_of_errors['uwi'] == row['uwi']]
+        for index, row in self.UWI_error.iterrows():
+            # Find the index in self.sum_of_errors corresponding to the current 'UWI'
+            index_to_update = self.sum_of_errors.index[self.sum_of_errors['UWI'] == row['UWI']]
 
             # Check if the index is found
             if not index_to_update.empty:
@@ -163,24 +163,24 @@ class DeclineCurveAnalysis:
         #print("Updated self.sum_of_errors:\n", self.sum_of_errors)
 
         return self.prod_rates_all, self.sum_of_errors
-    def _calculate_production_rates_for_uwi_individual(self, uwi_model_data, uwi_combined_df, uwi, di_gas = None, di_oil = None):
-        self.uwi_error = pd.DataFrame()
+    def _calculate_production_rates_for_UWI_individual(self, UWI_model_data, UWI_combined_df, UWI, di_gas = None, di_oil = None):
+        self.UWI_error = pd.DataFrame()
         q_oil = None 
         q_gas = None
         error_oil = None
         error_gas = None
-        #print(uwi)
+        #print(UWI)
 
         if self.load_oil:
             
             if self.iterate_di:
                 di_oil = di_oil
             else:
-                di_oil = float(uwi_model_data['di_oil'])
-            qi_oil = float(uwi_model_data['max_oil_production'])
-            oil_b_factor = float(uwi_model_data['oil_b_factor'])
-            max_oil_date = uwi_model_data['max_oil_production_date']
-            min_dec_oil = float(uwi_model_data['min_dec_oil'])
+                di_oil = float(UWI_model_data['di_oil'])
+            qi_oil = float(UWI_model_data['max_oil_production'])
+            oil_b_factor = float(UWI_model_data['oil_b_factor'])
+            max_oil_date = UWI_model_data['max_oil_production_date']
+            min_dec_oil = float(UWI_model_data['min_dec_oil'])
             max_oil_date_timestamp = pd.to_datetime(max_oil_date)
             if di_oil == 100:
                 di_oil == 99.9
@@ -195,12 +195,12 @@ class DeclineCurveAnalysis:
                 di_gas = di_gas
                 #print(di_gas)
             else:
-                di_gas = float(uwi_model_data['di_gas'])
-            qi_gas = float(uwi_model_data['max_gas_production'])
-            gas_b_factor = float(uwi_model_data['gas_b_factor'])
-            max_gas_date = uwi_model_data['max_gas_production_date']
+                di_gas = float(UWI_model_data['di_gas'])
+            qi_gas = float(UWI_model_data['max_gas_production'])
+            gas_b_factor = float(UWI_model_data['gas_b_factor'])
+            max_gas_date = UWI_model_data['max_gas_production_date']
             max_gas_date_timestamp = pd.to_datetime(max_gas_date)
-            min_dec_gas = float(uwi_model_data['min_dec_gas'])
+            min_dec_gas = float(UWI_model_data['min_dec_gas'])
             if di_gas == 100:
                 di_gas = 99.9       
             nominal_di_gas = (((1 - (di_gas / 100)) ** (-gas_b_factor)) - 1) / gas_b_factor if gas_b_factor != 0 else di_gas / 100
@@ -209,9 +209,9 @@ class DeclineCurveAnalysis:
             q_prev_gas = None
         production_rates_data = []
     
-        for index, row in uwi_combined_df.iterrows():
+        for index, row in UWI_combined_df.iterrows():
             row_date_timestamp = pd.to_datetime(row['date'])
-            row_uwi = row['uwi']
+            row_UWI = row['UWI']
             q_gas=q_gas
             print(q_gas)
 
@@ -303,7 +303,7 @@ class DeclineCurveAnalysis:
 
 
             production_rates_data.append({
-                    'uwi': row_uwi,
+                    'UWI': row_UWI,
                     'date': row_date_timestamp,
                     'gas_volume': row.get('gas_volume', np.nan),
                     'q_gas': q_gas,
@@ -314,16 +314,16 @@ class DeclineCurveAnalysis:
                 })
 
         production_df = pd.DataFrame(production_rates_data)
-        self.uwi_error = production_df.groupby('uwi')[['error_oil', 'error_gas']].median().reset_index()
-        self.uwi_error = self.uwi_error.rename(columns={'error_oil': 'sum_error_oil', 'error_gas': 'sum_error_gas'})
+        self.UWI_error = production_df.groupby('UWI')[['error_oil', 'error_gas']].median().reset_index()
+        self.UWI_error = self.UWI_error.rename(columns={'error_oil': 'sum_error_oil', 'error_gas': 'sum_error_gas'})
      
         return production_rates_data
 
 
 
 
-    def iterate_nominal_di(self, uwi_model_data, uwi):
-                # Core logic for calculating production rates for a single uwi
+    def iterate_nominal_di(self, UWI_model_data, UWI):
+                # Core logic for calculating production rates for a single UWI
         self.best_error_oil = float('inf')
         self.best_error_gas = float('inf')
         self.best_di_oil = None
@@ -336,19 +336,19 @@ class DeclineCurveAnalysis:
 
 
         if self.iterate_di == False:
-            di_oil = float(uwi_model_data['di_oil']) if self.load_oil == True else None
-            di_gas = float(uwi_model_data['di_gas']) if self.load_gas == True else None
-            self.uwi_production_rates = self._calculate_production_rates_for_uwi_individual(self.uwi_model_data, self.uwi_combined_df, uwi, di_gas, di_oil)
+            di_oil = float(UWI_model_data['di_oil']) if self.load_oil == True else None
+            di_gas = float(UWI_model_data['di_gas']) if self.load_gas == True else None
+            self.UWI_production_rates = self._calculate_production_rates_for_UWI_individual(self.UWI_model_data, self.UWI_combined_df, UWI, di_gas, di_oil)
         else:
             for di_value in range(40, 95, 5):
                 
                 di_oil = di_value
                 di_gas = di_value
                 #print(di_gas, di_oil)
-                self.uwi_production_rates = self._calculate_production_rates_for_uwi_individual(self.uwi_model_data, self.uwi_combined_df, uwi, di_gas, di_oil)
+                self.UWI_production_rates = self._calculate_production_rates_for_UWI_individual(self.UWI_model_data, self.UWI_combined_df, UWI, di_gas, di_oil)
 
-                error_oil = self.uwi_error['sum_error_oil'].iloc[0]  # Access the error for the current iteration
-                error_gas = self.uwi_error['sum_error_gas'].iloc[0]
+                error_oil = self.UWI_error['sum_error_oil'].iloc[0]  # Access the error for the current iteration
+                error_gas = self.UWI_error['sum_error_gas'].iloc[0]
 
 
                 #print("Current error oil:", error_oil)
@@ -371,9 +371,9 @@ class DeclineCurveAnalysis:
             # Use the best values for the final iteration
             di_oil = self.best_di_oil
             di_gas = self.best_di_gas
-            uwi_model_data['di_oil'] =  di_oil       
-            uwi_model_data['di_gas'] = di_gas
-            self.uwi_production_rates = self._calculate_production_rates_for_uwi_individual(self.uwi_model_data, self.uwi_combined_df, uwi, di_gas, di_oil)
+            UWI_model_data['di_oil'] =  di_oil       
+            UWI_model_data['di_gas'] = di_gas
+            self.UWI_production_rates = self._calculate_production_rates_for_UWI_individual(self.UWI_model_data, self.UWI_combined_df, UWI, di_gas, di_oil)
 
 
 

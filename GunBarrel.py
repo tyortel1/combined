@@ -15,9 +15,10 @@ class PlotGB(QDialog):
     hoverEvent = Signal(str)
     closed = Signal()
 
-    def __init__(self, depth_grid_data_df, grid_info_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections=None, zone_names=None, master_df=None, seismic_data=None, parent=None, main_app=None):
+    def __init__(self, db_manager, depth_grid_data_df, grid_info_df, currentLine, kd_tree_depth_grids, depth_grid_data_dict, intersections=None, zone_names=None, master_df=None, seismic_data=None, parent=None, main_app=None):
         super(PlotGB, self).__init__(parent)
         self.main_app = main_app
+        self.db_manager = db_manager
         self.depth_grid_data_df = depth_grid_data_df
         self.grid_info_df = grid_info_df
         self.current_line = currentLine
@@ -248,11 +249,11 @@ class PlotGB(QDialog):
             # Extracting intersection information and filtering invalid TVDs
             intersection_distances = [item[4] for item in self.intersections]
             intersection_tvds = [item[3] for item in self.intersections]
-            intersection_uwis = [item[0] for item in self.intersections]
+            intersection_UWIs = [item[0] for item in self.intersections]
 
             # Filter out invalid TVDs (like inf or NaN)
-            valid_intersections = [(dist, tvd, uwi) for dist, tvd, uwi in zip(intersection_distances, intersection_tvds, intersection_uwis) if np.isfinite(tvd)]
-            intersection_distances, intersection_tvds, intersection_uwis = zip(*valid_intersections) if valid_intersections else ([], [], [])
+            valid_intersections = [(dist, tvd, UWI) for dist, tvd, UWI in zip(intersection_distances, intersection_tvds, intersection_UWIs) if np.isfinite(tvd)]
+            intersection_distances, intersection_tvds, intersection_UWIs = zip(*valid_intersections) if valid_intersections else ([], [], [])
 
 
             fig.add_trace(go.Scatter(
@@ -261,18 +262,18 @@ class PlotGB(QDialog):
                 mode='markers',
                 name='Intersection Points',
                 marker=dict(color='black', size=self.default_dot_size),
-                text=intersection_uwis,  # Add UWI as hover text
+                text=intersection_UWIs,  # Add UWI as hover text
                 hoverinfo='text'  # Display the hover text
             ))
 
             # Add annotations for each UWI label
             annotations = []
-            for i, uwi in enumerate(intersection_uwis):
+            for i, UWI in enumerate(intersection_UWIs):
                 annotations.append(
                     dict(
                         x=intersection_distances[i],
                         y=intersection_tvds[i],
-                        text=uwi,
+                        text=UWI,
                         showarrow=False,
                         textangle=-45,  # Rotate text by 45 degrees
                         xanchor='left',
@@ -396,10 +397,10 @@ class PlotGB(QDialog):
         self.plot_intersection_line() 
 
     @Slot(str)
-    def receiveHoverEvent(self, uwi):
-        print(f'Hover event received for UWI: {uwi}')
-        self.hoverEvent.emit(uwi)
-        self.main_app.handle_hover_event(uwi)
+    def receiveHoverEvent(self, UWI):
+        print(f'Hover event received for UWI: {UWI}')
+        self.hoverEvent.emit(UWI)
+        self.main_app.handle_hover_event(UWI)
 
     def populate_well_zone_dropdown(self):
         """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
@@ -408,16 +409,17 @@ class PlotGB(QDialog):
         self.WellZoneDropdown.blockSignals(True)
         self.WellZoneDropdown.clear()
         self.WellZoneDropdown.addItem("Select Well Zone")
+        zone_names = self.db_manager.fetch_zone_names_by_type("Well")
+        if zone_names:
+            # Extract first element from each tuple and sort
+            zone_names = [name[0] for name in zone_names if name[0].strip()]  # Also strip whitespace
+            self.well_zone_names = sorted(zone_names)
+            self.WellZoneDropdown.addItems(self.well_zone_names)
+    
+        self.WellZoneDropdown.blockSignals(False)
 
-        if not self.master_df.empty:
-            # Filter the DataFrame to include only entries where 'Attribute Type' is 'Well'
-            well_df = self.master_df[self.master_df['Attribute Type'] == "Well"]
 
-            # Get the unique zone names from the filtered DataFrame
-            self.well_zone_names = well_df['Zone Name'].unique().tolist()
-
-            # Populate the dropdown with the filtered zone names
-            if self.well_zone_names:
+        if self.well_zone_names:
                 self.WellZoneDropdown.addItems(sorted(self.well_zone_names))
     
         self.WellZoneDropdown.blockSignals(False)
@@ -450,33 +452,53 @@ class PlotGB(QDialog):
 
     def populate_well_attribute_dropdown(self):
         """Populate the well attribute dropdown with numeric attributes for the selected well zone."""
-        if self.master_df.empty or self.selected_zone == "Select Well Zone":
-            print("No well zone selected or Master DataFrame is empty. No operations performed.")
-            return
-
-        well_zone_df = self.master_df[(self.master_df['Zone Name'] == self.selected_zone) & 
-                                      (self.master_df['Attribute Type'] == "Well")]
-
-        columns_to_exclude = [
-            'Zone Name', 'Zone Type', 'Attribute Type', 
-            'Top Depth', 'Base Depth', 'UWI', 
-            'Top X Offset', 'Base X Offset', 'Top Y Offset', 'Base Y Offset', 'Angle Top', 'Angle Base'
-        ]
-        remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
-
-        numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
-        numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
-
-        non_null_numeric_columns = [col for col in numeric_columns if remaining_df[col].notnull().any()]
-
+    
+        # Get the selected well zone from the well zone dropdown
+        selected_well_zone = self.WellZoneDropdown.currentText()
+    
+        # Clear the dropdown before populating
         self.WellAttributeDropdown.blockSignals(True)
-        if non_null_numeric_columns:
-            self.WellAttributeDropdown.addItem("Select Well Attribute")
-            self.WellAttributeDropdown.addItems(sorted(non_null_numeric_columns))
-            self.WellAttributeDropdown.setEnabled(True)
-        else:
-            self.WellAttributeDropdown.addItem("No Attributes Available")
-            self.WellAttributeDropdown.setEnabled(False)
+        self.WellAttributeDropdown.clear()
+        self.WellAttributeDropdown.addItem("Select Well Attribute")
+
+        if selected_well_zone != "Select Well Zone":
+            # Fetch the data for the selected zone
+            try:
+                well_zone_df = self.db_manager.fetch_table_data(selected_well_zone)
+                self.cached_well_zone_df = well_zone_df  # Cache the data
+            
+                if well_zone_df is not None and not well_zone_df.empty:
+                    # Drop fixed columns that are not relevant for selection
+                    columns_to_exclude = [
+                        'Zone_Name', 'Zone_Type', 'Attribute_Type',
+                        'Top_Depth', 'Base_Depth', 'UWI',
+                        'Top_X_Offset', 'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
+                        'Angle_Top', 'Angle_Base'
+                    ]
+                    remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
+                
+                    # Process numeric and date columns
+                    numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
+                    numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
+                
+                    date_columns = remaining_df.select_dtypes(include=['datetime64[ns]', 'datetime64']).columns.tolist()
+                
+                    combined_columns = numeric_columns + date_columns
+                    non_null_columns = [col for col in combined_columns if remaining_df[col].notnull().any()]
+                    non_null_columns.sort()
+                
+                    if non_null_columns:
+                        self.WellAttributeDropdown.addItems(non_null_columns)
+                        self.WellAttributeDropdown.setEnabled(True)
+                    else:
+                        self.WellAttributeDropdown.addItem("No Attributes Available")
+                        self.WellAttributeDropdown.setEnabled(False)
+                    
+            except Exception as e:
+                print(f"Error populating well attributes: {e}")
+                self.WellAttributeDropdown.addItem("Error Loading Attributes")
+                self.WellAttributeDropdown.setEnabled(False)
+    
         self.WellAttributeDropdown.blockSignals(False)
 
     def well_attribute_selected(self):
@@ -485,73 +507,61 @@ class PlotGB(QDialog):
     
         if self.selected_attribute == "Select Well Attribute" or not self.selected_attribute:
             return
-
         if self.selected_zone is None:
             print("No zone selected.")
             return
-
-        # Extract valid UWIs from intersections
-        valid_intersection_uwis = [item[0] for item in self.intersections if np.isfinite(item[3])]
-        print("Valid UWIs:", valid_intersection_uwis)
-
-        # Check if the selected attribute exists in the DataFrame columns
-        if self.selected_attribute not in self.master_df.columns:
-            print(f"Attribute {self.selected_attribute} not found in master_df.")
-            return
-
-        # Filter the master DataFrame for rows matching the Zone Name, UWI, and selected attribute
-        filtered_df = self.master_df[
-            (self.master_df['Zone Name'] == self.selected_zone) &
-            (self.master_df['UWI'].isin(valid_intersection_uwis))
-        ][['UWI', self.selected_attribute]]
-        print(filtered_df)
-        if self.selected_attribute not in filtered_df.columns:
-            print(f"Attribute {self.selected_attribute} not found in the selected zone.")
-            return
-
-        # Load the selected color palette
-        color_bar_name = self.WellAttributeColorBarDropdown.currentText()
-        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        file_path = os.path.join(palettes_dir, color_bar_name)
-
-        try:
-            color_palette = self.load_color_palette(file_path)
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not load color palette: {e}")
-            return
-
-        # Calculate the min and max values for the selected attribute
-        min_value = filtered_df[self.selected_attribute].min()
-        max_value = filtered_df[self.selected_attribute].max()
         
-   
-
-        # Create a color map for intersection points
-        uwi_color_map = {}
-        # Iterate over each UWI in valid_intersection_uwis
-        for uwi in valid_intersection_uwis:
-            # Find the attribute values for this UWI
-            uwi_values = filtered_df[filtered_df['UWI'] == uwi][self.selected_attribute]
-
-            # Debugging output: check if uwi_values is empty
-            if uwi_values.empty:
-                print(f"No values found for UWI {uwi}")
-                continue
-
-            # If there are multiple values, compute an average or pick one (e.g., the first)
-            value = uwi_values.mean()  # Or .median() or .iloc[0] for the first value
-            print(f"UWI: {uwi}, Value: {value}")
-
-            color = self.map_value_to_color(value, min_value, max_value, color_palette)
-            uwi_color_map[uwi] = color
-
-        print("Final UWI Color Map:", uwi_color_map)
-
-        # Update the plot with colored intersections
-        self.display_color_range(self.WellAttributeColorRangeDisplay, color_palette, min_value, max_value)
-
-        # Update the plot with colored intersections
-        self.update_intersection_plot(uwi_color_map)
+        try:
+            # Use cached zone data instead of master_df
+            if not hasattr(self, 'cached_well_zone_df') or self.cached_well_zone_df is None:
+                print("No zone data cached.")
+                return
+            
+            # Extract valid UWIs from intersections
+            valid_intersection_UWIs = [item[0] for item in self.intersections if np.isfinite(item[3])]
+            print("Valid UWIs:", valid_intersection_UWIs)
+        
+            # Filter the cached zone data
+            filtered_df = self.cached_well_zone_df[
+                self.cached_well_zone_df['UWI'].isin(valid_intersection_UWIs)
+            ][['UWI', self.selected_attribute]]
+        
+            if filtered_df.empty:
+                print("No matching data found for the selected UWIs and attribute")
+                return
+            
+            # Calculate the min and max values for the selected attribute
+            min_value = filtered_df[self.selected_attribute].min()
+            max_value = filtered_df[self.selected_attribute].max()
+        
+            # Load color palette
+            color_bar_name = self.WellAttributeColorBarDropdown.currentText()
+            palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
+            file_path = os.path.join(palettes_dir, f"{color_bar_name}.pal")  # Add .pal extension
+        
+            color_palette = self.load_color_palette(file_path)
+        
+            # Create color map for each UWI
+            UWI_color_map = {}
+            for UWI in valid_intersection_UWIs:
+                UWI_values = filtered_df[filtered_df['UWI'] == UWI][self.selected_attribute]
+                if not UWI_values.empty:
+                    value = UWI_values.iloc[0]  # Take first value instead of mean
+                    print(f"UWI: {UWI}, Value: {value}")
+                    if pd.notnull(value):  # Check for null values
+                        color = self.map_value_to_color(value, min_value, max_value, color_palette)
+                        UWI_color_map[UWI] = color
+        
+            print("Final UWI Color Map:", UWI_color_map)
+        
+            # Update displays
+            self.display_color_range(self.WellAttributeColorRangeDisplay, color_palette, min_value, max_value)
+            self.update_intersection_plot(UWI_color_map)
+        
+        except Exception as e:
+            print(f"Error in well_attribute_selected: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 
     def on_dot_size_changed(self):
@@ -559,7 +569,7 @@ class PlotGB(QDialog):
         self.update_dot_size(new_size)
 
 
-    def update_intersection_plot(self, uwi_color_map):
+    def update_intersection_plot(self, UWI_color_map):
         """Updates the colors of the intersection points without altering existing grid lines or size."""
         try:
             fig = self.current_figure
@@ -571,9 +581,9 @@ class PlotGB(QDialog):
             )
 
             if intersection_trace is not None:
-                intersection_uwis = intersection_trace.text
-                # Update the colors of the dots based on the new uwi_color_map
-                new_colors = [self.map_qcolor_to_hex(uwi_color_map.get(uwi, 'black')) for uwi in intersection_uwis]
+                intersection_UWIs = intersection_trace.text
+                # Update the colors of the dots based on the new UWI_color_map
+                new_colors = [self.map_qcolor_to_hex(UWI_color_map.get(UWI, 'black')) for UWI in intersection_UWIs]
             
                 # Update both color and maintain current size
                 fig.update_traces(
@@ -624,41 +634,58 @@ class PlotGB(QDialog):
 
 
     def map_qcolor_to_hex(self, qcolor):
-        """Convert a QColor to a hex string."""
+        """Convert a QColor or RGB tuple to a hex string."""
         if isinstance(qcolor, QColor):
-            return qcolor.name()  # QColor.name() returns the color in '#RRGGBB' format
-        return qcolor 
+            return qcolor.name()  # Returns '#RRGGBB'
+        elif isinstance(qcolor, tuple) and len(qcolor) >= 3:
+            # Handle RGB tuple
+            r, g, b = qcolor[:3]
+            return f"#{r:02x}{g:02x}{b:02x}"
+        return "#000000"  # Default black
 
     def load_color_palette(self, file_path):
+        """Load color palette and return list of QColors."""
+        base_path = file_path.replace('.pal.pal', '.pal')
         color_palette = []
+    
         try:
-            with open(file_path + '.pal', 'r') as file:
+            with open(base_path, 'r') as file:
                 lines = file.readlines()
-                start_index = 2
-                for line in lines[start_index:]:
-                    if line.strip():
+                for line in lines:
+                    if line.strip() and not line.strip().startswith(('struct', 'Name', 'Colors', '}', 'ColorPalette')):
                         try:
                             r, g, b = map(int, line.strip().split())
                             color_palette.append(QColor(r, g, b))
                         except ValueError:
                             continue
-        except FileNotFoundError:
-            print(f"Error: The file '{file_path}.pal' was not found.")
-        except IOError:
-            print(f"Error: An IOError occurred while trying to read '{file_path}.pal'.")
-        return color_palette
+        except Exception as e:
+            print(f"Error loading color palette from {base_path}: {e}")
+            return [QColor(0, 0, 0)]  # Return default black QColor
+    
+        return color_palette if color_palette else [QColor(0, 0, 0)]
 
     def map_value_to_color(self, value, min_value, max_value, color_palette):
+        """Map a value to a QColor using the provided color palette."""
+        if not color_palette:
+            return QColor(0, 0, 0)
+        
         if math.isnan(value) or math.isnan(min_value) or math.isnan(max_value):
-            return QColor(0, 0, 0)  # Return a default color for NaN values
-
+            return QColor(0, 0, 0)  # Return black for NaN values
+        
         if max_value == min_value:
-            return color_palette[0] if color_palette else QColor(0, 0, 0)
-
-        normalized_value = (value - min_value) / (max_value - min_value)
-        index = int(normalized_value * (len(color_palette) - 1))
-        index = max(0, min(index, len(color_palette) - 1))
-        return color_palette[index]
+            return color_palette[0]
+        
+        try:
+            normalized_value = (value - min_value) / (max_value - min_value)
+            normalized_value = max(0.0, min(1.0, normalized_value))  # Clamp between 0 and 1
+        
+            index = int(normalized_value * (len(color_palette) - 1))
+            index = max(0, min(index, len(color_palette) - 1))  # Ensure index is in bounds
+        
+            return color_palette[index]
+        except Exception as e:
+            print(f"Error in map_value_to_color: {e}")
+            return QColor(0, 0, 0)  # Return black on error
 
     def display_color_range(self, color_range_display, color_palette, min_attr, max_attr):
         if not color_palette or min_attr is None or max_attr is None:

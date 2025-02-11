@@ -60,9 +60,9 @@ class ProjectSaver:
             self.project_data['import_options'] = import_options_df.to_dict(orient='list')
         self.submit_save_task()
 
-    def save_selected_uwis(self, selected_uwis):
+    def save_selected_UWIs(self, selected_UWIs):
         with self.lock:
-            self.project_data['selected_uwis'] = selected_uwis
+            self.project_data['selected_UWIs'] = selected_UWIs
         self.submit_save_task()
 
     def save_depth_grid_colors(self, depth_grid_color_df):
@@ -160,13 +160,13 @@ class ProjectSaver:
 
 
 
-    def shutdown(self, line_width, line_opacity, uwi_width, uwi_opacity, selected_grid, selected_zone, selected_zone_attribute, selected_well_zone, selected_well_attribute, gridColorBarDropdown, zoneAttributeColorBarDropdown, WellAttributeColorBarDropdown):
+    def shutdown(self, line_width, line_opacity, UWI_width, UWI_opacity, selected_grid, selected_zone, selected_zone_attribute, selected_well_zone, selected_well_attribute, gridColorBarDropdown, zoneAttributeColorBarDropdown, WellAttributeColorBarDropdown):
         with self.lock:
             # Store the existing parameters
             self.project_data['line_width'] = line_width
             self.project_data['line_opacity'] = line_opacity
-            self.project_data['uwi_width'] = uwi_width
-            self.project_data['uwi_opacity'] = uwi_opacity
+            self.project_data['UWI_width'] = UWI_width
+            self.project_data['UWI_opacity'] = UWI_opacity
             self.project_data['selected_grid'] = selected_grid
             self.project_data['selected_zone'] = selected_zone
         

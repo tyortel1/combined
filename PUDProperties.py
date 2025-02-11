@@ -61,7 +61,7 @@ class PUDPropertiesDialog(QDialog):
         self.tab_index = 3  # Default tab index
 
         self.TABLE_HEADERS = [
-            "Pad Name",           # maps to uwi
+            "Pad Name",           # maps to UWI
             "Start Date",         # maps to start_date
             "Decline Curve Type", # maps to decline_curve_type
             "Decline Curve",      # maps to decline_curve
@@ -81,7 +81,7 @@ class PUDPropertiesDialog(QDialog):
     
         # Update key mapping to match headers exactly
         self.key_mapping = {
-            "Pad Name": "uwi",
+            "Pad Name": "UWI",
             "Start Date": "start_date",
             "Decline Curve Type": "decline_curve_type",
             "Decline Curve": "decline_curve",
@@ -339,7 +339,7 @@ class PUDPropertiesDialog(QDialog):
         :param scenario_id: ID of the scenario.
         """
         try:
-            selected_wells = well_data['uwi']
+            selected_wells = well_data['UWI']
             decline_curve = well_data['decline_curve']
             start_date = well_data.get('start_date', None)  # Optional field
 
@@ -348,9 +348,9 @@ class PUDPropertiesDialog(QDialog):
             print(well_data)
             # Iterate over selected wells
             for _, row in well_data.iterrows():
-                uwi = row['uwi']
+                UWI = row['UWI']
                 well_pad_data = {
-                    'uwi': row['uwi'],  # Ensure you extract scalar values
+                    'UWI': row['UWI'],  # Ensure you extract scalar values
                     'scenario_id': scenario_id,
                     'start_date': row['start_date'],
                     'total_depth': row['total_depth'],
@@ -370,22 +370,22 @@ class PUDPropertiesDialog(QDialog):
                 }
                 
 
-                if uwi in existing_uiws:
-                    logging.info(f"Updating well pad for UWI: {uwi}")
+                if UWI in existing_uiws:
+                    logging.info(f"Updating well pad for UWI: {UWI}")
                     # Update existing well pad
-                    well_pad_id = self.db_manager.get_well_pad_id(uwi, scenario_id)
+                    well_pad_id = self.db_manager.get_well_pad_id(UWI, scenario_id)
                     self.db_manager.update_well_pad(well_pad_id, well_pad_data)
                 else:
-                    logging.info(f"Inserting new well pad for UWI: {uwi}")
+                    logging.info(f"Inserting new well pad for UWI: {UWI}")
                     # Insert new well pad
 
                     self.db_manager.insert_well_pad(well_pad_data)
 
             # Remove wells not in the selected list
-            uiws_to_remove = [uwi for uwi in existing_uiws if uwi not in selected_wells]
-            for uwi in uiws_to_remove:
-                logging.info(f"Removing well pad for UWI: {uwi}")
-                self.db_manager.delete_pad(scenario_id, uwi)
+            uiws_to_remove = [UWI for UWI in existing_uiws if UWI not in selected_wells]
+            for UWI in uiws_to_remove:
+                logging.info(f"Removing well pad for UWI: {UWI}")
+                self.db_manager.delete_pad(scenario_id, UWI)
                
 
             QMessageBox.information(self, "Success", f"Scenario updated successfully!")
@@ -399,7 +399,7 @@ class PUDPropertiesDialog(QDialog):
         """Extract well data from the dialog inputs"""
         try:
             data = {
-                'uwi': dialog.uwi_input.text(),
+                'UWI': dialog.UWI_input.text(),
                 'start_date': dialog.start_date_input.date().toString('yyyy-MM-dd'),  # Extract from QDateEdit
                 'decline_curve': dialog.decline_curve_input.currentText(),           # Extract from QComboBox
                 'total_depth': dialog.total_depth_input.value(),
@@ -463,8 +463,8 @@ class PUDPropertiesDialog(QDialog):
         """
         try:
             # Column 0: UWI
-            uwi = pad['uwi']
-            self.well_pads_table.setItem(row_idx, 0, QTableWidgetItem(str(uwi)))
+            UWI = pad['UWI']
+            self.well_pads_table.setItem(row_idx, 0, QTableWidgetItem(str(UWI)))
 
             # Column 1: Start Date as QDateEdit
             start_date_edit = QDateEdit()
@@ -663,7 +663,7 @@ class PUDPropertiesDialog(QDialog):
 
             for _, well_data in scenario_wells_df.iterrows():
                 try:
-                    uwi = well_data['uwi']
+                    UWI = well_data['UWI']
                     decline_curve_type = well_data['decline_curve_type']
                     decline_curve_name = well_data['decline_curve']
                     start_date = well_data.get('start_date', None)
@@ -671,16 +671,16 @@ class PUDPropertiesDialog(QDialog):
                     decline_curve_data = None
 
                     if decline_curve_type == 'UWI':
-                        decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                        decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_UWI(
                             scenario_id=1,  
-                            uwi=decline_curve_name
+                            UWI=decline_curve_name
                         )
 
                         if decline_curve_df is not None and not decline_curve_df.empty:
                             decline_curve_data = decline_curve_df.iloc[0].to_dict()
                         else:
                             logging.warning(f"No model properties found for reference UWI: {decline_curve_name}")
-                            error_wells.append((uwi, "No model properties found"))
+                            error_wells.append((UWI, "No model properties found"))
                             continue
 
                     elif decline_curve_type == 'Saved DC':
@@ -688,12 +688,12 @@ class PUDPropertiesDialog(QDialog):
 
                         if decline_curve_data is None:
                             logging.warning(f"No saved decline curve found: {decline_curve_name}")
-                            error_wells.append((uwi, "No saved decline curve found"))
+                            error_wells.append((UWI, "No saved decline curve found"))
                             continue
 
                     else:
                         logging.error(f"Unknown decline curve type: {decline_curve_type}")
-                        error_wells.append((uwi, f"Unknown decline curve type: {decline_curve_type}"))
+                        error_wells.append((UWI, f"Unknown decline curve type: {decline_curve_type}"))
                         continue
 
                     # Ensure all required fields exist in decline_curve_data
@@ -721,7 +721,7 @@ class PUDPropertiesDialog(QDialog):
                     
 
                     # Assign UWI and scenario ID
-                    decline_curve_data['uwi'] = uwi
+                    decline_curve_data['UWI'] = UWI
                     decline_curve_data['scenario_id'] = self.scenario_id
 
                     # Process the scenario with updated decline curve data
@@ -733,14 +733,14 @@ class PUDPropertiesDialog(QDialog):
 
                 except Exception as e:
                     error_msg = str(e)
-                    logging.error(f"Error processing well {well_data.get('uwi', 'unknown')}: {error_msg}")
-                    error_wells.append((well_data.get('uwi', 'unknown'), error_msg))
+                    logging.error(f"Error processing well {well_data.get('UWI', 'unknown')}: {error_msg}")
+                    error_wells.append((well_data.get('UWI', 'unknown'), error_msg))
                     continue
 
             # Show results
             success_count = processed_wells - len(error_wells)
             if error_wells:
-                error_msg = "\n".join([f"UWI: {uwi} - Error: {error}" for uwi, error in error_wells])
+                error_msg = "\n".join([f"UWI: {UWI} - Error: {error}" for UWI, error in error_wells])
                 QMessageBox.warning(
                     self,
                     "Scenario Processing Complete",
@@ -763,18 +763,18 @@ class PUDPropertiesDialog(QDialog):
 
     def handle_scenario(self, scenario_id, well_data):
         
-        df_uwi_model_data = pd.DataFrame([well_data])
-        if 'id' in df_uwi_model_data.columns:
-            df_uwi_model_data = df_uwi_model_data.drop(columns=['id'])
+        df_UWI_model_data = pd.DataFrame([well_data])
+        if 'id' in df_UWI_model_data.columns:
+            df_UWI_model_data = df_UWI_model_data.drop(columns=['id'])
             
         date_columns = ['max_oil_production_date', 'max_gas_production_date', 'economic_limit_date']
         for col in date_columns:
-            if col in df_uwi_model_data.columns:
-                df_uwi_model_data[col] = pd.to_datetime(df_uwi_model_data[col], errors='coerce').dt.strftime('%Y-%m-%d')
+            if col in df_UWI_model_data.columns:
+                df_UWI_model_data[col] = pd.to_datetime(df_UWI_model_data[col], errors='coerce').dt.strftime('%Y-%m-%d')
                 
         # These are the columns that match the model_properties table schema
         required_columns = [
-            "scenario_id", "uwi", 
+            "scenario_id", "UWI", 
             "max_oil_production", "max_gas_production",
             "max_oil_production_date", "max_gas_production_date",
             "one_year_oil_production", "one_year_gas_production", 
@@ -793,21 +793,21 @@ class PUDPropertiesDialog(QDialog):
         ]
 
         # Reorder columns to match the database schema
-        df_uwi_model_data = df_uwi_model_data[required_columns]
-        print(df_uwi_model_data)
+        df_UWI_model_data = df_UWI_model_data[required_columns]
+        print(df_UWI_model_data)
     
-        self.db_manager.update_model_properties(df_uwi_model_data, scenario_id)
+        self.db_manager.update_model_properties(df_UWI_model_data, scenario_id)
     
-        self.uwi_production_rates_data, self.uwi_error, self.uwi_model_data = self.dca.planned_prod_rate(df_uwi_model_data)
-        self.db_manager.update_uwi_prod_rates(self.uwi_production_rates_data, scenario_id)
+        self.UWI_production_rates_data, self.UWI_error, self.UWI_model_data = self.dca.planned_prod_rate(df_UWI_model_data)
+        self.db_manager.update_UWI_prod_rates(self.UWI_production_rates_data, scenario_id)
     
-        self.uwi_error = pd.DataFrame({
-            'uwi': well_data['uwi'],
+        self.UWI_error = pd.DataFrame({
+            'UWI': well_data['UWI'],
             'sum_error_oil': [0],
             'sum_error_gas': [0]
         })
     
-        self.db_manager.update_uwi_errors(self.uwi_error, scenario_id)
+        self.db_manager.update_UWI_errors(self.UWI_error, scenario_id)
     
         
     def delete_pad(self):
@@ -823,31 +823,31 @@ class PUDPropertiesDialog(QDialog):
             logging.debug(f"Selected row: {row}")
 
             # Extract the UWI
-            uwi_item = self.well_pads_table.item(row, 0)
-            print(uwi_item)# Assuming column 0 contains UWI
-            if uwi_item is None:
+            UWI_item = self.well_pads_table.item(row, 0)
+            print(UWI_item)# Assuming column 0 contains UWI
+            if UWI_item is None:
                 QMessageBox.warning(self, "Warning", "Unable to determine the UWI for the selected pad")
                 return
 
-            uwi = uwi_item.text()
-            logging.debug(f"UWI: {uwi}")
+            UWI = UWI_item.text()
+            logging.debug(f"UWI: {UWI}")
 
 
             # Confirm deletion
             reply = QMessageBox.question(
                 self,
                 "Confirm Deletion",
-                f"Are you sure you want to delete the pad for UWI '{uwi}' in the current scenario?",
+                f"Are you sure you want to delete the pad for UWI '{UWI}' in the current scenario?",
                 QMessageBox.Yes | QMessageBox.No
             )
 
             if reply == QMessageBox.Yes:
                 # Perform the deletion in the database
-                self.db_manager.delete_pad(self.scenario_id, uwi)
+                self.db_manager.delete_pad(self.scenario_id, UWI)
 
                 # Remove the row from the table
                 self.well_pads_table.removeRow(row)
-                logging.info(f"Pad deleted: UWI={uwi}, Scenario ID={self.scenario_id}")
+                logging.info(f"Pad deleted: UWI={UWI}, Scenario ID={self.scenario_id}")
                 self.populate_well_pads_table()
 
         except Exception as e:
@@ -860,10 +860,10 @@ class PUDPropertiesDialog(QDialog):
         combined_data, date_ranges = self.db_manager.retrieve_and_sum()
         model_data = self.db_manager.retrieve_model_data()
         model_data_df = pd.DataFrame(model_data)
-        merged_df = pd.merge(date_ranges, model_data_df, on='uwi', how='inner')
+        merged_df = pd.merge(date_ranges, model_data_df, on='UWI', how='inner')
 
-        # Select only the uwi, first_date (start date), and capital_expenditures (CapEx) columns
-        capex_df = merged_df[['uwi', 'first_date', 'capital_expenditures']]
+        # Select only the UWI, first_date (start date), and capital_expenditures (CapEx) columns
+        capex_df = merged_df[['UWI', 'first_date', 'capital_expenditures']]
        #printcapex_df)
 
         self.cashflow_window.display_cashflow(combined_data, date_ranges, model_data_df )
@@ -889,7 +889,7 @@ class PUDPropertiesDialog(QDialog):
                       for col in range(self.well_pads_table.columnCount())]
         
             # Map the actual table headers to the columns we need
-            uwi_idx = headers.index('Pad Name')  # "Pad Name" contains UWI
+            UWI_idx = headers.index('Pad Name')  # "Pad Name" contains UWI
             start_date_idx = headers.index('Start Date')
             decline_curve_type_idx = headers.index('Decline Curve Type')
             decline_curve_idx = headers.index('Decline Curve')
@@ -908,11 +908,11 @@ class PUDPropertiesDialog(QDialog):
                     continue
 
                 # Get UWI from table item
-                uwi_item = self.well_pads_table.item(row_idx, uwi_idx)
-                if not uwi_item:
+                UWI_item = self.well_pads_table.item(row_idx, UWI_idx)
+                if not UWI_item:
                     logging.warning(f"Missing UWI (Pad Name) in row {row_idx}")
                     continue
-                uwi = uwi_item.text()
+                UWI = UWI_item.text()
 
                 # Get Start Date from QDateEdit widget
                 date_widget = self.well_pads_table.cellWidget(row_idx, start_date_idx)
@@ -927,13 +927,13 @@ class PUDPropertiesDialog(QDialog):
                 decline_curve = dc_widget.currentText() if dc_widget else None
 
                 logging.info(f"Row {row_idx} values:")
-                logging.info(f"UWI: {uwi}")
+                logging.info(f"UWI: {UWI}")
                 logging.info(f"Start Date: {start_date}")
                 logging.info(f"DC Type: {decline_curve_type}")
                 logging.info(f"DC: {decline_curve}")
 
                 # Find the well pad ID and save basic updates
-                well_pad_row = scenario_wells_df[scenario_wells_df["uwi"] == uwi]
+                well_pad_row = scenario_wells_df[scenario_wells_df["UWI"] == UWI]
                 if not well_pad_row.empty:
                     well_pad_id = well_pad_row.iloc[0]["id"]
                 
@@ -948,7 +948,7 @@ class PUDPropertiesDialog(QDialog):
                     # Build well data dictionary for decline curve processing
                     well_pad_data = {
                         "id": well_pad_id,
-                        "uwi": uwi,
+                        "UWI": UWI,
                         "start_date": start_date,
                         "decline_curve_type": decline_curve_type,
                         "decline_curve": decline_curve,
@@ -957,9 +957,9 @@ class PUDPropertiesDialog(QDialog):
                     }
                     modified_well_data.append(well_pad_data)
                 
-                    logging.info(f"Updated basic data for UWI {uwi}")
+                    logging.info(f"Updated basic data for UWI {UWI}")
                 else:
-                    logging.warning(f"No well pad ID found for UWI: {uwi}")
+                    logging.warning(f"No well pad ID found for UWI: {UWI}")
 
             if not modified_well_data:
                 logging.info("No valid well pad data to update.")
@@ -968,7 +968,7 @@ class PUDPropertiesDialog(QDialog):
             # Step 2: Process each modified well with its decline curve data
             for well_pad_data in modified_well_data:
                 try:
-                    uwi = well_pad_data["uwi"]
+                    UWI = well_pad_data["UWI"]
                     decline_curve_type = well_pad_data["decline_curve_type"]
                     decline_curve_name = well_pad_data["decline_curve"]
                     start_date = well_pad_data["start_date"]
@@ -976,9 +976,9 @@ class PUDPropertiesDialog(QDialog):
                     decline_curve_data = None
 
                     if decline_curve_type == "UWI":
-                        decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_uwi(
+                        decline_curve_df = self.db_manager.retrieve_model_data_by_scenario_and_UWI(
                             scenario_id=self.scenario_id,
-                            uwi=decline_curve_name
+                            UWI=decline_curve_name
                         )
                         decline_curve_data = decline_curve_df.iloc[0].to_dict() if not decline_curve_df.empty else None
 
@@ -986,7 +986,7 @@ class PUDPropertiesDialog(QDialog):
                         decline_curve_data = self.db_manager.get_saved_decline_curve_data(decline_curve_name)
 
                     if decline_curve_data is None:
-                        logging.warning(f"No valid decline curve found for {uwi}")
+                        logging.warning(f"No valid decline curve found for {UWI}")
                         continue
 
                     # Step 3: Ensure all required fields exist in decline_curve_data
@@ -1012,14 +1012,14 @@ class PUDPropertiesDialog(QDialog):
                     decline_curve_data["gas_model_status"] = well_pad_data["gas_model_status"]
 
                     # Assign UWI and scenario ID
-                    decline_curve_data["uwi"] = uwi
+                    decline_curve_data["UWI"] = UWI
                     decline_curve_data["scenario_id"] = self.scenario_id
 
                     # Process the scenario with updated decline curve data
                     self.handle_scenario(self.scenario_id, decline_curve_data)
 
                 except Exception as e:
-                    logging.error(f"Error processing well {uwi}: {str(e)}")
+                    logging.error(f"Error processing well {UWI}: {str(e)}")
 
             # Step 4: Final cleanup
             self.modified_rows.clear()
@@ -1039,7 +1039,7 @@ class PUDPropertiesDialog(QDialog):
         :return: A list of decline curve options.
         """
         if decline_curve_type == "UWI":
-            return self.db_manager.get_active_uwis_with_properties()  # Fetch UWI options
+            return self.db_manager.get_active_UWIs_with_properties()  # Fetch UWI options
         elif decline_curve_type == "Saved DC":
             return self.db_manager.get_decline_curve_names()  # Fetch Saved DC options
         else:

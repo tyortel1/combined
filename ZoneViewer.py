@@ -33,7 +33,7 @@ class ZoneViewerDialog(QDialog):
         self.zone_names = []
         self.df = pd.DataFrame()
         self.filtered_df = pd.DataFrame()
-        self.selected_uwis = None
+        self.selected_UWIs = None
         self.saved_sort_column = None
 
 
@@ -184,16 +184,16 @@ class ZoneViewerDialog(QDialog):
         self.filter_layout.addWidget(self.search_bar)
 
                 # UWI Filter
-        self.uwi_filter_label = QLabel("Filter by UWI")
-        self.uwi_filter = QComboBox(self)
-        self.uwi_filter.setFixedSize(QSize(180, 25))
-        self.uwi_filter.addItem("All")
+        self.UWI_filter_label = QLabel("Filter by UWI")
+        self.UWI_filter = QComboBox(self)
+        self.UWI_filter.setFixedSize(QSize(180, 25))
+        self.UWI_filter.addItem("All")
       
 
-        self.uwi_filter.setCurrentText("All")  # Set initial value
-        self.uwi_filter.currentTextChanged.connect(self.apply_filters)
-        self.filter_layout.addWidget(self.uwi_filter_label)
-        self.filter_layout.addWidget(self.uwi_filter)
+        self.UWI_filter.setCurrentText("All")  # Set initial value
+        self.UWI_filter.currentTextChanged.connect(self.apply_filters)
+        self.filter_layout.addWidget(self.UWI_filter_label)
+        self.filter_layout.addWidget(self.UWI_filter)
 
         # Criteria dropdowns
         self.filter_criteria_dropdown = QComboBox(self)
@@ -363,10 +363,10 @@ class ZoneViewerDialog(QDialog):
         if selected_zone in ["Select Zone", None, ""]:
             print("No valid zone selected. Clearing data.")
             self.df = pd.DataFrame()
-            self.selected_uwis = []
+            self.selected_UWIs = []
             self.selected_columns = []
-            self.uwi_filter.clear()
-            self.uwi_filter.addItem("All")# Reset pagination
+            self.UWI_filter.clear()
+            self.UWI_filter.addItem("All")# Reset pagination
             self.load_data()  # Clear the table view
             self.update_page_label() 
 
@@ -374,8 +374,9 @@ class ZoneViewerDialog(QDialog):
     
         try:
             print(selected_zone)
+            normalized_zone_name = selected_zone.replace(' ', '_')
             # Fetch entire table data for the selected zone
-            data, columns = self.db_manager.fetch_zone_table_data(selected_zone)
+            data, columns = self.db_manager.fetch_zone_table_data(normalized_zone_name)
         
             # Create DataFrame
             self.df = pd.DataFrame(data, columns=columns)
@@ -388,16 +389,16 @@ class ZoneViewerDialog(QDialog):
                 return
         
             # Update UI elements
-            self.selected_uwis = self.get_unique_uwis_from_dataframe()
+            self.selected_UWIs = self.get_unique_UWIs_from_dataframe()
             self.selected_columns = self.df.columns.tolist()
                         # Update UWI filter
-            self.uwi_filter.blockSignals(True)
-            self.uwi_filter.clear()
-            self.uwi_filter.addItem("All")
-            if "uwi" in self.df.columns:
-                unique_uwis = sorted(self.df["uwi"].unique().tolist())
-                self.uwi_filter.addItems([str(uwi) for uwi in unique_uwis])
-            self.uwi_filter.blockSignals(False)
+            self.UWI_filter.blockSignals(True)
+            self.UWI_filter.clear()
+            self.UWI_filter.addItem("All")
+            if "UWI" in self.df.columns:
+                unique_UWIs = sorted(self.df["UWI"].unique().tolist())
+                self.UWI_filter.addItems([str(UWI) for UWI in unique_UWIs])
+            self.UWI_filter.blockSignals(False)
         
 
             self.apply_filters()
@@ -412,15 +413,15 @@ class ZoneViewerDialog(QDialog):
             # Optional: log the full traceback
             import traceback
             traceback.print_exc()
-    def get_unique_uwis_from_dataframe(self):
+    def get_unique_UWIs_from_dataframe(self):
         """
         Fetch unique UWIs from the initial DataFrame.
 
         Returns:
             list: A sorted list of unique UWIs.
         """
-        if 'uwi' in self.df.columns:
-            return sorted(self.df['uwi'].unique().tolist())
+        if 'UWI' in self.df.columns:
+            return sorted(self.df['UWI'].unique().tolist())
         else:
             QMessageBox.warning(self, "Warning", "The UWI column is missing in the data.")
             return []      
@@ -541,7 +542,7 @@ class ZoneViewerDialog(QDialog):
 
         # Block signals to prevent multiple updates
         filters_to_block = [
-            self.uwi_filter, 
+            self.UWI_filter, 
  
             self.zone_name_filter, 
             self.zone_type_filter, 
@@ -559,14 +560,14 @@ class ZoneViewerDialog(QDialog):
             filtered_df = self.df.copy()
 
             # Extract filter texts
-            uwi_filter_text = self.uwi_filter.currentText().strip().lower()
+            UWI_filter_text = self.UWI_filter.currentText().strip().lower()
            
             zone_type_filter_text = self.zone_type_filter.currentText().strip().lower()
 
             # Apply UWI filter
-            if uwi_filter_text != "all":
+            if UWI_filter_text != "all":
                 filtered_df = filtered_df[
-                    filtered_df['uwi'].astype(str).str.lower().str.contains(uwi_filter_text)
+                    filtered_df['UWI'].astype(str).str.lower().str.contains(UWI_filter_text)
                 ]
 
 
@@ -913,7 +914,7 @@ class ZoneViewerDialog(QDialog):
         # Save dropdown states
         settings.setValue('zone_type_filter', self.zone_type_filter.currentText())
         settings.setValue('zone_name_filter', self.zone_name_filter.currentText())
-        settings.setValue('uwi_filter', self.uwi_filter.currentText())
+        settings.setValue('UWI_filter', self.UWI_filter.currentText())
         settings.setValue('rows_per_page', self.rows_per_page_combo.currentText())
         settings.setValue('filter_criteria', self.filter_criteria_dropdown.currentText())
         settings.setValue('highlight_criteria', self.highlight_criteria_dropdown.currentText())
@@ -951,7 +952,7 @@ class ZoneViewerDialog(QDialog):
         self.selected_columns = []
         self.zone_type_filter_text = "All"
         self.zone_name_filter_text = "Select Zone"
-        self.uwi_filter_text = "All"
+        self.UWI_filter_text = "All"
         self.rows_per_page = "1000"
         self.filter_criteria_text = "None"
         self.highlight_criteria_text = "None"
@@ -965,7 +966,7 @@ class ZoneViewerDialog(QDialog):
 
             # Block signals for UI components
             widgets_to_block = [
-                self.uwi_filter,
+                self.UWI_filter,
                 self.zone_name_filter,
                 self.zone_type_filter,
                 self.filter_criteria_dropdown,
@@ -983,7 +984,7 @@ class ZoneViewerDialog(QDialog):
                 self.selected_columns = json.loads(settings.value('selected_columns', '[]'))
                 self.zone_type_filter_text = settings.value('zone_type_filter', 'All')
                 self.zone_name_filter_text = settings.value('zone_name_filter', 'Select Zone')
-                self.uwi_filter_text = settings.value('uwi_filter', 'All')
+                self.UWI_filter_text = settings.value('UWI_filter', 'All')
                 self.rows_per_page = settings.value('rows_per_page', '1000')
                 self.filter_criteria_text = settings.value('filter_criteria', 'None')
                 self.highlight_criteria_text = settings.value('highlight_criteria', 'None')
@@ -1006,7 +1007,7 @@ class ZoneViewerDialog(QDialog):
         # Apply loaded settings to the UI
         self.zone_type_filter.setCurrentText(self.zone_type_filter_text)
         self.zone_name_filter.setCurrentText(self.zone_name_filter_text)
-        self.uwi_filter.setCurrentText(self.uwi_filter_text)
+        self.UWI_filter.setCurrentText(self.UWI_filter_text)
         self.rows_per_page_combo.setCurrentText(self.rows_per_page)
         self.filter_criteria_dropdown.setCurrentText(self.filter_criteria_text)
         self.highlight_criteria_dropdown.setCurrentText(self.highlight_criteria_text)
@@ -1235,9 +1236,9 @@ def main():
     }
     df = pd.DataFrame(data)
     zone_names = ['Zone1', 'Zone2', 'Zone3', 'Zone4', 'Zone5']
-    selected_uwis = ['001', '002', '003', '004', '005']
+    selected_UWIs = ['001', '002', '003', '004', '005']
 
-    dialog = ZoneViewerDialog(df, zone_names, selected_uwis)
+    dialog = ZoneViewerDialog(df, zone_names, selected_UWIs)
     dialog.show()
 
     sys.exit(app.exec_())

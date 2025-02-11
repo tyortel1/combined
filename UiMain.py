@@ -584,7 +584,7 @@ class UI_main:
     
         # Rest of your existing table setup code
         self.model_properties.setHorizontalHeaderLabels([
-            "uwi", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
+            "UWI", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
             "one_year_oil_production", "one_year_gas_production", "di_oil", "di_gas", "oil_b_factor", "gas_b_factor",
             "min_dec_oil", "min_dec_gas", "model_oil", "model_gas", "gas_b_factor", "oil_b_factor", "oil_price",
             "gas_price", "oil_price_dif", "gas_price_dif", "discount_rate", "working_interest", "royalty", "tax_rate",

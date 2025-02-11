@@ -199,7 +199,7 @@ class PUDWellSelector(QDialog):
         self.decline_curve_input = QComboBox()
         
         if self.db_manager:
-            initial_curves = self.db_manager.get_active_uwis_with_properties()
+            initial_curves = self.db_manager.get_active_UWIs_with_properties()
             self.decline_curve_input.addItems(initial_curves)
         
         decline_curve_layout.addWidget(self.decline_curve_label)
@@ -345,8 +345,8 @@ class PUDWellSelector(QDialog):
         self.decline_curve_input.clear()
     
         if selected_type == "UWI":
-            active_uwis = self.db_manager.get_active_uwis_with_properties()
-            self.decline_curve_input.addItems(active_uwis)
+            active_UWIs = self.db_manager.get_active_UWIs_with_properties()
+            self.decline_curve_input.addItems(active_UWIs)
         else:  # "Saved DC"
             decline_curve_names = self.db_manager.get_decline_curve_names()
             self.decline_curve_input.addItems(decline_curve_names)
@@ -377,7 +377,7 @@ class PUDWellSelector(QDialog):
             total_length = 0
             if self.db_manager:
                 well_data = self.db_manager.get_total_lengths()
-                matching_wells = [w for w in well_data if w["uwi"] == well_name]
+                matching_wells = [w for w in well_data if w["UWI"] == well_name]
                 if matching_wells:
                     total_length = matching_wells[0]["total_length"]
                 else:
@@ -394,7 +394,7 @@ class PUDWellSelector(QDialog):
             )
 
             well_row = {
-                "uwi": well_name,
+                "UWI": well_name,
                 "total_depth": total_length,
                 "total_capex_cost": well_capex,
                 "scenario": self.scenario_input.currentText(),
