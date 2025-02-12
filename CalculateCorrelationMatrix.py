@@ -66,12 +66,18 @@ class SaveRegressionDialog(QDialog):
         self.setLayout(layout)
     
     def populate_regression_tables(self):
-        """Populate the combo box with existing regression tables"""
+        """Populate the combo box with existing regression entries"""
         tables = self.db_manager.get_regression_tables()
         self.table_combo.clear()
         self.table_combo.addItem("")  # Empty option for new tables
-        for table_name, _ in tables:
-            self.table_combo.addItem(table_name)
+    
+        for regression in tables:
+            # Since get_regression_tables now returns more fields, unpack them
+            regression_id, regression_name, values_table, attrs_table, description, date_created = regression
+        
+            # Add regression name to combo box
+            # You could also store the full regression info in the item's data
+            self.table_combo.addItem(regression_name)
     
     def load_table_description(self, table_name):
         """Load description when a table is selected"""
@@ -676,9 +682,14 @@ class CorrelationDisplayDialog(QDialog):
             
             # Filter data matrix to only include selected attributes
             filtered_data = self.data_matrix[selected_attributes].copy()
-            filtered_data = filtered_data.reset_index()  # Ensure UWI is a column
-            filtered_data = filtered_data.drop_duplicates()  # Remove exact duplicate rows
-            filtered_data = filtered_data.set_index("UWI")  # Reset index to UWI if needed
+
+            # Ensure UWI is a column
+            if filtered_data.index.name == 'UWI':
+                filtered_data = filtered_data.reset_index()
+
+            # Remove duplicates by keeping the last entry for each UWI
+            filtered_data = filtered_data.drop_duplicates(subset=['UWI'], keep='last')
+
             print(filtered_data)
             # Use db_manager to save data
             self.parent().db_manager.save_correlation_to_regression(

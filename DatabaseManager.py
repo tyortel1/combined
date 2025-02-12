@@ -3044,49 +3044,36 @@ class DatabaseManager:
     def fetch_zone_table_data(self, zone_name):
         """
         Fetch entire table data for a specific zone name.
-
-        Parameters:
-        -----------
-        zone_name : str
-            The name of the zone to fetch data for
-
-        Returns:
-        --------
-        tuple: A tuple containing (data, columns)
-            - data: List of rows from the table
-            - columns: List of column names
         """
         self.connect()
         try:
-            # First, try to find the correct table
-            # You might need to adjust this query based on your database schema
+            # Get all tables
             self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = [table[0] for table in self.cursor.fetchall()]
         
-            # Find a table that matches the zone name or contains the zone name
-            matching_tables = [
-                table for table in tables 
-                if zone_name.lower() in table.lower() or 
-                   table.lower().startswith(zone_name.lower())
-            ]
-
-            if not matching_tables:
-                raise ValueError(f"No table found for zone name: {zone_name}")
-
-            # Use the first matching table
-            table_name = matching_tables[0]
-
+            # First try exact match
+            exact_matches = [table for table in tables if table.lower() == zone_name.lower()]
+            if exact_matches:
+                table_name = exact_matches[0]
+            else:
+                # If no exact match, then look for prefix match
+                prefix_matches = [table for table in tables if table.lower().startswith(zone_name.lower() + "_")]
+                if prefix_matches:
+                    table_name = prefix_matches[0]
+                else:
+                    raise ValueError(f"No matching table found for zone name: {zone_name}")
+        
+            print(f"Selected table for zone {zone_name}: {table_name}")  # Debug print
+        
             # Fetch data from the table
             query = f"SELECT * FROM {table_name}"
             self.cursor.execute(query)
         
-            # Fetch all rows
             data = self.cursor.fetchall()
-        
-            # Get column names
             columns = [description[0] for description in self.cursor.description]
         
             return data, columns
+        
         except sqlite3.Error as e:
             print(f"Error fetching zone table data: {e}")
             raise
@@ -3559,126 +3546,186 @@ class DatabaseManager:
         finally:
             self.disconnect()
 
-    def create_regression_attributes_table(self):
+    def create_regression_values_table(self):
+        """Creates template for tables storing regression values"""
         self.connect()
         create_table_sql = """
-        CREATE TABLE IF NOT EXISTS regression_attributes (
-            id INTEGER PRIMARY KEY,
-            UWI TEXT,
-            attribute_name TEXT,
+        CREATE TABLE IF NOT EXISTS r_values_template (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            UWI TEXT NOT NULL,
+            attribute_name TEXT NOT NULL,
             attribute_value REAL,
             source_table TEXT,
             source_column TEXT,
-            FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
+            FOREIGN KEY (UWI) REFERENCES UWIs(UWI),
+            UNIQUE(UWI, attribute_name)
         )
         """
         try:
             self.cursor.execute(create_table_sql)
             self.connection.commit()
-            print("Regression attributes table created successfully.")
+            print("Regression values template created successfully.")
         except sqlite3.Error as e:
-            print("Error creating regression attributes table:", e)
+            print("Error creating regression values template:", e)
+        finally:
+            self.disconnect()
+
+    def create_regression_attributes_table(self):
+        """Creates template for tables storing which attributes are used in each regression"""
+        self.connect()
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS r_attributes_template (
+            attribute_name TEXT PRIMARY KEY,
+            is_target BOOLEAN DEFAULT FALSE,
+            notes TEXT
+        )
+        """
+        try:
+            self.cursor.execute(create_table_sql)
+            self.connection.commit()
+            print("Regression attributes template created successfully.")
+        except sqlite3.Error as e:
+            print("Error creating regression attributes template:", e)
         finally:
             self.disconnect()
 
     def create_regression_table(self):
+        """Creates the main catalog tracking regression analyses and their associated table names"""
         self.connect()
         create_table_sql = """
-        CREATE TABLE IF NOT EXISTS regression_tables (
-            table_name TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS r_catalog (
+            regression_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            regression_name TEXT UNIQUE NOT NULL,
+            values_table_name TEXT UNIQUE NOT NULL,
+            attributes_table_name TEXT UNIQUE NOT NULL,
             description TEXT,
             date_created TEXT DEFAULT CURRENT_TIMESTAMP
         )
         """
-    
         try:
             self.cursor.execute(create_table_sql)
             self.connection.commit()
-            print("Regression tables catalog created successfully.")
+            print("Regression catalog created successfully.")
         except sqlite3.Error as e:
-            print("Error creating regression tables catalog:", e)
+            print("Error creating regression catalog:", e)
         finally:
             self.disconnect()
 
-    def delete_regression_table(self, table_name, within_transaction=False):
-        """Delete a regression table and its catalog entry"""
+    def add_regression_table(self, table_name, description, within_transaction=False):
+        """Add a regression entry to the r_catalog table
+        Args:
+            table_name: Base name for the regression (without r_ prefix)
+            description: Optional description
+            within_transaction: If True, doesn't commit (for use in larger transactions)
+        """
         if not within_transaction:
             self.connect()
         try:
-            # First delete the actual table
-            drop_table_sql = f"""
-            DROP TABLE IF EXISTS {table_name}
+            # Clean table name - replace spaces with underscores
+            safe_table_name = table_name.replace(" ", "_")
+            values_table = f"r_{safe_table_name}_values"
+            attrs_table = f"r_{safe_table_name}_attributes"
+        
+            insert_sql = """
+            INSERT INTO r_catalog (
+                regression_name,
+                values_table_name,
+                attributes_table_name,
+                description
+            ) VALUES (?, ?, ?, ?)
             """
-        
-            # Then delete from the catalog
-            delete_from_catalog_sql = """
-            DELETE FROM regression_tables
-            WHERE table_name = ?
-            """
-        
-            self.cursor.execute(drop_table_sql)
-            self.cursor.execute(delete_from_catalog_sql, (table_name,))
-        
+    
+            self.cursor.execute(insert_sql, (
+                table_name,  # Keep original name with spaces for display
+                values_table,
+                attrs_table,
+                description
+            ))
+    
             if not within_transaction:
                 self.connection.commit()
-                print(f"Table '{table_name}' deleted successfully.")
+                print(f"Added regression '{table_name}' to catalog with tables: {values_table}, {attrs_table}")
+            
         except sqlite3.Error as e:
             if not within_transaction:
                 self.connection.rollback()
-            print(f"Error deleting table '{table_name}': {e}")
+            print(f"Error adding regression '{table_name}' to catalog: {e}")
             raise e
         finally:
             if not within_transaction:
                 self.disconnect()
 
-    def add_regression_table(self, table_name, description, within_transaction=False):
-        """Add a table to the regression tables catalog"""
+
+    def delete_regression_table(self, table_name, within_transaction=False):
+        """Delete a regression's tables and its catalog entry"""
         if not within_transaction:
             self.connect()
         try:
-            insert_sql = """
-            INSERT INTO regression_tables (table_name, description)
-            VALUES (?, ?)
-            """
+            # Get the values and attributes table names from catalog
+            self.cursor.execute("""
+                SELECT values_table_name, attributes_table_name 
+                FROM r_catalog 
+                WHERE regression_name = ?
+            """, (table_name,))
         
-            self.cursor.execute(insert_sql, (table_name, description))
+            result = self.cursor.fetchone()
+            if result:
+                values_table, attrs_table = result
+            
+                # Drop both tables if they exist
+                self.cursor.execute(f'DROP TABLE IF EXISTS "{values_table}"')
+                self.cursor.execute(f'DROP TABLE IF EXISTS "{attrs_table}"')
+            
+                # Delete from the catalog
+                self.cursor.execute("""
+                    DELETE FROM r_catalog
+                    WHERE regression_name = ?
+                """, (table_name,))
         
             if not within_transaction:
                 self.connection.commit()
-                print(f"Table '{table_name}' added to catalog.")
+                print(f"Regression '{table_name}' and associated tables deleted successfully.")
+            
         except sqlite3.Error as e:
             if not within_transaction:
                 self.connection.rollback()
-            print(f"Error adding table '{table_name}' to catalog: {e}")
+            print(f"Error deleting regression '{table_name}': {e}")
             raise e
         finally:
             if not within_transaction:
                 self.disconnect()
+
 
     def save_correlation_to_regression(self, table_name, data_matrix, description=None, replace_mode=True):
         """
-        Save selected attribute data to a regression table
+        Save selected attribute data to regression tables
         Args:
-            table_name: Name of the regression table to create/update
+            table_name: Base name for the regression (without r_ prefix)
             data_matrix: Pandas DataFrame containing the raw data (indexed by UWI)
-            description: Optional description for the table
+            description: Optional description for the table 
             replace_mode: If True, replaces existing data, if False, adds to it
         """
+        # Clean table names - replace spaces with underscores for SQL safety
+        safe_table_name = table_name.replace(" ", "_")
+        values_table = f"r_{safe_table_name}_values"
+        attrs_table = f"r_{safe_table_name}_attributes"
+
         self.connect()
         try:
             # Start transaction
             self.connection.execute("BEGIN")
-    
+
             if replace_mode:
-                # Delete existing table if it exists
-                self.delete_regression_table(table_name, within_transaction=True)
-        
-                # Add to regression tables catalog
+                # Delete existing tables if they exist
+                self.cursor.execute(f'DROP TABLE IF EXISTS "{values_table}"')
+                self.cursor.execute(f'DROP TABLE IF EXISTS "{attrs_table}"')
+
+                # Add to regression catalog
                 self.add_regression_table(table_name, description, within_transaction=True)
-        
-                # Create the new regression table
-                create_table_sql = f"""
-                CREATE TABLE {table_name} (
+
+                # Create the new values table
+                create_values_sql = f"""
+                CREATE TABLE "{values_table}" (
                     id INTEGER PRIMARY KEY,
                     attribute_name TEXT,
                     attribute_value REAL,
@@ -3688,11 +3735,23 @@ class DatabaseManager:
                     FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
                 )
                 """
-                self.cursor.execute(create_table_sql)
+                self.cursor.execute(create_values_sql)
+
+                # Create the new attributes table
+                create_attrs_sql = f"""
+                CREATE TABLE "{attrs_table}" (
+                    attribute_name TEXT PRIMARY KEY,
+                    weight REAL DEFAULT 1.0,
+                    is_target BOOLEAN DEFAULT FALSE,
+                    notes TEXT
+                )
+                """
+                self.cursor.execute(create_attrs_sql)
+
             else:
-                # If table doesn't exist, create it
-                create_table_sql = f"""
-                CREATE TABLE IF NOT EXISTS {table_name} (
+                # If tables don't exist, create them
+                create_values_sql = f"""
+                CREATE TABLE IF NOT EXISTS "{values_table}" (
                     id INTEGER PRIMARY KEY,
                     attribute_name TEXT,
                     attribute_value REAL,
@@ -3702,58 +3761,102 @@ class DatabaseManager:
                     FOREIGN KEY (UWI) REFERENCES UWIs(UWI)
                 )
                 """
-                self.cursor.execute(create_table_sql)
-        
+                self.cursor.execute(create_values_sql)
+
+                create_attrs_sql = f"""
+                CREATE TABLE IF NOT EXISTS "{attrs_table}" (
+                    attribute_name TEXT PRIMARY KEY,
+                    weight REAL DEFAULT 1.0,
+                    is_target BOOLEAN DEFAULT FALSE,
+                    notes TEXT
+                )
+                """
+                self.cursor.execute(create_attrs_sql)
+
                 # Update catalog if needed
                 if not self.get_regression_table_by_name(table_name, within_transaction=True):
                     self.add_regression_table(table_name, description, within_transaction=True)
-    
-            # Insert data
-            insert_sql = f"""
-            INSERT INTO {table_name} 
+
+            # Insert data into values table
+            insert_values_sql = f"""
+            INSERT INTO "{values_table}" 
             (attribute_name, attribute_value, UWI, source_table, source_column)
             VALUES (?, ?, ?, ?, ?)
             """
-    
-            # Insert the raw data values
-            data_matrix = data_matrix.reset_index()  # Make UWI a column
-    
+
+            # Insert into attributes table
+            insert_attrs_sql = f"""
+            INSERT OR REPLACE INTO "{attrs_table}" 
+            (attribute_name, weight, is_target, notes)
+            VALUES (?, 1.0, FALSE, NULL)
+            """
+
+            # Ensure UWI is a column in the DataFrame
+            if data_matrix.index.name == 'UWI':
+                data_matrix = data_matrix.reset_index()
+
+            print("Filtered Data Columns:", data_matrix.columns.tolist())  # Debugging output
+
+            # Iterate through columns
             for col in data_matrix.columns:
-                if col != 'UWI':  # Skip the UWI column
-                    source_table, source_column = col.split('.')
-            
-                    if not replace_mode:
-                        # Delete existing entries for this attribute if in add mode
-                        self.cursor.execute(f"""
-                            DELETE FROM {table_name}
-                            WHERE attribute_name = ?
-                        """, (str(col),))
-            
-                    # Add new values
-                    for index, row in data_matrix.iterrows():
-                        value = row[col]
-                        UWI = row['UWI']
-                
-                        # Only insert if value is not null/NaN
-                        if isinstance(value, (int, float)) and not pd.isna(value):
-                            self.cursor.execute(insert_sql, 
-                                (str(col), float(value), str(UWI), str(source_table), str(source_column)))
-    
+                if col == 'UWI':  # Skip UWI column
+                    continue
+
+                # Debugging print
+                print(f"Processing column: {col}")  # Helps detect unexpected column names
+
+                # Handle case where column name doesn't contain '.'
+                if '.' in col:
+                    source_table, source_column = col.split('.', 1)
+                else:
+                    source_table = "Unknown"  # Assign a default value if the column has no dot
+                    source_column = col
+
+                if not replace_mode:
+                    # Delete existing entries for this attribute if in add mode
+                    self.cursor.execute(f"""
+                        DELETE FROM "{values_table}"
+                        WHERE attribute_name = ?
+                    """, (str(col),))
+
+                # Add to attributes table
+                self.cursor.execute(insert_attrs_sql, (str(col),))
+
+                # Add values
+                for index, row in data_matrix.iterrows():
+                    value = row[col]
+                    UWI = row['UWI']
+
+                    # Only insert if value is not null/NaN
+                    if isinstance(value, (int, float)) and not pd.isna(value):
+                        self.cursor.execute(insert_values_sql, 
+                            (str(col), float(value), str(UWI), str(source_table), str(source_column)))
+
             self.connection.commit()
-            print(f"Data saved to regression table: {table_name}")
-    
+            print(f"Data saved to regression tables: {values_table} and {attrs_table}")
+
         except sqlite3.Error as e:
             self.connection.rollback()
-            print(f"Error saving to regression table: {e}")
+            print(f"Error saving to regression tables: {e}")
             raise e
         finally:
             self.disconnect()
 
     def get_regression_tables(self):
-        """Get list of all regression tables and their descriptions"""
+        """Get list of all regression entries with their associated table names"""
         self.connect()
         try:
-            self.cursor.execute("SELECT table_name, description FROM regression_tables")
+            self.cursor.execute("""
+                SELECT 
+                    regression_id,
+                    regression_name,
+                    values_table_name,
+                    attributes_table_name,
+                    description,
+                    date_created
+                FROM r_catalog
+                ORDER BY regression_id
+            """)
             tables = self.cursor.fetchall()
             return tables
         except sqlite3.Error as e:
@@ -3779,6 +3882,75 @@ class DatabaseManager:
         finally:
             if not within_transaction:
                 self.disconnect()
+
+    def save_regression_feature_weights(self, regression_name, adjusted_weights, target_variable):
+        """
+        Save feature weights for a specific regression table
+    
+        Args:
+            regression_name (str): Name of the regression table
+            adjusted_weights (dict): Dictionary of feature names and their corresponding weights
+            target_variable (str): Name of the target variable
+        """
+        # Construct the attributes table name
+        safe_table_name = regression_name.replace(" ", "_")
+        attrs_table = f"r_{safe_table_name}_attributes"
+
+        self.connect()
+        try:
+            # Start transaction
+            self.connection.execute("BEGIN")
+
+            # First, set all is_target to 0
+            reset_sql = f"""
+            UPDATE "{attrs_table}"
+            SET is_target = 0
+            """
+            self.cursor.execute(reset_sql)
+
+            # Fetch the default weight for the target variable if not in adjusted_weights
+            self.cursor.execute(f"""
+                SELECT weight FROM "{attrs_table}" 
+                WHERE attribute_name = ?
+            """, (target_variable,))
+            default_weight_result = self.cursor.fetchone()
+            default_weight = default_weight_result[0] if default_weight_result else 1.0
+
+            # Then set the specific target variable to 1
+            target_update_sql = f"""
+            UPDATE "{attrs_table}"
+            SET is_target = 1, weight = ?
+            WHERE attribute_name = ?
+            """
+
+            # Update weights for each feature
+            update_sql = f"""
+            UPDATE "{attrs_table}"
+            SET weight = ?
+            WHERE attribute_name = ?
+            """
+
+            # Set the target variable's weight and mark as target
+            self.cursor.execute(target_update_sql, (
+                adjusted_weights.get(target_variable, default_weight), 
+                target_variable
+            ))
+
+            # Update weights for other features
+            for feature, weight in adjusted_weights.items():
+                if feature != target_variable:
+                    self.cursor.execute(update_sql, (weight, feature))
+
+            # Commit the transaction
+            self.connection.commit()
+            print(f"Weights updated for regression: {regression_name}")
+
+        except sqlite3.Error as e:
+            self.connection.rollback()
+            print(f"Error saving regression feature weights: {e}")
+            raise
+        finally:
+            self.disconnect()
 
 
     def fetch_correlation_data(self, UWIs, selected_attrs):
@@ -3850,77 +4022,57 @@ class DatabaseManager:
 
 
 
-    def get_regression_data(self, table_name, UWIs):
-        """
-        Retrieve regression data for selected UWIs.
-    
-        Parameters:
-        -----------
-        table_name : str
-            The name of the regression table to query.
-        UWIs : list
-            List of UWIs to filter.
-    
-        Returns:
-        --------
-        pandas.DataFrame
-            DataFrame containing the regression data filtered by UWIs.
-        """
-        if not UWIs:
-            print("No UWIs provided.")
-            return None  # Exit early if no UWIs selected
-
+    def get_regression_data(self, regression_name, UWIs):
+        """Get data from a regression's values table for specified UWIs"""
+        self.connect()
         try:
-            self.connect()
-
-            # Format UWIs for SQL query
-            placeholders = ', '.join(['?'] * len(UWIs))
-
-            query = f"""
-                SELECT * FROM {table_name}
-                WHERE UWI IN ({placeholders})
-            """
-
-            df = pd.read_sql_query(query, self.connection, params=UWIs)
-
-            if df.empty:
-                print(f"No data found for selected UWIs in {table_name}.")
-                return None
+            # Get table names using safe name conversion
+            safe_table_name = regression_name.replace(" ", "_")
+            values_table = f"r_{safe_table_name}_values"
         
+            # Build query with proper UWI list
+            UWI_placeholders = ','.join(['?' for _ in UWIs])
+        
+            query = f"""
+            SELECT UWI, attribute_name, attribute_value
+            FROM "{values_table}"
+            WHERE UWI IN ({UWI_placeholders})
+            """
+        
+            self.cursor.execute(query, UWIs)
+            rows = self.cursor.fetchall()
+        
+            if not rows:
+                return None
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(rows, columns=['UWI', 'attribute_name', 'attribute_value'])
+        
+            # Data is already in long format, which is what we want
             return df
-
+        
         except sqlite3.Error as e:
-            print(f"Error fetching regression data: {e}")
+            print(f"Error getting regression data: {e}")
             return None
         finally:
             self.disconnect()
 
-
-    def get_unique_attributes(self, table_name):
-        """
-        Retrieve unique attribute names from a regression table.
-    
-        Parameters:
-        -----------
-        table_name : str
-            The name of the regression table to query.
-        
-        Returns:
-        --------
-        list
-            List of unique attribute names.
-        """
+    def get_regression_attributes(self, regression_name):
+        """Get attributes for a regression from its attributes table"""
+        self.connect()
         try:
-            self.connect()
-            query = f"""
-                SELECT DISTINCT attribute_name 
-                FROM {table_name}
+            safe_table_name = regression_name.replace(" ", "_")
+            attrs_table = f"r_{safe_table_name}_attributes"
+        
+            self.cursor.execute(f"""
+                SELECT attribute_name, weight, is_target 
+                FROM "{attrs_table}"
                 ORDER BY attribute_name
-            """
-            df = pd.read_sql_query(query, self.connection)
-            return df['attribute_name'].tolist()
+            """)
+        
+            return self.cursor.fetchall()
         except sqlite3.Error as e:
-            print(f"Error fetching unique attributes: {e}")
+            print(f"Error getting regression attributes: {e}")
             return []
         finally:
             self.disconnect()
