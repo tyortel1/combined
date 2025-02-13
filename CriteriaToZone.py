@@ -1,14 +1,17 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QMessageBox
+﻿from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QMessageBox
 import pandas as pd
 
 class CriteriaToZoneDialog(QDialog):
-    def __init__(self, df, df_criteria, parent=None):
+    def __init__(self, df, db_manager, zone_name, parent=None):
         super(CriteriaToZoneDialog, self).__init__(parent)
         self.setWindowTitle("Save Criteria as Attribute")
         self.resize(400, 200)
-        
+
         self.df = df
-        self.df_criteria = df_criteria
+        self.db_manager = db_manager
+        self.zone_name = str(zone_name).strip()
+        print(self.zone_name)
+        print(self.df)
         self.attribute_name = None
 
         # Layout for the dialog
@@ -17,7 +20,21 @@ class CriteriaToZoneDialog(QDialog):
         # Criteria dropdown
         layout.addWidget(QLabel("Select Criteria:"))
         self.criteria_dropdown = QComboBox(self)
-        self.criteria_dropdown.addItems(self.df_criteria['Name'].unique())
+    
+        # Load criteria names using same method as highlight dropdown
+        print("\n=== Populating Criteria Dropdown ===")  # Debugging
+        criteria_names = self.db_manager.load_criteria_names()
+        if not criteria_names:
+            print("No criteria found in the database.")
+            QMessageBox.warning(self, "No Criteria", "No criteria found in database. Please create criteria first.")
+            self.reject()
+            return
+        
+        print(f"Loaded criteria: {criteria_names}")  # Debug print
+    
+        # Add criteria in same way as highlight dropdown
+        self.criteria_dropdown.addItem("None")
+        self.criteria_dropdown.addItems(criteria_names)
         layout.addWidget(self.criteria_dropdown)
 
         # Attribute name input
@@ -38,51 +55,72 @@ class CriteriaToZoneDialog(QDialog):
             QMessageBox.warning(self, "Input Error", "Please provide an attribute name.")
             return
 
+        print(f"\n🔹 Applying Criteria to Zone: {self.zone_name}")
+
         # Initialize the new column with 0s
         self.df[self.attribute_name] = 0
 
-        # Get the criteria conditions
-        criteria_conditions = self.df_criteria[self.df_criteria['Name'] == selected_criteria]
-    
-        # Initialize final_mask with all True values (or False, depending on your logic)
-        final_mask = pd.Series([True] * len(self.df), index=self.df.index)
-    
-        # Use this temporary mask for OR conditions
-        temp_mask = pd.Series([False] * len(self.df), index=self.df.index)
+        # Get criteria from database
+        _, conditions = self.db_manager.load_criteria_by_name(selected_criteria)
+        if not conditions:
+            QMessageBox.warning(self, "Criteria Not Found", "No matching criteria found.")
+            return
 
-        # Apply the criteria to each row in the DataFrame
-        for _, criterion in criteria_conditions.iterrows():
-            column = criterion['Column']
-            operator = criterion['Operator']
-            value = criterion['Value']
-            logical_operator = criterion.get('Logical Operator', 'AND')
+        print(f"\n🔹 Applying Criteria: {selected_criteria}")
+        print(conditions)
 
-            # Apply the filter condition based on the operator
-            if operator == '=':
-                mask = self.df[column] == value
-            elif operator == '>':
-                mask = self.df[column] > float(value)
-            elif operator == '<':
-                mask = self.df[column] < float(value)
-            elif operator == '>=':
-                mask = self.df[column] >= float(value)
-            elif operator == '<=':
-                mask = self.df[column] <= float(value)
-            elif operator == '!=':
-                mask = self.df[column] != value
+        # Start with a mask of all True values (AND logic)
+        group_mask = pd.Series(True, index=self.df.index)
+        
+        for column, operator, value, logical_op in conditions:
+            print(f"Applying condition: {column} {operator} {value} (Logical: {logical_op})")
+        
+            try:
+                numeric_col = pd.to_numeric(self.df[column], errors='coerce')
+                if operator == '=':
+                    mask = numeric_col == float(value)
+                elif operator == '>':
+                    mask = numeric_col > float(value)
+                elif operator == '<':
+                    mask = numeric_col < float(value)
+                elif operator == '>=':
+                    mask = numeric_col >= float(value)
+                elif operator == '<=':
+                    mask = numeric_col <= float(value)
+                elif operator == '!=':
+                    mask = numeric_col != float(value)
+                else:
+                    print(f"❌ Unsupported operator: {operator}")
+                    continue
+                    
+                # Apply AND/OR logic
+                if logical_op == 'OR':
+                    group_mask |= mask  # OR logic
+                else:
+                    group_mask &= mask  # AND logic (default)
+                    
+            except Exception as e:
+                print(f"❌ Error processing criterion: {e}")
+
+        # Set the attribute to 1 for rows that match the criteria
+        self.df.loc[group_mask, self.attribute_name] = 1
+
+        print("\n🔹 Final Mask Summary:")
+        print(f"  - Total rows selected: {group_mask.sum()}")
+        print(f"  - Sample selected rows:")
+        print(self.df[group_mask].head().to_string())
+        print(f"  - Table Name: {self.zone_name}")
+
+        print(f"\n✅ Updated DataFrame with new attribute '{self.attribute_name}':")
+        print(self.df[[self.attribute_name]].value_counts())
+
+        if self.db_manager:
+            # Update database with new attribute
+            success = self.db_manager.update_zone_column_data(self.zone_name, self.attribute_name, self.df)
+            
+            if success:
+                print(f"✅ Successfully saved '{self.attribute_name}' to database.")
             else:
-                mask = pd.Series([False] * len(self.df), index=self.df.index)
+                print(f"❌ Failed to save '{self.attribute_name}' to database.")
 
-            # Combine masks using the logical operator
-            if logical_operator == 'AND':
-                final_mask &= mask
-            elif logical_operator == 'OR':
-                temp_mask |= mask
-
-        # If OR conditions were used, combine them with the final mask
-        final_mask |= temp_mask
-
-        # Set the attribute column based on the final mask
-        self.df.loc[final_mask, self.attribute_name] = 1
-        print(self.df)
         self.accept()

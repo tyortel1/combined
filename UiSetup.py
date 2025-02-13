@@ -19,30 +19,7 @@ class Ui_MainWindow:
         MainWindow.optionsLayout = QVBoxLayout()
         MainWindow.optionsLayout.setSpacing(5)  # Minimal spacing
 
-        # Dropdown to select grid
-        MainWindow.gridLabel = QLabel("Select Grid:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridLabel)
-        MainWindow.gridDropdown = QComboBox(MainWindow)
-        MainWindow.gridDropdown.addItem("Select Grid")
-        MainWindow.optionsLayout.addWidget(MainWindow.gridDropdown)
-
-                # Dropdown to select grid color bar
-
-                # Color range display for grid
-        MainWindow.gridColorRangeDisplay = QLabel(MainWindow)
-        MainWindow.gridColorRangeDisplay.setFixedHeight(50)
-        MainWindow.gridColorRangeDisplay.setFixedWidth(220)
-        MainWindow.gridColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorRangeDisplay)
-
-        # Dropdown to select grid color bar
-        MainWindow.gridColorBarLabel = QLabel("Select Grid Color Bar:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarLabel)
-        MainWindow.gridColorBarDropdown = QComboBox(MainWindow)
-        MainWindow.gridColorBarDropdown.addItem("Rainbow") 
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarDropdown)
-
-        MainWindow.optionsLayout.addSpacing(25)
+       
                 # Separator line below grid color range display
         MainWindow.gridSeparator = QFrame(MainWindow)
         MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
@@ -131,6 +108,30 @@ class Ui_MainWindow:
         MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
         MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
         MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+
+        MainWindow.optionsLayout.addSpacing(5)
+         # Dropdown to select grid
+        MainWindow.gridLabel = QLabel("Select Grid:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.gridLabel)
+        MainWindow.gridDropdown = QComboBox(MainWindow)
+        MainWindow.gridDropdown.addItem("Select Grid")
+        MainWindow.optionsLayout.addWidget(MainWindow.gridDropdown)
+
+                # Dropdown to select grid color bar
+
+                # Color range display for grid
+        MainWindow.gridColorRangeDisplay = QLabel(MainWindow)
+        MainWindow.gridColorRangeDisplay.setFixedHeight(50)
+        MainWindow.gridColorRangeDisplay.setFixedWidth(220)
+        MainWindow.gridColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
+        MainWindow.optionsLayout.addWidget(MainWindow.gridColorRangeDisplay)
+
+        # Dropdown to select grid color bar
+        MainWindow.gridColorBarLabel = QLabel("Select Grid Color Bar:", MainWindow)
+        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarLabel)
+        MainWindow.gridColorBarDropdown = QComboBox(MainWindow)
+        MainWindow.gridColorBarDropdown.addItem("Rainbow") 
+        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarDropdown)
 
         MainWindow.optionsLayout.addSpacing(5)
 
@@ -247,79 +248,92 @@ class Ui_MainWindow:
         MainWindow.open_action = QAction("Open", MainWindow)
         file_menu.addAction(MainWindow.open_action)
 
-        # Launch menu
-        MainWindow.launch_menu = MainWindow.menu_bar.addMenu("Launch")
-        MainWindow.launch_menu.setEnabled(False)
-        MainWindow.plot_action = QAction("Zone Viewer", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.plot_action)
-        MainWindow.color_action = QAction("Color Editor", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.color_action)
-        MainWindow.pud_properties_action = QAction("Pad Production Scenario Builder", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.pud_properties_action)
-        MainWindow.dca_action = QAction("Decline Curve Analysis", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.dca_action)  # Add this line
+        # Menu bar
+        MainWindow.menu_bar = QMenuBar(MainWindow)
+        MainWindow.setMenuBar(MainWindow.menu_bar)
 
-  
-        MainWindow.launch_cashflow_action = QAction("Launch Combined Cashflow", MainWindow)
-        MainWindow.launch_menu.addAction(MainWindow.launch_cashflow_action)
+        # Project Menu
+        file_menu = MainWindow.menu_bar.addMenu("Project")
 
-        MainWindow.calculate_menu = MainWindow.menu_bar.addMenu("Calculate")
-        MainWindow.calculate_menu.setEnabled(False)
+        MainWindow.new_project_action = QAction("Create", MainWindow)
+        file_menu.addAction(MainWindow.new_project_action)
+
+        MainWindow.open_action = QAction("Open", MainWindow)
+        file_menu.addAction(MainWindow.open_action)
+
+        # Prepare Attributes Menu (Renamed from Calculate)
+        MainWindow.prepare_attributes_menu = MainWindow.menu_bar.addMenu("Prepare Attributes")
+        MainWindow.prepare_attributes_menu.setEnabled(False)
+
         MainWindow.calc_stage_action = QAction("Calculate Stages", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_stage_action)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.calc_stage_action)
+
         MainWindow.calc_grid_to_zone_action = QAction("Grid To Zone", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_grid_to_zone_action)
-        #MainWindow.calc_well_attribute_action = QAction("Calculate Well Attributes", MainWindow)
-        #MainWindow.calculate_menu.addAction(MainWindow.calc_well_attribute_action)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.calc_grid_to_zone_action)
+
         MainWindow.calc_inzone_action = QAction("Calculate in Zone", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_inzone_action)
-        MainWindow.pc_dialog_action = QAction("Calculate Parent Child", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.pc_dialog_action)
-        MainWindow.attribute_analyzer_action = QAction("Attribute Analyzer", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.attribute_analyzer_action)
-        MainWindow.correlation_matrix_action = QAction("Well Correlation Matrix", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.correlation_matrix_action)
-        MainWindow.well_comparison_action = QAction("Well Comparison Calculation", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.well_comparison_action)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.calc_inzone_action)
+
         MainWindow.merge_zones_action = QAction("Merge Zones", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.merge_zones_action)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.merge_zones_action)
+
         MainWindow.calc_zone_attb_action = QAction("Calculate Zone Attributes", MainWindow)
-        MainWindow.calculate_menu.addAction(MainWindow.calc_zone_attb_action)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.calc_zone_attb_action)
+
+        MainWindow.pc_dialog_action = QAction("Calculate Parent Child", MainWindow)
+        MainWindow.prepare_attributes_menu.addAction(MainWindow.pc_dialog_action)
+
+        # Regression Menu (New)
+        MainWindow.regression_menu = MainWindow.menu_bar.addMenu("Regression")
+        MainWindow.regression_menu.setEnabled(False)
+
+        MainWindow.correlation_matrix_action = QAction("Well Correlation Matrix", MainWindow)
+        MainWindow.regression_menu.addAction(MainWindow.correlation_matrix_action)
+
+        MainWindow.attribute_analyzer_action = QAction("Run Regression", MainWindow)  # Renamed
+        MainWindow.regression_menu.addAction(MainWindow.attribute_analyzer_action)
 
 
 
+        # Production Menu (New)
+        MainWindow.production_menu = MainWindow.menu_bar.addMenu("Production")
+        MainWindow.production_menu.setEnabled(False)
+
+        MainWindow.pud_properties_action = QAction("Pad Production Scenarios", MainWindow)
+        MainWindow.production_menu.addAction(MainWindow.pud_properties_action)
+
+        MainWindow.well_comparison_action = QAction("Well Comparison Calculation", MainWindow)
+        MainWindow.production_menu.addAction(MainWindow.well_comparison_action)
 
 
+        MainWindow.dca_action = QAction("Decline Curve Analysis", MainWindow)
+        MainWindow.production_menu.addAction(MainWindow.dca_action)
 
+        MainWindow.launch_cashflow_action = QAction("Launch Combined Cashflow", MainWindow)
+        MainWindow.production_menu.addAction(MainWindow.launch_cashflow_action)
+
+        # Import Menu (Unchanged)
         MainWindow.import_menu = MainWindow.menu_bar.addMenu("Import")
         MainWindow.import_menu.setEnabled(False)
+
         MainWindow.connect_action = QAction("SeisWare Wells and Production", MainWindow)
         MainWindow.connect_action.triggered.connect(MainWindow.connectToSeisWare)
         MainWindow.import_menu.addAction(MainWindow.connect_action)
-        MainWindow.data_loader_menu_action = QAction("SeisWare Grids ", MainWindow)
+
+        MainWindow.data_loader_menu_action = QAction("SeisWare Grids", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.data_loader_menu_action)
+
         MainWindow.import_action = QAction("CSV Production", MainWindow)
         MainWindow.import_action.triggered.connect(MainWindow.import_excel)
         MainWindow.import_menu.addAction(MainWindow.import_action)
+
         MainWindow.dataload_well_zones_action = QAction("CSV Well Zones and Attributes", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_well_zones_action)
+
         MainWindow.dataload_segy_action = QAction("Import Segy", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_segy_action)
-        # Add new actions
 
-
-
-
-        MainWindow.export_menu = MainWindow.menu_bar.addMenu("Export")
-        MainWindow.export_menu.setEnabled(False)
-
-        MainWindow.export_action = QAction("Export Results", MainWindow)
-        MainWindow.export_menu.addAction(MainWindow.export_action)
-        MainWindow.export_properties = QAction("Export SWMap Properties", MainWindow)
-        MainWindow.export_menu.addAction(MainWindow.export_properties)
-        MainWindow.zone_to_sw = QAction("Send Zones to SeisWare", MainWindow)
-        MainWindow.export_menu.addAction(MainWindow.zone_to_sw)
-
+        # Properties Menu (Unchanged)
         MainWindow.properties_menu = MainWindow.menu_bar.addMenu("Properties")
         MainWindow.properties_menu.setEnabled(True)
 
@@ -328,6 +342,7 @@ class Ui_MainWindow:
 
         MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
+
 
 
 

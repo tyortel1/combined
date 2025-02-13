@@ -90,10 +90,12 @@ class ZoneAttributeCalculator(QDialog):
     def populate_zones(self):
         """Load zones from the database"""
         try:
+            # Fetch Zone type zones to calculate from
             zones = self.db_manager.fetch_zone_names_by_type("Zone")
+            
             self.zone_combo.clear()
             self.zone_combo.addItem("Select Zone")
-            for zone in zones:
+            for zone in sorted(zones):
                 self.zone_combo.addItem(zone[0])
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error loading zones: {str(e)}")
@@ -108,7 +110,10 @@ class ZoneAttributeCalculator(QDialog):
         try:
             # Get zone data
             zone_data = self.db_manager.fetch_zone_depth_data(zone_name)
-            
+            if zone_data is None or zone_data.empty:
+                QMessageBox.warning(self, "Warning", f"No data found for zone: {zone_name}")
+                return
+                
             # Find numeric columns
             numeric_cols = zone_data.select_dtypes(include=[np.number]).columns
             
@@ -139,54 +144,42 @@ class ZoneAttributeCalculator(QDialog):
             self.selected_list.takeItem(self.selected_list.row(item))
 
     def do_calculate(self):
+        """Perform the zone attribute calculations by summing attributes for each UWI."""
         try:
             # Validate inputs
             zone_name = self.zone_combo.currentText()
             new_zone = self.new_zone_name.text().strip()
             calc_method = self.calc_combo.currentText()
-        
+
             if zone_name == "Select Zone":
-                QMessageBox.warning(self, "Warning", "Please select a zone")
+                QMessageBox.warning(self, "Warning", "Please select a source zone")
                 return
-            
+        
             if not new_zone:
                 QMessageBox.warning(self, "Warning", "Please enter a new zone name")
                 return
-            
-            selected_attrs = [self.selected_list.item(i).text() 
-                            for i in range(self.selected_list.count())]
+
+            # Check if the new zone name already exists
+            if self.db_manager.zone_exists(new_zone, "Well"):
+                QMessageBox.warning(self, "Warning", f"The zone '{new_zone}' already exists. Please choose a different name.")
+                return
+
+            # Get selected attributes
+            selected_attrs = [self.selected_list.item(i).text() for i in range(self.selected_list.count())]
             if not selected_attrs:
                 QMessageBox.warning(self, "Warning", "Please select attributes to calculate")
                 return
 
-            # Get zone data
+            # Fetch the source zone data (which contains UWI, Top Depth, Base Depth, and Attributes)
             zone_data = self.db_manager.fetch_zone_depth_data(zone_name)
-            print(zone_data)
-        
-            # Get directional survey data from database
+            if zone_data is None or zone_data.empty:
+                QMessageBox.warning(self, "Warning", f"No data found for zone: {zone_name}")
+                return
 
-            directional_rows = self.db_manager.get_directional_surveys()
-        
-            # Convert directional survey rows to DataFrame with correct columns
-            directional_data = pd.DataFrame(directional_rows, 
-                columns=['id', 'UWI', 'MD', 'TVD', 'X Offset', 'Y Offset', 'Cumulative Distance'])
-            
-            # Make sure we're using 'UWI' consistently
-            if 'UWI' in zone_data.columns:
-                zone_data = zone_data.rename(columns={'UWI': 'UWI'})
-            
-            print(zone_data['UWI'])
-
-
-
+            # Ensure consistent UWI type
             zone_data['UWI'] = zone_data['UWI'].astype(str)
-            directional_data['UWI'] = directional_data['UWI'].astype(str)
 
-        
-            # Group by UWI
-            grouped = zone_data.groupby('UWI')
-        
-            # Calculate based on selected method
+            # Define calculation functions
             calc_func = {
                 "Sum": lambda x: x.sum(),
                 "Mean": lambda x: x.mean(),
@@ -197,63 +190,46 @@ class ZoneAttributeCalculator(QDialog):
                 "Variance": lambda x: x.var(),
                 "Count": lambda x: x.count()
             }[calc_method]
-        
-            # Calculate new values with offsets from directional surveys
+
+            # Group by UWI and calculate the selected attributes
             results = []
+            grouped = zone_data.groupby('UWI')
+
             for UWI, group in grouped:
-                # Get directional data for this UWI
-                well_data = directional_data[directional_data['UWI'] == UWI]
-                if well_data.empty:
-                    print(f"No directional survey data found for UWI: {UWI}")
-                    continue
-                
-                # Get first and last entries from directional survey
-                first_entry = well_data.iloc[0]
-                last_entry = well_data.iloc[-1]
-            
-                result = {
-                    'UWI': UWI,
-                    'Top_X_Offset': int(first_entry['X Offset']),
-                    'Top_Y_Offset': int(first_entry['Y Offset']),
-                    'Base_X_Offset': int(last_entry['X Offset']),
-                    'Base_Y_Offset': int(last_entry['Y Offset'])
-                }
-            
-                # Calculate selected attributes
+                result = {'UWI': UWI}
+
+                # Calculate the selected attributes using the chosen method
                 for attr in selected_attrs:
                     if attr in group:
                         result[f"{attr}_{calc_method}"] = calc_func(group[attr])
-            
+
                 results.append(result)
-        
+
+            # If no results generated, show a warning
             if not results:
-                QMessageBox.warning(self, "Warning", "No results generated. Check directional survey data.")
+                QMessageBox.warning(self, "Warning", "No results generated. Check your data.")
                 return
-            
-            # Create DataFrame
+
+            # Convert results to DataFrame
             df = pd.DataFrame(results)
-        
-            # Add the zone and create table
-            zone_added = self.db_manager.add_zone_names(new_zone, "Well")
-            if not zone_added:
-                QMessageBox.warning(self, "Warning", f"Zone '{new_zone}' already exists")
+
+            # Add the new zone to the database
+            if not self.db_manager.add_zone_names(new_zone, "Well"):
+                QMessageBox.warning(self, "Warning", f"Failed to add zone '{new_zone}'")
                 return
-            
-            # Create table name
-            table_name = f"{new_zone.replace(' ', '_').replace('-', '_').lower()}"
-            if not table_name[0].isalpha():
-                table_name = f"z_{table_name}"
-            
-            # Create the table
-            table_created = self.db_manager.create_table_from_df(table_name, df)
-            if not table_created:
-                QMessageBox.warning(self, "Warning", f"Table '{table_name}' already exists")
+
+            # Create a new table with the calculated values
+            if not self.db_manager.create_table_from_df(new_zone, df):
+                QMessageBox.warning(self, "Warning", f"Failed to create table for zone '{new_zone}'")
                 return
-            
+
+            # Notify the user of success
             QMessageBox.information(self, "Success", 
-                f"Created new zone '{new_zone}' with {calc_method} of selected attributes")
+                f"Created new Well zone '{new_zone}' with {calc_method} of selected attributes")
+
+            # Close the dialog
             self.accept()
-        
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating attributes: {str(e)}")
             print(f"Error details: {str(e)}")  # For debugging

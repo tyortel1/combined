@@ -290,7 +290,7 @@ class DataLoadWellZonesDialog(QDialog):
         # Interpolate for top and base MDs
         top_x, top_y, _, _, _, _ = self.interpolate(top_md, well_data)
         base_x, base_y, _, _, _, _ = self.interpolate(base_md, well_data)
-        print(top_x, top_y, base_x, base_y )
+      
         return top_x, top_y, base_x, base_y
 
     def interpolate(self, md, data):
@@ -324,8 +324,7 @@ class DataLoadWellZonesDialog(QDialog):
             x1, y1 = first_row.get('Top X Offset'), first_row.get('Top Y Offset')
             x2, y2 = last_row.get('Base X Offset'), last_row.get('Base Y Offset')
 
-            # Print debug output
-            print(f"UWI: {UWI} - x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}")
+
 
             # Calculate the angle in radians
             dx, dy = x2 - x1, y1 - y2
@@ -373,10 +372,7 @@ if __name__ == "__main__":
         result = dialog.import_data()
         if result:
             df, zone_type, zone_name = result
-            print(df)
 
-            print(f"Zone Name: {zone_name}")
-            print(f"Zone Type: {zone_type}")
 
 
     sys.exit(app.exec_())

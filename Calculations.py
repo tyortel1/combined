@@ -226,64 +226,77 @@ class ZoneAttributesDialog(QDialog):
 
 
 
+
 class StagesCalculationDialog(QDialog):
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Calculate Stages")
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(400, 200)
+        self.setStyleSheet(self.get_dark_style())
 
         self.db_manager = db_manager
         self.zone_names = [zone[0] for zone in self.db_manager.fetch_zone_names_by_type('Zone')]
 
-        # Load and standardize directional survey DataFrame
+        # Standardize directional survey DataFrame
         self.directional_surveys_df = pd.DataFrame(self.db_manager.get_directional_surveys_dataframe())
-
-        # Ensure column names are lowercase and consistent
         self.directional_surveys_df.columns = self.directional_surveys_df.columns.str.lower().str.strip()
 
-        # Rename columns to standard format if necessary
+        # Rename columns
         column_mapping = {
-            "uwi": "UWI",
-            "md": "MD",
-            "tvd": "TVD",
-            "x offset": "X Offset",
-            "y offset": "Y Offset"
+            "uwi": "UWI", "md": "MD", "tvd": "TVD",
+            "x offset": "X Offset", "y offset": "Y Offset"
         }
         self.directional_surveys_df.rename(columns=column_mapping, inplace=True)
 
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
 
-        # Average Stage Length Input
-        self.avg_stage_length_label = QLabel("Average Stage Length:", self)
-        layout.addWidget(self.avg_stage_length_label)
-
+        # Average Stage Length
+        layout.addWidget(QLabel("Average Stage Length:", self))
         self.avg_stage_length_input = QLineEdit(self)
         layout.addWidget(self.avg_stage_length_input)
 
-        # Zone Name Input
-        self.zone_name_label = QLabel("Zone Name:", self)
-        layout.addWidget(self.zone_name_label)
-
+        # Zone Name
+        layout.addWidget(QLabel("Zone Name:", self))
         self.zone_name_dropdown = QComboBox(self)
         self.zone_name_dropdown.setEditable(True)
-        if not self.zone_names:
-            self.zone_name_dropdown.addItem("Select Zone")
-        else:
-            self.zone_name_dropdown.addItems(self.zone_names)
-            self.zone_name_dropdown.setCurrentIndex(0)
+        self.zone_name_dropdown.addItem("Select Zone") if not self.zone_names else self.zone_name_dropdown.addItems(self.zone_names)
         layout.addWidget(self.zone_name_dropdown)
 
-        # Calculate Button
-        self.calculate_button = QPushButton("Calculate", self)
-        self.calculate_button.clicked.connect(self.calculate_stages)
-        layout.addWidget(self.calculate_button)
+        # Button Layout (Side-by-Side on the Right)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # Push buttons to the right
 
-        # Close Button
+        self.calculate_button = QPushButton("Calculate", self)
         self.close_button = QPushButton("Close", self)
+
+        # Set button size
+        self.calculate_button.setFixedWidth(100)
+        self.close_button.setFixedWidth(100)
+
+        button_layout.addWidget(self.calculate_button)
+        button_layout.addWidget(self.close_button)
+
+        layout.addLayout(button_layout)
+
+        # Connect buttons
+        self.calculate_button.clicked.connect(self.calculate_stages)
         self.close_button.clicked.connect(self.accept)
-        layout.addWidget(self.close_button)
 
         self.setLayout(layout)
+
+
+    def get_dark_style(self):
+        """Returns dark theme styles"""
+        return """
+            QDialog { background-color: #222; color: white; }
+            QLabel { color: white; }
+            QLineEdit, QComboBox, QPushButton {
+                background-color: #333; color: white;
+                border: 1px solid white; padding: 5px;
+            }
+            QPushButton:hover { background-color: #444; }
+            QPushButton:pressed { background-color: #555; }
+        """
 
     def calculate_stages(self):
         try:
@@ -391,7 +404,7 @@ class StagesCalculationDialog(QDialog):
 
         if success:
             QMessageBox.information(self, "Calculation Complete",
-                                  f"Added stages for {len(new_UWIs)} new wells")
+                                  f"Added stages for  new wells")
         else:
             QMessageBox.warning(self, "Save Error",
                               "There was an error saving the new stages to the database.")

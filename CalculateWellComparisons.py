@@ -1,7 +1,7 @@
 ﻿from PySide6.QtWidgets import (
     QDialog, QLabel, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem,
     QAbstractItemView, QGroupBox, QLineEdit, QMessageBox, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QWidget, QCheckBox, QHBoxLayout, QSlider, QComboBox, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
+    QTableWidgetItem, QHeaderView, QWidget, QCheckBox, QHBoxLayout,QRadioButton, QSlider, QComboBox, QFormLayout, QFileDialog, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -216,33 +216,46 @@ class WeightsDialog(QDialog):
         self.save_button.clicked.connect(self.accept)
         layout.addWidget(self.save_button)
 
-    def add_weight_sliders(self, attributes: List[str]):
+    def add_weight_sliders(self, attributes: List[str], weights: dict = None):
+        print(f"Attributes: {attributes}")
+        print(f"Weights: {weights}")
+    
+        # Clear existing sliders
         for i in reversed(range(self.weights_layout.count())):
             self.weights_layout.itemAt(i).widget().setParent(None)
-
+    
         self.weight_sliders = {}
+    
         for attr in attributes:
+            print(f"Processing attribute: {attr}")
+        
             slider = QSlider(Qt.Horizontal)
             slider.setMinimum(1)
             slider.setMaximum(100)
-            slider.setValue(50)  # Default weight
+        
+            # Set weight based on provided weights or default to 50
+            if weights and attr in weights:
+                weight = weights[attr]
+                print(f"Weight for {attr}: {weight}")
+            
+                # Convert weight to slider value
+                if weight <= 1:
+                    slider_value = int(weight * 100)
+                else:
+                    slider_value = int(weight)
+            
+                # Ensure slider value is between 1 and 100
+                slider_value = max(1, min(100, slider_value))
+            
+                print(f"Setting slider for {attr} to: {slider_value}")
+            
+                slider.setValue(slider_value)
+            else:
+                print(f"No weight found for {attr}, defaulting to 50")
+                slider.setValue(50)  # Default weight
+        
             self.weights_layout.addRow(f"{attr}:", slider)
             self.weight_sliders[attr] = slider
-
-    def add_weight_sliders(self, attributes: List[str]):
-        """Dynamically create sliders for each selected attribute."""
-        for i in reversed(range(self.weights_layout.count())):
-            self.weights_layout.itemAt(i).widget().setParent(None)
-
-        self.weight_sliders = {}
-        for attr in attributes:
-            slider = QSlider(Qt.Horizontal)
-            slider.setMinimum(1)
-            slider.setMaximum(100)
-            slider.setValue(50)  # Default weight
-            self.weights_layout.addRow(f"{attr}:", slider)
-            self.weight_sliders[attr] = slider
-
 class WellComparisonDialog(QDialog):
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
@@ -267,6 +280,35 @@ class WellComparisonDialog(QDialog):
         # === LEFT PANEL ===
         left_layout = QVBoxLayout()
 
+        # Attribute Selection Mode Group
+        selection_mode_group = QGroupBox("Attribute Selection Mode")
+        selection_mode_layout = QVBoxLayout()
+
+        # Radio buttons for selection mode
+        self.manual_mode_radio = QRadioButton("Manual Attribute Selection")
+        self.regression_mode_radio = QRadioButton("Use Regression Attributes")
+    
+        # Set manual mode as default
+        self.manual_mode_radio.setChecked(True)
+    
+        selection_mode_layout.addWidget(self.manual_mode_radio)
+        selection_mode_layout.addWidget(self.regression_mode_radio)
+        selection_mode_group.setLayout(selection_mode_layout)
+    
+        # Add to left layout
+        left_layout.addWidget(selection_mode_group)
+
+        # Regression Selection Group
+        regression_group = QGroupBox("Regression Selection")
+        regression_layout = QVBoxLayout()
+    
+        self.regression_dropdown = QComboBox()
+        self.regression_dropdown.addItem("Select Regression")
+        regression_layout.addWidget(self.regression_dropdown)
+    
+        regression_group.setLayout(regression_layout)
+        left_layout.addWidget(regression_group)
+
         # Selectors
         self.planned_selector = DualListSelector("Planned Wells")
         self.active_selector = DualListSelector("Active Wells")
@@ -280,14 +322,13 @@ class WellComparisonDialog(QDialog):
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
 
-
         # === RIGHT PANEL ===
         right_layout = QVBoxLayout()
 
-        # Results table (this should take priority in resizing)
+        # Results table
         self.results_table = QTableWidget()
         self._setup_table()
-        right_layout.addWidget(self.results_table, 1)  # The '1' makes it expand properly
+        right_layout.addWidget(self.results_table, 1)
 
         # Buttons layout
         button_layout = QHBoxLayout()
@@ -306,11 +347,31 @@ class WellComparisonDialog(QDialog):
         self.export_button.setFixedWidth(button_width)
 
         # Add a spacer to push buttons to the right
-        button_layout.addStretch()  # Push buttons to the right
+        button_layout.addStretch()
         button_layout.addWidget(self.weights_button)
         button_layout.addWidget(self.calculate_button)
         button_layout.addWidget(self.decline_curve_button)
         button_layout.addWidget(self.export_button)
+
+        # Wrap the button layout inside a vertical layout
+        button_wrapper = QVBoxLayout()
+        button_wrapper.addStretch()
+        button_wrapper.addLayout(button_layout)
+
+        # Add buttons BELOW the table
+        right_layout.addLayout(button_wrapper, 0)
+
+        # Create right widget
+        right_widget = QWidget()
+        right_widget.setLayout(right_layout)
+
+        # Add panels to main layout
+        main_layout.addWidget(left_widget, 1)
+        main_layout.addWidget(right_widget, 2)
+
+        # Connect signals
+        self.manual_mode_radio.toggled.connect(self.toggle_attribute_selection)
+        self.regression_dropdown.currentIndexChanged.connect(self.update_attributes_from_regression)
 
         # Ensure button signals are connected
         self.weights_button.clicked.connect(self.open_weights_dialog)
@@ -318,23 +379,8 @@ class WellComparisonDialog(QDialog):
         self.decline_curve_button.clicked.connect(self.assign_type_curve)
         self.export_button.clicked.connect(self.export_to_excel)
 
-
-        # Wrap the button layout inside a vertical layout
-        button_wrapper = QVBoxLayout()
-        button_wrapper.addStretch()  # Pushes buttons to the bottom
-        button_wrapper.addLayout(button_layout)
-
-        # Add buttons BELOW the table, without shrinking the table
-        right_layout.addLayout(button_wrapper, 0)  # The '0' prevents it from taking extra space
-
-        # Create right widget
-        right_widget = QWidget()
-        right_widget.setLayout(right_layout)
-
-
-        # Add panels to main layout
-        main_layout.addWidget(left_widget, 1)
-        main_layout.addWidget(right_widget, 2)
+        # Set the layout
+        self.setLayout(main_layout)
 
         # Load initial data
         self.load_data()
@@ -359,15 +405,15 @@ class WellComparisonDialog(QDialog):
         header.setStretchLastSection(True)
 
     def load_data(self):
-        """Load initial data for the selectors. Filters active wells to only include those with model properties."""
+        """Load initial data for the selectors."""
         try:
             # Get numeric attributes only
             numeric_columns = self.db_manager.get_numeric_attributes()
             planned_wells = self.db_manager.get_UWIs_by_status("Planned")
-        
+    
             # Get initial active wells list
             active_wells = self.db_manager.get_UWIs_by_status("Active")
-        
+    
             # Filter active wells to only those with model properties
             filtered_active_wells = []
             for UWI in active_wells:
@@ -378,18 +424,24 @@ class WellComparisonDialog(QDialog):
                 )
                 if model_properties_df is not None and not model_properties_df.empty:
                     filtered_active_wells.append(UWI)
+    
+            # Load regression tables
+            regression_tables = self.db_manager.get_regression_tables()
+            self.regression_dropdown.clear()
+            self.regression_dropdown.addItem("Select Regression")
         
-            # Print debug info
-            print(f"Total active wells: {len(active_wells)}")
-            print(f"Active wells with model properties: {len(filtered_active_wells)}")
-            print(f"Wells filtered out: {len(active_wells) - len(filtered_active_wells)}")
-        
+            for regression in regression_tables:
+                # Assuming regression is a tuple with (id, name, ...)
+                regression_name = regression[1]  # Adjust index based on your get_regression_tables method
+                self.regression_dropdown.addItem(regression_name)
+
             # Populate lists
-            print("Numeric columns:", numeric_columns)
             self.planned_selector.add_items(planned_wells)
-            self.active_selector.add_items(filtered_active_wells)  # Use filtered list
-            self.attr_selector.add_items(sorted(numeric_columns))
+            self.active_selector.add_items(filtered_active_wells)
         
+            # Always load all numeric attributes initially
+            self.attr_selector.add_items(sorted(numeric_columns))
+    
         except Exception as e:
             print(f"Error loading data: {e}")
 
@@ -623,7 +675,15 @@ class WellComparisonDialog(QDialog):
                               "Please select attributes before adjusting weights.")
             return
     
-        dialog.add_weight_sliders(selected_attributes)
+        # If regression mode is on and a regression is selected, use those weights
+        if (self.regression_mode_radio.isChecked() and 
+            self.regression_dropdown.currentIndex() > 0):
+            regression_name = self.regression_dropdown.currentText()
+            weights = self.db_manager.get_regression_feature_weights(regression_name)
+            dialog.add_weight_sliders(selected_attributes, weights)
+        else:
+            # Default to manual mode
+            dialog.add_weight_sliders(selected_attributes)
 
         if dialog.exec():
             self.iqr_multiplier = dialog.sensitivity_slider.value()
@@ -923,7 +983,99 @@ class WellComparisonDialog(QDialog):
 
     
 
+    def toggle_attribute_selection(self):
+        """Toggle between manual and regression-based attribute selection"""
+        is_regression_mode = self.regression_mode_radio.isChecked()
+    
+        # Enable/disable regression dropdown
+        self.regression_dropdown.setEnabled(is_regression_mode)
+    
+        if is_regression_mode:
+            # Clear current attribute selections if a regression is selected
+            if self.regression_dropdown.currentIndex() > 0:
+                self.update_attributes_from_regression()
+        else:
+            # Restore original attributes in manual mode
+            self.load_original_attributes()
 
+    def load_original_attributes(self):
+        """Reload original numeric attributes when switching back to manual mode"""
+        try:
+            # Get numeric attributes only
+            numeric_columns = self.db_manager.get_numeric_attributes()
+    
+            # Clear existing selections
+            self.attr_selector.available_list.clear()
+            self.attr_selector.selected_list.clear()
+    
+            # Repopulate with original numeric attributes
+            self.attr_selector.add_items(sorted(numeric_columns))
+    
+        except Exception as e:
+            print(f"Error loading original attributes: {e}")
+
+    def update_attributes_from_regression(self):
+        """Update attribute selector based on selected regression"""
+        # Only update if in regression mode and a regression is selected
+        if not self.regression_mode_radio.isChecked():
+            return
+
+        selected_regression = self.regression_dropdown.currentText()
+    
+        if selected_regression and selected_regression != "Select Regression":
+            # Fetch attributes for the selected regression
+            attributes = self.db_manager.get_regression_attributes(selected_regression)
+        
+            # Clear existing attribute selections
+            self.attr_selector.available_list.clear()
+            self.attr_selector.selected_list.clear()
+        
+            # Add attributes to available list
+            if attributes:
+                # Assuming attributes is a list of tuples or just attribute names
+                attribute_names = [attr[0] if isinstance(attr, tuple) else attr for attr in attributes]
+                self.attr_selector.add_items(attribute_names)
+        
+            # Fetch and set weights from the regression
+            self.load_regression_weights(selected_regression)
+        else:
+            # If no regression selected, restore original attributes
+            self.load_original_attributes()
+
+    def load_regression_weights(self, regression_name):
+        """Load weights from the regression table"""
+        try:
+            # Fetch weights from the database
+            weights = self.db_manager.get_regression_feature_weights(regression_name)
+        
+            print("Weights retrieved:", weights)
+        
+            # Update weight sliders if weights are available
+            if weights:
+                # Open weights dialog
+                dialog = WeightsDialog(self)
+            
+                # Get the attributes from the regression
+                attributes = self.db_manager.get_regression_attributes(regression_name)
+                attribute_names = [attr[0] if isinstance(attr, tuple) else attr for attr in attributes]
+            
+                print("Attributes:", attribute_names)
+                print("Weights before passing:", weights)
+            
+                # Add weight sliders with retrieved weights
+                dialog.add_weight_sliders(attribute_names, weights)
+            
+                # Store the weights
+                self.weight_sliders = {attr: weight for attr, weight in weights.items()}
+            
+                print("Stored weights:", self.weight_sliders)
+            else:
+                print("No weights found for this regression")
+    
+        except Exception as e:
+            print(f"Error loading regression weights: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 

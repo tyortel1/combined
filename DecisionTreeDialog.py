@@ -220,6 +220,7 @@ class DecisionTreeDialog(QDialog):
             # Directly call show_result_dialog with the analysis results
             self.show_result_dialog(analysis_results)
 
+
         except Exception as e:
             print(f"Error analyzing most likely values: {e}")
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")
@@ -388,6 +389,8 @@ class DecisionTreeDialog(QDialog):
         
             # Execute the dialog
             if highlight_dialog.exec_() == QDialog.Accepted:
+                # Emit the signal with the new criteria
+                self.criteriaGenerated.emit(highlight_dialog.criteria_df)
                 return highlight_dialog.criteria_name
     
         except Exception as e:

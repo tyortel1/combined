@@ -188,6 +188,7 @@ class CalcAttributeAnalyzer(QDialog):
         except Exception as e:
             print(f"Error loading data: {str(e)}")
             QMessageBox.critical(self, "Error", f"Error loading data: {str(e)}")
+
     def update_regression_description(self, index):
         """Update the description text when a regression is selected"""
         description = self.regression_combo.itemData(index)
@@ -204,6 +205,8 @@ class CalcAttributeAnalyzer(QDialog):
         try:
             # Get selected UWIs
             UWIs = [self.selected_UWIs.item(i).text() for i in range(self.selected_UWIs.count())]
+            print("Selected UWIs:", UWIs)
+        
             if not UWIs:
                 QMessageBox.warning(self, "Invalid Selection", "Please select at least one UWI")
                 return
@@ -211,62 +214,99 @@ class CalcAttributeAnalyzer(QDialog):
             # Get selected regression table and target variable
             selected_regression = self.regression_combo.currentText()
             target_variable = self.target_combo.currentText()
+            print(f"Selected Regression: {selected_regression}")
+            print(f"Target Variable: {target_variable}")
+        
             if not selected_regression or not target_variable:
                 QMessageBox.warning(self, "Invalid Selection", "Please select both regression table and target variable")
                 return
 
+            # Fetch regression data
             regression_data = self.db_manager.get_regression_data(selected_regression, UWIs)
-            print(regression_data)
+        
             if regression_data is None or regression_data.empty:
                 QMessageBox.warning(self, "No Data", "No data found for the selected regression and UWIs")
                 return
 
-            # Prepare the data
-            # Pivot the data to get features as columns
-            data_pivoted = regression_data.pivot(
+            # Print out initial data characteristics
+            print("\nInitial Regression Data:")
+            print("Total rows:", len(regression_data))
+            print("Unique UWIs:", regression_data['UWI'].nunique())
+            print("Unique Attributes:", regression_data['attribute_name'].unique())
+
+            # Pivot the data with robust method
+            data_pivoted = regression_data.pivot_table(
                 index='UWI',
                 columns='attribute_name',
-                values='attribute_value'
+                values='attribute_value',
+                aggfunc='first'  # Use first value if multiple exist
             ).reset_index()
 
+            # Print pivoted data characteristics
+            print("\nPivoted Data:")
+            print("Pivoted Data Shape:", data_pivoted.shape)
+            print("Available Columns:", list(data_pivoted.columns))
+
+            # Validate target variable exists
             if target_variable not in data_pivoted.columns:
-                QMessageBox.warning(self, "Invalid Selection", f"Target variable {target_variable} not found in data")
+                QMessageBox.warning(self, "Invalid Selection", 
+                                    f"Target variable '{target_variable}' not found in data. "
+                                    f"Available columns: {list(data_pivoted.columns)}")
                 return
 
-
-
             # Separate features and target
-            X = data_pivoted.drop([target_variable, 'UWI'], axis=1)
-            y = data_pivoted[target_variable]
+            try:
+                X = data_pivoted.drop([target_variable, 'UWI'], axis=1)
+                y = data_pivoted[target_variable]
+            except KeyError as e:
+                QMessageBox.warning(self, "Data Error", 
+                                    f"Error separating features: {str(e)}. "
+                                    f"Columns: {list(data_pivoted.columns)}")
+                return
 
-            complete_mask = ~X.isna().any(axis=1)
-            X = X[complete_mask]
-            y = y[complete_mask]
+            # Print feature and target details
+            print("\nFeature Matrix X:")
+            print("Columns:", list(X.columns))
+            print("X Shape:", X.shape)
+        
+            print("\nTarget Vector y:")
+            print("y Description:", y.describe())
+            print("y Shape:", y.shape)
 
-            # Check for NaN values and print affected UWIs
-            print("\n Checking for NaN values in X before training:")
-            nan_counts = X.isna().sum()
-            nan_columns = nan_counts[nan_counts > 0]  # Get only columns with NaNs
+            # Detailed missing value analysis
+            print("\nMissing Value Analysis:")
+            missing_values = X.isna().sum()
+            print("Missing values in X:")
+            print(missing_values)
 
-            if not nan_columns.empty:
-                print(f" NaNs detected in columns: {nan_columns.index.tolist()}")
-                print(f"Total NaNs per column:\n{nan_columns}")
-    
-                # Find UWIs with NaNs
-                nan_rows = X[X.isna().any(axis=1)]
-                print("\n UWIs with NaN values:")
-                print(nan_rows.index.tolist())  # Print UWI indices that have NaNs
-            else:
-                print(" No NaNs detected in X.")
+            # Find columns with at least some non-missing values
+            valid_columns = missing_values[missing_values < len(X)].index.tolist()
+            print("\nColumns with non-missing values:")
+            print(valid_columns)
 
-            # Check for NaNs in y (target variable)
-            print("\n🔍 Checking for NaN values in y before training:")
-            if y.isna().sum() > 0:
-                print(f"⚠️ NaNs detected in target variable '{target_variable}'")
-                print("\n🚨 UWIs with NaN target values:")
-                print(y[y.isna()].index.tolist())  # Print UWIs with NaN target values
-            else:
-                print("✅ No NaNs detected in y.")
+            # Filter data to only use columns with non-missing values
+            X_filtered = X[valid_columns]
+            y_filtered = y[~X_filtered.isna().all(axis=1)]
+            X_filtered = X_filtered[~X_filtered.isna().all(axis=1)]
+
+            print("\nAfter initial filtering:")
+            print("X shape:", X_filtered.shape)
+            print("y shape:", y_filtered.shape)
+
+            # Further remove rows with any missing values
+            complete_mask = ~X_filtered.isna().any(axis=1)
+            X_filtered = X_filtered[complete_mask]
+            y_filtered = y_filtered[complete_mask]
+
+            print("\nAfter removing rows with missing values:")
+            print("X shape:", X_filtered.shape)
+            print("y shape:", y_filtered.shape)
+
+            # Check for sufficient samples
+            if len(X_filtered) < 5:
+                QMessageBox.warning(self, "Insufficient Data", 
+                                    f"Not enough samples for cross-validation. Found {len(X_filtered)} samples.")
+                return
 
             # Initialize models
             models = {
@@ -285,7 +325,7 @@ class CalcAttributeAnalyzer(QDialog):
             }
 
             # Prepare K-fold cross validation
-            kf = KFold(n_splits=5, shuffle=True, random_state=42)
+            kf = KFold(n_splits=min(5, len(X_filtered)), shuffle=True, random_state=42)
             scaler = StandardScaler()
 
             # Run analysis for each model
@@ -293,11 +333,11 @@ class CalcAttributeAnalyzer(QDialog):
                 r2_scores = []
                 mae_scores = []
                 rmse_scores = []
-                feature_importance = np.zeros(X.shape[1])
+                feature_importance = np.zeros(X_filtered.shape[1])
 
-                for train_idx, test_idx in kf.split(X):
-                    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-                    y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+                for train_idx, test_idx in kf.split(X_filtered):
+                    X_train, X_test = X_filtered.iloc[train_idx], X_filtered.iloc[test_idx]
+                    y_train, y_test = y_filtered.iloc[train_idx], y_filtered.iloc[test_idx]
 
                     # Scale the features
                     X_train_scaled = scaler.fit_transform(X_train)
@@ -321,14 +361,14 @@ class CalcAttributeAnalyzer(QDialog):
                         feature_importance += model.feature_importances_
 
                 # Average the scores and feature importance
-                feature_importance /= kf.n_splits
-            
+                feature_importance /= len(list(kf.split(X_filtered)))
+        
                 # Store results
                 results['Model'].append(model_name)
                 results['R2 Score'].append(np.mean(r2_scores))
                 results['MAE'].append(np.mean(mae_scores))
                 results['RMSE'].append(np.mean(rmse_scores))
-                results['Feature Importance'].append(dict(zip(X.columns, feature_importance)))
+                results['Feature Importance'].append(dict(zip(X_filtered.columns, feature_importance)))
 
             # Show regression analysis dialog
             dialog = RegressionAnalysisDialog(

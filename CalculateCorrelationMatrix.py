@@ -3,6 +3,7 @@
                                QWidget, QLineEdit, QAbstractItemView, QPushButton, QHeaderView, QComboBox, QListWidget, QMessageBox, QCheckBox, QFileDialog)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QDoubleValidator
+from TwoListSelector import TwoListSelector
 
 from PySide6.QtWidgets import QStackedWidget, QMenu, QSlider
 import networkx as nx
@@ -713,166 +714,70 @@ class GenerateCorrelationMatrix(QDialog):
         self.setWindowTitle("Well Zone Correlation Analysis")
         self.setMinimumWidth(800)
         self.setMinimumHeight(600)
-
+        
+        # Overall layout
         layout = QVBoxLayout()
-
-        # Create UWI selector (unchanged)
-        UWI_widget = QWidget()
-        UWI_layout = QVBoxLayout()
-        UWI_layout.addWidget(QLabel("Well UWIs"))
-
-        UWI_search = QLineEdit()
-        UWI_search.setPlaceholderText("Search UWIs...")
-        UWI_search.textChanged.connect(self.filter_UWIs)
-        UWI_layout.addWidget(UWI_search)
-
-        UWI_lists = QHBoxLayout()
-        self.available_UWIs = QListWidget()
-        self.available_UWIs.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.selected_UWIs = QListWidget()
-        self.selected_UWIs.setSelectionMode(QAbstractItemView.ExtendedSelection)
-
-        UWI_buttons = QVBoxLayout()
-        btn_select_UWI = QPushButton(">")
-        btn_deselect_UWI = QPushButton("<")
-        btn_select_all_UWI = QPushButton(">>")
-        btn_deselect_all_UWI = QPushButton("<<")
-
-        btn_select_UWI.clicked.connect(self.select_UWI)
-        btn_deselect_UWI.clicked.connect(self.deselect_UWI)
-        btn_select_all_UWI.clicked.connect(self.select_all_UWIs)
-        btn_deselect_all_UWI.clicked.connect(self.deselect_all_UWIs)
-
-        UWI_buttons.addWidget(btn_select_all_UWI)
-        UWI_buttons.addWidget(btn_select_UWI)
-        UWI_buttons.addWidget(btn_deselect_UWI)
-        UWI_buttons.addWidget(btn_deselect_all_UWI)
-
-        UWI_lists.addWidget(self.available_UWIs)
-        UWI_lists.addLayout(UWI_buttons)
-        UWI_lists.addWidget(self.selected_UWIs)
-        UWI_layout.addLayout(UWI_lists)
-        UWI_widget.setLayout(UWI_layout)
-
-        # Create attribute selector (unchanged)
-        attr_widget = QWidget()
-        attr_layout = QVBoxLayout()
-        attr_layout.addWidget(QLabel("Attributes"))
-
-        attr_search = QLineEdit()
-        attr_search.setPlaceholderText("Search attributes...")
-        attr_search.textChanged.connect(self.filter_attrs)
-        attr_layout.addWidget(attr_search)
-
-        attr_lists = QHBoxLayout()
-        self.available_attrs = QListWidget()
-        self.available_attrs.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.selected_attrs = QListWidget()
-        self.selected_attrs.setSelectionMode(QAbstractItemView.ExtendedSelection)
-
-        attr_buttons = QVBoxLayout()
-        btn_select_attr = QPushButton(">")
-        btn_deselect_attr = QPushButton("<")
-        btn_select_all_attr = QPushButton(">>")
-        btn_deselect_all_attr = QPushButton("<<")
-
-        btn_select_attr.clicked.connect(self.select_attr)
-        btn_deselect_attr.clicked.connect(self.deselect_attr)
-        btn_select_all_attr.clicked.connect(self.select_all_attrs)
-        btn_deselect_all_attr.clicked.connect(self.deselect_all_attrs)
-
-        attr_buttons.addWidget(btn_select_all_attr)
-        attr_buttons.addWidget(btn_select_attr)
-        attr_buttons.addWidget(btn_deselect_attr)
-        attr_buttons.addWidget(btn_deselect_all_attr)
-
-        attr_lists.addWidget(self.available_attrs)
-        attr_lists.addLayout(attr_buttons)
-        attr_lists.addWidget(self.selected_attrs)
-        attr_layout.addLayout(attr_lists)
-        attr_widget.setLayout(attr_layout)
-
+        
+        # Create a two-list selector for UWIs using your TwoListSelector
+        self.uwi_selector = TwoListSelector(
+            left_title="Available UWIs", 
+            right_title="Selected UWIs"
+        )
+        
+        # Create a two-list selector for Attributes
+        self.attr_selector = TwoListSelector(
+            left_title="Available Attributes", 
+            right_title="Selected Attributes"
+        )
+        
+        # Add selectors to layout
         splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(UWI_widget)
-        splitter.addWidget(attr_widget)
+        splitter.addWidget(self.uwi_selector)
+        splitter.addWidget(self.attr_selector)
         layout.addWidget(splitter)
-
-        # ✅ Checkbox for ignoring zeros
+        
+        # Ignore zeros checkbox
         self.ignore_zeros_checkbox = QCheckBox("Ignore Zeros in Correlation")
         layout.addWidget(self.ignore_zeros_checkbox)
-
-
-
+        
+        # Threshold selection
         threshold_layout = QHBoxLayout()
-
-        # Keep label and combobox left-aligned
         threshold_label = QLabel("Correlation Threshold:")
         threshold_label.setFixedWidth(150)
         threshold_layout.addWidget(threshold_label)
-
+        
         self.threshold_input = QComboBox()
         self.threshold_input.setFixedWidth(70)
-
         threshold_values = [f"{i/20:.2f}" for i in range(21)]
         self.threshold_input.addItems(threshold_values)
         self.threshold_input.setCurrentIndex(0)
-
         threshold_layout.addWidget(self.threshold_input)
-        # Add stretch AFTER the widgets to push everything to the left
+        
+        # Add stretch to push widgets to the left
         threshold_layout.addStretch()
-
         layout.addLayout(threshold_layout)
-
-
+        
+        # Run button with green styling
         btn_run = QPushButton("Run Correlation Analysis")
+        btn_run.setStyleSheet("""
+            QPushButton {
+                background-color: #2ecc71;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #27ae60;
+            }
+        """)
         btn_run.clicked.connect(self.run_analysis)
         layout.addWidget(btn_run)
-
+        
         self.setLayout(layout)
         self.load_data()
 
-    def filter_UWIs(self, text):
-        for i in range(self.available_UWIs.count()):
-            item = self.available_UWIs.item(i)
-            item.setHidden(text.lower() not in item.text().lower())
-    
-    def filter_attrs(self, text):
-        for i in range(self.available_attrs.count()):
-            item = self.available_attrs.item(i)
-            item.setHidden(text.lower() not in item.text().lower())
-    
-    def select_all_UWIs(self):
-        items = []
-        # Iterate in reverse to avoid index shifting
-        for i in range(self.available_UWIs.count() - 1, -1, -1):
-            item = self.available_UWIs.item(i)
-            if not item.isHidden():
-                items.append(self.available_UWIs.takeItem(i))
-        for item in reversed(items):  # Add items in original order
-            self.selected_UWIs.addItem(item)
-    
-    def deselect_all_UWIs(self):
-        items = []
-        for i in range(self.selected_UWIs.count()-1, -1, -1):
-            items.append(self.selected_UWIs.takeItem(i))
-        for item in reversed(items):  # Add items in original order
-            self.available_UWIs.addItem(item)
-    
-    def select_all_attrs(self):
-        items = []
-        for i in range(self.available_attrs.count()-1, -1, -1):
-            item = self.available_attrs.item(i)
-            if not item.isHidden():
-                items.append(self.available_attrs.takeItem(i))
-        for item in reversed(items):  # Add items in original order
-            self.selected_attrs.addItem(item)
-    
-    def deselect_all_attrs(self):
-        items = []
-        for i in range(self.selected_attrs.count()-1, -1, -1):
-            items.append(self.selected_attrs.takeItem(i))
-        for item in reversed(items):  # Add items in original order
-            self.available_attrs.addItem(item)
+
         
     def _is_numeric_column(self, data, col_idx):
         try:
@@ -913,12 +818,12 @@ class GenerateCorrelationMatrix(QDialog):
                 'Top_X_Offset', 'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
                 'Angle_Top', 'Angle_Base', 'Total_Lateral_Length'
             ]
-        
-            # Load UWIs into available_UWIs
+    
+            # Load UWIs 
             print("\nGetting UWIs...")
             UWIs = self.db_manager.get_UWIs()
             print(f"Found UWIs: {UWIs}")
-            self.available_UWIs.addItems(UWIs)
+            self.uwi_selector.set_left_items(UWIs)
 
             # Fetch well zones
             print("\nFetching Well Zones...")
@@ -947,7 +852,7 @@ class GenerateCorrelationMatrix(QDialog):
                         if col.upper() == 'UWI' or any(exclude.lower() in col.lower() for exclude in columns_to_exclude):
                             print(f"Skipping excluded column: {col}")
                             continue
-                        
+                    
                         col_idx = columns.index(col)
                         print(f"Checking Column: {col}")
 
@@ -963,37 +868,13 @@ class GenerateCorrelationMatrix(QDialog):
                     continue
 
             print(f"\nFinal List of Numeric Attributes: {numeric_columns}")
-            self.available_attrs.clear()  # Clear any existing items
-            self.available_attrs.addItems(numeric_columns)
+            self.attr_selector.set_left_items(numeric_columns)
 
         except Exception as e:
             print(f"Error loading data: {str(e)}")
             QMessageBox.critical(self, "Error", f"Error loading data: {str(e)}")
+            
 
-            
-    def select_UWI(self):
-        items = self.available_UWIs.selectedItems()
-        for item in items:
-            self.available_UWIs.takeItem(self.available_UWIs.row(item))
-            self.selected_UWIs.addItem(item)
-            
-    def deselect_UWI(self):
-        items = self.selected_UWIs.selectedItems()
-        for item in items:
-            self.selected_UWIs.takeItem(self.selected_UWIs.row(item))
-            self.available_UWIs.addItem(item)
-            
-    def select_attr(self):
-        items = self.available_attrs.selectedItems()
-        for item in items:
-            self.available_attrs.takeItem(self.available_attrs.row(item))
-            self.selected_attrs.addItem(item)
-            
-    def deselect_attr(self):
-        items = self.selected_attrs.selectedItems()
-        for item in items:
-            self.selected_attrs.takeItem(self.selected_attrs.row(item))
-            self.available_attrs.addItem(item)
 
     def validate_numeric_data(self, data):
         """Ensure all data is in correct format for correlation"""
@@ -1040,8 +921,8 @@ class GenerateCorrelationMatrix(QDialog):
         """Run correlation analysis on selected items"""
         try:
             # Get selected UWIs and attributes
-            UWIs = [self.selected_UWIs.item(i).text() for i in range(self.selected_UWIs.count())]
-            selected_attrs = [self.selected_attrs.item(i).text() for i in range(self.selected_attrs.count())]
+            UWIs = self.uwi_selector.get_right_items()
+            selected_attrs = self.attr_selector.get_right_items()
 
             print("Selected UWIs:", UWIs)
             print("Selected Attributes:", selected_attrs)

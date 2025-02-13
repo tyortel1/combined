@@ -404,26 +404,20 @@ class PlotGB(QDialog):
 
     def populate_well_zone_dropdown(self):
         """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
-    
+
         # Clear the dropdown and set a default option
         self.WellZoneDropdown.blockSignals(True)
         self.WellZoneDropdown.clear()
         self.WellZoneDropdown.addItem("Select Well Zone")
+    
         zone_names = self.db_manager.fetch_zone_names_by_type("Well")
         if zone_names:
             # Extract first element from each tuple and sort
             zone_names = [name[0] for name in zone_names if name[0].strip()]  # Also strip whitespace
             self.well_zone_names = sorted(zone_names)
             self.WellZoneDropdown.addItems(self.well_zone_names)
-    
+
         self.WellZoneDropdown.blockSignals(False)
-
-
-        if self.well_zone_names:
-                self.WellZoneDropdown.addItems(sorted(self.well_zone_names))
-    
-        self.WellZoneDropdown.blockSignals(False)
-
     def populate_color_bar_dropdown(self):
         """Populate the color bar dropdown with file names from the Palettes directory."""
         palettes_path = os.path.join(os.path.dirname(__file__), 'Palettes')

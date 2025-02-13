@@ -1,29 +1,34 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
+﻿from PySide6.QtWidgets import QDialog, QVBoxLayout, QListWidgetItem, QHBoxLayout, QComboBox, QMessageBox, QPushButton, QLineEdit, QLabel, QListWidget, QFormLayout, QColorDialog
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtCore import Qt
 import pandas as pd
 
 class HighlightCriteriaDialog(QDialog):
-    def __init__(self, columns, existing_criteria_df=None, parent=None):
+    def __init__(self, db_manager, columns, parent=None):
         super(HighlightCriteriaDialog, self).__init__(parent)
         self.setWindowTitle("Define Criteria")
 
+        self.db_manager = db_manager  # Store the database manager
         self.criteria = []
         self.columns = columns
         self.highlight_color = QColor(Qt.yellow)  # Default highlight color
-        self.criteria_df = existing_criteria_df if existing_criteria_df is not None else pd.DataFrame(columns=['Name', 'Type', 'Column', 'Operator', 'Value', 'Logical Operator', 'Color'])
         self.criteria_name = None
+        self.criteria_df = pd.DataFrame(columns=['Name', 'Type', 'Column', 'Operator', 'Value', 'Logical Operator', 'Color'])
+
+
         # Layouts
         self.main_layout = QVBoxLayout(self)
 
         # Criteria name dropdown - Editable and placed at the top
         self.criteria_name_dropdown = QComboBox(self)
         self.criteria_name_dropdown.setEditable(True)
-        self.populate_criteria_names()
         self.criteria_name_dropdown.currentTextChanged.connect(self.load_criteria_from_name)
 
         self.main_layout.addWidget(QLabel("Criteria Name:"))
         self.main_layout.addWidget(self.criteria_name_dropdown)
+
+        # **Populate the dropdown AFTER it's created**
+        self.populate_criteria_names()
 
         self.form_layout = QFormLayout()
 
@@ -77,6 +82,8 @@ class HighlightCriteriaDialog(QDialog):
         # Add criteria list to the main layout
         self.main_layout.addWidget(QLabel("Current Criteria:"))
         self.main_layout.addWidget(self.criteria_list)
+        self.criteria_list.setEditTriggers(QListWidget.DoubleClicked)
+        self.criteria_list.itemChanged.connect(self.edit_criterion_value)
 
         # Color picker for highlight color with a preview
         self.color_button = QPushButton("Choose Highlight Color")
@@ -107,11 +114,13 @@ class HighlightCriteriaDialog(QDialog):
         self.main_layout.addLayout(self.bottom_button_layout)
 
     def populate_criteria_names(self):
-        self.criteria_name_dropdown.addItem("")  
-        """Populate the criteria dropdown with unique names from the existing criteria DataFrame."""
-        if self.criteria_df is not None and not self.criteria_df.empty:
-            unique_names = self.criteria_df['Name'].unique()
-            self.criteria_name_dropdown.addItems(unique_names)
+        """Load criteria names from the database into the dropdown."""
+        self.criteria_name_dropdown.clear()
+        self.criteria_name_dropdown.addItem("")  # Allow empty selection
+
+        criteria_names = self.db_manager.load_criteria_names()
+        self.criteria_name_dropdown.addItems(criteria_names)
+
 
     def filter_columns(self):
         """Filter the column dropdown based on the text in the filter box."""
@@ -138,83 +147,65 @@ class HighlightCriteriaDialog(QDialog):
             })
             self.criteria_df = pd.concat([self.criteria_df, new_criterion], ignore_index=True)
 
-            # Construct the text to display in the list, including the logical operator if it's not None
+            # Construct the text to display in the list
             criterion_text = f"{column} {operator} {value}"
             if logical_operator:
                 criterion_text += f" ({logical_operator})"
-        
-            self.criteria_list.addItem(criterion_text)
+
+            item = QListWidgetItem(criterion_text)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)  # Enable inline editing
+            item.setData(Qt.UserRole, criterion_text)  # Store original value
+
+            self.criteria_list.addItem(item)
             self.value_entry.clear()
 
+
     def delete_criterion(self):
+        """Delete selected criterion from the database."""
         selected_items = self.criteria_list.selectedItems()
         if not selected_items:
             return
 
         for item in selected_items:
-            # Extract the criterion text from the selected item
             criterion_text = item.text().strip()
-        
-            # Identify the operator (assuming operators are one of '=', '>', '<', '>=', '<=', '!=')
+
+            # Extract column, operator, and value
             for operator in ['>=', '<=', '!=', '>', '<', '=']:
                 if operator in criterion_text:
                     parts = criterion_text.split(operator, 1)
                     if len(parts) == 2:
-                        column = parts[0].strip()
-                        value = parts[1].strip()
+                        column, value = parts[0].strip(), parts[1].strip()
                         break
             else:
-                print(f"Operator not found in criterion: {criterion_text}")
                 continue
-    
-            # Normalize values for comparison
-            column = column.lower()
-            value = value.lower()
-            current_name = self.criteria_name_dropdown.currentText().strip().lower()
-        
-            # Find the matching row in the criteria DataFrame and remove it
-            matching_rows = self.criteria_df[
-                (self.criteria_df['Name'].str.strip().str.lower() == current_name) &
-                (self.criteria_df['Column'].str.strip().str.lower() == column) &
-                (self.criteria_df['Operator'].str.strip() == operator) &
-                (self.criteria_df['Value'].str.strip().str.lower() == value)
-            ]
-    
-            if not matching_rows.empty:
-                self.criteria_df = self.criteria_df.drop(matching_rows.index)
-                print(f"Deleted criterion: {criterion_text}")
-            else:
-                print(f"No matching criterion found for: {criterion_text}")
-                print("Debugging information:")
-                for _, row in self.criteria_df.iterrows():
-                    print(f"Name: '{row['Name']}', Column: '{row['Column']}', Operator: '{row['Operator']}', Value: '{row['Value']}'")
 
-            # Remove the item from the criteria list
+            logical_operator = None
+            if "(" in value and ")" in value:
+                value, logical_operator = value.split("(", 1)
+                logical_operator = logical_operator.strip(")")
+
+            # Delete from database
+            self.db_manager.delete_criteria_condition(self.criteria_name_dropdown.currentText(), column, operator, value, logical_operator)
+
+            # Remove from UI
             index = self.criteria_list.row(item)
             self.criteria_list.takeItem(index)
-
-        # Reset the DataFrame index after dropping rows
-        self.criteria_df.reset_index(drop=True, inplace=True)
-        print("DataFrame after deletion:")
-        print(self.criteria_df)
 
         
 
 
     def choose_color(self):
-        """Open a color dialog to select a highlight color."""
+        """Open a color dialog to select a highlight color and save it to the database."""
         color = QColorDialog.getColor(self.highlight_color, self, "Select Highlight Color")
         if color.isValid():
             self.highlight_color = color
             self.update_color_preview()
 
-            # Update the color for all rows in the DataFrame that match the current Name
-            criteria_name = self.criteria_name_dropdown.currentText().strip()
-            self.criteria_df.loc[self.criteria_df['Name'] == criteria_name, 'Color'] = color.name()
+            # Update color in the database
+            self.db_manager.update_criteria_color(self.criteria_name_dropdown.currentText(), color.name())
 
-            # Optionally, update the UI or provide feedback to the user
-            self.criteria_list.clear()
-            self.load_criteria_from_name(criteria_name)
+            # Reload criteria
+            self.load_criteria_from_name(self.criteria_name_dropdown.currentText())
 
     def update_color_preview(self):
         """Update the preview box to show the selected color."""
@@ -223,32 +214,127 @@ class HighlightCriteriaDialog(QDialog):
         self.color_preview.setPalette(palette)
 
     def save_criteria(self):
-        # Get the criteria name from the dropdown
-        self.criteria_name = self.criteria_name_dropdown.currentText().strip()
+        """Save criteria to the database."""
+        criteria_name = self.criteria_name_dropdown.currentText().strip()
 
-        # Check if the criteria name is blank
-        if not self.criteria_name:
-            # Show an error message
-            QMessageBox.warning(self, "Error", "Criteria Name cannot be blank. Please enter a valid name.")
-            return  # Do not close the dialog
+        if not criteria_name:
+            QMessageBox.warning(self, "Error", "Criteria Name cannot be blank.")
+            return
 
-        # If the name is valid, accept the dialog and close it
-        self.accept()
-    
+        # Prepare criteria list
+        criteria_list = []
+        for i in range(self.criteria_list.count()):
+            criterion_text = self.criteria_list.item(i).text()
+
+            # Extract column, operator, and value
+            for operator in ['>=', '<=', '!=', '>', '<', '=']:
+                if operator in criterion_text:
+                    parts = criterion_text.split(operator, 1)
+                    if len(parts) == 2:
+                        column, value = parts[0].strip(), parts[1].strip()
+                        break
+            else:
+                continue  # Skip if no valid operator is found
+
+            logical_operator = None
+            if "(" in value and ")" in value:
+                value, logical_operator = value.split("(", 1)
+                logical_operator = logical_operator.strip(")")
+
+            criteria_list.append((column, operator, value.strip(), logical_operator))
+
+        # Save criteria to the database
+        success, message = self.db_manager.save_criteria(criteria_name, self.highlight_color.name(), criteria_list)
+
+        if success:
+            QMessageBox.information(self, "Success", message)
+            self.accept()
+        else:
+            QMessageBox.warning(self, "Error", message)
+
 
     def get_criteria(self):
-        return self.criteria_df
+        """Fetch criteria from the database instead of using a DataFrame."""
+        return self.db_manager.load_all_criteria()
 
     def load_criteria_from_name(self, name):
-        if not self.criteria_df.empty:
-            criteria = self.criteria_df[self.criteria_df['Name'] == name]
-            self.criteria_list.clear()
+        """Load criteria conditions and set highlight color without clearing if renaming."""
+        if not name:
+            return
 
-            for _, row in criteria.iterrows():
-                criterion_text = f"{row['Column']} {row['Operator']} {row['Value']}"
-                self.criteria_list.addItem(criterion_text)
-                self.highlight_color = QColor(row['Color'])
-                self.update_color_preview()
+        # Load color and conditions from the database
+        highlight_color, conditions = self.db_manager.load_criteria_by_name(name)
 
-            self.criteria_name_dropdown.setCurrentText(name)
+        if highlight_color is None:
+            return  # No criteria found
+
+        # Preserve list if renaming, otherwise clear it
+        self.criteria_list.clear()
+
+        for column, operator, value, logical_operator in conditions:
+            criterion_text = f"{column} {operator} {value}"
+            if logical_operator:
+                criterion_text += f" ({logical_operator})"
+
+            item = QListWidgetItem(criterion_text)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)  # Allow item to be editable
+            item.setData(Qt.UserRole, criterion_text)  # Store original value for comparison
+            self.criteria_list.addItem(item)
+
+        # Set highlight color
+        self.highlight_color = QColor(highlight_color)
+        self.update_color_preview()
+
+
+
+
+
+    def edit_criterion_value(self, item):
+        """Update the database when a criterion value is edited in the list."""
+        new_text = item.text().strip()
+
+        # Extract column, operator, and value
+        for operator in ['>=', '<=', '!=', '>', '<', '=']:
+            if operator in new_text:
+                parts = new_text.split(operator, 1)
+                if len(parts) == 2:
+                    column, new_value = parts[0].strip(), parts[1].strip()
+                    break
+        else:
+            return  # Skip if no valid operator is found
+
+        logical_operator = None
+        if "(" in new_value and ")" in new_value:
+            new_value, logical_operator = new_value.split("(", 1)
+            logical_operator = logical_operator.strip(")")
+
+        # Retrieve the old value from Qt.UserRole
+        old_text = item.data(Qt.UserRole)
+
+        if old_text:
+            for operator in ['>=', '<=', '!=', '>', '<', '=']:
+                if operator in old_text:
+                    parts = old_text.split(operator, 1)
+                    if len(parts) == 2:
+                        old_column, old_value = parts[0].strip(), parts[1].strip()
+                        break
+        else:
+            return  # If no old value is stored, skip update
+
+        # Update DataFrame only if value changed
+        if old_column == column and old_value != new_value:
+            self.criteria_df.loc[(self.criteria_df['Column'] == column) & 
+                                 (self.criteria_df['Operator'] == operator) & 
+                                 (self.criteria_df['Value'] == old_value), 'Value'] = new_value
+
+            print(f"Updated {old_column}: {old_value} → {new_value} in DataFrame")
+    
+        # Store new value in Qt.UserRole for tracking future edits
+        item.setData(Qt.UserRole, new_text)
+
+
+
+
+
+
 

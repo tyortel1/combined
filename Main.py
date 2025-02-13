@@ -318,33 +318,47 @@ class MainWindow(QMainWindow):
         # Clear previous content
         self.ui.excel_widget.clearContents()
 
-        # Set the number of rows in the Excel widget to match the length of the DataFrame
+        if self.UWI_prod_rates_all.empty:
+            print("No data available to update Excel widget.")
+            return
+
+        # Set the number of rows and columns dynamically
         self.ui.excel_widget.setRowCount(len(self.UWI_prod_rates_all))
-       
+        self.ui.excel_widget.setColumnCount(len(self.UWI_prod_rates_all.columns))
 
-        # Update the Excel widget with the production data and cumulative volumes
-                        # Update the Excel widget with the production data, cumulative volumes, and additional columns
+        # Set column headers dynamically
+        self.ui.excel_widget.setHorizontalHeaderLabels(self.UWI_prod_rates_all.columns)
+
+        # Populate the Excel widget with data
         for row_index, (_, row_data) in enumerate(self.UWI_prod_rates_all.iterrows()):
-            date_str = row_data['date'] 
-            self.ui.excel_widget.setItem(row_index, 0, QTableWidgetItem(date_str))
-
-            columns_to_format = ['oil_volume', 'cumulative_oil_volume', 'q_oil', 'error_oil', 'oil_revenue',
-                                    'gas_volume', 'cumulative_gas_volume', 'q_gas', 'error_gas', 'gas_revenue',
-                                    'total_revenue', 'discounted_revenue']
-            for col_index, column in enumerate(columns_to_format, start=2):
+            for col_index, column in enumerate(self.UWI_prod_rates_all.columns):
                 value = row_data[column]
-                if value is not None:
-                    self.ui.excel_widget.setItem(row_index, col_index, QTableWidgetItem('{:.2f}'.format(value)))
+                item = QTableWidgetItem()
+
+                # Ensure date stays as a string
+                if "date" in column.lower():
+                    item.setData(Qt.DisplayRole, str(value))
+
+                # Ensure no scientific notation for numeric values
+                elif isinstance(value, (int, float)):
+                    formatted_value = f"{value:.10f}".rstrip("0").rstrip(".")
+                    item.setData(Qt.EditRole, formatted_value)
+
                 else:
-                    self.ui.excel_widget.setItem(row_index, col_index, QTableWidgetItem(''))
+                    item.setData(Qt.DisplayRole, str(value) if value is not None else "")
 
-        # Resize rows to fit content
+                self.ui.excel_widget.setItem(row_index, col_index, item)
+
+        # Resize rows and columns to fit content
         self.ui.excel_widget.resizeRowsToContents()
+        self.ui.excel_widget.resizeColumnsToContents()
 
-        # Sort the values in the Excel widget by date
-        self.ui.excel_widget.sortItems(0)
-     
+        # Sort by date column if it exists
+        if "date" in self.UWI_prod_rates_all.columns:
+            self.ui.excel_widget.sortItems(self.UWI_prod_rates_all.columns.get_loc("date"))
+
         print("Excel Updated")
+
 
 
 
@@ -461,25 +475,22 @@ class MainWindow(QMainWindow):
 
 
     def populate_tab_2(self):
-       #print"pop2 start")
+        # print("pop2 start")
         self.ui.model_properties.blockSignals(True)
 
         try:
-  
+            if not self.model_data:
+                print("No data available to populate tab 2.")
+                self.ui.model_properties.clearContents()
+                return
 
-            # Define headers based on the keys of the dictionaries
-            headers = [
-                "UWI", "max_oil_production", "max_gas_production", "max_oil_production_date", "max_gas_production_date",
-                "one_year_oil_production", "one_year_gas_production", "di_oil", "di_gas", "oil_b_factor", "gas_b_factor",
-                "min_dec_oil", "min_dec_gas", "model_oil", "model_gas", "oil_price", "gas_price", "oil_price_dif", "gas_price_dif",
-                "discount_rate", "working_interest", "royalty", "tax_rate", "capital_expenditures", "operating_expenditures",
-                "economic_limit_type", "economic_limit_date", "net_price_oil", "net_price_gas", "gas_model_status", "oil_model_status"
-            ]
+            # Dynamically determine headers from the first dictionary in the dataset
+            headers = list(self.model_data[0].keys()) if self.model_data else []
 
             # Clear existing data
             self.ui.model_properties.clearContents()
-                     
-            # Set headers
+
+            # Set headers dynamically
             self.ui.model_properties.setColumnCount(len(headers))
             self.ui.model_properties.setHorizontalHeaderLabels(headers)
 
@@ -491,20 +502,26 @@ class MainWindow(QMainWindow):
                 for col_index, header in enumerate(headers):
                     col_data = row_data.get(header, "")
                     item = QTableWidgetItem()
-                    
-                    # Handle UWI and other large numbers to avoid scientific notation
+
+                    # Handle UWI as a string to prevent numeric conversion
                     if header == "UWI":
                         item.setData(Qt.EditRole, str(col_data))
+
+                    # Handle dates, model names, and types as strings
                     elif "date" in header or "model" in header or "type" in header:
-                        # Treat these fields as strings
                         item.setData(Qt.DisplayRole, str(col_data))
+
                     else:
                         try:
                             numeric_value = float(col_data)
-                            item.setData(Qt.EditRole, numeric_value)
-                        except ValueError:
+
+                            # Ensure no scientific notation & limit to 2 decimal places
+                            formatted_value = f"{numeric_value:.2f}"
+                            item.setData(Qt.EditRole, formatted_value)
+
+                        except (ValueError, TypeError):
                             item.setData(Qt.DisplayRole, str(col_data))
-                    
+
                     self.ui.model_properties.setItem(row_index, col_index, item)
 
             # Adjust row height and column width for better readability
@@ -516,13 +533,20 @@ class MainWindow(QMainWindow):
 
             # Enable sorting after populating the table
             self.ui.model_properties.setSortingEnabled(False)
-            
+
             # Sort by UWI initially or use the last sorted column and order
-            self.ui.model_properties.sortItems(self.last_sorted_column, self.last_sort_order)
+            if hasattr(self, "last_sorted_column") and hasattr(self, "last_sort_order"):
+                self.ui.model_properties.sortItems(self.last_sorted_column, self.last_sort_order)
+
             self.ui.model_properties.blockSignals(False)
         except Exception as e:
+            import traceback
             print("Error populating tab 2:", e)
+            traceback.print_exc()
+
         print("pop2 end")
+
+
 
     def show_context_menu(self, position):
         """

@@ -231,6 +231,7 @@ class DatabaseManager:
         SET npv = ?, npv_discounted = ?, EFR_oil = ?, EFR_gas = ?, EUR_oil_remaining = ?, EUR_gas_remaining = ?
         WHERE UWI = ? AND scenario_id = ?
         """
+
         try:
             # Execute the update query with the new parameters
             self.cursor.execute(update_sql, (npv, npv_discounted, EFR_oil, EFR_gas, EUR_oil_remaining, EUR_gas_remaining, UWI, scenario_id))
@@ -3165,6 +3166,57 @@ class DatabaseManager:
         
         finally:
             self.disconnect()
+    def zone_exists(self, zone_name, zone_type):
+        """Check if a zone with the given name and type already exists."""
+        self.connect()
+        try:
+            self.cursor.execute("SELECT COUNT(*) FROM Zones WHERE ZoneName = ? AND Type = ?", (zone_name, zone_type))
+            return self.cursor.fetchone()[0] > 0
+        finally:
+            self.disconnect()
+
+    def update_zone_column_data(self, table_name, column_name, data):
+        """
+        Adds a new column to the specified table if it does not exist and updates values for all rows.
+        Args:
+            table_name (str): The name of the table (zone name).
+            column_name (str): The column to add/update.
+            data (pd.DataFrame): DataFrame containing all rows with the new column values.
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        self.connect()
+        if not self.connection:
+            return False
+        try:
+            cursor = self.connection.cursor()
+            # Step 1: Ensure the column exists
+            cursor.execute(f"PRAGMA table_info({table_name})")
+            existing_columns = [row[1] for row in cursor.fetchall()]
+            if column_name not in existing_columns:
+                alter_query = f"ALTER TABLE {table_name} ADD COLUMN {column_name} REAL DEFAULT 0;"
+                cursor.execute(alter_query)
+                self.connection.commit()
+                print(f"✅ Column '{column_name}' added to table '{table_name}'.")
+        
+            # Step 2: Update all rows
+            update_query = f"UPDATE {table_name} SET {column_name} = ? WHERE UWI = ? AND Top_Depth = ? AND Base_Depth = ?"
+            update_data = [(row[column_name], row['UWI'], row['Top_Depth'], row['Base_Depth']) for _, row in data.iterrows()]
+            cursor.executemany(update_query, update_data)
+        
+            self.connection.commit()
+            print(f"✅ Successfully updated column '{column_name}' in table '{table_name}'.")
+            return True
+        except Exception as e:
+            print(f"❌ Error updating column '{column_name}' in table '{table_name}': {e}")
+            self.connection.rollback()
+            return False
+        finally:
+            self.disconnect()
+
+
+
+
 
 
     def save_merged_zone(self, merged_data: pd.DataFrame, new_zone_name: str) -> bool:
@@ -3275,27 +3327,21 @@ class DatabaseManager:
 
 
     def fetch_zone_depth_data(self, zone_name):
-        """
-        Fetches zone data as a DataFrame from the table named after the zone.
-        Cleans numeric columns before conversion to avoid errors.
-        """
         self.connect()
         if not self.connection:
             print("Connection failed.")
             return pd.DataFrame()
-
         try:
-            # Ensure table name is formatted correctly
             sanitized_zone_name = zone_name.replace(" ", "_")
-
-            # Fetch the data
             query = f"SELECT * FROM {sanitized_zone_name}"
             df = pd.read_sql_query(query, self.connection)
-
-            # Clean up column names - ensure consistent naming
+        
+            if 'UWI' in df.columns:
+                df['UWI'] = df['UWI'].astype(str)
+                print("UWI dtype after fetching:", df['UWI'].dtype)
+                print("Sample UWIs:", df['UWI'].head().tolist())
+        
             df.columns = [col.strip() for col in df.columns]
-
-            # Rename depth columns if needed to match expected format
             column_mapping = {
                 'TOP_DEPTH': 'Top_Depth',
                 'BASE_DEPTH': 'Base_Depth',
@@ -3303,36 +3349,29 @@ class DatabaseManager:
                 'Base Depth': 'Base_Depth'
             }
             df.rename(columns=column_mapping, inplace=True)
-
-            # Convert empty strings and invalid numeric values to NaN
             df.replace(["", "NULL", "null", "N/A", "n/a", "NaN", "nan"], np.nan, inplace=True)
-
-            # 🔹 1️⃣ Exclude Known Non-Numeric Columns
-            non_numeric_cols = ["well_depth_units"]  # Add any known non-numeric columns
-            numeric_cols = [col for col in df.columns if col not in non_numeric_cols]
-
-            # 🔹 2️⃣ Remove non-numeric characters & Convert only numeric columns
+        
+            non_numeric_cols = ["well_depth_units", "UWI"]
+            numeric_cols = [col for col in df.columns if col not in non_numeric_cols and col != 'UWI']
+        
             def clean_numeric(value):
                 if isinstance(value, str):
-                    cleaned = re.sub(r"[^\d.-]", "", value)  # Remove everything except digits, periods, negatives
+                    cleaned = re.sub(r"[^\d.-]", "", value)
                     return cleaned if cleaned else np.nan
                 return value
-
+        
             for col in numeric_cols:
-                df[col] = df[col].astype(str).str.strip()  # Ensure it's a string before cleaning
+                df[col] = df[col].astype(str).str.strip()
                 df[col] = df[col].apply(clean_numeric)
-                df[col] = pd.to_numeric(df[col], errors='coerce')  # Convert only valid columns to numeric
-
-            # 🔹 3️⃣ Debug: Print rows with NaN values
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
             print("DEBUG: Rows with NaN after conversion:")
-            print(df[df.isna().any(axis=1)])  # Print only rows with NaN values
-
-            # Sort by UWI and Top_Depth if they exist
+            print(df[df.isna().any(axis=1)])
+        
             if "UWI" in df.columns and "Top_Depth" in df.columns:
                 df.sort_values(['UWI', 'Top_Depth'], inplace=True)
-
+        
             return df
-
         except Exception as e:
             print(f"Error fetching zone data for table {zone_name}: {e}")
             return pd.DataFrame()
@@ -3346,7 +3385,7 @@ class DatabaseManager:
         """Overwrites the entire zone table with new data instead of updating row-by-row."""
         print(f"\n🔹 Overwriting Table: {zone_name}")
         print(f"Column types before save: {updated_data.dtypes}")  # Log types before save
-    
+        updated_data['UWI'] = updated_data['UWI'].astype(str)
         self.connect()
         if not self.connection:
             return False
@@ -3393,16 +3432,24 @@ class DatabaseManager:
             self.disconnect()
 
     def fetch_zone_data(self, zone_name):
-       self.connect()
-       try:
-           query = f"""
-           SELECT UWI, Top_X_Offset, Top_Y_Offset, Base_X_Offset, Base_Y_Offset, 
-                  Top_Depth, Base_Depth, Angle_Top, Angle_Base 
-           FROM {zone_name}
-           """
-           return pd.read_sql(query, self.connection)
-       finally:
-           self.disconnect()
+        self.connect()
+        try:
+            query = f"""
+            SELECT UWI, Top_X_Offset, Top_Y_Offset, Base_X_Offset, Base_Y_Offset, 
+                   Top_Depth, Base_Depth, Angle_Top, Angle_Base 
+            FROM {zone_name}
+            """
+            df = pd.read_sql(query, self.connection)
+        
+            # Ensure UWI is treated as a string
+            df['UWI'] = df['UWI'].astype(str)
+        
+            print("UWI dtype after fetching:", df['UWI'].dtype)
+            print("Sample UWIs:", df['UWI'].head().tolist())
+        
+            return df
+        finally:
+            self.disconnect()
 
     def plot_zones(self, zone_name):
        query = f"""
@@ -4076,3 +4123,221 @@ class DatabaseManager:
             return []
         finally:
             self.disconnect()
+
+
+
+    def get_regression_feature_weights(self, regression_name):
+        """
+        Fetch feature weights for a specific regression table
+        """
+        # Construct the attributes table name
+        safe_table_name = regression_name.replace(" ", "_")
+        attrs_table = f"r_{safe_table_name}_attributes"
+
+        self.connect()
+        try:
+            # Query weights for non-target attributes
+            self.cursor.execute(f"""
+                SELECT attribute_name, weight 
+                FROM "{attrs_table}"
+                WHERE is_target = 0
+                ORDER BY weight DESC
+            """)
+        
+            # Fetch all results
+            weights = dict(self.cursor.fetchall())
+        
+            print(f"Raw weights from database: {weights}")
+        
+            return weights
+    
+        except sqlite3.Error as e:
+            print(f"Error fetching regression weights: {e}")
+            return {}
+        finally:
+            # Always disconnect
+            self.disconnect()
+
+
+
+
+    def create_criteria_tables(self):
+        """
+        Creates necessary tables for storing highlight criteria.
+        """
+        self.connect()
+        try:
+            # Table for storing unique criteria names and their colors
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS criteria_names (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    color TEXT NOT NULL
+                )
+            """)
+
+            # Table for storing individual conditions linked to criteria names
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS criteria_conditions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    criteria_id INTEGER NOT NULL,
+                    column_name TEXT NOT NULL,
+                    operator TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    logical_operator TEXT,
+                    FOREIGN KEY (criteria_id) REFERENCES criteria_names(id) ON DELETE CASCADE
+                )
+            """)
+
+            self.connection.commit()
+
+        except sqlite3.Error as e:
+            print(f"Error creating criteria tables: {e}")
+
+        finally:
+            self.disconnect()
+
+
+    def save_criteria(self, criteria_name, highlight_color, criteria_list):
+        """Save or update criteria name and conditions in the database."""
+        self.connect()
+        try:
+            # Insert or update criteria name and color
+            self.cursor.execute("""
+                INSERT INTO criteria_names (name, color)
+                VALUES (?, ?)
+                ON CONFLICT(name) DO UPDATE SET color = excluded.color
+            """, (criteria_name, highlight_color))
+
+            # Get the criteria_id
+            self.cursor.execute("SELECT id FROM criteria_names WHERE name = ?", (criteria_name,))
+            criteria_id = self.cursor.fetchone()[0]
+
+            # Delete old conditions for this criteria name
+            self.cursor.execute("DELETE FROM criteria_conditions WHERE criteria_id = ?", (criteria_id,))
+
+            # Insert new conditions
+            for column, operator, value, logical_operator in criteria_list:
+                self.cursor.execute("""
+                    INSERT INTO criteria_conditions (criteria_id, column_name, operator, value, logical_operator)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (criteria_id, column, operator, value, logical_operator))
+
+            self.connection.commit()
+            return True, "Criteria saved successfully."
+
+        except sqlite3.Error as e:
+            return False, str(e)
+
+        finally:
+            self.disconnect()
+
+    def load_criteria_names(self):
+        """Fetch all unique criteria names from the database."""
+        self.connect()
+        try:
+            self.cursor.execute("SELECT DISTINCT name FROM criteria_names")
+            return [row[0] for row in self.cursor.fetchall()]
+        finally:
+            self.disconnect()
+
+    def load_criteria_by_name(self, criteria_name):
+        """Load criteria conditions and highlight color for the given criteria name."""
+        if not criteria_name:
+            return None, []
+
+        self.connect()
+        try:
+            # Step 1: Fetch criteria ID & highlight color from criteria_names
+            query = "SELECT id, color FROM criteria_names WHERE name = ?"
+            self.cursor.execute(query, (criteria_name,))
+            result = self.cursor.fetchone()
+
+            if not result:
+                print(f"🔴 No criteria found for {criteria_name} in criteria_names")
+                return None, []
+
+            criteria_id, highlight_color = result
+            print(f"✅ Found criteria: ID={criteria_id}, Color={highlight_color}")
+
+            # Step 2: Fetch all conditions for this criteria_id
+            query = "SELECT column_name, operator, value, logical_operator FROM criteria_conditions WHERE criteria_id = ?"
+            self.cursor.execute(query, (criteria_id,))
+            conditions = self.cursor.fetchall()
+
+            if not conditions:
+                print(f"⚠️ No conditions found for criteria ID {criteria_id}")
+                return highlight_color, []
+
+            print(f"✅ Loaded {len(conditions)} conditions for {criteria_name}")
+            return highlight_color, conditions
+
+        except Exception as e:
+            print(f"❌ Error in load_criteria_by_name: {e}")
+            return None, []
+
+        finally:
+            self.disconnect()
+
+
+
+    def delete_criteria_condition(self, criteria_name, column, operator, value, logical_operator):
+        """Delete a specific condition from the criteria."""
+        self.connect()
+        try:
+            self.cursor.execute("""
+                DELETE FROM criteria_conditions
+                WHERE criteria_id = (SELECT id FROM criteria_names WHERE name = ?)
+                AND column_name = ? AND operator = ? AND value = ? AND (logical_operator = ? OR logical_operator IS NULL)
+            """, (criteria_name, column, operator, value, logical_operator))
+            self.connection.commit()
+        finally:
+            self.disconnect()
+
+    def update_criterion_value(self, criteria_name, column, old_value, new_value):
+        """Update a specific criterion's value in the database."""
+        self.connect()
+        try:
+            self.cursor.execute("""
+                UPDATE criteria_conditions 
+                SET value = ?
+                WHERE criteria_id = (SELECT id FROM criteria_names WHERE name = ?)
+                AND column_name = ? AND value = ?
+            """, (new_value, criteria_name, column, old_value))
+            self.connection.commit()
+        finally:
+            self.disconnect()
+
+    def update_criteria_color(self, criteria_name, color):
+        """Update the highlight color of a criteria."""
+        self.connect()
+        try:
+            self.cursor.execute("UPDATE criteria_names SET color = ? WHERE name = ?", (color, criteria_name))
+            self.connection.commit()
+        finally:
+            self.disconnect()
+
+    def get_criteria_color_by_name(self, criteria_name):
+        """Fetch the highlight color for a given criteria name."""
+        if not criteria_name:
+            return None
+
+        self.connect()
+        try:
+            query = "SELECT color FROM criteria_names WHERE name = ?"
+            self.cursor.execute(query, (criteria_name,))
+            result = self.cursor.fetchone()
+
+            if result:
+                return result[0]  # Return the color
+            else:
+                print(f"⚠️ No color found for criteria: {criteria_name}")
+                return None
+
+        except Exception as e:
+            print(f"❌ Error in get_criteria_color_by_name: {e}")
+            return None
+
+        finally:
+            self.disconnect()
+

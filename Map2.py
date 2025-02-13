@@ -221,8 +221,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.gun_barrel_action.triggered.connect(self.toggleDrawing)
         self.cross_plot_action.triggered.connect(self.crossPlot)
         self.color_editor_action.triggered.connect(self.open_color_editor)
-        self.color_action.triggered.connect(self.open_color_editor)
-        self.plot_action.triggered.connect(self.plot_data)
+        
         self.zone_viewer_action.triggered.connect(self.launch_zone_viewer)
         self.zoomOut.triggered.connect(self.zoom_out)
         self.zoomIn.triggered.connect(self.zoom_in)
@@ -278,16 +277,38 @@ class Map(QMainWindow, Ui_MainWindow):
         event.accept()
 
     def cleanup(self):
-        # Ensure all connections and resources are properly closed
-        if self.connection:
+        """Ensure all connections and resources are properly closed before shutting down."""
+    
+        # Disconnect safely
+        if getattr(self, "connection", None):  # Checks if connection exists
             self.connection.Disconnect()
             self.connection = None
+
+        # Retrieve required attributes for shutdown
+        selected_zone_attribute = self.zoneAttributeDropdown.currentText()
+        selected_well_zone = self.WellZoneDropdown.currentText()
+        selected_well_attribute = self.WellAttributeDropdown.currentText()
+        gridColorBarDropdown = self.gridColorBarDropdown.currentText()
+        zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
+        WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()
+
+        # Ensure project_saver is valid before calling shutdown
         if self.project_saver:
-            self.project_saver.shutdown(
-                self.line_width, self.line_opacity, self.UWI_width, self.UWI_opacity,
-                self.gridDropdown.currentText(), self.zoneDropdown.currentText()
-            )
+            try:
+                self.project_saver.shutdown(
+                    selected_zone_attribute,
+                    selected_well_zone,
+                    selected_well_attribute,
+                    gridColorBarDropdown,
+                    zoneAttributeColorBarDropdown,
+                    WellAttributeColorBarDropdown
+                )
+            except Exception as e:
+                print(f"Error during shutdown: {e}")
+
+        # Quit application safely
         QCoreApplication.quit()
+
         
     def setData(self, force_recalculate=False):
         """
@@ -375,7 +396,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def on_drainage_size_changed(self):
         new_drainage_size = self.gradientSizeSpinBox.value()
-        self.drawingArea.clearDrainageEllipses()
+        self.drawingArea.clearDrainageItems()
         self.drainage_width = new_drainage_size
         self.setData(True)
 
@@ -634,6 +655,7 @@ class Map(QMainWindow, Ui_MainWindow):
             # Clear cache for zone data
             self.cached_zone_df = None
             self.cached_zone_name = None
+            self.drawingArea.setScaledData(self.well_data)
 
         else:
             # Load the entire table into memory for the selected zone
@@ -695,6 +717,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """Simplified method to apply grid name colors directly when Zone Name equals Grid Name."""
         # Filter the DataFrame for the selected zone
         zone_df = self.cached_zone_df
+        print(zone_df)
 
         if zone_df.empty:
             QMessageBox.warning(self, "Warning", f"No data found for zone '{self.selected_zone}'.")
@@ -1107,6 +1130,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         if self.selected_well_zone == "Select Well Zone":
             # Reset well attribute dropdown and clear the plotting area
+            self.populate_zone_dropdown()
             self.populate_well_zone_dropdown()
             self.WellAttributeDropdown.setEnabled(False)
             self.cached_well_zone_df = None
@@ -1165,7 +1189,8 @@ class Map(QMainWindow, Ui_MainWindow):
             'Top_X_Offset', 'Base_X_Offset', 'Top_Y_Offset', 'Base_Y_Offset',
             'Angle_Top', 'Angle_Base'
         ]
-        remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
+        if not well_zone_df.empty:
+            remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
         print(remaining_df)
             # Ensure datetime columns are converted
         for col in remaining_df.columns:
@@ -1195,7 +1220,6 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Populate dropdown
         if non_null_columns:
-            self.WellAttributeDropdown.addItem("Select Well Attribute")
             self.WellAttributeDropdown.addItems(non_null_columns)
             self.WellAttributeDropdown.setEnabled(True)
         else:
@@ -1479,11 +1503,28 @@ class Map(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(QCoreApplication.translate("MainWindow", "Zone Analyzer", None))
 
     def set_interactive_elements_enabled(self, enabled):
-        self.plot_action.setEnabled(enabled)
-        self.export_action.setEnabled(enabled)
-        self.export_properties.setEnabled(enabled)
-        for action in self.toolbar.actions():
-            action.setEnabled(enabled)
+        # Update to enable/disable existing interactive elements
+        self.prepare_attributes_menu.setEnabled(enabled)
+        self.regression_menu.setEnabled(enabled)
+        self.production_menu.setEnabled(enabled)
+        self.import_menu.setEnabled(enabled)
+    
+        # Enable/disable all actions in each relevant menu
+        for menu in [
+            self.prepare_attributes_menu,
+            self.regression_menu,
+            self.production_menu,
+            self.import_menu,
+            self.properties_menu
+        ]:
+            for action in menu.actions():
+                action.setEnabled(enabled)
+
+        # Enable/disable toolbar actions
+        if hasattr(self, "toolbar"):
+            for action in self.toolbar.actions():
+                action.setEnabled(enabled)
+
 
 
 
@@ -1670,10 +1711,24 @@ class Map(QMainWindow, Ui_MainWindow):
             # Save the directory as the last used directory
             self.save_last_directory(directory)
 
-            # Update UI and internal states
             self.set_interactive_elements_enabled(False)
+
+# Update UI and internal states
+            self.set_interactive_elements_enabled(False)
+
+            # Enable menus that still exist
             self.import_menu.setEnabled(True)
-            self.calculate_menu.setEnabled(True)
+            self.prepare_attributes_menu.setEnabled(True)  # Renamed from calculate_menu
+            self.regression_menu.setEnabled(True)  # New menu
+            self.production_menu.setEnabled(True)  # New menu
+            self.properties_menu.setEnabled(True)  # Keep as is
+
+            # Enable all actions inside the Import menu
+            for action in self.import_menu.actions():
+                action.setEnabled(True)
+
+
+            # Enable specific actions that still exist
             self.data_loader_menu_action.setEnabled(True)
 
             # Reset DataFrames
@@ -1711,6 +1766,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.create_directional_surveys_table()
                 self.db_manager.create_zones_table()
                 self.db_manager.create_regression_table()
+                self.db_manager.create_criteria_tables()
                 
                 # Additional database initialization if needed
                 # For example, creating tables or setting up initial data
@@ -1764,10 +1820,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.setData(True)
      
 
-            # Enable menus and interactive elements
-            self.export_menu.setEnabled(True)
-            self.launch_menu.setEnabled(True)
-            self.calculate_menu.setEnabled(True)
+
             self.set_interactive_elements_enabled(True)
             if hasattr(self, 'project_file_name') and self.project_file_name:
                 # Use the ProjectSaver class to save specific parts of the project data
@@ -1778,9 +1831,8 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.project_saver.save_depth_grid_colors(self.depth_grid_color_df)
                 self.project_saver.save_grid_info(self.grid_info_df)
                 
-                self.export_menu.setEnabled(True)
-                self.launch_menu.setEnabled(True)
-                self.calculate_menu.setEnabled(True)
+
+
 
     def connectToSeisWare(self):
 
@@ -1881,7 +1933,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         self.selected_UWIs = self.db_manager.get_UWIs()
         dialog = DataLoadWellZonesDialog(self.selected_UWIs, self.directional_surveys_df)
-        print(self.directional_surveys_df)
+      
         if dialog.exec() == QDialog.Accepted:
             result = dialog.import_data()
             if result:
@@ -1909,12 +1961,12 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-                print("Project data updated and saved")
-                self.populate_zone_dropdown()
-                self.populate_well_attribute_dropdown()
-                self.populate_well_zone_dropdown()
-                self.export_menu.setEnabled(True)
-                self.launch_menu.setEnabled(True)
+        print("Project data updated and saved")
+        self.populate_zone_dropdown()
+        self.populate_well_zone_dropdown()
+   
+        
+
 
     def dataload_segy(self):
         # Create and launch the DataLoadSegy dialog
@@ -2573,30 +2625,35 @@ class Map(QMainWindow, Ui_MainWindow):
         self.project_saver.save_master_df(self.master_df)
 
     def shutdown_and_save_all(self):
-        selected_grid = self.gridDropdown.currentText()
-        gridColorBarDropdown = self.gridColorBarDropdown.currentText()
-        selected_zone = self.zoneDropdown.currentText()
-        selected_zone_attribute = self.zoneAttributeDropdown.currentText()
-        zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
-        selected_well_zone = self.WellZoneDropdown.currentText()
-        selected_well_attribute = self.WellAttributeDropdown.currentText()
-        WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()
+        """Safely shuts down and saves all necessary settings before exit."""
 
-        self.project_saver.shutdown(
-        self.line_width, 
-        self.line_opacity, 
-        self.UWI_width, 
-        self.UWI_opacity, 
-        selected_grid, 
-        selected_zone,
-        selected_zone_attribute, 
-        selected_well_zone, 
-        selected_well_attribute, 
-        gridColorBarDropdown,
-        zoneAttributeColorBarDropdown,
-        WellAttributeColorBarDropdown
-    )
- 
+        if not self.project_saver:
+            print("Warning: Project saver is not initialized.")
+            return
+
+        try:
+            # Retrieve dropdown selections
+            selected_grid = self.gridDropdown.currentText()
+            gridColorBarDropdown = self.gridColorBarDropdown.currentText()
+            selected_zone = self.zoneDropdown.currentText()
+            selected_zone_attribute = self.zoneAttributeDropdown.currentText()
+            zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
+            selected_well_zone = self.WellZoneDropdown.currentText()
+            selected_well_attribute = self.WellAttributeDropdown.currentText()
+            WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()
+
+            # Call shutdown with the correct arguments
+            self.project_saver.shutdown(
+                selected_zone_attribute,
+                selected_well_zone,
+                selected_well_attribute,
+                gridColorBarDropdown,
+                zoneAttributeColorBarDropdown,
+                WellAttributeColorBarDropdown
+            )
+
+        except Exception as e:
+            print(f"Error during shutdown: {e}")
         
 ###########################################Export#############################################
 

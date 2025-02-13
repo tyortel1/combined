@@ -189,10 +189,15 @@ class ProjectLoader:
 
             # Enable menus and update window title
             self.parent.import_menu.setEnabled(True)
-            self.parent.launch_menu.setEnabled(True)
-            self.parent.calculate_menu.setEnabled(True)
+            self.parent.prepare_attributes_menu.setEnabled(True)  # Renamed from calculate_menu
+            self.parent.regression_menu.setEnabled(True)  # New menu
+            self.parent.production_menu.setEnabled(True)  # New menu
+            self.parent.properties_menu.setEnabled(True)  # Keep as is
+
+            # Update window title
             file_basename = os.path.basename(file_name)
             self.parent.setWindowTitle(f"Zone Analyzer - {file_basename}")
+
 
 
             

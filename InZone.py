@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import (QDialog, QLabel, QComboBox, QMessageBox, 
-                               QPushButton, QAbstractItemView, QListWidget, QListWidgetItem, 
-                               QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy)
+                               QPushButton, QVBoxLayout, QWidget, QVBoxLayout, QHBoxLayout)
 from PySide6.QtGui import QIcon
 import pandas as pd
 from shapely.geometry import LineString
 import numpy as np
+from PySide6.QtWidgets import QProgressDialog
+from TwoListSelector import TwoListSelector
 from PySide6.QtWidgets import QProgressDialog
 
 class InZoneDialog(QDialog):
@@ -26,102 +27,103 @@ class InZoneDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        # Zone Name Selection
-        self.zone_name_label = QLabel("Zone Name:", self)
+        layout = QVBoxLayout()
+        
+        # Zone Name Selection with matching style
+        zone_name_container = QWidget()
+        zone_name_layout = QVBoxLayout(zone_name_container)
+        zone_name_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.zone_name_label = QLabel("Zone Name", self)
+        self.zone_name_label.setStyleSheet("""
+            QLabel {
+                color: #2c3e50;
+                font-weight: bold;
+                font-size: 12px;
+                padding: 5px;
+                background-color: #ecf0f1;
+                border: 1px solid #bdc3c7;
+                border-bottom: none;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+        """)
+        
         self.zone_name_combo = QComboBox(self)
         self.zone_name_combo.setEditable(True)
         self.zone_name_combo.addItems(self.zone_names)
-
-        # Grid Selection Lists
-        grid_list_layout = QHBoxLayout()
+        self.zone_name_combo.setStyleSheet("""
+            QComboBox {
+                background-color: white;
+                border: 1px solid #bdc3c7;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+                padding: 5px;
+            }
+            QComboBox:focus {
+                border: 1px solid #3498db;
+            }
+        """)
         
-        # Available Grids List
-        self.available_grids_list = QListWidget()
-        self.available_grids_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        grid_list_layout.addWidget(self.available_grids_list)
-
-        # Arrow Buttons Layout
-        grid_arrow_layout = QVBoxLayout()
-        grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        # Move All Right Button
-        self.move_all_grids_right_button = QPushButton()
-        self.move_all_grids_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
-        self.move_all_grids_right_button.clicked.connect(self.move_all_grids_right)
-        grid_arrow_layout.addWidget(self.move_all_grids_right_button)
-
-        # Move Selected Right Button
-        self.move_grids_right_button = QPushButton()
-        self.move_grids_right_button.setIcon(QIcon("icons/arrow_right.ico"))
-        self.move_grids_right_button.clicked.connect(self.move_selected_grids_right)
-        grid_arrow_layout.addWidget(self.move_grids_right_button)
-
-        # Move Selected Left Button
-        self.move_grids_left_button = QPushButton()
-        self.move_grids_left_button.setIcon(QIcon("icons/arrow_left.ico"))
-        self.move_grids_left_button.clicked.connect(self.move_selected_grids_left)
-        grid_arrow_layout.addWidget(self.move_grids_left_button)
-
-        # Move All Left Button
-        self.move_all_grids_left_button = QPushButton()
-        self.move_all_grids_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
-        self.move_all_grids_left_button.clicked.connect(self.move_all_grids_left)
-        grid_arrow_layout.addWidget(self.move_all_grids_left_button)
-
-        grid_arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        grid_list_layout.addLayout(grid_arrow_layout)
-
-        # Selected Grids List
-        self.selected_grids_list = QListWidget()
-        self.selected_grids_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        grid_list_layout.addWidget(self.selected_grids_list)
-
-        # Main Layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.zone_name_label)
-        layout.addWidget(self.zone_name_combo)
-        layout.addLayout(grid_list_layout)
-
-        # Buttons
+        zone_name_layout.addWidget(self.zone_name_label)
+        zone_name_layout.addWidget(self.zone_name_combo)
+        layout.addWidget(zone_name_container)
+        
+        # Create the grid selector
+        self.grid_selector = TwoListSelector(
+            left_title="Available Grids",
+            right_title="Selected Grids"
+        )
+        layout.addWidget(self.grid_selector)
+        
+        # Style the buttons
+        button_style = """
+            QPushButton {
+                padding: 5px 15px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton#calculate {
+                background-color: #2ecc71;
+                color: white;
+            }
+            QPushButton#calculate:hover {
+                background-color: #27ae60;
+            }
+            QPushButton#close {
+                background-color: #e74c3c;
+                color: white;
+            }
+            QPushButton#close:hover {
+                background-color: #c0392b;
+            }
+        """
+        
+        # Button layout - horizontal with right alignment
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # This pushes buttons to the right
+        
         self.calculate_button = QPushButton("Calculate", self)
+        self.calculate_button.setObjectName("calculate")
         self.calculate_button.clicked.connect(self.create_grid_dataframe)
-        layout.addWidget(self.calculate_button)
+        self.calculate_button.setStyleSheet(button_style)
+        button_layout.addWidget(self.calculate_button)
 
         self.close_button = QPushButton("Close", self)
+        self.close_button.setObjectName("close")
         self.close_button.clicked.connect(self.accept)
-        layout.addWidget(self.close_button)
+        self.close_button.setStyleSheet(button_style)
+        button_layout.addWidget(self.close_button)
 
+        layout.addLayout(button_layout)
         self.setLayout(layout)
         self.update_grid_selection()
 
     def update_grid_selection(self):
         """Update the available grids list with depth grids."""
         grid_names = self.grid_info_df[self.grid_info_df['Type'] == 'Depth']['Grid'].tolist()
-        self.available_grids_list.clear()
-        for grid_name in grid_names:
-            item = QListWidgetItem(grid_name)
-            self.available_grids_list.addItem(item)
-
-    # Grid Movement Methods
-    def move_all_grids_right(self):
-        while self.available_grids_list.count() > 0:
-            item = self.available_grids_list.takeItem(0)
-            self.selected_grids_list.addItem(item)
-
-    def move_selected_grids_right(self):
-        for item in self.available_grids_list.selectedItems():
-            self.selected_grids_list.addItem(self.available_grids_list.takeItem(
-                self.available_grids_list.row(item)))
-
-    def move_selected_grids_left(self):
-        for item in self.selected_grids_list.selectedItems():
-            self.available_grids_list.addItem(self.selected_grids_list.takeItem(
-                self.selected_grids_list.row(item)))
-
-    def move_all_grids_left(self):
-        while self.selected_grids_list.count() > 0:
-            item = self.selected_grids_list.takeItem(0)
-            self.available_grids_list.addItem(item)
+        self.grid_selector.set_left_items(grid_names)
 
     def create_grid_dataframe(self):
         """Create and process the grid data."""
@@ -130,9 +132,6 @@ class InZoneDialog(QDialog):
         if not zone_name:
             QMessageBox.warning(self, "Error", "Zone name cannot be empty. Please enter a valid zone name.")
             return
-
-
-
 
         # Create DataFrame with well and grid data
         data = []
@@ -174,9 +173,8 @@ class InZoneDialog(QDialog):
         # Create main DataFrame
         df = pd.DataFrame(data)
         
-        # Get selected grids and process intersections
-        selected_grids = [self.selected_grids_list.item(i).text() 
-                         for i in range(self.selected_grids_list.count())]
+        # Get selected grids from the TwoListSelector
+        selected_grids = self.grid_selector.get_right_items()
         
         self.sorted_grid_order = self.get_sorted_grid_order(selected_grids)
         
@@ -186,8 +184,6 @@ class InZoneDialog(QDialog):
             
             # Create percentage data
             percentage_data = self.create_percentage_dataframe(intersections)
-            
-
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to process and save zone data: {str(e)}")
