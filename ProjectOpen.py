@@ -82,45 +82,34 @@ class ProjectLoader:
     
 
 
-            self.parent.gridDropdown.blockSignals(True)
-            self.parent.zoneDropdown.blockSignals(True)
-            self.parent.zoneAttributeDropdown.blockSignals(True)
-            self.parent.WellZoneDropdown.blockSignals(True)
-            self.parent.WellAttributeDropdown.blockSignals(True)
-            self.parent.gridColorBarDropdown.blockSignals(True)
-            self.parent.zoneAttributeColorBarDropdown.blockSignals(True)
-            self.parent.WellAttributeColorBarDropdown.blockSignals(True)
+            self.parent.gridDropdown.combo.blockSignals(True)
+            self.parent.zoneDropdown.combo.blockSignals(True)
+            self.parent.zoneAttributeDropdown.combo.blockSignals(True)
+            self.parent.wellZoneDropdown.combo.blockSignals(True)
+            self.parent.wellAttributeDropdown.combo.blockSignals(True)
+            self.parent.grid_colorbar.colorbar_dropdown.combo.blockSignals(True)
+            self.parent.zone_colorbar.colorbar_dropdown.combo.blockSignals(True)
+            self.parent.well_colorbar.colorbar_dropdown.combo.blockSignals(True)
 
 
+         
+            self.parent.gridDropdown.combo.setCurrentText("Select Grid")
+            self.parent.wellZoneDropdown.combo.setCurrentText("Select Well Zone")
+            self.parent.zoneDropdown.combo.setCurrentText("Select Zone")
 
-            # Set dropdowns to the saved values
-            selected_grid = data_loaded.get('selected_grid', 'Default Grid')
-            self.parent.gridDropdown.setCurrentText(selected_grid)
+            # Set all color bar dropdowns to "Rainbow"
+            self.parent.grid_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
+            self.parent.zone_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
+            self.parent.well_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
 
-    
-    
-            selected_well_zone = data_loaded.get('selected_well_zone', 'Default Well Zone')
-            self.parent.WellZoneDropdown.setCurrentText(selected_well_zone)
-    
-            grid_color_bar_dropdown = data_loaded.get('grid_color_bar_dropdown', 'Default Grid Color Bar')
-            self.parent.gridColorBarDropdown.setCurrentText(grid_color_bar_dropdown)
-    
-            zone_attribute_color_bar_dropdown = data_loaded.get('zone_attribute_color_bar_dropdown', 'Default Zone Attribute Color Bar')
-            self.parent.zoneAttributeColorBarDropdown.setCurrentText(zone_attribute_color_bar_dropdown)
-    
-            well_attribute_color_bar_dropdown = data_loaded.get('well_attribute_color_bar_dropdown', 'Default Well Attribute Color Bar')
-            self.parent.WellAttributeColorBarDropdown.setCurrentText(well_attribute_color_bar_dropdown)
-
-
-            # Re-enable signals after setting the values
-            self.parent.gridDropdown.blockSignals(False)
-            self.parent.zoneDropdown.blockSignals(False)
-            self.parent.zoneAttributeDropdown.blockSignals(False)
-            self.parent.WellZoneDropdown.blockSignals(False)
-            self.parent.WellAttributeDropdown.blockSignals(False)
-            self.parent.gridColorBarDropdown.blockSignals(False)
-            self.parent.zoneAttributeColorBarDropdown.blockSignals(False)
-            self.parent.WellAttributeColorBarDropdown.blockSignals(False)
+            self.parent.gridDropdown.combo.blockSignals(False)
+            self.parent.zoneDropdown.combo.blockSignals(False)
+            self.parent.zoneAttributeDropdown.combo.blockSignals(False)
+            self.parent.wellZoneDropdown.combo.blockSignals(False)
+            self.parent.wellAttributeDropdown.combo.blockSignals(False)
+            self.parent.grid_colorbar.colorbar_dropdown.combo.blockSignals(False)
+            self.parent.zone_colorbar.colorbar_dropdown.combo.blockSignals(False)
+            self.parent.well_colorbar.colorbar_dropdown.combo.blockSignals(False)
             # Load zone viewer settings if they exist
             if 'zone_viewer_settings' in data_loaded:
                 self.parent.save_zone_viewer_settings = data_loaded['zone_viewer_settings']

@@ -1828,7 +1828,7 @@ class DatabaseManager:
                 self.connection.commit()
             
                 # Updated print statement to show actual values being set
-                print(f"✅ Well pad for UWI {planned_UWI} updated:")
+                print(f"  Well pad for UWI {planned_UWI} updated:")
                 print(f"   → decline_curve = {matched_UWI}, decline_curve_type = 'UWI', scenario_id = {scenario_id}")
             else:
                 print(f"❌ No matching well found for UWI {planned_UWI} in Scenario {scenario_id}")
@@ -3147,7 +3147,7 @@ class DatabaseManager:
             # Verify the append operation
             cursor.execute(f"SELECT COUNT(*) FROM {zone_name}")
             total_records = cursor.fetchone()[0]
-            print(f"\n✅ Successfully appended new records!")
+            print(f"\n  Successfully appended new records!")
             print(f"Total records in table: {total_records}")
         
             # Verify column types
@@ -3197,7 +3197,7 @@ class DatabaseManager:
                 alter_query = f"ALTER TABLE {table_name} ADD COLUMN {column_name} REAL DEFAULT 0;"
                 cursor.execute(alter_query)
                 self.connection.commit()
-                print(f"✅ Column '{column_name}' added to table '{table_name}'.")
+                print(f"  Column '{column_name}' added to table '{table_name}'.")
         
             # Step 2: Update all rows
             update_query = f"UPDATE {table_name} SET {column_name} = ? WHERE UWI = ? AND Top_Depth = ? AND Base_Depth = ?"
@@ -3205,7 +3205,7 @@ class DatabaseManager:
             cursor.executemany(update_query, update_data)
         
             self.connection.commit()
-            print(f"✅ Successfully updated column '{column_name}' in table '{table_name}'.")
+            print(f"  Successfully updated column '{column_name}' in table '{table_name}'.")
             return True
         except Exception as e:
             print(f"❌ Error updating column '{column_name}' in table '{table_name}': {e}")
@@ -3417,7 +3417,7 @@ class DatabaseManager:
             cursor = self.connection.cursor()
             cursor.execute(f"PRAGMA table_info({zone_name})")
             table_info = cursor.fetchall()
-            print("\n✅ Table successfully overwritten!")
+            print("\n  Table successfully overwritten!")
             print("Column types in database:")
             for col in table_info:
                 print(f"{col[1]}: {col[2]}")  # col[1] is name, col[2] is type
@@ -4258,7 +4258,7 @@ class DatabaseManager:
                 return None, []
 
             criteria_id, highlight_color = result
-            print(f"✅ Found criteria: ID={criteria_id}, Color={highlight_color}")
+            print(f"  Found criteria: ID={criteria_id}, Color={highlight_color}")
 
             # Step 2: Fetch all conditions for this criteria_id
             query = "SELECT column_name, operator, value, logical_operator FROM criteria_conditions WHERE criteria_id = ?"
@@ -4269,7 +4269,7 @@ class DatabaseManager:
                 print(f"⚠️ No conditions found for criteria ID {criteria_id}")
                 return highlight_color, []
 
-            print(f"✅ Loaded {len(conditions)} conditions for {criteria_name}")
+            print(f"  Loaded {len(conditions)} conditions for {criteria_name}")
             return highlight_color, conditions
 
         except Exception as e:

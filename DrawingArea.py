@@ -1,4 +1,4 @@
-import os
+﻿import os
 import csv
 import numpy as np
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsTextItem, QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem
@@ -112,9 +112,15 @@ class DrawingArea(QGraphicsView):
         self.line_items = {}
         self.view_adjusted = False
         self.initial_fit_in_view_done = False 
+        # ✅ Default settings
         self.show_UWIs = True
-        self.show_ticks = True
-        self.drainage_size = 400
+        self.show_ticks = True  # ✅ Default ON
+        self.drainage_visible = True
+        self.drainage_size = 400  # ✅ Default 400
+        self.UWI_width = 25
+        self.UWI_opacity = 0.5
+        self.line_width = 25
+        self.line_opacity = 0.5
 
         self.textPixmapCache = {}
         self.color_palette = self.load_color_palette('Palettes/Rainbow.pal')
@@ -122,6 +128,10 @@ class DrawingArea(QGraphicsView):
                 # Set background color to very light grey
         light_grey = QColor(240, 240, 240)
         self.setBackgroundBrush(QBrush(light_grey))
+        self.show_UWIs = True  # ✅ Default: Show UWI labels
+        self.show_ticks = True  # ✅ Default: Show zone ticks
+        self.drainage_visible = True  # ✅ NEW: Store drainage visibility state
+
 
     def reset_boundaries(self):
         self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = self.max_z = 0
@@ -737,48 +747,50 @@ class DrawingArea(QGraphicsView):
 
 
     def toggleTextItemsVisibility(self, visible):
-        print(visible)
+        """Toggle the visibility of UWI text labels."""
+        visible = (visible == Qt.Checked)  # Convert Qt state to boolean
+        print(f"Toggling UWI visibility: {visible}")
+
         try:
-            # Iterate through all text items in the scene with the tag "UWI_label"
             text_items = [item for item in self.scene.items() if item.data(0) == "UWI_label"]
 
-            if visible == 0:
-                # Hide text items by setting opacity to 0
-                for item in text_items:
-                    item.setOpacity(0.0)
-            else:
-                # Show text items with the desired opacity
-                for item in text_items:
-                    item.setOpacity(self.UWI_opacity)  # Use the configured opacity value (0.0 to 1.0)
+            for item in text_items:
+                item.setOpacity(self.UWI_opacity if visible else 0.0)
 
-            # Optionally update the scene and viewport
             self.scene.update()
             self.viewport().update()
 
         except Exception as e:
             print(f"Error toggling text item visibility: {e}")
+
 
     def togglegradientVisibility(self, visible):
-        print(visible)
-        try:
-            # Iterate through all text items in the scene with the tag "UWI_label"
-            text_items = [item for item in self.scene.items() if item.data(0) == "drainage"]
+        """Toggle the visibility of the drainage area."""
+        self.drainage_visible = visible
 
-            if visible == 0:
-                # Hide text items by setting opacity to 0
-                for item in text_items:
+        print(f"Toggling drainage visibility: {visible}")
+
+        try:
+            drainage_items = [item for item in self.scene.items() if item.data(0) == "drainage"]
+
+            if not visible:
+                # Hide drainage items
+                for item in drainage_items:
                     item.setOpacity(0.0)
             else:
-                # Show text items with the desired opacity
-                for item in text_items:
-                    item.setOpacity(self.UWI_opacity)  # Use the configured opacity value (0.0 to 1.0)
+                #   If turning ON, ensure drainage is redrawn
+                if not drainage_items:
+                    print("  Redrawing drainage")
+                    self.setScaledData(self.scaled_data)  #   Redraw well paths and drainage
+                else:
+                    for item in drainage_items:
+                        item.setOpacity(1.0)  # Show existing drainage
 
-            # Optionally update the scene and viewport
             self.scene.update()
             self.viewport().update()
 
         except Exception as e:
-            print(f"Error toggling text item visibility: {e}")
+            print(f"Error toggling drainage visibility: {e}")
    
 
    
@@ -814,22 +826,25 @@ class DrawingArea(QGraphicsView):
     #        self.setZoneTicks(zone_ticks)
 
     def toggleticksVisibility(self, visible):
+        print(f"🔄 toggleticksVisibility called with: {visible}")
+
         tick_items = [item for item in self.scene.items() if item.data(0) == 'bulkzoneticks']
-        
+
         if visible == 0:
-            # Hide ticks by setting opacity to 0
+            print("❌ Hiding ticks")
+            self.show_ticks = False
             for item in tick_items:
                 item.setOpacity(0.0)
-            self.show_ticks = False
         else:
-            # Show ticks by setting opacity to 1
+            print("✅ Showing ticks")
+            self.show_ticks = True
             for item in tick_items:
                 item.setOpacity(0.5)  # Adjust this value for desired opacity
-            self.show_ticks = True
 
-        # Update the scene and viewport to reflect the changes
+        print(f"🎯 After toggleticksVisibility: show_ticks={self.show_ticks}")
         self.scene.update()
         self.viewport().update()
+
 
 
     def get_point_by_md(self, UWI, md):

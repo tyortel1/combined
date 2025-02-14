@@ -1,4 +1,4 @@
-# main.pydef well
+﻿# main.pydef well
 from email.policy import default
 import subprocess
 import sys
@@ -28,7 +28,7 @@ import platform
 from SeisWare import seisware_sdk_312 as SeisWare
 
 #from Exporting import ExportDialog
-from DataLoader import DataLoaderDialog
+from DataLoadGrid import DataLoadGridDialog
 from ZoneViewer import ZoneViewerDialog
 from SwPropertiesEdit import SWPropertiesEdit
 from DataLoadWellZone import DataLoadWellZonesDialog
@@ -71,6 +71,8 @@ from CalculateWellComparisons import WellComparisonDialog
 from CalcMergeZones import CalcMergeZoneDialog
 from CalculateZoneAttributes import ZoneAttributeCalculator
 from CalcAttributeAnalyzer import CalcAttributeAnalyzer
+from StyledColorbar import StyledColorBar  # Add this import
+from PropertiesMap import MapPropertiesDialog
 
 
 
@@ -180,6 +182,8 @@ class Map(QMainWindow, Ui_MainWindow):
         self.cached_well_zone_df = None
         self.cached_well_zone_name = None
 
+
+
          # Create an instance of EurNpv
 
 
@@ -194,35 +198,30 @@ class Map(QMainWindow, Ui_MainWindow):
 
         
 
-
         
-        self.gridDropdown.currentIndexChanged.connect(self.grid_selected)
-        self.zoneDropdown.currentIndexChanged.connect(self.zone_selected)
-        self.zoneAttributeDropdown.currentIndexChanged.connect(self.zone_attribute_selected)
-        self.WellZoneDropdown.currentIndexChanged.connect(self.well_zone_selected)
-        self.WellAttributeDropdown.currentIndexChanged.connect(self.well_attribute_selected)
-        self.WellAttributeColorBarDropdown.currentIndexChanged.connect(self.well_attribute_selected)
+        
+        # For the Zone section
+        self.zoneDropdown.combo.currentIndexChanged.connect(self.zone_selected)
+        self.zoneAttributeDropdown.combo.currentIndexChanged.connect(self.zone_attribute_selected)
+        self.zone_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.zone_attribute_color_selected)
 
-        self.gridColorBarDropdown.currentIndexChanged.connect(self.grid_color_selected)
-        self.zoneAttributeColorBarDropdown.currentIndexChanged.connect(self.zone_attribute_color_selected)
-        self.WellAttributeColorBarDropdown.currentIndexChanged.connect(self.well_attribute_selected)
+        # For the Well Zone section
+        self.wellZoneDropdown.combo.currentIndexChanged.connect(self.well_zone_selected)
+        self.wellAttributeDropdown.combo.currentIndexChanged.connect(self.well_attribute_selected)
+        self.well_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.well_attribute_selected)
+
+        # For the Grid section
+        self.gridDropdown.combo.currentIndexChanged.connect(self.grid_selected)
+        self.grid_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.grid_color_selected)
 
 
-
-
-        self.UWICheckbox.stateChanged.connect(self.toggle_UWI_labels)
-        self.ticksCheckbox.stateChanged.connect(self.toggle_ticks)
-        self.gradientCheckbox.stateChanged.connect(self.toggle_drainage)
-        self.UWIWidthSlider.valueChanged.connect(self.change_UWI_width)
-        self.opacitySlider.valueChanged.connect(self.change_opacity)
-        self.lineWidthSlider.valueChanged.connect(self.change_line_width)
-        self.lineOpacitySlider.valueChanged.connect(self.change_line_opacity)
         self.plot_tool_action.triggered.connect(self.plot_data)
         self.gun_barrel_action.triggered.connect(self.toggleDrawing)
         self.cross_plot_action.triggered.connect(self.crossPlot)
         self.color_editor_action.triggered.connect(self.open_color_editor)
         
         self.zone_viewer_action.triggered.connect(self.launch_zone_viewer)
+        self.map_properties_action.triggered.connect(self.map_properties)
         self.zoomOut.triggered.connect(self.zoom_out)
         self.zoomIn.triggered.connect(self.zoom_in)
 
@@ -242,7 +241,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.calc_zone_attb_action.triggered.connect(self.calculate_zone_attributes)
     
    
-        self.data_loader_menu_action.triggered.connect(self.dataloader)
+        self.data_loader_menu_action.triggered.connect(self.dataloadgrids)
         self.dataload_well_zones_action.triggered.connect(self.dataload_well_zones)
         self.dataload_segy_action.triggered.connect(self.dataload_segy)
         self.launch_cashflow_action.triggered.connect(self.launch_combined_cashflow)
@@ -250,7 +249,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.well_properties_action.triggered.connect(self.well_properties)
         self.scenarioDropdown.currentIndexChanged.connect(self.update_active_scenario)
         self.pud_properties_action.triggered.connect(self.pud_properties)
-        self.gradientSizeSpinBox.editingFinished.connect(self.on_drainage_size_changed)
+
         #self.export_action.triggered.connect(self.export_results)
         #self.export_properties.triggered.connect(self.export_sw_properties)
         #self.zone_to_sw.triggered.connect(self.send_zones_to_sw)
@@ -289,7 +288,7 @@ class Map(QMainWindow, Ui_MainWindow):
         selected_well_zone = self.WellZoneDropdown.currentText()
         selected_well_attribute = self.WellAttributeDropdown.currentText()
         gridColorBarDropdown = self.gridColorBarDropdown.currentText()
-        zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
+        zoneAttributeColorBarDropdown = self.zone_colorbar.currentText()
         WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()
 
         # Ensure project_saver is valid before calling shutdown
@@ -443,52 +442,54 @@ class Map(QMainWindow, Ui_MainWindow):
             return
 
         # Block signals while populating the dropdown
-        self.gridDropdown.blockSignals(True)
+        self.gridDropdown.combo.blockSignals(True)
 
         # Clear the dropdown and add the default item
-        self.gridDropdown.clear()
-        self.gridDropdown.addItem("Select Grid")
+        self.gridDropdown.combo.clear()
+        self.gridDropdown.combo.addItem("Select Grid")
 
         # Get grid names from the grid_info_df, sort them alphabetically, and add them to the dropdown
         grid_names = sorted(self.grid_info_df['Grid'].tolist())
-        self.gridDropdown.addItems(grid_names)
+        print(grid_names)
+        self.gridDropdown.combo.addItems(grid_names)
 
         # Unblock signals after populating the dropdown
-        self.gridDropdown.blockSignals(False)
+        self.gridDropdown.combo.blockSignals(False)
 
         # If a selected_grid is provided, set it as the current text
         if selected_grid and selected_grid in grid_names:
-            self.gridDropdown.setCurrentText(selected_grid)
+            self.gridDropdown.combo.setCurrentText(selected_grid)
 
     def populate_zone_dropdown(self, selected_zone=None):
-       self.selected_zone = selected_zone
-       zones = self.db_manager.fetch_zone_names_by_type("Zone")
-       intersections = self.db_manager.fetch_zone_names_by_type("Intersections")
-   
-       all_zones = zones + intersections if zones and intersections else zones or intersections
-       if all_zones:
-           zone_names_sorted = sorted([z[0] for z in all_zones])
-           self.zoneDropdown.blockSignals(True)
-           self.zoneDropdown.clear()
-           self.zoneDropdown.addItem("Select Zone")
-           self.zoneDropdown.addItems(zone_names_sorted)
-           self.zoneDropdown.blockSignals(False)
-       
-           if self.selected_zone and self.selected_zone in zone_names_sorted:
-               self.zoneDropdown.setCurrentText(selected_zone)
-               self.zoneAttributeDropdown.setEnabled(True)
-           else:
-               self.zoneDropdown.setCurrentText('Select Zone')
-               self.zoneAttributeDropdown.setEnabled(False)
-       else:
-            # Block signals temporarily to avoid triggering unwanted updates
-            self.zoneDropdown.blockSignals(True)
-            self.zoneDropdown.clear()
-            self.zoneDropdown.addItem("No Zones Available")
-            self.zoneDropdown.blockSignals(False)
+        self.selected_zone = selected_zone
+        zones = self.db_manager.fetch_zone_names_by_type("Zone")
+        intersections = self.db_manager.fetch_zone_names_by_type("Intersections")
 
+        all_zones = zones + intersections if zones and intersections else zones or intersections
+        if all_zones:
+            zone_names_sorted = sorted([z[0] for z in all_zones])
+            self.zoneDropdown.combo.blockSignals(True)
+            self.zoneDropdown.combo.clear()
+            self.zoneDropdown.combo.addItem("Select Zone")
+            self.zoneDropdown.combo.addItems(zone_names_sorted)
+            self.zoneDropdown.combo.blockSignals(False)
+    
+            if self.selected_zone and self.selected_zone in zone_names_sorted:
+                self.zoneDropdown.combo.setCurrentText(selected_zone)
+                self.zoneAttributeDropdown.setEnabled(True)
+            else:
+                self.zoneDropdown.combo.setCurrentText('Select Zone')
+                self.zoneAttributeDropdown.setEnabled(False)
+        else:
+            # Block signals temporarily to avoid triggering unwanted updates
+            self.zoneDropdown.combo.blockSignals(True)
+            self.zoneDropdown.combo.clear()
+            self.zoneDropdown.combo.addItem("No Zones Available")
+            self.zoneDropdown.combo.blockSignals(False)
             # Disable the zone attribute dropdown
             self.zoneAttributeDropdown.setEnabled(False)
+
+
 
     def pc_dialog(self):
         """
@@ -565,11 +566,11 @@ class Map(QMainWindow, Ui_MainWindow):
         self.zoneAttributeDropdown.clear()
 
         if numeric_cols:
-            self.zoneAttributeDropdown.addItem("Select Zone Attribute")
-            self.zoneAttributeDropdown.addItems(numeric_cols)
+            self.zoneAttributeDropdown.combo.addItem("Select Zone Attribute")
+            self.zoneAttributeDropdown.combo.addItems(numeric_cols)
             self.zoneAttributeDropdown.setEnabled(True)
         else:
-            self.zoneAttributeDropdown.addItem("No Attributes Available")
+            self.zoneAttributeDropdown.combo.addItem("No Attributes Available")
             self.zoneAttributeDropdown.setEnabled(False)
 
         self.zoneAttributeDropdown.blockSignals(False)
@@ -579,17 +580,18 @@ class Map(QMainWindow, Ui_MainWindow):
         if index == 0:  # "Select Grid" is selected
             self.drawingArea.clearGrid()
             return
-
+    
         self.selected_grid = self.gridDropdown.currentText()
-
-        # Load the color palette before using it
-        self.get_grid_color()
-
+    
+        # Get the selected color palette from StyledColorBar
+        selected_palette_name = self.grid_colorbar.currentText()
+        self.selected_color_palette = self.grid_colorbar.selected_color_palette
+    
         if self.selected_grid in self.depth_grid_data_df['Grid'].unique():
             selected_grid_df = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == self.selected_grid]
         else:
             selected_grid_df = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == self.selected_grid]
-
+    
         # Extract grid information from grid_info_df
         grid_info = self.grid_info_df[self.grid_info_df['Grid'] == self.selected_grid].iloc[0]
         min_x = grid_info['min_x']
@@ -600,26 +602,28 @@ class Map(QMainWindow, Ui_MainWindow):
         max_z = grid_info['max_z']
         bin_size_x = grid_info['bin_size_x']
         bin_size_y = grid_info['bin_size_y']
-
+    
         # Extract X, Y, and Z values from the selected grid DataFrame
         x_values = selected_grid_df['X'].values
         y_values = selected_grid_df['Y'].values
         z_values = selected_grid_df['Z'].values
-
-        # Map Z values to colors
+    
+        # Use StyledColorBar's `map_value_to_color()`
         grid_points_with_values = [
-            (QPointF(x, y), self.map_value_to_color(z, min_z, max_z, self.selected_color_palette))
+            (QPointF(x, y), self.grid_colorbar.map_value_to_color(z, min_z, max_z, self.selected_color_palette))
             for x, y, z in zip(x_values, y_values, z_values)
         ]
-
+    
         # Update the drawing area with the new grid points and grid info
         self.drawingArea.setGridPoints(grid_points_with_values, min_x, max_x, min_y, max_y, min_z, max_z, bin_size_x, bin_size_y)
+    
+        # Ensure color bar is updated with the current min and max Z values
+        self.grid_colorbar.display_color_range(min_z, max_z)
 
-        self.display_color_range(self.gridColorRangeDisplay, self.selected_color_palette, min_z, max_z)
 
     def grid_color_selected(self):
         # Get the selected color bar from the dropdown
-        self.selected_color_bar = self.gridColorBarDropdown.currentText()
+        self.selected_color_bar = self.grid_colorbar.colorbar_dropdown.currentText()
 
         # Get the current index from the grid dropdown
         index = self.gridDropdown.currentIndex()
@@ -803,7 +807,8 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def zone_attribute_color_selected(self):
         
-        self.selected_zone_attribute_colorbar = self.zoneAttributeColorBarDropdown.currentText()
+        self.selected_zone_attribute_colorbar = self.zone_colorbar.currentText()
+
     
         palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
         file_path = os.path.join(palettes_dir, self.selected_zone_attribute_colorbar)
@@ -836,14 +841,11 @@ class Map(QMainWindow, Ui_MainWindow):
             QMessageBox.critical(self, "Error", str(e))
             return
 
-
         # Load the selected color palette
-        color_bar_name = self.zoneAttributeColorBarDropdown.currentText()
-        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        file_path = os.path.join(palettes_dir, color_bar_name)
+        color_bar_name = self.zone_colorbar.currentText()
 
         try:
-            color_palette = self.load_color_palette(file_path)
+            color_palette = self.zone_colorbar.load_color_palette(color_bar_name)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Could not load color palette: {e}")
             return
@@ -920,42 +922,39 @@ class Map(QMainWindow, Ui_MainWindow):
                             break
                  
                     well['md_colors'].append(assigned_color)
-        self.display_color_range(self.zoneAttributeColorRangeDisplay, color_palette, min_value, max_value)
+        self.zone_colorbar.display_color_range(min_value, max_value)
 
 
 
     def zone_attribute_color_selected(self):
         """Handles the selection of a new color bar for zone attributes."""
-        self.selected_zone_attribute_colorbar = self.WellAttributeColorBarDropdown.currentText()
+        self.selected_zone_attribute_colorbar = self.zone_colorbar.currentText()
     
-        # Construct the path to the palette file
-        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        file_path = os.path.join(palettes_dir, self.selected_zone_attribute_colorbar)
-
         try:
+            # Load the color palette using StyledColorBar method
+            color_palette = self.zone_colorbar.load_color_palette(self.selected_zone_attribute_colorbar)
+        
             # Preprocess data and apply the selected color palette
             self.preprocess_zone_attribute_data()
         
-            # Pass the updated well_data only, as processed_data is no longer needed
+            # Pass the updated well_data only
             self.drawingArea.setScaledData(self.well_data)
-        
+    
         except FileNotFoundError:
-            QMessageBox.warning(self, "Error", f"The palette file '{file_path}' was not found.")
+            QMessageBox.warning(self, "Error", f"The palette file was not found.")
         except Exception as e:
-            # Log the error and display a message box
-        
             QMessageBox.warning(self, "Error", f"An error occurred while updating colors: {e}")
 
 
 
 
-    def get_color_for_md(self, UWI, md):
-        """Get color for a specific UWI and MD from well_data."""
-        if UWI not in self.well_data or 'md_colors' not in self.well_data[UWI]:
-            return QColor(Qt.black)  # Default color if UWI does not exist or has no MD color mappings
+    #def get_color_for_md(self, UWI, md):
+    #    """Get color for a specific UWI and MD from well_data."""
+    #    if UWI not in self.well_data or 'md_colors' not in self.well_data[UWI]:
+    #        return QColor(Qt.black)  # Default color if UWI does not exist or has no MD color mappings
 
-        # Return the color associated with the specific MD
-        return self.well_data[UWI]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
+    #    # Return the color associated with the specific MD
+    #    return self.well_data[UWI]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
 
     
     def draw_grid_on_map(self, grid_df):
@@ -1087,52 +1086,46 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def populate_well_zone_dropdown(self):
         """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
-    
-        # Block signals to avoid triggering unnecessary events
-        self.WellZoneDropdown.blockSignals(True)
-    
-        # Clear existing items and set the default option
-        self.WellZoneDropdown.clear()
-        self.WellZoneDropdown.addItem("Select Well Zone")
 
+        # Block signals to avoid triggering unnecessary events
+        self.wellZoneDropdown.combo.blockSignals(True)
+
+        # Clear existing items and set the default option
+        self.wellZoneDropdown.combo.clear()
+        self.wellZoneDropdown.combo.addItem("Select Well Zone")
         try:
             # Fetch unique zone names from the database where type is 'Well'
             zones = self.db_manager.fetch_zone_names_by_type("Well")
-
             if zones:
                 # Sort zones alphabetically
                 zones = [zone[0] for zone in zones if zone[0].strip()] 
                 zones = sorted(zones)
                 print(zones)
-
                 # Populate the dropdown with sorted zone names
-                self.WellZoneDropdown.addItems(zones)
+                self.wellZoneDropdown.combo.addItems(zones)
             else:
                 print("No zones of type 'Well' found.")
-
         except Exception as e:
             print(f"Error populating Well Zone dropdown: {e}")
-
         finally:
             # Unblock signals after populating the dropdown
-            self.WellZoneDropdown.blockSignals(False)
+            self.wellZoneDropdown.combo.blockSignals(False)
 
     def well_zone_selected(self):
         """Handles the selection of a well zone from the dropdown."""
-        self.selected_well_zone = self.WellZoneDropdown.currentText()
-
-        self.WellAttributeDropdown.blockSignals(True)
-        self.WellAttributeDropdown.clear()
+        self.selected_well_zone = self.wellZoneDropdown.combo.currentText()
+        self.wellAttributeDropdown.combo.blockSignals(True)
+        self.wellAttributeDropdown.combo.clear()
         self.drawingArea.clearWellAttributeBoxes()
-        self.WellAttributeDropdown.addItem("Select Well Attribute")
-        self.WellAttributeDropdown.blockSignals(False)
-        self.WellAttributeDropdown.setEnabled(False)
+        self.wellAttributeDropdown.combo.addItem("Select Well Attribute")
+        self.wellAttributeDropdown.combo.blockSignals(False)
+        self.wellAttributeDropdown.setEnabled(False)
 
         if self.selected_well_zone == "Select Well Zone":
             # Reset well attribute dropdown and clear the plotting area
             self.populate_zone_dropdown()
             self.populate_well_zone_dropdown()
-            self.WellAttributeDropdown.setEnabled(False)
+            self.wellAttributeDropdown.setEnabled(False)
             self.cached_well_zone_df = None
             self.cached_well_zone_name = None
         else:
@@ -1148,39 +1141,31 @@ class Map(QMainWindow, Ui_MainWindow):
                         raise ValueError(f"No table found for zone: {self.selected_well_zone}")
                 else:
                     print(f"Using cached data for well zone: {self.selected_well_zone}")
-        
+    
                 # Populate the well attribute dropdown
                 self.populate_well_attribute_dropdown()
                 # Enable the dropdown
-                self.WellAttributeDropdown.setEnabled(True)
+                self.wellAttributeDropdown.setEnabled(True)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load data for well zone '{self.selected_well_zone}': {e}")
-
         
  
 
     def populate_well_attribute_dropdown(self):
         """Populate the well attribute dropdown with numeric attributes for the selected well zone."""
-    
+
         # Get the selected well zone from the well zone dropdown
-        selected_well_zone = self.WellZoneDropdown.currentText()
+        selected_well_zone = self.wellZoneDropdown.combo.currentText()
         # Clear the dropdown before populating
-        self.WellAttributeDropdown.blockSignals(True)
-        self.WellAttributeDropdown.clear()
-
-        self.WellAttributeDropdown.addItem("Select Well Attribute")
-    
-
+        self.wellAttributeDropdown.combo.blockSignals(True)
+        self.wellAttributeDropdown.combo.clear()
+        self.wellAttributeDropdown.combo.addItem("Select Well Attribute")
 
         if selected_well_zone != "Select Well Attribute":
-  
             well_zone_df = self.cached_well_zone_df
-
         elif selected_well_zone == "Select Well Attribute":
-
-                # Filter master_df for the selected well zone
+            # Filter master_df for the selected well zone
             well_zone_df = None
-
 
         # Drop fixed columns that are not relevant for selection
         columns_to_exclude = [
@@ -1192,14 +1177,14 @@ class Map(QMainWindow, Ui_MainWindow):
         if not well_zone_df.empty:
             remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
         print(remaining_df)
-            # Ensure datetime columns are converted
+
+        # Ensure datetime columns are converted
         for col in remaining_df.columns:
             if col.lower().endswith('date') or 'date' in col.lower():
                 try:
                     remaining_df[col] = pd.to_datetime(remaining_df[col], errors='coerce')
                 except Exception as e:
                     print(f"Error converting {col} to datetime: {e}")
-
 
         # Find numeric columns
         numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
@@ -1220,29 +1205,29 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Populate dropdown
         if non_null_columns:
-            self.WellAttributeDropdown.addItems(non_null_columns)
-            self.WellAttributeDropdown.setEnabled(True)
+            self.wellAttributeDropdown.combo.addItems(non_null_columns)
+            self.wellAttributeDropdown.setEnabled(True)
         else:
-            self.WellAttributeDropdown.addItem("No Attributes Available")
-            self.WellAttributeDropdown.setEnabled(False)
+            self.wellAttributeDropdown.combo.addItem("No Attributes Available")
+            self.wellAttributeDropdown.setEnabled(False)
 
-        self.WellAttributeDropdown.blockSignals(False)
+        self.wellAttributeDropdown.combo.blockSignals(False)
        
 
 
     def well_attribute_selected(self):
         """Handle the event when a well attribute is selected."""
-    
+
         # Get the selected attribute from the dropdown
-        selected_attribute = self.WellAttributeDropdown.currentText()
+        selected_attribute = self.wellAttributeDropdown.combo.currentText()
 
         # Ensure a valid attribute is selected
         if selected_attribute == "Select Well Attribute" or not selected_attribute:
             return
 
-                # Check if the selected table is `model_properties`
+        # Check if the selected table is `model_properties`
         if self.cached_well_zone_name == "model_properties":
-            active_scenario_id = self.db_manager.get_active_scenario_id()  # Method to fetch the active scenario ID
+            active_scenario_id = self.db_manager.get_active_scenario_id()
 
             try:
                 # Fetch data for the active scenario
@@ -1271,6 +1256,7 @@ class Map(QMainWindow, Ui_MainWindow):
             # Use cached well zone data for other zones
             well_zone_df = self.cached_well_zone_df.copy()
             print(well_zone_df)
+
 
         # Ensure the selected attribute exists in the DataFrame
         if selected_attribute not in well_zone_df.columns:
@@ -1305,7 +1291,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 return
 
         # Load the selected color palette
-        color_bar_name = self.WellAttributeColorBarDropdown.currentText()
+        color_bar_name = self.well_colorbar.colorbar_dropdown.combo.currentText()
         palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
         file_path = os.path.join(palettes_dir, color_bar_name)
 
@@ -1322,16 +1308,13 @@ class Map(QMainWindow, Ui_MainWindow):
                 min_value = valid_dates.min()
                 max_value = valid_dates.max()
             else:
-                # Handle case where all dates are null
                 return
             well_zone_df['color'] = (date_field - min_value).dt.days.apply(
                 lambda value: self.map_value_to_color(value, 0, (max_value - min_value).days, color_palette)
             )
             # Update the color bar display with dates
-            self.display_color_range(
-                self.WellAttributeColorRangeDisplay, color_palette, 
-                min_value.strftime('%Y-%m-%d'), max_value.strftime('%Y-%m-%d')
-            )
+            self.well_colorbar.display_color_range(color_palette, 
+                min_value.strftime('%Y-%m-%d'), max_value.strftime('%Y-%m-%d'))
         else:
             # Numeric field: Calculate min and max values
             min_value = well_zone_df[selected_attribute].dropna().min()
@@ -1340,9 +1323,8 @@ class Map(QMainWindow, Ui_MainWindow):
                 lambda value: self.map_value_to_color(value, min_value, max_value, color_palette)
             )
             # Update the color bar display with numeric range
-            self.display_color_range(
-                self.WellAttributeColorRangeDisplay, color_palette, min_value, max_value
-            )
+            self.well_colorbar.display_color_range(min_value, max_value)
+
 
         print("DataFrame head:\n", well_zone_df.head())
 
@@ -1555,41 +1537,67 @@ class Map(QMainWindow, Ui_MainWindow):
         y = self.scrollArea.verticalScrollBar().value()
         self.drawingArea.setOffset(QPointF(-x, -y))
 
+    def map_properties(self):
+        """Open the Map Properties Dialog and apply changes on 'Apply'."""
+        dialog = MapPropertiesDialog(self)
 
-    def toggle_UWI_labels(self, state):
-        state == Qt.Checked
-        self.drawingArea.toggleTextItemsVisibility(state)
+        # ✅ Debugging before opening dialog
+        print(f"📌 Before Dialog Open: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
-    def toggle_ticks(self, state):
-
-        print(f"Checkbox state: {state}")  # Should print 0 or 2
-        state == Qt.Checked
-        self.drawingArea.toggleticksVisibility(state)
-
-    def toggle_drainage(self, state):
-
-        print(f"Checkbox state: {state}")  # Should print 0 or 2
-        state == Qt.Checked
-        self.drawingArea.togglegradientVisibility(state)
+        # ✅ Set values in the dialog
+        dialog.UWICheckbox.setChecked(self.drawingArea.show_UWIs)
+        dialog.ticksCheckbox.setChecked(self.drawingArea.show_ticks)
+        dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  # ✅ Should match drawingArea
+        dialog.gradientSizeSpinBox.setValue(self.drawingArea.drainage_size)
 
 
+        dialog.UWIWidthSlider.setValue(self.drawingArea.UWI_width)
+        dialog.opacitySlider.setValue(int(self.drawingArea.UWI_opacity * 100))
+        dialog.lineWidthSlider.setValue(self.drawingArea.line_width)
+        dialog.lineOpacitySlider.setValue(int(self.drawingArea.line_opacity * 100))
 
-    def change_UWI_width(self, value=80):
-        self.UWI_width = value
-        self.drawingArea.updateUWIWidth(value)
+        # ✅ Print checkbox state BEFORE dialog opens
+        print(f"🟡 Dialog Checkbox States BEFORE Opening:")
+        print(f"   - Show UWI Labels: {dialog.UWICheckbox.isChecked()}")
+        print(f"   - Show Ticks: {dialog.ticksCheckbox.isChecked()}")
+        print(f"   - Show Drainage: {dialog.gradientCheckbox.isChecked()}")  # ⬅️ Should be `True`
 
-    def change_opacity(self, value):
-        self.UWI_opacity = value / 100.0
-        self.drawingArea.setUWIOpacity(self.UWI_opacity)
+        if dialog.exec():  # User clicked "Apply"
+            print("✅ Applying Map Properties")
 
-    def change_line_width(self, value):
-       
-        self.line_width = value
-        self.drawingArea.updateLineWidth(value)
+            # ✅ Store values in `DrawingArea`
+            self.drawingArea.show_UWIs = dialog.UWICheckbox.isChecked()
+            self.drawingArea.show_ticks = dialog.ticksCheckbox.isChecked()
+            self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()  # ⬅️ This is flipping to `False`!
+            self.drawingArea.drainage_size = dialog.gradientSizeSpinBox.value()
 
-    def change_line_opacity(self, value):
-        self.line_opacity = value / 100.0
-        self.drawingArea.updateLineOpacity(self.line_opacity)
+            # ✅ Debug After Applying Values
+            print(f"✅ After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
+
+            self.drawingArea.toggleTextItemsVisibility(self.drawingArea.show_UWIs)
+            self.drawingArea.toggleticksVisibility(self.drawingArea.show_ticks)
+            self.drawingArea.togglegradientVisibility(self.drawingArea.drainage_visible)
+
+            self.drawingArea.UWI_width = dialog.UWIWidthSlider.value()
+            self.drawingArea.updateUWIWidth(self.drawingArea.UWI_width)
+
+            self.drawingArea.UWI_opacity = dialog.opacitySlider.value() / 100.0
+            self.drawingArea.setUWIOpacity(self.drawingArea.UWI_opacity)
+
+            self.drawingArea.line_width = dialog.lineWidthSlider.value()
+            self.drawingArea.updateLineWidth(self.drawingArea.line_width)
+
+            self.drawingArea.line_opacity = dialog.lineOpacitySlider.value() / 100.0
+            self.drawingArea.updateLineOpacity(self.drawingArea.line_opacity)
+
+            # ✅ Force Redraw
+            self.drawingArea.scene.update()
+            self.drawingArea.viewport().update()
+
+            print("✅ Map Properties Updated!")
+
+
+
 
 ########################################CREATE OPEN
 
@@ -1781,8 +1789,8 @@ class Map(QMainWindow, Ui_MainWindow):
             # Show an error message if the database path is not specified
             QMessageBox.critical(self, "Error", "Database path is not specified.", QMessageBox.Ok)
 
-    def dataloader(self):
-        dialog = DataLoaderDialog(self.import_options_df)
+    def dataloadgrids(self):
+        dialog = DataLoadGridDialog(self.import_options_df)
         if dialog.exec() == QDialog.Accepted:
         
        
@@ -1996,6 +2004,9 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Display seismic data (assuming 10 is the page or trace limit)
         self.display_seismic_data(10)
+
+
+
 
 
     def display_seismic_data(self, inline_number):
@@ -2637,7 +2648,8 @@ class Map(QMainWindow, Ui_MainWindow):
             gridColorBarDropdown = self.gridColorBarDropdown.currentText()
             selected_zone = self.zoneDropdown.currentText()
             selected_zone_attribute = self.zoneAttributeDropdown.currentText()
-            zoneAttributeColorBarDropdown = self.zoneAttributeColorBarDropdown.currentText()
+            zoneAttributeColorBarDropdown = self.zone_colorbar.currentText()
+
             selected_well_zone = self.WellZoneDropdown.currentText()
             selected_well_attribute = self.WellAttributeDropdown.currentText()
             WellAttributeColorBarDropdown = self.WellAttributeColorBarDropdown.currentText()

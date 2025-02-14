@@ -3,6 +3,7 @@ from DefaultProperties import DefaultProperties
 from DatabaseManager import DatabaseManager
 
 
+
 class LoadProductions:
     def __init__(self):
         self.combined_df = None

@@ -1,60 +1,84 @@
-from genericpath import samefile
 import pandas as pd
 import numpy as np
-from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QProgressDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
+from PySide6.QtWidgets import (
+    QApplication, QDialog, QFileDialog, QProgressDialog, 
+    QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QCheckBox, 
+    QScrollArea, QWidget, QComboBox, QLineEdit, QMessageBox
+)
 from PySide6.QtCore import Qt
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
 
 class DataLoadWellZonesDialog(QDialog):
     def __init__(self, UWI_list=None, directional_surveys_df=None, parent=None):
-        super(DataLoadWellZonesDialog, self).__init__()
+        """
+        Initialize the Well Zones Data Load Dialog
+        
+        :param UWI_list: List of Well Unique Well Identifiers
+        :param directional_surveys_df: DataFrame of directional surveys
+        :param parent: Parent widget
+        """
+        super().__init__(parent)
+        
+        # Dialog setup
         self.setWindowTitle("Load Well Zones and Attributes")
         self.setMinimumSize(600, 600)
-
+        
+        # Main layout
         self.layout = QVBoxLayout(self)
-
-        self.zone_type_label = QLabel("Zone Type:", self)
-        self.layout.addWidget(self.zone_type_label)
-
-        self.zone_type_combo = QComboBox(self)
-        self.zone_type_combo.addItems(["Well", "Zone", "Intersections"])
-        self.zone_type_combo.currentIndexChanged.connect(self.update_headers)
-        self.layout.addWidget(self.zone_type_combo)
-
-        self.zone_name_label = QLabel("Zone Name:", self)
-        self.layout.addWidget(self.zone_name_label)
-
-        self.zone_name_input = QLineEdit(self)
+        
+        # Zone Type Dropdown
+        self.zone_type_dropdown = StyledDropdown("Zone Type:", parent=self)
+        self.zone_type_dropdown.setItems(["Well", "Zone", "Intersections"])
+        self.zone_type_dropdown.combo.currentIndexChanged.connect(self.update_headers)
+        self.layout.addWidget(self.zone_type_dropdown)
+        
+        # Zone Name Input
+        self.zone_name_input = StyledDropdown("Zone Name:", parent=self)
+        self.zone_name_input.combo.setEditable(True)
         self.layout.addWidget(self.zone_name_input)
-
-
-
+        
         # Unit Dropdown
-        self.unit_label = QLabel("Unit of Measurement:", self)
-        self.layout.addWidget(self.unit_label)
-
-        self.unit_combo = QComboBox(self)
-        self.unit_combo.addItems(["Feet", "Meters"])
-        self.layout.addWidget(self.unit_combo)
-
-        self.file_button = QPushButton("Select CSV File", self)
+        self.unit_dropdown = StyledDropdown("Unit of Measurement:", parent=self)
+        self.unit_dropdown.setItems(["Feet", "Meters"])
+        self.layout.addWidget(self.unit_dropdown)
+        
+        # File Selection Layout
+        file_layout = QHBoxLayout()
+        
+        # Small Select CSV Button (left-aligned)
+        self.file_button = StyledButton("Select CSV", "secondary")
+        self.file_button.setFixedWidth(100)  # Make it small
         self.file_button.clicked.connect(self.select_file)
-        self.layout.addWidget(self.file_button)
-
-        self.file_label = QLabel("", self)
-        self.layout.addWidget(self.file_label)
-
+        file_layout.addWidget(self.file_button)
+        
+        # File path label
+        self.file_label = QLabel("No file selected", self)
+        file_layout.addWidget(self.file_label)
+        file_layout.addStretch()  # Push everything to the left
+        
+        self.layout.addLayout(file_layout)
+        
+        # Scroll Area for Headers
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_area.setWidget(self.scroll_content)
         self.layout.addWidget(self.scroll_area)
-
-        self.import_button = QPushButton("Import", self)
-        self.import_button.setEnabled(False)
-        self.import_button.clicked.connect(self.accept_import)
-        self.layout.addWidget(self.import_button)
-
+        
+        # Button Layout (for Load Data button)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # Push the button to the right
+        
+        # Load Data Button
+        self.load_button = StyledButton("Load Data", "function")
+        self.load_button.clicked.connect(self.accept_import)
+        button_layout.addWidget(self.load_button)
+        
+        self.layout.addLayout(button_layout)
+        
+        # Instance variables
         self.file_path = None
         self.headers_checkboxes = []
         self.headers_dropdowns = []
@@ -156,10 +180,9 @@ class DataLoadWellZonesDialog(QDialog):
 
             df = pd.read_csv(self.file_path, usecols=selected_headers)
 
-            zone_type = self.zone_type_combo.currentText()
-            zone_name = self.zone_name_input.text().strip()
-
-            unit = self.unit_combo.currentText()
+            zone_type = self.zone_type_dropdown.combo.currentText()
+            zone_name = self.zone_name_input.combo.currentText().strip()
+            unit = self.unit_dropdown.combo.currentText()
 
             UWI_header = self.get_special_header("UWI")
             if not UWI_header:

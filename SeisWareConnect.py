@@ -1,47 +1,36 @@
-from select import select
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, 
-    QComboBox, QListWidget, QGridLayout, QMessageBox, QScrollBar,
+    QApplication, QDialog, QVBoxLayout, QHBoxLayout, 
+    QMessageBox
 )
-import numpy as np
 from PySide6.QtCore import Qt, QSignalBlocker
+import numpy as np
 import pandas as pd
 import sys
-import LoadProductions
 import datetime
+from StyledTwoListSelector import TwoListSelector
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
 
-sys.path.append('C:\\Program Files')
 import SeisWare
 
 class SeisWareConnectDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
      
-        
         # Set dialog properties
         self.setWindowTitle("SeisWare Connect")
-        self.setGeometry(590, 257, 700, 700)
-        self.setMinimumSize(120, 1)
+        self.setGeometry(590, 257, 800, 700)
         
-        # Initialize UI components
-        self.initUI()
-
+        # Initialize class attributes
         self.project_list = []
         self.connection = SeisWare.Connection()
         self.login_instance = SeisWare.LoginInstance()
-
-        self.connect_to_seisware()
-        # Your connection code or setup here
-        # self.connect_to_seisware()
         self.well_list = []
         self.project_names = []
-        self.projects =[]
-        #self.curve_calibration_dict = {}
+        self.projects = []
         self.filter_name = None
         self.grid_xyz_top = []
-        self.filtered_well_filter =[]
-        
-        self.login_instance = SeisWare.LoginInstance()
+        self.filtered_well_filter = []
         self.directional_survey_values = []
         self.Grid_intersec_top = []
         self.Grid_intersec_bottom = []
@@ -53,61 +42,51 @@ class SeisWareConnectDialog(QDialog):
         self.filter_selection = None
         self.project_selection = None
         self.selected_UWIs = None
-  
 
+        # Initialize UI
+        self.initUI()
 
+        # Connect to SeisWare
+        self.connect_to_seisware()
 
     def initUI(self):
-        # Project label and dropdown
-        self.project_label = QLabel("Project:", self)
-        self.project_label.setGeometry(20, 20, 60, 20)  # x, y, width, height
+        # Main layout
+        main_layout = QVBoxLayout(self)
 
-        self.project_dropdown = QComboBox(self)
-        self.project_dropdown.setGeometry(90, 20, 150, 20)  # x, y, width, height
-        self.project_dropdown.currentIndexChanged.connect(self.on_project_select)
-
-        # Well filter label and dropdown
-        self.filter_label = QLabel("Well Filter:", self)
-        self.filter_label.setGeometry(20, 50, 60, 20)  # x, y, width, height
-
-        self.filter_dropdown = QComboBox(self)
-        self.filter_dropdown.setGeometry(90, 50, 150, 20)  # x, y, width, height
-        self.filter_dropdown.setEnabled(False)
-        self.filter_dropdown.currentIndexChanged.connect(self.on_filter_select)
-
-        # Listboxes for UWIs
-        self.UWI_listbox = QListWidget(self)
-        self.UWI_listbox.setGeometry(20, 100, 280, 500)  # x, y, width, height
-
-        self.selected_UWI_listbox = QListWidget(self)
-        self.selected_UWI_listbox.setGeometry(400, 100, 280, 500)  # x, y, width, height
-
-        self.UWI_listbox.setSelectionMode(QListWidget.MultiSelection)
-        self.selected_UWI_listbox.setSelectionMode(QListWidget.MultiSelection)
-
-        # Buttons for moving items between listboxes
-        button_width = 50
-        self.move_right_button = QPushButton(">", self)
-        self.move_right_button.setGeometry(320, 250, button_width, 30)  # x, y, width, height
-        self.move_right_button.clicked.connect(self.move_selected_right)
-
-        self.move_left_button = QPushButton("<", self)
-        self.move_left_button.setGeometry(320, 290, button_width, 30)  # x, y, width, height
-        self.move_left_button.clicked.connect(self.move_selected_left)
-
-        self.move_all_right_button = QPushButton(">>", self)
-        self.move_all_right_button.setGeometry(320, 330, button_width, 30)  # x, y, width, height
-        self.move_all_right_button.clicked.connect(self.move_all_right)
-
-        self.move_all_left_button = QPushButton("<<", self)
-        self.move_all_left_button.setGeometry(320, 370, button_width, 30)  # x, y, width, height
-        self.move_all_left_button.clicked.connect(self.move_all_left)
-
-        # Okay button
-        self.okay_button = QPushButton("Okay", self)
-        self.okay_button.setGeometry(580, 630, 100, 30)  # x, y, width, height
-        self.okay_button.clicked.connect(self.okay_clicked) 
+        # Top section for dropdowns
+        top_layout = QVBoxLayout()
         
+        # Project dropdown
+        self.project_dropdown = StyledDropdown("Project:")
+        self.project_dropdown.combo.currentIndexChanged.connect(self.on_project_select)
+        top_layout.addWidget(self.project_dropdown)
+
+        # Well filter dropdown
+        self.filter_dropdown = StyledDropdown("Well Filter:")
+        self.filter_dropdown.combo.setEnabled(False)
+        self.filter_dropdown.combo.currentIndexChanged.connect(self.on_filter_select)
+        top_layout.addWidget(self.filter_dropdown)
+
+        main_layout.addLayout(top_layout)
+
+        # Two-list selector for UWIs
+        self.uwi_selector = TwoListSelector("Available UWIs", "Selected UWIs")
+        self.uwi_selector.setFullHeight(True)  # Set full height as requested
+        main_layout.addWidget(self.uwi_selector)
+
+        # Button layout
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # This pushes the button to the right
+
+        # Okay button with styled green function button
+        self.okay_button = StyledButton("Load Data", "function")
+        self.okay_button.clicked.connect(self.okay_clicked)
+        button_layout.addWidget(self.okay_button)
+
+        main_layout.addLayout(button_layout)
+
+        # Set the main layout
+        self.setLayout(main_layout)
 
     def connect_to_seisware(self):
         # Connect to API
@@ -126,19 +105,17 @@ class SeisWareConnectDialog(QDialog):
             QMessageBox.critical(self,"Error", f"Failed to get the project list from the server: {err}")
             return
 
-                # Put project names in Dropdown
-            # Populate project_dropdown with project_names
+        # Populate project dropdown
         self.project_names = [project.Name() for project in self.project_list]
-        with QSignalBlocker(self.project_dropdown):
-            self.project_dropdown.addItems([project.Name() for project in self.project_list])
+        with QSignalBlocker(self.project_dropdown.combo):
+            self.project_dropdown.setItems(self.project_names)
             self.project_dropdown.setCurrentIndex(-1)
 
-
-        # Add more connections as needed
-    def on_project_select(self, event):
-        self.filter_dropdown.setEnabled(True)
+    def on_project_select(self, index):
+        # Enable filter dropdown
+        self.filter_dropdown.combo.setEnabled(True)
       
-    # Clear the content of the list selectors
+        # Clear the content of the list selectors
         self.clear_widgets()
             
         self.login_instance = SeisWare.LoginInstance()
@@ -149,26 +126,20 @@ class SeisWareConnectDialog(QDialog):
             QMessageBox.critical(self,"Error", "No project was found")
             sys.exit(1)
 
-            
-        print("enabled")
-        print(self.projects)
-        print(self.connection)
         try:
             self.login_instance.Open(self.connection, self.projects[0])
         except RuntimeError as err:
-            
-            QMessageBox.critical(self,"Error", f"Failed to filters: {err}")
-          
-
-
+            QMessageBox.critical(self,"Error", f"Failed to open project: {err}")
+            return
 
         self.well_filter = SeisWare.FilterList()
         try:
             self.login_instance.FilterManager().GetAll(self.well_filter)
         except RuntimeError as err:
-            QMessageBox.critical(self,"Error", f"Failed to filters: {err}")
-            print(self.well_filter)
+            QMessageBox.critical(self,"Error", f"Failed to get filters: {err}")
+            return
 
+        # Filter for well filters (type 2)
         filter_list = []
         for filter in self.well_filter:
             filter_type = filter.FilterType()
@@ -176,50 +147,12 @@ class SeisWareConnectDialog(QDialog):
                 filter_name = filter.Name()
                 filter_list.append(filter_name)
 
-        with QSignalBlocker(self.filter_dropdown):
-            self.filter_dropdown.clear() 
-            self.filter_dropdown.addItems(filter_list)
+        # Populate filter dropdown
+        with QSignalBlocker(self.filter_dropdown.combo):
+            self.filter_dropdown.setItems(filter_list)
             self.filter_dropdown.setCurrentIndex(-1)
 
-
-        #project_name = self.project_selection.get()
-        #self.projects = [project for project in self.project_list if project.Name() == project_name]
-        #if not self.projects:
-        #    QMessageBox.critical(self,"Error", "No project was found")
-        #    sys.exit(1)
-
-        #login_instance = SeisWare.LoginInstance()
-        #try:
-        #    login_instance.Open(self.connection, self.projects[0])
-        #except RuntimeError as err:
-        #    QMessageBox.critical(self,"Error", "Failed to connect to the project: " + str(err))
-
-        ## Get the wells from the project
-        #self.well_list = SeisWare.WellList()
-        #try:
-        #    login_instance.WellManager().GetAll(self.well_list)
-        #except RuntimeError as err:
-        #    QMessageBox.critical(self,"Error", "Failed to get all the wells from the project: " + str(err))
-
-
-        ## Retrieve UWIs from the well_list
-        ## Retrieve UWIs from the well_list and sort them
-        #UWI_list = [well.UWI() for well in self.well_list]
-        #self.sorted_UWI_list = sorted(UWI_list, reverse=False)
-
-        #        # Get the grids from the project
-        #self.grid_list = SeisWare.GridList()
-        #try:
-        #    self.login_instance.GridManager().GetAll(self.grid_list)
-        #except RuntimeError as err:
-        #    QMessageBox.critical(self,"Failed to get the grids from the project", err)
-        #        # Create the Well Filter dropdown using OptionMenu and populate it with filter_list
-        #self.grids = [grid.Name() for grid in self.grid_list]
-        #self.grid_objects_with_names = [(grid, grid.Name()) for grid in self.grid_list]
-
-    def on_filter_select(self, event):
-        # Initialize a structure to store all the data, sorted as per your requirements.
-   
+    def on_filter_select(self, index):
         selected_filter = self.filter_dropdown.currentText()
         print(f"Selected filter: {selected_filter}")
 
@@ -227,67 +160,36 @@ class SeisWareConnectDialog(QDialog):
         well_filter = SeisWare.FilterList()
         self.login_instance.FilterManager().GetAll(well_filter)
         self.filtered_well_filter = [f for f in well_filter if f.Name() == selected_filter]
-        print(self.filtered_well_filter)
 
         # Retrieve well information
         well_keys = SeisWare.IDSet()
-        failed_well_keys = SeisWare.IDSet()
         self.well_list = SeisWare.WellList()
         try:
             # Get well keys for the selected filter
             self.login_instance.WellManager().GetKeysByFilter(self.filtered_well_filter[0], well_keys)
 
-            # Retrieve well data (populating full objects if needed)
+            # Retrieve well data 
             self.login_instance.WellManager().GetByKeys(well_keys, self.well_list, True)
 
             if not self.well_list:
                 QMessageBox.warning(self, "No Wells Found", "No wells were found for the provided filter.")
                 return
 
-            # Log the retrieved wells for debugging
-            for well in self.well_list:
-                print(f"Well UWI: {well.UWI()}")  # Adjust attribute as needed
-        except SeisWare.MultiException as multi_ex:
-            print("Error for specific well keys:")
-            for key, error in multi_ex.errors.items():
-                print(f"Key: {key}, Error: {error}")
+            # Clear and populate UWI list
+            self.uwi_selector.set_left_items([well.UWI() for well in self.well_list])
+
+            # Map UWIs to Well objects
+            self.UWI_to_well_dict = {well.UWI(): well for well in self.well_list}
+
         except RuntimeError as err:
-            QMessageBox.critical(self, "Runtime Error", f"Failed to retrieve wells: {err}")
-                
-        except RuntimeError as err:
-            QMessageBox.critical(self, "Failed to get all the wells from the project", str(err))
-
-    
-        # Map UWIs to Well IDs
-        try:
-            UWI_to_well_id = {well.UWI(): well.ID() for well in self.well_list}  # Assuming Uwi is the correct attribute name
-        except AttributeError as e:
-            print("Error:", e)
-            return
-        print(UWI_to_well_id)
-
-
-        self.UWI_to_well_dict = {}
-
-# Populate the dictionary with well objects and UWIs
-        for well in self.well_list:
-            UWI = well.UWI()
-            self.UWI_to_well_dict[UWI] = well
-        for UWI, well in self.UWI_to_well_dict.items():
-            print(f"UWI: {UWI}, Well: {well}")
-
-        self.UWI_listbox.clear()
-        for UWI in UWI_to_well_id.keys():
-            self.UWI_listbox.addItem(UWI)
-
+            QMessageBox.critical(self, "Failed to get wells", str(err))
     
     def okay_clicked(self):
-        UWI_list = []
-        for index in range(self.selected_UWI_listbox.count()):
-            item = self.selected_UWI_listbox.item(index)
-            if item is not None:
-                UWI_list.append(item.text())
-        print(UWI_list)
+        UWI_list = self.uwi_selector.get_right_items()
+        
+        if not UWI_list:
+            QMessageBox.information(self, "Info", "No wells selected.")
+            return
         production_keys = SeisWare.IDSet()
         failed_production_keys = SeisWare.IDSet()
         productions = SeisWare.ProductionList()
@@ -297,21 +199,18 @@ class SeisWareConnectDialog(QDialog):
         # Process and return or display your productions data as needed
         print(productions)  # Placeholder for actual data handling
 
-
         all_production_volume_data = []
 
         # Initialize a set to collect unique Well IDs from all productions
         all_well_ids = set()
 
         for production in productions:
-
-
             try:
-                
                 self.login_instance.ProductionManager().PopulateWells(production)
                 production_wells = SeisWare.ProductionWellList()
                 production.Wells(production_wells)
-                            # Populate Volumes for the Production
+                            
+                # Populate Volumes for the Production
                 self.login_instance.ProductionManager().PopulateVolumes(production)
                 volume_list = SeisWare.ProductionVolumeList()
                 production.Volumes(volume_list)
@@ -319,7 +218,7 @@ class SeisWareConnectDialog(QDialog):
                 production_volume_data = []
                 print(production_wells)
         
-                            # Collect data for each well in the production
+                # Collect data for each well in the production
                 for well in production_wells:
                     well_key = well.WellID()
                     print("Well Key:", well_key)
@@ -367,13 +266,13 @@ class SeisWareConnectDialog(QDialog):
             except Exception as e:
                 print(f"Failed to process production wells: {e}")
       
-        
         sorted_data = sorted(
             all_production_volume_data,
             key=lambda x: (x["UWI"], x["date"], x["oil_volume"] + x["gas_volume"]),
             reverse=True
-)
-# Create a dictionary to store the best row for each (UWI, date)
+        )
+        
+        # Create a dictionary to store the best row for each (UWI, date)
         seen = {}
         for row in sorted_data:
             key = (row["UWI"], row["date"])
@@ -384,18 +283,11 @@ class SeisWareConnectDialog(QDialog):
         self.directional_surveys()
         self.accept()
         print('swdone')
-        print(self.well_data_df)
-        print (self.production_data)
 
-
-        
         return self.production_data, self.directional_survey_values, self.well_data_df, self.selected_UWIs
 
-
-
     def directional_surveys(self):
-        selected_UWIs = [self.selected_UWI_listbox.item(i).text() for i in range(self.selected_UWI_listbox.count())]
-        print(selected_UWIs)
+        selected_UWIs = self.uwi_selector.get_right_items()
         self.selected_UWIs = selected_UWIs
 
         if not selected_UWIs:
@@ -529,43 +421,10 @@ class SeisWareConnectDialog(QDialog):
         self.well_data_df['spud_date'] = self.well_data_df['spud_date'].apply(lambda x: x if pd.notnull(x) else None)
 
 
-
-
-
-        
-
-    # Event handlers and methods to replicate the functionality of your original class
-    def move_selected_right(self):
-        selected_items = self.UWI_listbox.selectedItems()
-        for item in selected_items:
-            self.UWI_listbox.takeItem(self.UWI_listbox.row(item))
-            self.selected_UWI_listbox.addItem(item.text())
-            
-
-    def move_selected_left(self):
-        selected_items = self.selected_UWI_listbox.selectedItems()
-        for item in selected_items:
-            self.selected_UWI_listbox.takeItem(self.selected_UWI_listbox.row(item))
-            self.UWI_listbox.addItem(item.text())
-
-    def move_all_right(self):
-        for index in range(self.UWI_listbox.count()):
-            item = self.UWI_listbox.item(index)
-            self.selected_UWI_listbox.addItem(item.text())
-        self.UWI_listbox.clear()
-
-    def move_all_left(self):
-        for index in range(self.selected_UWI_listbox.count()):
-            item = self.selected_UWI_listbox.item(index)
-            self.UWI_listbox.addItem(item.text())
-        self.selected_UWI_listbox.clear()
     def clear_widgets(self):
-        self.selected_UWI_listbox.clear()
-        with QSignalBlocker(self.filter_dropdown):
-            self.filter_dropdown.clear() 
-            self.filter_dropdown.setCurrentIndex(-1)
-        # Clear the selected_UWI_listbox
-        self.UWI_listbox.clear()
+        # Clear UWI selector
+        self.uwi_selector.set_left_items([])
+        self.uwi_selector.set_right_items([])
     
 # Main application logic
 

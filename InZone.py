@@ -5,7 +5,9 @@ import pandas as pd
 from shapely.geometry import LineString
 import numpy as np
 from PySide6.QtWidgets import QProgressDialog
-from TwoListSelector import TwoListSelector
+from StyledTwoListSelector import TwoListSelector
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
 from PySide6.QtWidgets import QProgressDialog
 
 class InZoneDialog(QDialog):
@@ -29,96 +31,36 @@ class InZoneDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout()
         
-        # Zone Name Selection with matching style
-        zone_name_container = QWidget()
-        zone_name_layout = QVBoxLayout(zone_name_container)
-        zone_name_layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.zone_name_label = QLabel("Zone Name", self)
-        self.zone_name_label.setStyleSheet("""
-            QLabel {
-                color: #2c3e50;
-                font-weight: bold;
-                font-size: 12px;
-                padding: 5px;
-                background-color: #ecf0f1;
-                border: 1px solid #bdc3c7;
-                border-bottom: none;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }
-        """)
-        
-        self.zone_name_combo = QComboBox(self)
-        self.zone_name_combo.setEditable(True)
-        self.zone_name_combo.addItems(self.zone_names)
-        self.zone_name_combo.setStyleSheet("""
-            QComboBox {
-                background-color: white;
-                border: 1px solid #bdc3c7;
-                border-bottom-left-radius: 4px;
-                border-bottom-right-radius: 4px;
-                padding: 5px;
-            }
-            QComboBox:focus {
-                border: 1px solid #3498db;
-            }
-        """)
-        
-        zone_name_layout.addWidget(self.zone_name_label)
-        zone_name_layout.addWidget(self.zone_name_combo)
-        layout.addWidget(zone_name_container)
+        # Zone Name Selection using StyledDropdown
+        self.zone_name_dropdown = StyledDropdown("Zone Name", parent=self)
+        self.zone_name_dropdown.combo.setEditable(True)
+        self.zone_name_dropdown.setItems(self.zone_names)
+        layout.addWidget(self.zone_name_dropdown)
         
         # Create the grid selector
         self.grid_selector = TwoListSelector(
             left_title="Available Grids",
             right_title="Selected Grids"
         )
+        self.grid_selector.setFullHeight(True)
         layout.addWidget(self.grid_selector)
-        
-        # Style the buttons
-        button_style = """
-            QPushButton {
-                padding: 5px 15px;
-                border-radius: 4px;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            QPushButton#calculate {
-                background-color: #2ecc71;
-                color: white;
-            }
-            QPushButton#calculate:hover {
-                background-color: #27ae60;
-            }
-            QPushButton#close {
-                background-color: #e74c3c;
-                color: white;
-            }
-            QPushButton#close:hover {
-                background-color: #c0392b;
-            }
-        """
         
         # Button layout - horizontal with right alignment
         button_layout = QHBoxLayout()
         button_layout.addStretch()  # This pushes buttons to the right
         
-        self.calculate_button = QPushButton("Calculate", self)
-        self.calculate_button.setObjectName("calculate")
+        self.calculate_button = StyledButton("Calculate", "function")
         self.calculate_button.clicked.connect(self.create_grid_dataframe)
-        self.calculate_button.setStyleSheet(button_style)
         button_layout.addWidget(self.calculate_button)
 
-        self.close_button = QPushButton("Close", self)
-        self.close_button.setObjectName("close")
+        self.close_button = StyledButton("Close", "close")
         self.close_button.clicked.connect(self.accept)
-        self.close_button.setStyleSheet(button_style)
         button_layout.addWidget(self.close_button)
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
         self.update_grid_selection()
+
 
     def update_grid_selection(self):
         """Update the available grids list with depth grids."""

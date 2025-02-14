@@ -1,12 +1,18 @@
-import os
+﻿import os
 from PySide6.QtWidgets import QWidget, QHBoxLayout,QSpinBox, QFrame, QVBoxLayout,  QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton
 from PySide6.QtCore import Qt, QMetaObject
 from PySide6.QtGui import QIcon,  QPalette, QColor, QAction
 
 from DrawingArea import DrawingArea
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
+from StyledColorbar import StyledColorBar
+
+
 
 class Ui_MainWindow:
     def setupUi(self, MainWindow):
+        # Basic window setup remains the same
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1500, 1500)
         MainWindow.centralWidget = QWidget(MainWindow)
@@ -15,207 +21,201 @@ class Ui_MainWindow:
         # Main layout
         MainWindow.mainLayout = QHBoxLayout(MainWindow.centralWidget)
 
-        # Options layout
+        # Options layout - slightly reduced spacing
         MainWindow.optionsLayout = QVBoxLayout()
-        MainWindow.optionsLayout.setSpacing(5)  # Minimal spacing
+        MainWindow.optionsLayout.setSpacing(5)  # Reduced from 10
+        MainWindow.optionsLayout.setAlignment(Qt.AlignTop)
 
-       
-                # Separator line below grid color range display
-        MainWindow.gridSeparator = QFrame(MainWindow)
-        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
-        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+        # Well Bore Display Options Section
+        MainWindow.zoneFrame = QFrame(MainWindow)
+        MainWindow.zoneFrame.setFrameStyle(QFrame.Panel | QFrame.Raised)  # 3D raised panel effect
+        MainWindow.zoneFrame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #B0B0B0;
+                border-top-color: #E0E0E0;
+                border-left-color: #E0E0E0;
+                border-bottom-color: #808080;
+                border-right-color: #808080;
+                border-radius: 8px;
+                padding: 12px;
+            }
+        """)
 
-        MainWindow.optionsLayout.addSpacing(5)
+        # Zone layout with tighter spacing
+        MainWindow.zoneLayout = QVBoxLayout(MainWindow.zoneFrame)
+        MainWindow.zoneLayout.setSpacing(3)  # Reduced from 5
 
+        # Simplified Zone dropdowns
+        MainWindow.zoneDropdown = StyledDropdown("Zone")
+        MainWindow.zoneDropdown.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            QComboBox {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        MainWindow.zoneDropdown.combo.addItem("Select Zone")
+        MainWindow.zoneLayout.addWidget(MainWindow.zoneDropdown)
 
-        # Dropdown to select zone
-        MainWindow.zoneLabel = QLabel("Select Zone:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneLabel)
-        MainWindow.zoneDropdown = QComboBox(MainWindow)
-        MainWindow.zoneDropdown.addItem("Select Zone")
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneDropdown)
+        MainWindow.zoneAttributeDropdown = StyledDropdown("Zone Attribute")
+        MainWindow.zoneAttributeDropdown.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            QComboBox {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        MainWindow.zoneAttributeDropdown.combo.addItem("Select Zone Attribute")
+        MainWindow.zoneLayout.addWidget(MainWindow.zoneAttributeDropdown)
 
-        # Dropdown to select zone attribute
-        MainWindow.zoneAttributeLabel = QLabel("Select Zone Attribute:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeLabel)
-        MainWindow.zoneAttributeDropdown = QComboBox(MainWindow)
-        MainWindow.zoneAttributeDropdown.addItem("Select Zone Attribute")
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeDropdown)
+        # Zone color bar section - No bubbles around it
+        MainWindow.zone_colorbar = StyledColorBar("Zone Color Bar", parent=MainWindow)
+        MainWindow.zone_colorbar.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        MainWindow.zone_colorbar.setContentsMargins(0, 0, 0, 0)
+        MainWindow.zoneLayout.addWidget(MainWindow.zone_colorbar)
 
+        MainWindow.optionsLayout.addWidget(MainWindow.zoneFrame)
+        MainWindow.optionsLayout.addSpacing(10)  # Reduced from 15
 
+        # Well Display Options Section
+        MainWindow.wellZoneFrame = QFrame(MainWindow)
+        MainWindow.wellZoneFrame.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        MainWindow.wellZoneFrame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #B0B0B0;
+                border-top-color: #E0E0E0;
+                border-left-color: #E0E0E0;
+                border-bottom-color: #808080;
+                border-right-color: #808080;
+                border-radius: 8px;
+                padding: 12px;
+            }
+        """)
 
-                # Color range display for zone attribute
-        MainWindow.zoneAttributeColorRangeDisplay = QLabel(MainWindow)
-        MainWindow.zoneAttributeColorRangeDisplay.setFixedHeight(50)
-        MainWindow.zoneAttributeColorRangeDisplay.setFixedWidth(220)
-        MainWindow.zoneAttributeColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorRangeDisplay)
+        MainWindow.wellZoneLayout = QVBoxLayout(MainWindow.wellZoneFrame)
+        MainWindow.wellZoneLayout.setSpacing(3)
 
-                # Dropdown to select zone color bar
-        MainWindow.zoneAttributeColorBarLable = QLabel("Select Zone Color Bar:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorBarLable)
-        MainWindow.zoneAttributeColorBarDropdown = QComboBox(MainWindow)
-        MainWindow.zoneAttributeColorBarDropdown.addItem("Rainbow")
-        MainWindow.optionsLayout.addWidget(MainWindow.zoneAttributeColorBarDropdown)
+        # Well Zone dropdowns
+        MainWindow.wellZoneDropdown = StyledDropdown("Well Zone")
+        MainWindow.wellZoneDropdown.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            QComboBox {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        MainWindow.wellZoneDropdown.combo.addItem("Select Well Zone")
+        MainWindow.wellZoneLayout.addWidget(MainWindow.wellZoneDropdown)
 
+        MainWindow.wellAttributeDropdown = StyledDropdown("Well Attribute")
+        MainWindow.wellAttributeDropdown.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            QComboBox {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        MainWindow.wellAttributeDropdown.combo.addItem("Select Well Attribute")
+        MainWindow.wellZoneLayout.addWidget(MainWindow.wellAttributeDropdown)
 
-        MainWindow.optionsLayout.addSpacing(25)
+        # Well color bar section - No bubbles
+        MainWindow.well_colorbar = StyledColorBar("Well Color Bar", parent=MainWindow)
+        MainWindow.well_colorbar.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        MainWindow.well_colorbar.setContentsMargins(0, 0, 0, 0)
+        MainWindow.wellZoneLayout.addWidget(MainWindow.well_colorbar)
 
-                # Separator line below grid color range display
-        MainWindow.gridSeparator = QFrame(MainWindow)
-        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
-        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
+        MainWindow.optionsLayout.addWidget(MainWindow.wellZoneFrame)
+        MainWindow.optionsLayout.addSpacing(10)
 
-        MainWindow.optionsLayout.addSpacing(5)
+        # Grid Display Options Section
+        MainWindow.gridFrame = QFrame(MainWindow)
+        MainWindow.gridFrame.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        MainWindow.gridFrame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #B0B0B0;
+                border-top-color: #E0E0E0;
+                border-left-color: #E0E0E0;
+                border-bottom-color: #808080;
+                border-right-color: #808080;
+                border-radius: 8px;
+                padding: 12px;
+            }
+        """)
 
+        MainWindow.gridLayout = QVBoxLayout(MainWindow.gridFrame)
+        MainWindow.gridLayout.setSpacing(3)
 
+        # Grid dropdown
+        MainWindow.gridDropdown = StyledDropdown("Grid")
+        MainWindow.gridDropdown.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            QComboBox {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        MainWindow.gridDropdown.combo.addItem("Select Grid")
+        MainWindow.gridLayout.addWidget(MainWindow.gridDropdown)
 
-        # Dropdown to select Well Zone
-        MainWindow.WellZoneLabel = QLabel("Select Well Zone:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.WellZoneLabel)
-        MainWindow.WellZoneDropdown = QComboBox(MainWindow)
-        MainWindow.WellZoneDropdown.addItem("Select Well Zone")
-        MainWindow.optionsLayout.addWidget(MainWindow.WellZoneDropdown)
+        # Grid color bar section - No bubbles
+        MainWindow.grid_colorbar = StyledColorBar("Grid Color Bar", parent=MainWindow)
+        MainWindow.grid_colorbar.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        MainWindow.grid_colorbar.setContentsMargins(0, 0, 0, 0)
+        MainWindow.gridLayout.addWidget(MainWindow.grid_colorbar)
 
-        # Dropdown to select Well Attribute
-        MainWindow.WellAttributeLabel = QLabel("Select Well Attribute:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeLabel)
-        MainWindow.WellAttributeDropdown = QComboBox(MainWindow)
-        MainWindow.WellAttributeDropdown.addItem("Select Well Attribute")
-        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeDropdown)
-
-        # Color range display for Well attribute
-        MainWindow.WellAttributeColorRangeDisplay = QLabel(MainWindow)
-        MainWindow.WellAttributeColorRangeDisplay.setFixedHeight(50)
-        MainWindow.WellAttributeColorRangeDisplay.setFixedWidth(220)
-        MainWindow.WellAttributeColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
-        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorRangeDisplay)
-
-        # Dropdown to select Well Color Bar
-        MainWindow.WellAttributeColorBarLabel = QLabel("Select Well Color Bar:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorBarLabel)
-        MainWindow.WellAttributeColorBarDropdown = QComboBox(MainWindow)
-        MainWindow.WellAttributeColorBarDropdown.addItem("Rainbow")
-        MainWindow.optionsLayout.addWidget(MainWindow.WellAttributeColorBarDropdown)
-
-
-        MainWindow.optionsLayout.addSpacing(25)
-
-                # Separator line below grid color range display
-        MainWindow.gridSeparator = QFrame(MainWindow)
-        MainWindow.gridSeparator.setFrameShape(QFrame.HLine)
-        MainWindow.gridSeparator.setFrameShadow(QFrame.Sunken)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridSeparator)
-
-        MainWindow.optionsLayout.addSpacing(5)
-         # Dropdown to select grid
-        MainWindow.gridLabel = QLabel("Select Grid:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridLabel)
-        MainWindow.gridDropdown = QComboBox(MainWindow)
-        MainWindow.gridDropdown.addItem("Select Grid")
-        MainWindow.optionsLayout.addWidget(MainWindow.gridDropdown)
-
-                # Dropdown to select grid color bar
-
-                # Color range display for grid
-        MainWindow.gridColorRangeDisplay = QLabel(MainWindow)
-        MainWindow.gridColorRangeDisplay.setFixedHeight(50)
-        MainWindow.gridColorRangeDisplay.setFixedWidth(220)
-        MainWindow.gridColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorRangeDisplay)
-
-        # Dropdown to select grid color bar
-        MainWindow.gridColorBarLabel = QLabel("Select Grid Color Bar:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarLabel)
-        MainWindow.gridColorBarDropdown = QComboBox(MainWindow)
-        MainWindow.gridColorBarDropdown.addItem("Rainbow") 
-        MainWindow.optionsLayout.addWidget(MainWindow.gridColorBarDropdown)
-
-        MainWindow.optionsLayout.addSpacing(5)
-
-
-        # Checkbox to show/hide UWI labels
-        MainWindow.UWICheckbox = QCheckBox("Show UWI Labels", MainWindow)
-        MainWindow.UWICheckbox.setChecked(True)
-        MainWindow.optionsLayout.addWidget(MainWindow.UWICheckbox)
-
-                # Checkbox to show/hide UWI labels
-        MainWindow.ticksCheckbox = QCheckBox("Show Ticks", MainWindow)
-        MainWindow.ticksCheckbox.setChecked(True)
-        MainWindow.optionsLayout.addWidget(MainWindow.ticksCheckbox)
-
-        MainWindow.gradientCheckbox = QCheckBox("Show Drainage", MainWindow)
-        MainWindow.gradientCheckbox.setChecked(True)
-
-        # Spin box for gradient size
-        MainWindow.gradientSizeSpinBox = QSpinBox(MainWindow)
-        MainWindow.gradientSizeSpinBox.setMinimum(1)    # Minimum size
-        MainWindow.gradientSizeSpinBox.setMaximum(1000) # Maximum size
-        MainWindow.gradientSizeSpinBox.setValue(400)    # Default value
-        MainWindow.gradientSizeSpinBox.setSingleStep(10) # Step size for increment/decrement
-        MainWindow.gradientSizeSpinBox.setToolTip("Set the size of the drainage gradient")
-        
-
-
-        # Horizontal layout to put checkbox and spinbox together
-        gradientLayout = QHBoxLayout()
-        gradientLayout.addWidget(MainWindow.gradientCheckbox)
-        gradientLayout.addWidget(QLabel("Size:"))
-        gradientLayout.addWidget(MainWindow.gradientSizeSpinBox)
-        gradientLayout.addStretch()  # Add stretching to prevent cramping
-
-        # Add the horizontal layout to the options layout
-        MainWindow.optionsLayout.addLayout(gradientLayout)
-
-
-        MainWindow.UWIWidthLabel = QLabel("UWI Size:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.UWIWidthLabel)
-
-        # Slider to change the width of the lines
-        MainWindow.UWIWidthSlider = QSlider(Qt.Horizontal, MainWindow)
-        MainWindow.UWIWidthSlider.setMinimum(1)
-        MainWindow.UWIWidthSlider.setMaximum(100)
-        MainWindow.UWIWidthSlider.setValue(25)
-        MainWindow.optionsLayout.addWidget(MainWindow.UWIWidthSlider)
-
-        # Label for the opacity slider
-        MainWindow.opacityLabel = QLabel("UWI Label Opacity:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.opacityLabel)
-
-        # Slider to change the opacity of UWI labels
-        MainWindow.opacitySlider = QSlider(Qt.Horizontal, MainWindow)
-        MainWindow.opacitySlider.setMinimum(0)
-        MainWindow.opacitySlider.setMaximum(100)
-        MainWindow.opacitySlider.setValue(50)
-        MainWindow.optionsLayout.addWidget(MainWindow.opacitySlider)
-
-        # Label for the line width slider
-        MainWindow.lineWidthSliderLabel = QLabel("Line Width:", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.lineWidthSliderLabel)
-
-        # Slider to change the width of the lines
-        MainWindow.lineWidthSlider = QSlider(Qt.Horizontal, MainWindow)
-        MainWindow.lineWidthSlider.setMinimum(1)
-        MainWindow.lineWidthSlider.setMaximum(200)
-        MainWindow.lineWidthSlider.setValue(25)
-        MainWindow.optionsLayout.addWidget(MainWindow.lineWidthSlider)
-
-        MainWindow.lineLabel = QLabel("Line Opacity", MainWindow)
-        MainWindow.optionsLayout.addWidget(MainWindow.lineLabel)
-
-        # Slider to change the line opacity
-        MainWindow.lineOpacitySlider = QSlider(Qt.Horizontal, MainWindow)
-        MainWindow.lineOpacitySlider.setMinimum(0)
-        MainWindow.lineOpacitySlider.setMaximum(100)
-        MainWindow.lineOpacitySlider.setValue(50)
-        MainWindow.optionsLayout.addWidget(MainWindow.lineOpacitySlider)
-
-        # Adding a spacer to push everything to the top
+        MainWindow.optionsLayout.addWidget(MainWindow.gridFrame)
         MainWindow.optionsLayout.addStretch()
 
-        MainWindow.mainLayout.addLayout(MainWindow.optionsLayout, 1)  # Occupy 1/8th of the window
+        # Add the options layout to the main layout
+        MainWindow.mainLayout.addLayout(MainWindow.optionsLayout, 1)
+
+        # Ensure a minimum width for the options column
+        MainWindow.optionsLayout.setContentsMargins(5, 5, 5, 5)
+
 
         # Scroll area for the drawing area
         MainWindow.scrollArea = QScrollArea(MainWindow.centralWidget)
@@ -343,6 +343,9 @@ class Ui_MainWindow:
         MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
 
+        MainWindow.map_properties_action = QAction("Map Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.map_properties_action )
+
 
 
 
@@ -405,7 +408,7 @@ class Ui_MainWindow:
         """Populate the color bar dropdowns with file names from the Palettes directory."""
         palettes_path = os.path.join(os.path.dirname(__file__), 'Palettes')
         color_bar_files = [f.split('.')[0] for f in os.listdir(palettes_path) if f.endswith('.pal')]
-
-        self.zoneAttributeColorBarDropdown.addItems(color_bar_files)
-        self.gridColorBarDropdown.addItems(color_bar_files)
-        self.WellAttributeColorBarDropdown.addItems(color_bar_files)
+    
+        self.zone_colorbar.addColorBarOptions(color_bar_files)
+        self.well_colorbar.addColorBarOptions(color_bar_files)
+        self.grid_colorbar.addColorBarOptions(color_bar_files)

@@ -898,7 +898,7 @@ class ZoneViewerDialog(QDialog):
         if filter_criteria != "None":
             self.apply_saved_filter()
 
-        # ✅ Apply highlighting criteria here
+        #   Apply highlighting criteria here
         if highlight_criteria != "None":
             self.apply_highlight_criteria()
 
@@ -1095,12 +1095,12 @@ class ZoneViewerDialog(QDialog):
             print("No filter criteria selected, showing all data.")
             return self.df.copy()
 
-        # ✅ Fetch filter name and conditions separately
+        #   Fetch filter name and conditions separately
         _, conditions = self.db_manager.load_criteria_by_name(selected_filter)
         if not conditions:
             print(f"⚠️ No conditions found for: '{selected_filter}'")
             return self.df.copy()
-        print(f"✅ Applying filter criteria: {conditions}")
+        print(f"  Applying filter criteria: {conditions}")
 
         # Start with a mask of all True values (AND logic)
         group_mask = pd.Series(True, index=self.df.index)
@@ -1124,7 +1124,7 @@ class ZoneViewerDialog(QDialog):
                 else:
                     print(f"❌ Unsupported operator: {operator}")
                     continue
-                # ✅ Apply AND/OR logic
+                #   Apply AND/OR logic
                 if logical_op == 'OR':
                     group_mask |= mask  # OR logic
                 else:
@@ -1132,7 +1132,7 @@ class ZoneViewerDialog(QDialog):
             except Exception as e:
                 print(f"❌ Error processing filter criteria: {e}")
 
-        # ✅ Apply filter to get matching rows
+        #   Apply filter to get matching rows
         filtered_df = self.df[group_mask].copy()
         print(f"🟢 Filtered to {len(filtered_df)} rows from {len(self.df)} total rows")
         return filtered_df
@@ -1504,7 +1504,7 @@ class ZoneViewerDialog(QDialog):
                 self.filtered_df['HighlightColor'] = None
             return
 
-        # ✅ Fetch highlight color and conditions separately
+        #   Fetch highlight color and conditions separately
         highlight_color, conditions = self.db_manager.load_criteria_by_name(selected_highlight)
 
         if not conditions:
@@ -1513,7 +1513,7 @@ class ZoneViewerDialog(QDialog):
                 self.filtered_df['HighlightColor'] = None
             return
 
-        print(f"✅ Applying highlight criteria: {conditions}")
+        print(f"  Applying highlight criteria: {conditions}")
     
         # Reset Highlight column
         self.filtered_df['HighlightColor'] = None
@@ -1543,7 +1543,7 @@ class ZoneViewerDialog(QDialog):
                     print(f"❌ Unsupported operator: {operator}")
                     continue
 
-                # ✅ Apply AND/OR logic
+                #   Apply AND/OR logic
                 if logical_op == 'OR':
                     group_mask |= mask  # OR logic
                 else:
@@ -1552,13 +1552,13 @@ class ZoneViewerDialog(QDialog):
             except Exception as e:
                 print(f"❌ Error processing highlight criteria: {e}")
 
-        # ✅ Apply highlight color to matching rows
+        #   Apply highlight color to matching rows
         self.filtered_df.loc[group_mask, 'HighlightColor'] = highlight_color
         print(f"🟢 Applied {highlight_color} to {group_mask.sum()} rows")
 
         # Debugging: Check highlighted rows
         highlighted_rows = self.filtered_df[self.filtered_df['HighlightColor'].notna()]
-        print(f"\n✅ Final highlighted rows: {len(highlighted_rows)}")
+        print(f"\n  Final highlighted rows: {len(highlighted_rows)}")
 
 
 

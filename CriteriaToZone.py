@@ -111,7 +111,7 @@ class CriteriaToZoneDialog(QDialog):
         print(self.df[group_mask].head().to_string())
         print(f"  - Table Name: {self.zone_name}")
 
-        print(f"\n✅ Updated DataFrame with new attribute '{self.attribute_name}':")
+        print(f"\n  Updated DataFrame with new attribute '{self.attribute_name}':")
         print(self.df[[self.attribute_name]].value_counts())
 
         if self.db_manager:
@@ -119,7 +119,7 @@ class CriteriaToZoneDialog(QDialog):
             success = self.db_manager.update_zone_column_data(self.zone_name, self.attribute_name, self.df)
             
             if success:
-                print(f"✅ Successfully saved '{self.attribute_name}' to database.")
+                print(f"  Successfully saved '{self.attribute_name}' to database.")
             else:
                 print(f"❌ Failed to save '{self.attribute_name}' to database.")
 
