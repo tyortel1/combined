@@ -45,7 +45,7 @@ from DrawingArea import DrawingArea
 from ProjectSaver import ProjectSaver
 from ProjectOpen import ProjectLoader# Import the DrawingArea class
 from UiSetup import Ui_MainWindow
-from Calculations import StagesCalculationDialog, ZoneAttributesDialog, WellAttributesDialog
+from Calculations import StagesCalculationDialog, GridToZone, WellAttributesDialog
 from InZone import InZoneDialog
 from CrossPlot import CrossPlot3D
 from DataLoadSegy import DataLoadSegy
@@ -70,7 +70,7 @@ from CalculateCorrelationMatrix import GenerateCorrelationMatrix
 from CalculateWellComparisons import WellComparisonDialog
 from CalcMergeZones import CalcMergeZoneDialog
 from CalculateZoneAttributes import ZoneAttributeCalculator
-from CalcAttributeAnalyzer import CalcAttributeAnalyzer
+from CalcRegressionAnalyzer import CalcRegressionAnalyzer
 from StyledColorbar import StyledColorBar  # Add this import
 from PropertiesMap import MapPropertiesDialog
 
@@ -824,10 +824,6 @@ class Map(QMainWindow, Ui_MainWindow):
     def preprocess_zone_attribute_data(self):
         """Populates the well data with colors based on the selected zone and attribute."""
 
-        # Ensure selected zone and attribute are valid
-        if not self.selected_zone or not self.selected_zone_attribute:
-            QMessageBox.warning(self, "Warning", "Please select a valid zone and attribute.")
-            return
 
         try:
             # Fetch the selected attribute data for the zone
@@ -1541,13 +1537,13 @@ class Map(QMainWindow, Ui_MainWindow):
         """Open the Map Properties Dialog and apply changes on 'Apply'."""
         dialog = MapPropertiesDialog(self)
 
-        # ✅ Debugging before opening dialog
+        #  Debugging before opening dialog
         print(f"📌 Before Dialog Open: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
-        # ✅ Set values in the dialog
+        #  Set values in the dialog
         dialog.UWICheckbox.setChecked(self.drawingArea.show_UWIs)
         dialog.ticksCheckbox.setChecked(self.drawingArea.show_ticks)
-        dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  # ✅ Should match drawingArea
+        dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  #  Should match drawingArea
         dialog.gradientSizeSpinBox.setValue(self.drawingArea.drainage_size)
 
 
@@ -1556,23 +1552,23 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.lineWidthSlider.setValue(self.drawingArea.line_width)
         dialog.lineOpacitySlider.setValue(int(self.drawingArea.line_opacity * 100))
 
-        # ✅ Print checkbox state BEFORE dialog opens
+        #  Print checkbox state BEFORE dialog opens
         print(f"🟡 Dialog Checkbox States BEFORE Opening:")
         print(f"   - Show UWI Labels: {dialog.UWICheckbox.isChecked()}")
         print(f"   - Show Ticks: {dialog.ticksCheckbox.isChecked()}")
         print(f"   - Show Drainage: {dialog.gradientCheckbox.isChecked()}")  # ⬅️ Should be `True`
 
         if dialog.exec():  # User clicked "Apply"
-            print("✅ Applying Map Properties")
+            print(" Applying Map Properties")
 
-            # ✅ Store values in `DrawingArea`
+            #  Store values in `DrawingArea`
             self.drawingArea.show_UWIs = dialog.UWICheckbox.isChecked()
             self.drawingArea.show_ticks = dialog.ticksCheckbox.isChecked()
             self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()  # ⬅️ This is flipping to `False`!
             self.drawingArea.drainage_size = dialog.gradientSizeSpinBox.value()
 
-            # ✅ Debug After Applying Values
-            print(f"✅ After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
+            #  Debug After Applying Values
+            print(f" After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
             self.drawingArea.toggleTextItemsVisibility(self.drawingArea.show_UWIs)
             self.drawingArea.toggleticksVisibility(self.drawingArea.show_ticks)
@@ -1590,11 +1586,11 @@ class Map(QMainWindow, Ui_MainWindow):
             self.drawingArea.line_opacity = dialog.lineOpacitySlider.value() / 100.0
             self.drawingArea.updateLineOpacity(self.drawingArea.line_opacity)
 
-            # ✅ Force Redraw
+            #  Force Redraw
             self.drawingArea.scene.update()
             self.drawingArea.viewport().update()
 
-            print("✅ Map Properties Updated!")
+            print(" Map Properties Updated!")
 
 
 
@@ -2567,7 +2563,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def attribute_analyzer(self):
     
-        dialog = CalcAttributeAnalyzer(self.db_manager)
+        dialog = CalcRegressionAnalyzer(self.db_manager)
         dialog.exec()
 
 
@@ -2596,7 +2592,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def grid_to_zone(self):
         print(self.zone_names)
-        dialog = ZoneAttributesDialog(
+        dialog = GridToZone(
             self.db_manager,
             self.grid_info_df,
             self.kd_tree_depth_grids,

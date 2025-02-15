@@ -1,93 +1,129 @@
-import math
-from datetime import datetime, timedelta
-from shapely.geometry import LineString, Point
-
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
-    QDoubleSpinBox, QTableWidget, QTableWidgetItem, 
-    QMessageBox, QPushButton
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem, 
+    QMessageBox, QGroupBox
 )
 from PySide6.QtCore import Qt
+from StyledButton import StyledButton
+from StyledDropdown import StyledDropdown
+from StyledDropdown import StyledInputBox
+import math
+from datetime import datetime
+from shapely.geometry import LineString, Point
 
 class PCDialog(QDialog):
     def __init__(self, db_manager, parent=None):
-       super().__init__(parent)
-       self.setWindowTitle("Parent-Child Well Analysis")
-       self.setModal(True)
-       self.db_manager = db_manager
-       self.results = []
-       self.resize(900, 600)
-   
-       # Create spinboxes
-       self.scenario_combo = QComboBox()
-       scenarios = self._get_available_scenarios()
-       self.scenario_combo.addItems([str(s) for s in scenarios])
-   
-       self.distance_spinbox = QDoubleSpinBox()
-       self.angle_spinbox = QDoubleSpinBox()
-       self.month_spinbox = QDoubleSpinBox()
-       self.tvd_spinbox = QDoubleSpinBox()
-   
-       # Main layout
-       layout = QVBoxLayout(self)
-   
-       # Input layout
-       input_layout = QVBoxLayout()
-       inputs = [
-           ("Scenario:", self.scenario_combo),
-           ("Lateral Distance (m):", self.distance_spinbox, (0, 1000), 250, 50),
-           ("Maximum Angle (degrees):", self.angle_spinbox, (0, 90), 20, 5),
-           ("Minimum Time Difference (Months):", self.month_spinbox, (1, 24), 6, 1),
-           ("Maximum TVD Difference (m):", self.tvd_spinbox, (0, 1000), 500, 50)
-       ]
-   
-       for input_data in inputs:
-           row = QHBoxLayout()
-           label = QLabel(input_data[0])
-           label.setFixedWidth(200)
-           row.addWidget(label)
-       
-           spinbox = input_data[1]
-           if isinstance(spinbox, QDoubleSpinBox):
-               spinbox.setRange(*input_data[2])
-               spinbox.setValue(input_data[3])
-               spinbox.setSingleStep(input_data[4])
-       
-           spinbox.setFixedWidth(150)
-           row.addWidget(spinbox)
-           row.addStretch()
-           input_layout.addLayout(row)
-   
-       layout.addLayout(input_layout)
-   
-       # Results table
-       self.results_table = QTableWidget()
-       self.results_table.setColumnCount(8)
-       self.results_table.setHorizontalHeaderLabels([
-           "Target UWI", "Target Date", 
-           "Parent UWI", "Parent Date", 
-           "Lateral Dist", "Angle ",
-           "Target TVD", "Parent TVD"
-       ])
-       layout.addWidget(self.results_table)
-   
-       # Button layout - bottom right
-       button_layout = QHBoxLayout()
-       button_layout.addStretch()
-   
-       for btn_text, connection in [
-           ("Calculate", self._run_analysis),
-           ("Save", self.accept),
-           ("Cancel", self.reject)
-       ]:
-           btn = QPushButton(btn_text)
-           btn.setFixedWidth(150)
-           btn.clicked.connect(connection)
-           button_layout.addWidget(btn)
-   
-       layout.addLayout(button_layout)
-       self.setLayout(layout)
+        super().__init__(parent)
+        self.setWindowTitle("Parent-Child Well Analysis")
+        self.setModal(True)
+        self.db_manager = db_manager
+        self.results = []
+        self.resize(900, 600)
 
+        # Main layout
+        layout = QVBoxLayout(self)
+
+        # Parameters Group
+        param_group = QGroupBox("Analysis Parameters")
+        param_layout = QVBoxLayout()
+        param_layout.setSpacing(10)  # Add spacing between elements
+
+        # Grid layout for inputs to ensure alignment
+        input_layout = QVBoxLayout()
+        input_layout.setSpacing(10)
+
+        # Create all inputs first with consistent label widths
+        input_params = [
+            ("Scenario", self.create_dropdown),
+            ("Lateral Distance (m)", self.create_input, "250"),
+            ("Maximum Angle (degrees)", self.create_input, "20"),
+            ("Minimum Time Difference (Months)", self.create_input, "600"),
+            ("Maximum TVD Difference (m)", self.create_input, "500")
+        ]
+
+        # Find the longest label width
+        label_width = 200  # Starting minimum width
+        for label_text, *_ in input_params:
+            test_label = QLabel(label_text)
+            label_width = max(label_width, test_label.sizeHint().width() + 30)  # Add padding
+
+        # Create inputs with consistent label width
+        self.inputs = {}
+        for label_text, create_func, *args in input_params:
+            if create_func == self.create_dropdown:
+                widget = self.create_dropdown(label_text, label_width)
+                self.scenario_combo = widget  # Keep reference for scenario combo
+            else:
+                widget = self.create_input(label_text, args[0], label_width)
+                self.inputs[label_text] = widget
+            input_layout.addWidget(widget)
+
+        param_layout.addLayout(input_layout)
+        param_group.setLayout(param_layout)
+        layout.addWidget(param_group)
+
+        # Results group
+        results_group = QGroupBox("Analysis Results")
+        results_layout = QVBoxLayout()
+
+        # Results table
+        self.results_table = QTableWidget()
+        self.results_table.setColumnCount(8)
+        self.results_table.setHorizontalHeaderLabels([
+            "Target UWI", "Target Date", 
+            "Parent UWI", "Parent Date", 
+            "Lateral Dist", "Angle",
+            "Target TVD", "Parent TVD"
+        ])
+        self.results_table.horizontalHeader().setStretchLastSection(True)
+        results_layout.addWidget(self.results_table)
+    
+        results_group.setLayout(results_layout)
+        layout.addWidget(results_group)
+
+        # Button layout - bottom right
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        # Create styled buttons
+        self.calculate_button = StyledButton("Calculate", "function", self)
+        self.save_button = StyledButton("Save", "export", self)
+        self.close_button = StyledButton("Close", "close", self)
+
+        # Connect buttons
+        self.calculate_button.clicked.connect(self._run_analysis)
+        self.save_button.clicked.connect(self.accept)
+        self.close_button.clicked.connect(self.reject)
+
+        # Add buttons to layout
+        button_layout.addWidget(self.calculate_button)
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.close_button)
+
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+        # Initialize the scenario dropdown
+        scenarios = self._get_available_scenarios()
+        self.scenario_combo.setItems([str(s) for s in scenarios])
+
+    def create_dropdown(self, label_text, label_width):
+        """Helper to create a styled dropdown with consistent label width"""
+        dropdown = StyledDropdown(
+            label_text=label_text,
+            parent=self
+        )
+        dropdown.label.setFixedWidth(label_width)
+        return dropdown
+
+    def create_input(self, label_text, default_value, label_width):
+        """Helper to create a styled input with consistent label width"""
+        input_box = StyledInputBox(
+            label_text=label_text,
+            default_value=default_value,
+            parent=self
+        )
+        input_box.label.setFixedWidth(label_width)
+        return input_box
     def _get_available_scenarios(self):
         """Retrieve scenario names from database"""
         try:
@@ -153,11 +189,16 @@ class PCDialog(QDialog):
                 QMessageBox.warning(self, "No Data", "No model or well data found.")
                 return
 
-            # Parameters
-            max_lateral_distance = self.distance_spinbox.value()
-            max_angle = self.angle_spinbox.value()
-            min_months = self.month_spinbox.value()
-            max_tvd_diff = self.tvd_spinbox.value()
+            try:
+                max_lateral_distance = float(self.inputs["Lateral Distance (m)"].text())
+                max_angle = float(self.inputs["Maximum Angle (degrees)"].text())
+                min_months = float(self.inputs["Minimum Time Difference (Months)"].text())
+                max_tvd_diff = float(self.inputs["Maximum TVD Difference (m)"].text())
+            except ValueError:
+                QMessageBox.warning(self, "Invalid Input", 
+                                  "Please ensure all numeric inputs are valid numbers.")
+                return
+
 
             # Map wells and TVD data for quick lookup
             well_map = {well['UWI']: well for well in wells}

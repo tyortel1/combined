@@ -13165,3 +13165,11 @@ Supported signatures:
 2025-02-13 11:03:49,565 - root - INFO - PUDPropertiesDialog initialized
 2025-02-13 11:04:00,289 - root - INFO - Dialog closed successfully
 2025-02-13 11:05:59,179 - matplotlib.colorbar - DEBUG - locator: <matplotlib.ticker.AutoLocator object at 0x00000206EB349CA0>
+2025-02-15 14:32:21,158 - root - DEBUG - Toolbar setup completed
+2025-02-15 14:32:21,159 - root - DEBUG - Scenario dropdown setup completed
+2025-02-15 14:32:21,163 - root - DEBUG - Table setup completed
+2025-02-15 14:32:21,163 - root - DEBUG - UI setup completed successfully
+2025-02-15 14:32:21,164 - root - DEBUG - Signal connections established
+2025-02-15 14:32:21,167 - root - INFO - No scenarios to load.
+2025-02-15 14:32:21,167 - root - INFO - PUDPropertiesDialog initialized
+2025-02-15 14:32:22,903 - root - INFO - Dialog closed successfully

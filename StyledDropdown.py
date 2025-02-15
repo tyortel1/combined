@@ -1,13 +1,35 @@
-from PySide6.QtWidgets import QWidget, QLabel, QComboBox, QLineEdit, QHBoxLayout, QDateTimeEdit
+﻿from PySide6.QtWidgets import QWidget, QLabel,QTextEdit, QComboBox, QLineEdit, QHBoxLayout, QDateTimeEdit
 from PySide6.QtCore import Qt, QDate
-from PySide6.QtGui import QDoubleValidator
+from PySide6.QtGui import QDoubleValidator, QTextOption
 from PySide6.QtCore import Signal
 
 
+
 class StyledBaseWidget(QWidget):
+    label_width = 120  # Default width
+    
+    @classmethod
+    def calculate_label_width(cls, labels):
+        """Calculate and set the width needed for the longest label"""
+        test_label = QLabel()
+        metrics = test_label.fontMetrics()
+        max_width = 0
+        for label in labels:
+            width = metrics.horizontalAdvance(label)
+            max_width = max(max_width, width)
+        cls.label_width = max_width + 20  # Add padding for safety
+        print(f"Set label width to: {cls.label_width}")  # Debug print
+        return cls.label_width
+
+    @classmethod
+    def reset_label_width(cls):
+        """Reset to default width if needed"""
+        cls.label_width = 120
+
     def __init__(self, label_text, input_widget, parent=None):
         super().__init__(parent)
         self.setupUi(label_text, input_widget)
+    
     
     def setupUi(self, label_text, input_widget):
         layout = QHBoxLayout(self)
@@ -23,20 +45,21 @@ class StyledBaseWidget(QWidget):
                 padding: 5px;
             }
         """)
-        self.label.setFixedWidth(120)  # Fixed width for consistency
+        self.label.setFixedWidth(self.label_width)
         
         self.input_widget = input_widget
-        self.input_widget.setFixedWidth(200)  # Fixed width to match all widgets
+        self.input_widget.setFixedWidth(200)
         
         layout.addWidget(self.label)
         layout.addWidget(self.input_widget)
-        layout.addStretch()  # Aligns nicely with other widgets
+        layout.addStretch()
         layout.setAlignment(Qt.AlignLeft)
 
         self.selected_color_palette = []
 
 class StyledDropdown(StyledBaseWidget):
     def __init__(self, label_text, items=None, editable=False, parent=None):
+        print(label_text)
         self.combo = QComboBox()
         self.combo.setStyleSheet("""
             QComboBox {
@@ -78,9 +101,10 @@ class StyledDropdown(StyledBaseWidget):
 
 
 class StyledInputBox(StyledBaseWidget):
-    editingFinished = Signal()  # Add this Signal before __init__
+    editingFinished = Signal()
 
     def __init__(self, label_text, default_value="", validator=None, parent=None):
+        print(label_text)
         self.input_field = QLineEdit()
         self.input_field.setStyleSheet("""
             QLineEdit {
@@ -94,9 +118,18 @@ class StyledInputBox(StyledBaseWidget):
             }
         """)
         self.input_field.setText(str(default_value))
+        self.input_field.setMinimumWidth(250)  # Ensure it’s wide enough
+
         if validator:
             self.input_field.setValidator(validator)
+
         super().__init__(label_text, self.input_field, parent)
+
+        # ✅ Read the updated label width from `StyledBaseWidget.label_width`
+        updated_width = StyledBaseWidget.label_width  
+        print(f"StyledInputBox applying label width: {updated_width}")  # Debugging print
+        self.label.setFixedWidth(updated_width)  # ✅ Apply the correct width
+
         self.input_field.editingFinished.connect(self.editingFinished.emit)
 
     def text(self):
@@ -104,6 +137,12 @@ class StyledInputBox(StyledBaseWidget):
 
     def setText(self, text):
         self.input_field.setText(text)
+
+
+
+
+
+
 
 
 

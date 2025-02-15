@@ -1,15 +1,21 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QComboBox, 
                               QPushButton, QLabel, QMessageBox, QCheckBox, QListWidget,
-                              QAbstractItemView, QSizePolicy, QSpacerItem,QLineEdit)
+                              QAbstractItemView, QSizePolicy, QSpacerItem)
+
+from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Qt
+from StyledTwoListSelector import TwoListSelector
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
+from StyledDropdown import StyledInputBox
 import numpy as np
 import pandas as pd
 
-class ZoneAttributesDialog(QDialog):
+class GridToZone(QDialog):
     def __init__(self, db_manager, grid_info_df, kd_tree_depth_grids, 
                  kd_tree_att_grids, depth_grid_data_dict, 
                  attribute_grid_data_dict, parent=None):
-        super(ZoneAttributesDialog, self).__init__(parent)
+        super(GridToZone, self).__init__(parent)
         self.setWindowTitle("Sample Grid Values")
         self.setMinimumSize(500, 400)
         
@@ -21,174 +27,124 @@ class ZoneAttributesDialog(QDialog):
         self.attribute_grid_data_dict = attribute_grid_data_dict
         
         self.setup_ui()
-        
+
     def setup_ui(self):
         layout = QVBoxLayout()
-
-        # Zone Selection
-        zone_layout = QHBoxLayout()
-        self.zone_label = QLabel("Zone:", self)
-        zone_layout.addWidget(self.zone_label)
         
-        self.zone_combo = QComboBox(self)
-        self.populate_zone_list()
-        zone_layout.addWidget(self.zone_combo)
-        layout.addLayout(zone_layout)
-
-        # Grid Type Selection
-        grid_type_layout = QHBoxLayout()
-        self.grid_type_label = QLabel("Grid Type:", self)
-        grid_type_layout.addWidget(self.grid_type_label)
+        # Zone Name Selection - Initialize with empty items list
+        self.zone_dropdown = StyledDropdown(
+            label_text="Zone Name",
+            items=[],  # Will be populated later
+            parent=self
+        )
+        layout.addWidget(self.zone_dropdown)
         
-        self.grid_type_combo = QComboBox(self)
-        self.grid_type_combo.addItems(['Attribute', 'Depth'])
-        self.grid_type_combo.currentIndexChanged.connect(self.update_available_grids)
-        grid_type_layout.addWidget(self.grid_type_combo)
-        layout.addLayout(grid_type_layout)
-
-        # Grid Selection Lists
-        grid_list_layout = QHBoxLayout()
-
-        # Available Grids
-        available_layout = QVBoxLayout()
-        available_layout.addWidget(QLabel("Available Grids:"))
-        self.available_grids = QListWidget()
-        self.available_grids.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        available_layout.addWidget(self.available_grids)
-        grid_list_layout.addLayout(available_layout)
-
-        # Arrow Buttons
-        arrow_layout = QVBoxLayout()
-        arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        # Grid Type Selection - Initialize with predefined items
+        self.grid_type_dropdown = StyledDropdown(
+            label_text="Grid Type",
+            items=['Attribute', 'Depth'],
+            parent=self
+        )
+        # Connect signal to combo since that's where the QComboBox lives
+        self.grid_type_dropdown.combo.currentIndexChanged.connect(self.update_available_grids)
+        layout.addWidget(self.grid_type_dropdown)
         
-        for button_info in [
-            ("→", self.move_selected_right),
-            ("⇉", self.move_all_right),
-            ("←", self.move_selected_left),
-            ("⇇", self.move_all_left)
-        ]:
-            btn = QPushButton(button_info[0])
-            btn.clicked.connect(button_info[1])
-            arrow_layout.addWidget(btn)
+        # Grid Selector
+        self.grid_selector = TwoListSelector(
+            left_title="Available Grids",
+            right_title="Selected Grids"
+        )
+        layout.addWidget(self.grid_selector)
         
-        arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        grid_list_layout.addLayout(arrow_layout)
-
-        # Selected Grids
-        selected_layout = QVBoxLayout()
-        selected_layout.addWidget(QLabel("Selected Grids:"))
-        self.selected_grids = QListWidget()
-        self.selected_grids.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        selected_layout.addWidget(self.selected_grids)
-        grid_list_layout.addLayout(selected_layout)
-
-        layout.addLayout(grid_list_layout)
-
         # Sampling Options
         self.use_intermediate = QCheckBox("Sample intermediate points")
         self.use_intermediate.setToolTip("Sample additional points between top and base")
         layout.addWidget(self.use_intermediate)
-
-        # Buttons
+        
+        # Buttons Layout
         button_layout = QHBoxLayout()
-        self.sample_button = QPushButton("Sample Grid Values", self)
+        button_layout.addStretch()
+        
+        self.sample_button = StyledButton("Sample Grid Values", "function", parent=self)
         self.sample_button.clicked.connect(self.sample_grid_values)
         button_layout.addWidget(self.sample_button)
-
-        self.close_button = QPushButton("Close", self)
+        
+        self.close_button = StyledButton("Close", "close", parent=self)
         self.close_button.clicked.connect(self.reject)
         button_layout.addWidget(self.close_button)
-
+        
         layout.addLayout(button_layout)
         self.setLayout(layout)
         
-        # Initialize grid list
+        # Initialize data
         self.update_available_grids()
+        self.populate_zone_list()
 
     def populate_zone_list(self):
-        pass
-
-
+        """Populate zone names from the database."""
+        zone_names = self.db_manager.fetch_zone_names_by_type("Zone")
+        print(f"Raw zone names from DB: {zone_names}")  # Debug print
+    
+        # Extract the first element from each tuple
+        cleaned_names = [name[0] for name in zone_names if name and name[0]]
+    
+        if cleaned_names:
+            print(f"Cleaned zone names: {cleaned_names}")  # Debug print
+            self.zone_dropdown.setItems(cleaned_names)
+        else:
+            print("No valid zone names to populate")
     def update_available_grids(self):
-        """Update available grids based on selected type"""
-        self.available_grids.clear()
-        grid_type = self.grid_type_combo.currentText()
+        """Update available grids based on selected type."""
+        self.grid_selector.clear_left_items()
+        grid_type = self.grid_type_dropdown.currentText()  # Using the wrapper method
         
         # Filter grid info by type
-        grids = self.grid_info_df[
-            self.grid_info_df['Type'] == grid_type
-        ]['Grid'].tolist()
+        grids = self.grid_info_df[self.grid_info_df['Type'] == grid_type]['Grid'].tolist()
         
-        # Add to available list if not already in selected
-        for grid in grids:
-            if self.selected_grids.findItems(grid, Qt.MatchExactly) == []:
-                self.available_grids.addItem(grid)
-
-    def move_selected_right(self):
-        for item in self.available_grids.selectedItems():
-            self.selected_grids.addItem(self.available_grids.takeItem(
-                self.available_grids.row(item)
-            ))
-
-    def move_all_right(self):
-        while self.available_grids.count() > 0:
-            self.selected_grids.addItem(
-                self.available_grids.takeItem(0)
-            )
-
-    def move_selected_left(self):
-        for item in self.selected_grids.selectedItems():
-            self.available_grids.addItem(self.selected_grids.takeItem(
-                self.selected_grids.row(item)
-            ))
-
-    def move_all_left(self):
-        while self.selected_grids.count() > 0:
-            self.available_grids.addItem(
-                self.selected_grids.takeItem(0)
-            )
+        # Add grids to the available list
+        self.grid_selector.set_left_items(grids)
 
     def get_intermediate_points(self, top_point, base_point, num_points=5):
-        """Generate evenly spaced points between top and base"""
-        points = []
-        for i in range(num_points):
-            fraction = i / (num_points - 1)
-            x = top_point[0] + (base_point[0] - top_point[0]) * fraction
-            y = top_point[1] + (base_point[1] - top_point[1]) * fraction
-            points.append([x, y])
-        return points
+        """Generate evenly spaced points between top and base."""
+        return [
+            [
+                top_point[0] + (base_point[0] - top_point[0]) * i / (num_points - 1),
+                top_point[1] + (base_point[1] - top_point[1]) * i / (num_points - 1)
+            ]
+            for i in range(num_points)
+        ]
 
     def sample_grid_values(self):
         """Sample grid values and update zone table."""
         try:
-            zone_name = self.zone_combo.currentText()
-            grid_type = self.grid_type_combo.currentText()
-            selected_grids = [self.selected_grids.item(i).text() for i in range(self.selected_grids.count())]
+            zone_name = self.zone_dropdown.combo.currentText()
+            grid_type = self.grid_type_dropdown.combo.currentText()
+            selected_grids = self.grid_selector.get_right_items()
 
             if not selected_grids:
                 return QMessageBox.warning(self, "Error", "Please select at least one grid")
 
             # Fetch zone data from the database (includes correct column names)
             zone_data = self.db_manager.fetch_zone_table_data(zone_name)
-            zone_df = pd.DataFrame(zone_data[0], columns=zone_data[1])  # Convert to DataFrame
+            zone_df = pd.DataFrame(zone_data[0], columns=zone_data[1])
 
             if zone_df.empty:
                 return QMessageBox.warning(self, "Error", f"No data found for zone '{zone_name}'")
 
-            # Ensure the necessary columns exist with the original naming
+            # Ensure required columns exist
             required_columns = ["Top_X_Offset", "Top_Y_Offset", "Base_X_Offset", "Base_Y_Offset"]
             missing_columns = [col for col in required_columns if col not in zone_df.columns]
-        
+
             if missing_columns:
                 return QMessageBox.warning(self, "Error", f"Missing required columns: {', '.join(missing_columns)}")
 
-            # Extract Top/Base points using correct column names
+            # Extract Top/Base points
             top_points = zone_df[['Top_X_Offset', 'Top_Y_Offset']].values
             base_points = zone_df[['Base_X_Offset', 'Base_Y_Offset']].values
 
             # Select KD-Tree and Grid Data
             kd_trees, grid_data = (
-                (self.kd_tree_att_grids, self.attribute_grid_data_dict) if grid_type == 'Attribute' 
+                (self.kd_tree_att_grids, self.attribute_grid_data_dict) if grid_type == 'Attribute'
                 else (self.kd_tree_depth_grids, self.depth_grid_data_dict)
             )
 
@@ -215,7 +171,7 @@ class ZoneAttributesDialog(QDialog):
 
                 zone_df[avg_col_name] = avg_values
 
-            # Bulk update zone data with original column names
+            # Bulk update zone data
             self.db_manager.update_zone_data(zone_name, zone_df)
 
             QMessageBox.information(self, "Success", f"Processed {len(selected_grids)} grids for zone {zone_name}")
@@ -226,13 +182,11 @@ class ZoneAttributesDialog(QDialog):
 
 
 
-
 class StagesCalculationDialog(QDialog):
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Calculate Stages")
-        self.setMinimumSize(400, 200)
-        self.setStyleSheet(self.get_dark_style())
+        self.setMinimumSize(300, 100)
 
         self.db_manager = db_manager
         self.zone_names = [zone[0] for zone in self.db_manager.fetch_zone_names_by_type('Zone')]
@@ -248,30 +202,44 @@ class StagesCalculationDialog(QDialog):
         }
         self.directional_surveys_df.rename(columns=column_mapping, inplace=True)
 
-        layout = QVBoxLayout(self)
+        self.setup_ui()
 
-        # Average Stage Length
-        layout.addWidget(QLabel("Average Stage Length:", self))
-        self.avg_stage_length_input = QLineEdit(self)
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Average Stage Length input
+        self.avg_stage_length_input = StyledInputBox(
+            label_text="Stage Length",
+            default_value="",
+            validator=QDoubleValidator(),
+            parent=self
+        )
         layout.addWidget(self.avg_stage_length_input)
 
-        # Zone Name
-        layout.addWidget(QLabel("Zone Name:", self))
-        self.zone_name_dropdown = QComboBox(self)
-        self.zone_name_dropdown.setEditable(True)
-        self.zone_name_dropdown.addItem("Select Zone") if not self.zone_names else self.zone_name_dropdown.addItems(self.zone_names)
+        # Zone Name dropdown
+        initial_items = ["Select Zone"] + self.zone_names if self.zone_names else ["Select Zone"]
+        self.zone_name_dropdown = StyledDropdown(
+            label_text="Zone Name",
+            items=initial_items,
+            editable=True,
+            parent=self
+        )
         layout.addWidget(self.zone_name_dropdown)
 
         # Button Layout (Side-by-Side on the Right)
         button_layout = QHBoxLayout()
         button_layout.addStretch()  # Push buttons to the right
 
-        self.calculate_button = QPushButton("Calculate", self)
-        self.close_button = QPushButton("Close", self)
-
-        # Set button size
-        self.calculate_button.setFixedWidth(100)
-        self.close_button.setFixedWidth(100)
+        self.calculate_button = StyledButton(
+            text="Calculate",
+            button_type="function",
+            parent=self
+        )
+        self.close_button = StyledButton(
+            text="Close",
+            button_type="close",
+            parent=self
+        )
 
         button_layout.addWidget(self.calculate_button)
         button_layout.addWidget(self.close_button)
@@ -281,22 +249,6 @@ class StagesCalculationDialog(QDialog):
         # Connect buttons
         self.calculate_button.clicked.connect(self.calculate_stages)
         self.close_button.clicked.connect(self.accept)
-
-        self.setLayout(layout)
-
-
-    def get_dark_style(self):
-        """Returns dark theme styles"""
-        return """
-            QDialog { background-color: #222; color: white; }
-            QLabel { color: white; }
-            QLineEdit, QComboBox, QPushButton {
-                background-color: #333; color: white;
-                border: 1px solid white; padding: 5px;
-            }
-            QPushButton:hover { background-color: #444; }
-            QPushButton:pressed { background-color: #555; }
-        """
 
     def calculate_stages(self):
         try:
@@ -310,10 +262,13 @@ class StagesCalculationDialog(QDialog):
         # Get selected zone name
         zone_name = self.zone_name_dropdown.currentText().strip()
         zone_table_name = self.db_manager.get_table_name_from_zone(zone_name)
+        
         # Validate zone name
-        if not zone_name:
+        if not zone_name or zone_name == "Select Zone":
             QMessageBox.warning(self, "No Zone Name", "Please enter or select a valid zone name.")
             return
+
+        # Rest of the calculate_stages method remains unchanged...
 
         # Get existing UWIs for the selected zone
         zone_depth_df = self.db_manager.fetch_zone_depth_data(zone_table_name)

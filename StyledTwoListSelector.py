@@ -271,7 +271,18 @@ class TwoListSelector(QWidget):
             self.left_list.setMaximumHeight(16777215 // 2)
             self.right_list.setMaximumHeight(16777215 // 2)
 
+    def clear_left_items(self):
+        """Clear all items from the left list."""
+        self.left_list.clear()
 
+    def clear_right_items(self):
+        """Clear all items from the right list."""
+        self.right_list.clear()
+
+    def clear(self):
+        """Clear both lists."""
+        self.clear_left_items()
+        self.clear_right_items()
 
 class DarkTwoListSelector(TwoListSelector):
     """
