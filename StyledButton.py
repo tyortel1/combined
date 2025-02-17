@@ -12,42 +12,44 @@ class StyledButton(QPushButton):
             QPushButton {
                 padding: 5px 15px;
                 border-radius: 4px;
-                font-weight: bold;
-                font-size: 12px;
-                color: white;
-            """
+                font-weight: 500;
+                font-size: 13px;
+                color: #333333;
+                border-style: solid;
+                border-width: 1px;
+                border-bottom-width: 3px;
+            }
+            QPushButton:hover {
+                color: #1a1a1a;
+            }
+            QPushButton:pressed {
+                padding-top: 6px;
+                padding-bottom: 4px;
+                border-bottom-width: 1px;
+            }
+        """
         
-        if button_type == "function":
-            color_style = """
-                background-color: #2ecc71;
-            }
-            QPushButton:hover {
-                background-color: #27ae60;
-            }
-            """
-        elif button_type == "close":
-            color_style = """
-                background-color: #e74c3c;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            """
-        elif button_type == "export":
-            color_style = """
-                background-color: #3498db;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            """
-        else:
-            color_style = """
-                background-color: #95a5a6;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
-            """
+        button_styles = {
+            "function": ("#C7E6C7", "#A8D1A8", "#95C795"),
+            "close": ("#E6C3C3", "#D1A8A8", "#C79595"),
+            "export": ("#C3C3E6", "#A8A8D1", "#9595C7"),
+            "default": ("#E0E0E0", "#CCCCCC", "#B0B0B0")
+        }
+
+        bg_color, hover_color, border_color = button_styles.get(button_type, button_styles["default"])
+
+        color_style = f"""
+            QPushButton {{
+                background-color: {bg_color};
+                border-color: {border_color};
+            }}
+            QPushButton:hover {{
+                background-color: {hover_color};
+            }}
+            QPushButton:pressed {{
+                background-color: {border_color};
+                border-bottom-color: {hover_color};
+            }}
+        """
 
         self.setStyleSheet(base_style + color_style)

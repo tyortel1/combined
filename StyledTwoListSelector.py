@@ -33,9 +33,10 @@ class TwoListSelector(QWidget):
         left_label = QLabel(left_title)
         left_label.setStyleSheet("""
             QLabel {
-                color: #2c3e50;
+                color: #333333;
                 font-weight: bold;
-                font-size: 12px;
+                font-weight: 500;
+                font-size: 13px;
                 padding: 5px;
                 background-color: #ecf0f1;
                 border: 1px solid #bdc3c7;
@@ -132,6 +133,8 @@ class TwoListSelector(QWidget):
         button_container = QWidget()
         button_layout = QVBoxLayout(button_container)
         button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
         
         # Button style
         button_style = """
@@ -163,6 +166,8 @@ class TwoListSelector(QWidget):
         
         self.move_all_left = QPushButton()
         self.move_all_left.setIcon(QIcon("icons/arrow_double_left.png"))
+
+  
         
         # Set button styling
         for button in [self.move_all_right, self.move_right, self.move_left, self.move_all_left]:
@@ -180,7 +185,7 @@ class TwoListSelector(QWidget):
         button_layout.setContentsMargins(0, 0, 0, 0)
         
         # Add stretch to position buttons vertically centered with lists
-        button_layout.addStretch(1)
+        button_layout.addStretch(2)
         
         # Add buttons
         button_layout.addWidget(self.move_all_right)

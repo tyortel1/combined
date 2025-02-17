@@ -112,11 +112,11 @@ class DrawingArea(QGraphicsView):
         self.line_items = {}
         self.view_adjusted = False
         self.initial_fit_in_view_done = False 
-        #  Default settings
+        # Default settings
         self.show_UWIs = True
-        self.show_ticks = True  #  Default ON
+        self.show_ticks = True  # Default ON
         self.drainage_visible = True
-        self.drainage_size = 400  #  Default 400
+        self.drainage_size = 400  # Default 400
         self.UWI_width = 25
         self.UWI_opacity = 0.5
         self.line_width = 25
@@ -128,9 +128,9 @@ class DrawingArea(QGraphicsView):
                 # Set background color to very light grey
         light_grey = QColor(240, 240, 240)
         self.setBackgroundBrush(QBrush(light_grey))
-        self.show_UWIs = True  #  Default: Show UWI labels
-        self.show_ticks = True  #  Default: Show zone ticks
-        self.drainage_visible = True  #  NEW: Store drainage visibility state
+        self.show_UWIs = True  # Default: Show UWI labels
+        self.show_ticks = True  # Default: Show zone ticks
+        self.drainage_visible = True  # NEW: Store drainage visibility state
 
 
     def reset_boundaries(self):
@@ -836,7 +836,7 @@ class DrawingArea(QGraphicsView):
             for item in tick_items:
                 item.setOpacity(0.0)
         else:
-            print(" Showing ticks")
+            print("Showing ticks")
             self.show_ticks = True
             for item in tick_items:
                 item.setOpacity(0.5)  # Adjust this value for desired opacity

@@ -1,7 +1,7 @@
 import sys
 import SeisWare
 import pandas as pd
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QComboBox, QSizePolicy, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
+from PySide6.QtWidgets import QApplication, QDialog, QLabel, QComboBox,QWidget, QSizePolicy, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QColor
 import numpy as np
@@ -31,17 +31,27 @@ class DataLoadGridDialog(QDialog):
     def setupUi(self):
         layout = QVBoxLayout(self)
 
+        # Create a container for left-aligned widgets
+        left_layout = QVBoxLayout()
+        left_layout.setAlignment(Qt.AlignLeft)  # Ensures widgets align left
+
         # Project
         self.project_dropdown = StyledDropdown("Project:", parent=self)
-        layout.addWidget(self.project_dropdown)
+        left_layout.addWidget(self.project_dropdown)
 
         # Grid Unit
         self.grid_unit_dropdown = StyledDropdown("Grid Unit:", parent=self)
         self.grid_unit_dropdown.setItems(["Feet", "Meters"])
-        layout.addWidget(self.grid_unit_dropdown)
+        left_layout.addWidget(self.grid_unit_dropdown)
 
         # Add some space
-        layout.addSpacing(20)
+        left_layout.addSpacing(20)
+
+        # Wrap left_layout in a widget and add it to the main layout
+        left_container = QWidget()
+        left_container.setLayout(left_layout)
+        layout.addWidget(left_container, alignment=Qt.AlignLeft)
+
 
         # Depth Grids Selector
         self.depth_grid_selector = TwoListSelector("Available Depth Grids", "Selected Depth Grids")

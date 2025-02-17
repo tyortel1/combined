@@ -1537,13 +1537,13 @@ class Map(QMainWindow, Ui_MainWindow):
         """Open the Map Properties Dialog and apply changes on 'Apply'."""
         dialog = MapPropertiesDialog(self)
 
-        #  Debugging before opening dialog
+        # Debugging before opening dialog
         print(f"📌 Before Dialog Open: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
-        #  Set values in the dialog
+        # Set values in the dialog
         dialog.UWICheckbox.setChecked(self.drawingArea.show_UWIs)
         dialog.ticksCheckbox.setChecked(self.drawingArea.show_ticks)
-        dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  #  Should match drawingArea
+        dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  # Should match drawingArea
         dialog.gradientSizeSpinBox.setValue(self.drawingArea.drainage_size)
 
 
@@ -1552,23 +1552,23 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.lineWidthSlider.setValue(self.drawingArea.line_width)
         dialog.lineOpacitySlider.setValue(int(self.drawingArea.line_opacity * 100))
 
-        #  Print checkbox state BEFORE dialog opens
+        # Print checkbox state BEFORE dialog opens
         print(f"🟡 Dialog Checkbox States BEFORE Opening:")
         print(f"   - Show UWI Labels: {dialog.UWICheckbox.isChecked()}")
         print(f"   - Show Ticks: {dialog.ticksCheckbox.isChecked()}")
         print(f"   - Show Drainage: {dialog.gradientCheckbox.isChecked()}")  # ⬅️ Should be `True`
 
         if dialog.exec():  # User clicked "Apply"
-            print(" Applying Map Properties")
+            print("Applying Map Properties")
 
-            #  Store values in `DrawingArea`
+            # Store values in `DrawingArea`
             self.drawingArea.show_UWIs = dialog.UWICheckbox.isChecked()
             self.drawingArea.show_ticks = dialog.ticksCheckbox.isChecked()
             self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()  # ⬅️ This is flipping to `False`!
             self.drawingArea.drainage_size = dialog.gradientSizeSpinBox.value()
 
-            #  Debug After Applying Values
-            print(f" After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
+            # Debug After Applying Values
+            print(f"After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
             self.drawingArea.toggleTextItemsVisibility(self.drawingArea.show_UWIs)
             self.drawingArea.toggleticksVisibility(self.drawingArea.show_ticks)
@@ -1586,11 +1586,11 @@ class Map(QMainWindow, Ui_MainWindow):
             self.drawingArea.line_opacity = dialog.lineOpacitySlider.value() / 100.0
             self.drawingArea.updateLineOpacity(self.drawingArea.line_opacity)
 
-            #  Force Redraw
+            # Force Redraw
             self.drawingArea.scene.update()
             self.drawingArea.viewport().update()
 
-            print(" Map Properties Updated!")
+            print("Map Properties Updated!")
 
 
 

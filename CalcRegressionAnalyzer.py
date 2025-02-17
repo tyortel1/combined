@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
                                QTableWidget, QTableWidgetItem, QSplitter,
                                QWidget, QLineEdit, QAbstractItemView, QMessageBox, 
                                QComboBox, QGroupBox, QCheckBox, QHeaderView, 
@@ -30,6 +30,7 @@ from StyledDropdown import StyledDropdown
 from StyledDropdown import StyledInputBox
 from StyledTwoListSelector import TwoListSelector
 from StyledButton import StyledButton
+import mplcursors
 
 
 
@@ -40,84 +41,79 @@ class CalcRegressionAnalyzer(QDialog):
         self.setWindowTitle("Well Regression Analysis")
         self.setMinimumWidth(800)
         self.setMinimumHeight(600)
-        
-                # Calculate label widths for consistency
-        labels = [
-            "Regression",
-            "Target Variable",
-            "Description"
-        ]
 
-
+        # Calculate label widths for consistency
+        labels = ["Regression", "Target Variable", "Description"]
         labels_width = StyledDropdown.calculate_label_width(labels)
-        print(labels_width)# Get fixed width
-
 
         # Main layout
         main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignLeft)
 
-        # Regression Selection Group
-        regression_group = QGroupBox("Regression Selection")
+        # Regression Selection Layout
         regression_layout = QVBoxLayout()
+        regression_layout.setAlignment(Qt.AlignLeft)
 
-
-        # Styled Dropdown for Regression Selection
+        # Row 1: Regression Dropdown (Fully Left-Aligned)
+        regression_row = QHBoxLayout()
+        regression_row.setAlignment(Qt.AlignLeft)
         self.regression_dropdown = StyledDropdown("Regression", editable=False)
         self.regression_dropdown.combo.currentIndexChanged.connect(self.regression_changed)
-        regression_layout.addWidget(self.regression_dropdown)
+        regression_row.addWidget(self.regression_dropdown, 0, Qt.AlignLeft)  # Forces left alignment
+        regression_layout.addLayout(regression_row)
 
-        # Styled Dropdown for Target Variable
+        # Row 2: Target Variable Dropdown (Fully Left-Aligned)
+        target_row = QHBoxLayout()
+        target_row.setAlignment(Qt.AlignLeft)
         self.target_dropdown = StyledDropdown("Target Variable", editable=False)
-        regression_layout.addWidget(self.target_dropdown)
+        target_row.addWidget(self.target_dropdown, 0, Qt.AlignLeft)
+        regression_layout.addLayout(target_row)
 
-  
-        # Styled Input Box (Now aligned with dropdowns)
-        
-        self.regression_description = StyledInputBox("Description", default_value="")  
-        self.regression_description.label.setFixedWidth(labels_width) 
-        self.regression_description.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  
-        regression_layout.addWidget(self.regression_description)
+        # Row 3: Description Input Box (Already Left-Aligned)
+        description_row = QHBoxLayout()
+        description_row.setAlignment(Qt.AlignLeft)
+        self.regression_description = StyledInputBox("Description", default_value="")
+        self.regression_description.label.setFixedWidth(labels_width)
+        self.regression_description.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        description_row.addWidget(self.regression_description, 0, Qt.AlignLeft)
+        regression_layout.addLayout(description_row)
 
+        # Add Regression Layout to Main Layout
+        main_layout.addLayout(regression_layout)
 
-
-        regression_group.setLayout(regression_layout)
-        main_layout.addWidget(regression_group)
-
-        # UWI Selection using TwoListSelector
-        uwi_group = QGroupBox("Well Selection")
-        uwi_layout = QVBoxLayout()
-        
-        self.uwi_selector = TwoListSelector(
-            left_title="Available UWIs", 
-            right_title="Selected UWIs"
-        )
-        uwi_layout.addWidget(self.uwi_selector)
-        uwi_group.setLayout(uwi_layout)
-        main_layout.addWidget(uwi_group)
+        # UWI Selection using TwoListSelector (Fully Left-Aligned)
+        uwi_layout = QHBoxLayout()
+        uwi_layout.setAlignment(Qt.AlignLeft)
+        self.uwi_selector = TwoListSelector(left_title="Available UWIs", right_title="Selected UWIs")
+        uwi_layout.addWidget(self.uwi_selector, 0, Qt.AlignLeft)
+        main_layout.addLayout(uwi_layout)
 
         # Button layout at the bottom right
         button_layout = QHBoxLayout()
-        button_layout.addStretch()  # Push buttons to the right
-        
-        # Close Button (Red)
+        button_layout.addStretch()  # Pushes buttons to the right
+
+        # Close Button
         close_button = StyledButton("Close", "close")
-        close_button.setFixedSize(100, 30)  # Standard button size
+        close_button.setFixedSize(100, 30)
         close_button.clicked.connect(self.close)
-        
-        # Run Analysis Button (Green)
+
+        # Run Analysis Button
         btn_run = StyledButton("Run Analysis", "function")
-        btn_run.setFixedSize(120, 30)  # Slightly wider to accommodate text
+        btn_run.setFixedSize(120, 30)
         btn_run.clicked.connect(self.run_analysis)
-        
+
         # Add buttons to layout
         button_layout.addWidget(btn_run)
         button_layout.addWidget(close_button)
-        
+
         # Add button layout to main layout
         main_layout.addLayout(button_layout)
-        
+
         # Load initial data
         self.load_data()
+
+
+
 
     def regression_changed(self, index):
         """Handle regression selection change"""
@@ -378,8 +374,15 @@ class RegressionAnalysisDialog(QDialog):
         self.model_table.setHorizontalHeaderLabels(['Model', 'R2 Score', 'MAE', 'RMSE'])
         self.model_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.model_table.setFixedHeight(300)
-        self.model_table.horizontalHeader().setStretchLastSection(True)
-        self.model_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Adjust column sizes
+        self.model_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Allow manual resizing
+        self.model_table.setColumnWidth(0, 80)  # Model column
+        self.model_table.setColumnWidth(1, 80)   # R2 Score column
+        self.model_table.setColumnWidth(2, 80)   # MAE column
+        self.model_table.setColumnWidth(3, 80)   # RMSE column
+
+        # Prevent last column from taking up all space
+        self.model_table.horizontalHeader().setStretchLastSection(False)
         
         # Style the table
         table_style = """
@@ -525,11 +528,13 @@ class RegressionAnalysisDialog(QDialog):
         self.update_model_comparison(0)
         self.update_feature_importance_table(0)
 
+
+
     def update_model_comparison(self, metric_idx):
-        """Update model comparison plot with a horizontal bar chart"""
+        """Update model comparison plot with a horizontal bar chart and hover effect"""
         self.ax1.clear()
         self.ax1.set_facecolor("black")
-        
+
         # Set all spines and ticks to white
         for spine in self.ax1.spines.values():
             spine.set_color('white')
@@ -543,19 +548,30 @@ class RegressionAnalysisDialog(QDialog):
         colors = plt.cm.viridis(np.linspace(0, 1, len(model_names)))
         bars = self.ax1.barh(model_names, metric_values, color=colors)
 
-        self.ax1.set_xlabel(metric_name, color='white', fontsize=10)
-        self.ax1.set_title('Model Performance Comparison', color='white', fontsize=12, pad=20)
+        # Remove title and x-axis label for a more compact display
+        self.ax1.set_xticks([])
+        self.ax1.set_yticks([])
 
         # Add value labels with better positioning
         for bar, value in zip(bars, metric_values):
             x_pos = value + (max(metric_values) * 0.02)  # Offset for better readability
             self.ax1.text(x_pos, bar.get_y() + bar.get_height()/2.,
-                         f'{value:.3f}', ha='left', va='center', color='white',
-                         fontsize=9)
+                          f'{value:.3f}', ha='left', va='center', color='white',
+                          fontsize=9)
+
+        # Add hover effect with white text
+        cursor = mplcursors.cursor(bars, hover=True)
+        @cursor.connect("add")
+        def on_hover(sel):
+            idx = int(sel.index)
+            sel.annotation.set_text(model_names[idx])  # Show model name on hover
+            sel.annotation.get_bbox_patch().set(facecolor="black", edgecolor="white")  # Black background
+            sel.annotation.set_color("white")  # Ensure text is white
 
         # Adjust layout to prevent text cutoff
         self.fig1.tight_layout()
         self.canvas1.draw()
+
 
     def normalize_importance_to_weights(self, importance_dict):
         """Convert feature importances to weights that sum to 1.0"""
@@ -614,63 +630,60 @@ class RegressionAnalysisDialog(QDialog):
         self.update_feature_importance(model_idx)
 
     def update_feature_importance(self, model_idx, use_weights=True):
-        """Update feature importance plot for selected model"""
+        """Update feature importance plot for selected model with hover effect"""
         self.ax2.clear()
         self.ax2.set_facecolor("black")
-        
+    
         # Set all spines and ticks to white
         for spine in self.ax2.spines.values():
             spine.set_color('white')
         self.ax2.tick_params(axis='both', colors='white')
 
         model_importance = self.results['Feature Importance'][model_idx]
-        model_name = self.results['Model'][model_idx]
 
         if use_weights:
-            # Convert to weights
             values = self.normalize_importance_to_weights(model_importance)
-            title_suffix = "Weights"
-            xlabel = "Feature Weight (%)"
         else:
             values = model_importance
-            title_suffix = "Importance"
-            xlabel = "Feature Importance"
 
         # Sort by value
-        sorted_values = dict(sorted(values.items(),
-                                  key=lambda x: x[1],
-                                  reverse=True))
+        sorted_values = dict(sorted(values.items(), key=lambda x: x[1], reverse=True))
 
         features = list(sorted_values.keys())
-        if use_weights:
-            importance_values = [v * 100 for v in sorted_values.values()]  # Convert to percentages
-        else:
-            importance_values = list(sorted_values.values())
+        importance_values = [v * 100 if use_weights else v for v in sorted_values.values()]
 
         # Create horizontal bars with a color gradient
         colors = plt.cm.viridis(np.linspace(0, 1, len(features)))
         bars = self.ax2.barh(range(len(features)), importance_values, color=colors)
 
-        self.ax2.set_yticks(range(len(features)))
-        self.ax2.set_yticklabels(features, color='white')
-        self.ax2.set_xlabel(xlabel, color='white', fontsize=10)
-        self.ax2.set_title(f'Feature {title_suffix} ({model_name})', color='white', fontsize=12, pad=20)
+        # Remove title and x-axis label for a more compact display
+        self.ax2.set_xticks([])
+        self.ax2.set_yticks([])
 
         # Add value labels with better positioning
         for bar, value in zip(bars, importance_values):
-            if use_weights:
-                label = f"{value:.1f}%"
-            else:
-                label = f"{value:.3f}"
-                
+            label = f"{value:.1f}%" if use_weights else f"{value:.3f}"
             x_pos = value + (max(importance_values) * 0.02)
             self.ax2.text(x_pos, bar.get_y() + bar.get_height()/2.,
-                         label, ha='left', va='center', color='white',
-                         fontsize=9)
+                          label, ha='left', va='center', color='white',
+                          fontsize=9)
+
+# Add hover effect with white text
+        # Add hover effect with white text
+        cursor = mplcursors.cursor(bars, hover=True)
+        @cursor.connect("add")
+        def on_hover(sel):
+            idx = int(sel.index)
+            sel.annotation.set_text(features[idx])  # Display feature name on hover
+            sel.annotation.get_bbox_patch().set(facecolor="black", edgecolor="white")  # Black background
+            sel.annotation.set_color("white")  # Set annotation text color to white
+
+
 
         # Adjust layout to prevent text cutoff
         self.fig2.tight_layout()
         self.canvas2.draw()
+
 
     def save_to_excel(self):
         """Export model performance and feature importance tables to Excel"""

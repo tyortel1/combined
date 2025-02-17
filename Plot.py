@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import plotly.graph_objs as go
 import json
@@ -6,7 +6,7 @@ import json
 import plotly.offline as py_offline
 from PySide6.QtGui import QIcon, QIntValidator, QColor, QPainter, QBrush, QPixmap, QLinearGradient, QGuiApplication
 from PySide6.QtWidgets import (
-    QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, 
+    QApplication, QVBoxLayout,QSpacerItem,QSizePolicy, QHBoxLayout,QGraphicsDropShadowEffect, QPushButton, QSlider, QSpinBox, 
     QLineEdit, QComboBox, QDialog, QSizePolicy, QLabel, QFrame, QMessageBox
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -19,6 +19,9 @@ from PySide6.QtCore import Signal, QtMsgType, Qt
 from scipy import interpolate
 from PySide6.QtCore import QUrl
 from scipy.ndimage import gaussian_filter
+from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget
+from StyledButton import StyledButton
+from StyledColorbar import StyledColorBar 
 
 
 
@@ -29,6 +32,8 @@ class Plot(QDialog):
     
     def __init__(self, UWI_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_UWI, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree,db_manager, parent=None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint | Qt.Window)
+
         self.main_app = parent
         self.UWI_list = UWI_list
         self.directional_surveys_df = directional_surveys_df
@@ -55,7 +60,7 @@ class Plot(QDialog):
         self.selected_zone = None
         self.tick_size_value = 50
         self.fig = go.Figure()
-        self.palette_name = 'Rainbow'
+
         self.next_well = False
         self.db_manager = db_manager
      
@@ -65,7 +70,7 @@ class Plot(QDialog):
         self.init_ui()
         
         # Set initial size and position
-        self.resize(1200, 800)  # Set initial size (width, height)
+        self.resize(1200, 1400)  # Set initial size (width, height)
 
         # Check if there are multiple screens
         app = QGuiApplication.instance() or QGuiApplication([])
@@ -85,95 +90,209 @@ class Plot(QDialog):
 
     def init_ui(self):
 
-        self.UWI_list = sorted(self.UWI_list)
-        # Create the dropdown for well selection
-        self.well_selector = QComboBox()
-        self.well_selector.addItems(self.UWI_list)
+        labels = [
+            "Well",
+            "Zone",
+            "Attribute",
+            "Color Bar",  # Add this
+            "Tick Size",
+            "Max TVD",
+            "Min TVD"
+        ]
+        StyledDropdown.calculate_label_width(labels)
 
+
+
+        self.setStyleSheet("""
+                QDialog {
+                    background-color: white;
+                }
+                QLabel {
+                    color: black;
+                }
+                QPushButton {
+                    background-color: white;
+                    border: none;
+                }
+            """)
+
+
+
+        def create_dropdown(label):
+            dropdown = StyledDropdown(label)
+            dropdown.setStyleSheet("""
+                QLabel, QComboBox {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return dropdown
+
+        def create_section(frame_name, fixed_height=None):
+            frame = QFrame()
+            frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
+            frame.setStyleSheet("""
+                QFrame {
+                    background-color: white;
+                    border: 2px solid #A0A0A0;
+                    border-radius: 6px;
+                    padding: 4px;
+                }
+            """)
+            if fixed_height:
+                frame.setFixedHeight(fixed_height)
+                frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setBlurRadius(10)
+            shadow.setXOffset(3)
+            shadow.setYOffset(3)
+            shadow.setColor(QColor(0, 0, 0, 100))
+            frame.setGraphicsEffect(shadow)
+
+            layout = QVBoxLayout(frame)
+            layout.setSpacing(1)
+            layout.setContentsMargins(5, 5, 5, 5)
+            layout.setAlignment(Qt.AlignTop)
+            return frame, layout
+
+        def create_input(label, default_value='', validator=None):
+            input_box = StyledInputBox(label, default_value, validator)
+            input_box.label.setFixedWidth(StyledDropdown.label_width)  # Use the same width
+            input_box.setStyleSheet("""
+                QLabel {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return input_box
+
+        def create_colorbar():
+            colorbar = StyledColorBar("Color Bar")  # Make sure to pass the label text
+            colorbar.colorbar_dropdown.label.setFixedWidth(StyledDropdown.label_width)  # Use the calculated width
+    
+            # Apply consistent styling
+            colorbar.setStyleSheet("""
+                QLabel {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return colorbar
+
+
+
+
+        # Well and Navigation Section
+        wellFrame, wellLayout = create_section("Well Navigation", fixed_height=90)
+    
+        # Well Selector
+        self.well_selector = create_dropdown("Well")
+        self.well_selector.addItems(self.UWI_list)
         current_index = self.UWI_list.index(self.current_UWI)
         self.well_selector.setCurrentIndex(current_index)
-        self.well_selector.currentIndexChanged.connect(self.on_well_selected)
+        self.well_selector.combo.currentIndexChanged.connect(self.on_well_selected)
+        # Navigation Buttons Layout
 
-        # Create navigation buttons
-        self.next_button = QPushButton('Next')
-        self.prev_button = QPushButton('Previous')
-        self.next_button.clicked.connect(self.on_next)
+        self.prev_button = QPushButton()
+        self.next_button = QPushButton()
+
+        # Load icons
+        prev_icon = QIcon(os.path.join(os.path.dirname(__file__), 'Icons', 'arrow_left.ico'))
+        next_icon = QIcon(os.path.join(os.path.dirname(__file__), 'Icons', 'arrow_right.ico'))
+
+        self.prev_button.setIcon(prev_icon)
+        self.next_button.setIcon(next_icon)
+
+        self.prev_button.setFixedSize(40, 40)
+        self.next_button.setFixedSize(40, 40)
+
+        self.prev_button.setText('')
+        self.next_button.setText('')
+
+        # Connect existing methods
         self.prev_button.clicked.connect(self.on_prev)
+        self.next_button.clicked.connect(self.on_next)
 
-        # Create dropdowns for Select Zone, Select Attribute Filter, and Select Zone Attribute
-        self.zone_selector = QComboBox()
-        self.zone_attribute_selector = QComboBox()
+        # Create a horizontal layout for buttons
+      # Create a horizontal layout for buttons
+        button_layout = QHBoxLayout()
 
-        # Color range display
-        self.color_range_display = QLabel()
-        self.color_range_display.setFixedHeight(50)
-        self.color_range_display.setFixedWidth(220)
-        self.color_range_display.setStyleSheet("background-color: white; border: 1px solid black;")
+        # Add spacer before the first button (20 units)
+        spacer_20 = QSpacerItem(0, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        button_layout.addItem(spacer_20)  # Add the 20-unit spacer first
 
-        # Create the Color Palette dropdown
-        self.palette_selector = QComboBox()
-        self.palette_selector.currentIndexChanged.connect(self.update_color_range)
+        # Add the first button
+        button_layout.addWidget(self.prev_button)
 
-        # Create the text box for tick size
-        self.tick_size_input = QLineEdit()
-        self.tick_size_input.setText('50')  # Default value
+        # Add spacer before the second button (40 units)
+        spacer_40 = QSpacerItem(0, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        button_layout.addItem(spacer_40)  # Add the 40-unit spacer before the second button
+
+        # Add the second button
+        button_layout.addWidget(self.next_button)
+
+        button_layout.addStretch()  # This ensures buttons are centered or aligned as needed
+
+        # Add to layout under the well dropdown
+        wellLayout.addWidget(self.well_selector)
+        wellLayout.addLayout(button_layout)
+
+
+
+
+        # Zone and Attribute Section
+        zoneFrame, zoneLayout = create_section("Zone and Attribute", fixed_height=170)
+    
+        # Zone Selector
+        self.zone_selector = create_dropdown("Zone")
+        self.zone_attribute_selector = create_dropdown("Attribute")
+        self.color_colorbar = create_colorbar()
+
+
+        # Add widgets to zone frame
+        zoneLayout.addWidget(self.zone_selector)
+        zoneLayout.addWidget(self.zone_attribute_selector)
+        zoneLayout.addWidget(self.color_colorbar)
+       
+        # Tick Settings Section
+
+        tickFrame, tickLayout = create_section("Tick Settings", fixed_height=110)
+
+        # Tick Size Input
+        self.tick_size_input = create_input("Tick Size", default_value='50')
         self.tick_size_input.editingFinished.connect(self.change_tick_size_from_input)
 
-        self.max_tvd_spinbox = QSpinBox()
-        self.max_tvd_spinbox.setRange(-10000, 10000)  # Adjust based on your data range
-        self.max_tvd_spinbox.setSingleStep(100)
+        # TVD Range Inputs
+        tvd_validator = QIntValidator()
 
-        self.min_tvd_spinbox = QSpinBox()
-        self.min_tvd_spinbox.setRange(-10000, 10000)  # Adjust based on your data range
-        self.min_tvd_spinbox.setSingleStep(100)
+        # TVD Range Inputs with integer validation
+        self.max_tvd_input = create_input("Max TVD", default_value='0', validator=tvd_validator)
+        self.min_tvd_input = create_input("Min TVD", default_value='0', validator=tvd_validator)
 
-        # Connect the spinboxes to update the plot when values change
-        self.min_tvd_spinbox.editingFinished.connect(self.plot_current_well)
-        self.max_tvd_spinbox.editingFinished.connect(self.plot_current_well)
+        # Connect inputs to update plot
+        self.min_tvd_input.editingFinished.connect(self.plot_current_well)
+        self.max_tvd_input.editingFinished.connect(self.plot_current_well)
 
-        # Layout for well selector
-        well_selector_layout = QVBoxLayout()
-        well_selector_layout.addWidget(self.well_selector)
+        # Add widgets to tick frame
+        tickLayout.addWidget(self.tick_size_input)
+        tickLayout.addWidget(self.max_tvd_input)
+        tickLayout.addWidget(self.min_tvd_input)
 
-        # Layout for Previous and Next buttons side by side
-        nav_buttons_layout = QHBoxLayout()
-        nav_buttons_layout.addWidget(self.prev_button)
-        nav_buttons_layout.addWidget(self.next_button)
-
-        # Layout for dropdowns above the color palette
-        dropdowns_layout = QVBoxLayout()
-        dropdowns_layout.addWidget(QLabel("Select Zone:"))
-        dropdowns_layout.addWidget(self.zone_selector)
-        dropdowns_layout.addWidget(QLabel("Select Zone Attribute:"))
-        dropdowns_layout.addWidget(self.zone_attribute_selector)
-        dropdowns_layout.addWidget(QLabel("Color Range:"))
-        dropdowns_layout.addWidget(self.color_range_display)
-
-        # Layout for color palette selector and tick size
-        palette_layout = QVBoxLayout()
-        palette_layout.addWidget(QLabel("Select Palette:"))
-        palette_layout.addWidget(self.palette_selector)
-        palette_layout.addWidget(QLabel("Tick Size (TVD):"))
-        palette_layout.addWidget(self.tick_size_input)
-
-        # Layout for TVD range selectors with labels above them
-        tvd_layout = QVBoxLayout()
-        tvd_layout.addWidget(QLabel("Max TVD:"))  # Label for max TVD
-        tvd_layout.addWidget(self.max_tvd_spinbox)
-        tvd_layout.addWidget(QLabel("Min TVD:"))  # Label for min TVD
-        tvd_layout.addWidget(self.min_tvd_spinbox)
-        
-
-        # Layout for controls
+        # Control Layout
         control_layout = QVBoxLayout()
-        control_layout.addLayout(well_selector_layout)
-        control_layout.addLayout(nav_buttons_layout)
-        control_layout.addLayout(dropdowns_layout)
-        control_layout.addLayout(palette_layout)
-        control_layout.addLayout(tvd_layout)  # Add TVD range to the control layout
+        control_layout.addWidget(wellFrame)
+        control_layout.addWidget(zoneFrame)
+        control_layout.addWidget(tickFrame)
         control_layout.addStretch()
 
-        # Create the plot layout
+        # Plot Layout
         self.plot_widget = QWebEngineView()
         self.plot_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.plot_layout = QVBoxLayout()
@@ -185,26 +304,14 @@ class Plot(QDialog):
         main_layout.addLayout(control_layout, stretch=1)
         main_layout.addLayout(self.plot_layout, stretch=7)
         self.setLayout(main_layout)
-        self.setWindowTitle("Zone Viewer")
 
-        # Set window icon
-        self.setWindowIcon(QIcon("icons/ZoneAnalyzer.png"))
+        self.zone_selector.combo.currentIndexChanged.connect(self.zone_selected)
+        self.zone_attribute_selector.combo.currentIndexChanged.connect(self.attribute_selected)
+        self.zone_attribute_selector.combo.setEnabled(False)
 
-        # Initial plot
-        self.zone_selector.currentIndexChanged.connect(self.zone_selected)
-        self.zone_attribute_selector.currentIndexChanged.connect(self.attribute_selected)
-        self.palette_selector.currentIndexChanged.connect(self.palette_selected)
-
-        self.zone_attribute_selector.setEnabled(False)
-        self.populate_color_bar_dropdown()
         self.populate_zone_names()
-        #self.change_tick_size_from_input()
         self.set_default_tvd_range()
         self.plot_current_well()
-        
-
-
-
 
     def set_default_tvd_range(self):
         depth_grids = self.grid_info_df[self.grid_info_df['Type'] == 'Depth']
@@ -212,14 +319,15 @@ class Plot(QDialog):
         if not depth_grids.empty:
             min_z = depth_grids['min_z'].min()
             max_z = depth_grids['max_z'].max()
-        
+    
             # Set default TVD range with +/- 50 adjustment
-            self.min_tvd_spinbox.setValue(min_z - 50)
-            self.max_tvd_spinbox.setValue(max_z + 100)
+            self.min_tvd_input.setText(str(min_z - 50))
+            self.max_tvd_input.setText(str(max_z + 100))
         else:
             # Set some sensible defaults if no depth grids are found
-            self.min_tvd_spinbox.setValue(-100)
-            self.max_tvd_spinbox.setValue(1000)
+            self.min_tvd_input.setText(str(-100))
+            self.max_tvd_input.setText(str(1000))
+
 
     def palette_selected(self):
         if self.next_well == False:
@@ -239,7 +347,7 @@ class Plot(QDialog):
 
     def populate_zone_names(self):
 
-
+        
         self.zone_selector.blockSignals(True)
         # Clear existing items
         self.zone_selector.clear()
@@ -268,6 +376,8 @@ class Plot(QDialog):
         finally:
             # Unblock signals after populating the dropdown
             self.zone_selector.blockSignals(False)
+            self.zone_attribute_selector.combo.setEnabled(True)
+
 
 
     def populate_zone_attribute(self):
@@ -334,130 +444,21 @@ class Plot(QDialog):
         self.populate_zone_attribute()
 
 
-    def populate_color_bar_dropdown(self):
-        """Populate the color bar dropdowns with file names from the Palettes directory."""
-        current_dir = os.path.dirname(__file__)
-        palettes_path = os.path.join(current_dir, 'Palettes')
-    
-        # List all .pal files in the Palettes directory
-        color_bar_files = [f.split('.')[0] for f in os.listdir(palettes_path) if f.endswith('.pal')]
-        self.palette_selector.blockSignals(True)
-    
-        try:
-            # Clear existing items in the palette selector
-            self.palette_selector.clear()
 
-            # Add color bar files to the dropdown
-            self.palette_selector.addItems(color_bar_files)
-
-            # Set default selection to 'Rainbow' if available
-            if 'Rainbow' in color_bar_files:
-                self.palette_selector.setCurrentText('Rainbow')
-                self.update_color_range()  # Ensure color range is updated for default palette
-
-        except Exception as e:
-            print(f"Error populating color bar dropdown: {e}")
-          
-
-        finally:
-            # Re-enable signals
-            self.palette_selector.blockSignals(False)
-
-        self.load_color_palette()
-
-
-
-    def load_color_palette(self):
-        
-        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        file_path = os.path.join(palettes_dir, f"{self.palette_name}.pal")
-        color_palette = []
-
-        try:
-            with open(file_path, 'r') as file:
-                lines = file.readlines()
-                for line in lines:
-                    if line.strip() and not line.strip().startswith(('struct', 'Name', 'Colors', '}', 'ColorPalette')):
-                        try:
-                            r, g, b = map(int, line.strip().split())
-                            color_palette.append(QColor(r, g, b))
-                        except ValueError:
-                            continue
-        except Exception as e:
-            print(f"Error loading color palette: {e}")
-
-        return color_palette
 
     def update_color_range(self):
-        """Update the color range display based on the selected palette."""
-        self.palette_name = self.palette_selector.currentText()
-        color_palette = self.load_color_palette()
-        self.display_color_range(color_palette)
-
-    def display_color_range(self, color_palette):
-        """Display the color range gradient with dashes and values above it."""
-        if not color_palette or self.min_attr is None or self.max_attr is None:
-            print("Unable to display color range.")
-            self.color_range_display.setPixmap(QPixmap(self.color_range_display.size()))
-            return
-
-        pixmap = QPixmap(self.color_range_display.size())
-        pixmap.fill(Qt.white)
-
-        painter = QPainter(pixmap)
+        """Update the color range display and refresh the plot based on the selected palette from StyledColorBar."""
+        self.palette_name = self.color_colorbar.colorbar_dropdown.currentText()
     
-        # Calculate dimensions
-        margin = 5
-        dash_height = 5
-        text_height = 15
-        color_bar_height = 20
-        total_height = margin + text_height + dash_height + color_bar_height + margin
-        color_bar_y = total_height - color_bar_height - margin
-        edge_padding = 10  # Increased padding
+        # Update the color range display
+        self.color_colorbar.display_color_range(self.min_attr, self.max_attr)
 
-        # Draw color gradient (left to right: min to max)
-        gradient = QLinearGradient(edge_padding, color_bar_y, 
-                                   self.color_range_display.width() - edge_padding, color_bar_y)
-        for i, color in enumerate(color_palette):
-            gradient.setColorAt(i / (len(color_palette) - 1), color)
+        # Force a replot to apply new colors
+        self.plot_current_well()
 
-        painter.setBrush(QBrush(gradient))
-        painter.drawRect(edge_padding, color_bar_y, 
-                         self.color_range_display.width() - 2 * edge_padding, color_bar_height)
 
-        # Prepare for drawing text and dashes
-        painter.setPen(Qt.black)
-        font = painter.font()
-        font.setPointSize(8)
-        painter.setFont(font)
 
-        # Calculate intermediate values
-        num_intervals = 4
-        interval = (self.max_attr - self.min_attr) / num_intervals
-        values = [self.min_attr + i * interval for i in range(num_intervals + 1)]
 
-        for i, value in enumerate(values):
-            x = int(i * (self.color_range_display.width() - 2 * edge_padding) / num_intervals) + edge_padding
-        
-            # Draw dash
-            painter.drawLine(x, color_bar_y - dash_height, x, color_bar_y)
-        
-            # Draw value
-            text = f"{value:.2f}"
-            text_width = painter.fontMetrics().horizontalAdvance(text)
-        
-            # Adjust text position for edge values
-            if i == 0:  # Leftmost value
-                text_x = edge_padding
-            elif i == num_intervals:  # Rightmost value
-                text_x = self.color_range_display.width() - text_width - edge_padding
-            else:
-                text_x = x - text_width / 2
-        
-            painter.drawText(text_x, margin + text_height, text)
-
-        painter.end()
-        self.color_range_display.setPixmap(pixmap)
 
 
     def plot_current_well(self):
@@ -558,8 +559,17 @@ class Plot(QDialog):
                     colorscale='RdBu',
                     zmin=-max_amplitude,
                     zmax=max_amplitude,
-                    showscale=True
+                    showscale=False  # Keep colorbar
+                    #colorbar=dict(
+                    #    len=0.3,  # ⬅️ 30% of default height
+                    #    thickness=10,  # ⬅️ Make it thinner
+                    #    x=1.02,  # ⬅️ Slightly move to the right
+                    #    y=0.5,  # ⬅️ Center it vertically
+                    #    title="Amplitude",  # Optional: Label for colorbar
+                    #    titleside="right"
+                    #)
                 ))
+
 
             # Now plot the grid data over the seismic data (optimized with vectorization)
             well_coords_grid = np.column_stack((self.current_well_data['X Offset'], self.current_well_data['Y Offset']))
@@ -619,7 +629,8 @@ class Plot(QDialog):
                         mode='lines',
                         name=grid_name,
                         line=dict(color=grid_color_rgb),
-                        fill=None
+                        fill=None,  # Added missing comma
+                        showlegend=False  # Turn off legend for this trace
                     ))
 
                     if i < len(sorted_grids) - 1:
@@ -637,7 +648,7 @@ class Plot(QDialog):
                     print(f"Error processing grid {grid_name}: {e}")
 
             # Plot well path as black lines
-            fig.update_yaxes(range=[self.min_tvd_spinbox.value(), self.max_tvd_spinbox.value()])
+            fig.update_yaxes(range=[float(self.min_tvd_input.text()), float(self.max_tvd_input.text())])
 
             # Store the figure object as an instance variable
             self.fig = fig
@@ -718,18 +729,6 @@ class Plot(QDialog):
 
 
 
-    def get_color(self, value, min_val, max_val):
-        self.palette_name = self.palette_selector.currentText()
-        color_palette = self.load_color_palette()
-    
-        if min_val == max_val:
-            normalized = 0.5
-        else:
-            normalized = (value - min_val) / (max_val - min_val)
-    
-        index = int(normalized * (len(color_palette) - 1))
-        return color_palette[index]
-
     def update_zone_ticks(self):
         if self.selected_zone is None or self.selected_zone == 'Select Zone':
             print("No valid zone selected for tick update.")
@@ -738,35 +737,24 @@ class Plot(QDialog):
         try:
             tick_traces = []
             zone_fills = []
-    
-            # Get the current UWI
-    
 
-            # Get the selected attribute
             attribute = self.zone_attribute_selector.currentText()
             color_zones = attribute != "Select Zone Attribute"
 
-
             # Filter the master_df for the current UWI and selected zone
             zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI]
-
-            print(zone_data)
-
-
+        
             if zone_data.empty:
                 print(f"No data found for UWI {self.current_UWI} and zone {self.selected_zone}")
                 return
 
-
-
             if color_zones:
                 if attribute not in zone_data.columns:
                     print(f"Selected attribute '{attribute}' not found in the data.")
-                    return
-                # Calculate min and max of the attribute for color scaling
+                    color_zones = False  # Prevent it from blocking tick drawing
+
                 self.min_attr = zone_data[attribute].min()
                 self.max_attr = zone_data[attribute].max()
-  
 
             for _, zone_row in zone_data.iterrows():
                 top_md = zone_row['Top_Depth']
@@ -776,9 +764,9 @@ class Plot(QDialog):
                 base_cum_dist = self.interpolate_value(base_md, 'Cumulative Distance')
                 top_tvd = self.interpolate_value(top_md, 'TVD')
                 base_tvd = self.interpolate_value(base_md, 'TVD')
-        
+
                 if all(v is not None for v in [top_cum_dist, base_cum_dist, top_tvd, base_tvd]):
-                    # Add ticks
+                    # Always add tick marks, even if no attribute is selected
                     for cum_dist, tvd, name in [(top_cum_dist, top_tvd, 'Top'), (base_cum_dist, base_tvd, 'Base')]:
                         tick_traces.append(go.Scatter(
                             x=[cum_dist, cum_dist],
@@ -788,29 +776,23 @@ class Plot(QDialog):
                             showlegend=False,
                             hoverinfo='skip'
                         ))
-            
-                    if color_zones:
-                        # Check if the attribute exists in zone_row
-                        if attribute not in zone_row.index:
-                            print(f"Attribute '{attribute}' not found in zone row.")
-                        
-                            continue
 
-                        # Add colored fill between top and base
+                    if color_zones:
                         attribute_value = zone_row[attribute]
-                        color = self.get_color(attribute_value, self.min_attr, self.max_attr)
+                        color = self.color_colorbar.map_value_to_color(attribute_value, self.min_attr, self.max_attr, self.color_colorbar.selected_color_palette)
+
                         zone_fills.append(go.Scatter(
-                        x=[top_cum_dist, base_cum_dist],
-                        y=[top_tvd, base_tvd],
-                        mode='lines',
-                        line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value/3)),
-                        name=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}',
-                        showlegend=False,
-                        hoverinfo='text',
-                        text=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}'
-                    ))
+                            x=[top_cum_dist, base_cum_dist],
+                            y=[top_tvd, base_tvd],
+                            mode='lines',
+                            line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value/3)),
+                            name=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}',
+                            showlegend=False,
+                            hoverinfo='text',
+                            text=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}'
+                        ))
                     else:
-                        # Just add a line connecting top and base without fill
+                        # Always add zone boundary even if no attribute is selected
                         tick_traces.append(go.Scatter(
                             x=[top_cum_dist, base_cum_dist],
                             y=[top_tvd, base_tvd],
@@ -818,32 +800,34 @@ class Plot(QDialog):
                             line=dict(color='blue', width=2, dash='dash'),
                             name=f'{self.selected_zone} Boundary'
                         ))
+
                 else:
                     print(f"Unable to create visualization for {self.selected_zone} due to missing interpolated values")
 
             if tick_traces or zone_fills:
                 self.fig.add_traces(zone_fills)
                 self.fig.add_traces(tick_traces)
+
                 html_content = py_offline.plot(self.fig, include_plotlyjs='cdn', output_type='div')
                 self.plot_widget.setHtml(html_content)
 
-            file_path = os.path.join(os.getcwd(), "plot.html")
-            py_offline.plot(self.fig, filename=file_path, auto_open=False)
-          
-            url = QUrl.fromLocalFile(file_path)
-            self.plot_widget.load(url)
-          
+                file_path = os.path.join(os.getcwd(), "plot.html")
+                py_offline.plot(self.fig, filename=file_path, auto_open=False)
+                self.plot_widget.load(QUrl.fromLocalFile(file_path))
+
         except Exception as e:
             print(f"Error updating zone ticks and fills: {str(e)}")
             print("Zone data columns:", zone_data.columns.tolist())
             import traceback
             traceback.print_exc()
 
+
     def on_well_selected(self, index):
         try:
             selected_UWI = self.well_selector.currentText()  # Get UWI directly from the selector
             if selected_UWI in self.UWI_list:
                 self.current_UWI = selected_UWI
+                self.current_index = index  # Add this line
                 self.plot_current_well()  # Update the plot for the selected UWI
             else:
                 print(f"Selected UWI {selected_UWI} not found in UWI list.")
@@ -908,13 +892,7 @@ class Plot(QDialog):
       
         self.main_app.handle_hover_event(self.current_UWI)
 
-    def on_well_selected(self, index):
-        try:
-            self.current_index = index
-            if self.next_well ==False:
-                self.plot_current_well()
-        except Exception as e:
-            print(f"Error in on_well_selected: {e}")
+
 
 
     def show_error_message(self, message):

@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal
 
 
 
+
 class StyledBaseWidget(QWidget):
     label_width = 120  # Default width
     
@@ -35,20 +36,27 @@ class StyledBaseWidget(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Common Label
+        # Updated Label Style
         self.label = QLabel(label_text, self)
         self.label.setStyleSheet("""
             QLabel {
-                color: #2c3e50;
-                font-weight: bold;
-                font-size: 12px;
+                color: #333333;
+                font-weight: 500;
+                font-size: 13px;
                 padding: 5px;
             }
         """)
         self.label.setFixedWidth(self.label_width)
-        
+    
         self.input_widget = input_widget
         self.input_widget.setFixedWidth(200)
+    
+        layout.addWidget(self.label)
+        layout.addWidget(self.input_widget)
+        layout.addStretch()
+        layout.setAlignment(Qt.AlignLeft)
+
+        self.selected_color_palette = []
         
         layout.addWidget(self.label)
         layout.addWidget(self.input_widget)
@@ -80,29 +88,61 @@ class StyledDropdown(StyledBaseWidget):
         super().__init__(label_text, self.combo, parent)
 
     def setItems(self, items):
+        """Set all items in the dropdown, clearing existing ones."""
         self.combo.clear()
         self.combo.addItems(items)
 
+    def addItem(self, item):
+        """Add a single item to the dropdown."""
+        self.combo.addItem(item)
+
+    def addItems(self, items):
+        """Add multiple items to the dropdown."""
+        self.combo.addItems(items)
+
     def currentText(self):
+        """Get the current selected text."""
         return self.combo.currentText()
 
     def setCurrentText(self, text):
+        """Set the current text."""
         self.combo.setCurrentText(text)
 
     def currentIndex(self):
+        """Get the current selected index."""
         return self.combo.currentIndex()
 
     def setCurrentIndex(self, index):
+        """Set the current index."""
         self.combo.setCurrentIndex(index)
 
     def clear(self):
+        """Clear all items from the dropdown."""
         self.combo.clear()
 
+    def count(self):
+        """Get the number of items in the dropdown."""
+        return self.combo.count()
+
+    def itemText(self, index):
+        """Get the text at the specified index."""
+        return self.combo.itemText(index)
+
+    def blockSignals(self, block):
+        """Block or unblock signals from the combo box."""
+        return self.combo.blockSignals(block)
+
+    def currentIndexChanged(self):
+        """Get the currentIndexChanged signal from the combo box."""
+        return self.combo.currentIndexChanged
 
 
+
+
+        
 class StyledInputBox(StyledBaseWidget):
     editingFinished = Signal()
-
+    
     def __init__(self, label_text, default_value="", validator=None, parent=None):
         print(label_text)
         self.input_field = QLineEdit()
@@ -118,28 +158,18 @@ class StyledInputBox(StyledBaseWidget):
             }
         """)
         self.input_field.setText(str(default_value))
-        self.input_field.setMinimumWidth(250)  # Ensure it’s wide enough
-
+        # Remove the minimum width setting - let base widget handle it
+        
         if validator:
             self.input_field.setValidator(validator)
-
+            
         super().__init__(label_text, self.input_field, parent)
-
-        # ✅ Read the updated label width from `StyledBaseWidget.label_width`
-        updated_width = StyledBaseWidget.label_width  
-        print(f"StyledInputBox applying label width: {updated_width}")  # Debugging print
-        self.label.setFixedWidth(updated_width)  # ✅ Apply the correct width
-
         self.input_field.editingFinished.connect(self.editingFinished.emit)
-
     def text(self):
         return self.input_field.text()
 
     def setText(self, text):
         self.input_field.setText(text)
-
-
-
 
 
 

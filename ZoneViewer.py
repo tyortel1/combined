@@ -1001,10 +1001,50 @@ class ZoneViewerDialog(QDialog):
 
 
     def open_decision_tree_dialog(self):
-        dialog = DecisionTreeDialog(self.df, self)
-        dialog.criteriaGenerated.connect(self.handle_new_criteria)
-        dialog.exec_()
+        try:
+            print("Opening Decision Tree Dialog...")
 
+                        # Check if DataFrame is valid
+            if self.df is None or self.df.empty:
+                print("Warning: Empty or None DataFrame passed")
+                QMessageBox.warning(self, "Error", "No data available")
+                return
+        
+            # Check if database manager is valid
+            if self.db_manager is None:
+                print("Warning: No database manager provided")
+                QMessageBox.warning(self, "Error", "Database manager not initialized")
+                return
+
+
+            dialog = DecisionTreeDialog(
+                master_df=self.df,
+                db_manager=self.db_manager,
+                parent=self
+            )
+
+            if dialog.exec_() == QDialog.Accepted:
+                criteria_name = dialog.criteria_name
+
+                # Fetch updated criteria names from the database
+                highlight_names = [self.highlight_criteria_dropdown.itemText(i) for i in range(self.highlight_criteria_dropdown.count())]
+                filter_names = [self.filter_criteria_dropdown.itemText(i) for i in range(self.filter_criteria_dropdown.count())]
+
+                # Ensure dropdowns contain the new criteria name
+                if criteria_name not in highlight_names:
+                    self.highlight_criteria_dropdown.addItem(criteria_name)
+
+                if criteria_name not in filter_names:
+                    self.filter_criteria_dropdown.addItem(criteria_name)
+
+                # Reload data if the selected criteria matches the newly added one
+                if self.highlight_criteria_dropdown.currentText() == criteria_name or \
+                   self.filter_criteria_dropdown.currentText() == criteria_name:
+                    self.load_data()
+        
+        
+        except Exception as e:
+            print(f"Error in decision tree dialog: {e}")
 
 
 
@@ -1071,7 +1111,7 @@ class ZoneViewerDialog(QDialog):
         # Fetch criteria from the database instead of using self.df_criteria
         self.filter_criteria = self.db_manager.load_criteria_by_name(selected_filter)
 
-        if not self.criteria:
+        if not self.filter_criteria:
             print(f"No criteria found for name: '{selected_filter}'")
             return
 
@@ -1425,18 +1465,6 @@ class ZoneViewerDialog(QDialog):
 
 
 
-    # Usage within your main application
-        # Usage within your main application
-    def open_decision_tree_dialog(self):
-        dialog = DecisionTreeDialog(self.df, self)
-    
-        # Remove or comment out the line trying to connect to dataUpdated
-        # dialog.dataUpdated.connect(self.update_dataframe)  # Remove this line
-    
-        # Connect only the criteriaGenerated signal
-        dialog.criteriaGenerated.connect(self.handle_new_criteria)
-    
-        dialog.show()
 
     #def apply_saved_filter(self):
     #    selected_filter = self.filter_criteria_dropdown.currentText()

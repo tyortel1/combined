@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QDialog, QListWidget, QVBoxLayout, QTextEdit, 
+﻿from PySide6.QtWidgets import (QDialog, QListWidget, QVBoxLayout, QTextEdit, 
     QFormLayout, QPushButton, QSpacerItem, QSizePolicy, QLabel, QMessageBox, 
     QHBoxLayout, QListWidgetItem, QComboBox, QLineEdit, QColorDialog)
 from PySide6.QtGui import QIcon, QColor, QPalette
@@ -9,227 +9,268 @@ from collections import defaultdict, Counter
 from HighlightCriteriaDialog import HighlightCriteriaDialog
 import pandas as pd
 from PySide6.QtCore import Signal
+from StyledTwoListSelector import TwoListSelector
+from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget
+from StyledButton import StyledButton
+
+
 
 class DecisionTreeDialog(QDialog):
 
 
 
     criteriaGenerated = Signal(pd.DataFrame)
-    def __init__(self, master_df, parent=None):
+    def __init__(self, master_df, db_manager, parent=None):
         super().__init__(parent)
+        print("DecisionTreeDialog initialization started")
+    
+        # Detailed input validation
+        print(f"Master DataFrame shape: {master_df.shape}")
+        print(f"Columns: {list(master_df.columns)}")
+        print(f"Database Manager: {db_manager}")
+    
         # Create a deep copy of the DataFrame at initialization
         self.master_df = master_df.copy()
-        self.initUI()
+        self.db_manager = db_manager 
+    
+        try:
+            print("About to call initUI()")
+            self.initUI()
+            print("initUI() completed successfully")
+        
+            # Explicit visibility settings
+            self.setWindowFlags(Qt.Window)  # Ensure it's a window
+            self.setWindowModality(Qt.NonModal)
+            self.setAttribute(Qt.WA_DontCreateNativeAncestors)
+            self.setAttribute(Qt.WA_ShowWithoutActivating)
+        
+            # Force visibility
+            print("Attempting to make dialog visible")
+            self.setVisible(True)
+        
+        except Exception as e:
+            print(f"Error in initialization: {e}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Initialization Error", str(e))
+
+    def show(self):
+        print("Custom show method called")
+        super().show()
+        self.raise_()  # Bring to front
+        self.activateWindow() 
 
     def initUI(self):
         self.setWindowTitle("Decision Tree Selection")
         self.setGeometry(100, 100, 800, 600)
 
-        available_columns = sorted([col for col in self.master_df.columns])
-        self.df_filtered = pd.DataFrame()
-        main_layout = QVBoxLayout(self)
-
-        # Changed to match the actual method name
-        self.setup_selector_layout(main_layout, "Select Attributes", 
-                                   available_items=available_columns,
-                                   move_all_right_callback=self.move_all_attributes_right,
-                                   move_right_callback=self.move_selected_attributes_right,
-                                   move_left_callback=self.move_selected_attributes_left,
-                                   move_all_left_callback=self.move_all_attributes_left,
-                                   available_list_attr='attribute_available_listbox', 
-                                   selected_list_attr='attribute_selected_listbox')
-
-        # Dropdown for outcome selection
-        outcome_layout = QHBoxLayout()
-        outcome_label = QLabel("Select Outcome:")
-        self.outcome_dropdown = QComboBox()
-        self.outcome_dropdown.addItems(available_columns)
-        outcome_layout.addWidget(outcome_label)
-        outcome_layout.addWidget(self.outcome_dropdown)
-        self.outcome_dropdown.currentIndexChanged.connect(self.reset_master_df)
-        main_layout.addLayout(outcome_layout)
-
-        # Editable threshold box
-        threshold_layout = QHBoxLayout()
-        threshold_label = QLabel("Threshold:")
-        self.threshold_edit = QLineEdit()
-        self.threshold_edit.setText("0.5")  # Default value
-        threshold_layout.addWidget(threshold_label)
-        threshold_layout.addWidget(self.threshold_edit)
-        main_layout.addLayout(threshold_layout)
-
-        # OK/Cancel buttons
-        button_layout = QHBoxLayout()
-        self.ok_button = QPushButton("OK")
-        self.cancel_button = QPushButton("Cancel")
-        self.ok_button.clicked.connect(self.build_decision_tree)
-        self.cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-        main_layout.addLayout(button_layout)
-
-
-    def setup_selector_layout(self, main_layout, label_text, available_items, move_all_right_callback, 
-                        move_right_callback, move_left_callback, move_all_left_callback, 
-                        available_list_attr, selected_list_attr):
-        section_label = QLabel(label_text)
-        main_layout.addWidget(section_label)
-
-        list_layout = QHBoxLayout()
-
-        available_listbox = QListWidget()
-        available_listbox.setSelectionMode(QListWidget.ExtendedSelection)
-        setattr(self, available_list_attr, available_listbox)
-        for item in available_items:
-            QListWidgetItem(item, available_listbox)
-        list_layout.addWidget(available_listbox)
-
-        arrow_layout = QVBoxLayout()
-
-        self.move_all_right_button = QPushButton()
-        self.move_all_right_button.setIcon(QIcon("icons/arrow_double_right.png"))
-        self.move_all_right_button.clicked.connect(move_all_right_callback)
-        arrow_layout.addWidget(self.move_all_right_button)
-
-        self.move_right_button = QPushButton()
-        self.move_right_button.setIcon(QIcon("icons/arrow_right.ico"))
-        self.move_right_button.clicked.connect(move_right_callback)
-        arrow_layout.addWidget(self.move_right_button)
-
-        self.move_left_button = QPushButton()
-        self.move_left_button.setIcon(QIcon("icons/arrow_left.ico"))
-        self.move_left_button.clicked.connect(move_left_callback)
-        arrow_layout.addWidget(self.move_left_button)
-
-        self.move_all_left_button = QPushButton()
-        self.move_all_left_button.setIcon(QIcon("icons/arrow_double_left.png"))
-        self.move_all_left_button.clicked.connect(move_all_left_callback)
-        arrow_layout.addWidget(self.move_all_left_button)
-
-        arrow_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        list_layout.addLayout(arrow_layout)
-
-        selected_listbox = QListWidget()
-        selected_listbox.setSelectionMode(QListWidget.ExtendedSelection)
-        setattr(self, selected_list_attr, selected_listbox)
+        # Calculate label widths for consistent alignment
+        labels = [
+            "Outcome",    # Used by outcome dropdown
+            "Operator",   # Used by threshold operator dropdown
+            "Value",      # Used by threshold value input
+        ]
+        StyledDropdown.calculate_label_width(labels)
     
-        list_layout.addWidget(selected_listbox)
-        main_layout.addLayout(list_layout)
 
-    def move_all_attributes_right(self):
-        self.move_all_items(self.attribute_available_listbox, self.attribute_selected_listbox)
+        # Set dialog styling
+        self.setStyleSheet("""
+            QDialog {
+                background-color: white;
+            }
+            QLabel {
+                color: black;
+            }
+            QPushButton {
+                background-color: white;
+                border: none;
+            }
+        """)
 
-    def move_selected_attributes_right(self):
-        self.move_selected_items(self.attribute_available_listbox, self.attribute_selected_listbox)
+        def create_dropdown(label):
+            dropdown = StyledDropdown(label)
+            dropdown.setStyleSheet("""
+                QLabel, QComboBox {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return dropdown
+        def create_input(label, default_value='', validator=None):
+            input_box = StyledInputBox(label, default_value, validator)
+            input_box.label.setFixedWidth(StyledDropdown.label_width)  # Set width explicitly
+            input_box.setStyleSheet("""
+                QLabel {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return input_box
 
-    def move_selected_attributes_left(self):
-        self.move_selected_items(self.attribute_selected_listbox, self.attribute_available_listbox)
+        main_layout = QVBoxLayout(self)
+    
+        # Outcome selection layout
+        outcome_layout = QHBoxLayout()
+        self.outcome_dropdown = create_dropdown("Outcome")
+        available_columns = sorted([col for col in self.master_df.columns])
+        self.outcome_dropdown.addItems(available_columns)
+        self.outcome_dropdown.combo.currentIndexChanged.connect(self.reset_master_df)
+        outcome_layout.addWidget(self.outcome_dropdown)
+        outcome_layout.addStretch()
 
-    def move_all_attributes_left(self):
-        self.move_all_items(self.attribute_selected_listbox, self.attribute_available_listbox)
+        threshold_layout = QVBoxLayout()  # Change to vertical layout
 
-    def move_selected_items(self, source_list, target_list):
-        for item in source_list.selectedItems():
-            target_list.addItem(item.text())
-            source_list.takeItem(source_list.row(item))
+        self.threshold_operator = create_dropdown("Operator")  # Matches labels list
+        self.threshold_operator.addItems(['>', '<', '=', '>=', '<='])
+        threshold_layout.addWidget(self.threshold_operator)
 
-    def move_all_items(self, source_list, target_list):
-        while source_list.count() > 0:
-            item = source_list.takeItem(0)
-            target_list.addItem(item.text())
+        # Create value input and add below operator
+        self.threshold_value = create_input("Value", "0")  # Matches labels list
+        threshold_layout.addWidget(self.threshold_value)
 
+        # Create a container for the threshold section
+        threshold_container = QHBoxLayout()
+        threshold_container.addLayout(threshold_layout)
+        threshold_container.addStretch()
+    
+        # Initialize TwoListSelector for attributes
+        self.attribute_selector = TwoListSelector(
+            "Available Attributes", 
+            "Selected Attributes"
+        )
+        self.attribute_selector.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+    
+        # Populate available attributes
+        self.attribute_selector.set_left_items(available_columns)
+    
+        # Buttons in bottom right
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+    
+        self.run_button = StyledButton("Run", "function")
+        self.close_button = StyledButton("Close", "close")
+    
+        # Set fixed size for buttons
+        self.run_button.setFixedSize(80, 25)
+        self.close_button.setFixedSize(80, 25)
+    
+        self.run_button.clicked.connect(self.build_decision_tree)
+        self.close_button.clicked.connect(self.reject)
+    
+        button_layout.addWidget(self.run_button)
+        button_layout.addWidget(self.close_button)
+    
+        # Add all components to main layout in the correct order
+        main_layout.addLayout(outcome_layout)
+        main_layout.addLayout(threshold_container)  # Use container instead of threshold_layout
+        main_layout.addWidget(self.attribute_selector)
+        main_layout.addLayout(button_layout)
+    
+        # Add some spacing between sections
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
 
     def build_decision_tree(self):
-        selected_attributes = [self.attribute_selected_listbox.item(i).text() 
-                             for i in range(self.attribute_selected_listbox.count())]
-        selected_outcome = self.outcome_dropdown.currentText()
-
-        # Calculate total number of existing bad frac stages
-        total_bad_fracs = self.master_df[selected_outcome].sum()
-        print(f"Total existing bad frac stages: {total_bad_fracs}")
-
+        # Get selected attributes from new TwoListSelector
+        selected_attributes = self.attribute_selector.get_right_items()
+        # Get selected outcome from StyledDropdown
+        selected_outcome = self.outcome_dropdown.combo.currentText()
+    
         if len(selected_attributes) > 0:
             relevant_columns = selected_attributes + [selected_outcome]
             self.df_filtered = self.master_df[relevant_columns].copy()
-
+        
+            # Just remove NA values - we'll handle the comparison in plot_decision_tree
             self.df_filtered = self.df_filtered.loc[
-                (self.df_filtered[selected_outcome] != 0) & 
-                (self.df_filtered[selected_outcome].notna())
+                self.df_filtered[selected_outcome].notna()
             ]
 
-            # Try progressively lower thresholds
-            thresholds = [0.3, 0.2, 0.1, 0.05]
-            for threshold in thresholds:
-                print(f"\nTrying threshold: {threshold}")
-                predicted_bad_fracs = self.plot_decision_tree(selected_attributes, selected_outcome, threshold)
-            
-                # If we capture a good portion of existing bad fracs, stop
-                if predicted_bad_fracs is not None:
-                    capture_rate = predicted_bad_fracs.sum() / total_bad_fracs
-                    print(f"Capture rate: {capture_rate:.2%}")
-                    if capture_rate > 0.7:  # Adjust this threshold as needed
-                        break
+            # Get user-specified threshold and operator
+            threshold_value = float(self.threshold_value.text())
+            operator = self.threshold_operator.combo.currentText()
+        
+            print(f"\nUsing {operator} {threshold_value} for outcome {selected_outcome}")
+            predicted_outcomes = self.plot_decision_tree(selected_attributes, selected_outcome, threshold_value)
+        
+            if predicted_outcomes is not None:
+                # Calculate total matches based on our criteria
+                matching_count = predicted_outcomes.sum()
+                total_possible = len(self.master_df)
+                match_rate = matching_count / total_possible
+                print(f"Found {matching_count} matches out of {total_possible} total rows ({match_rate:.2%})")
 
     def analyze_most_likely_values(self, attributes, outcome):
         try:
             print("Starting analysis...")
             analysis_results = []
-            tolerance = 1e-5  # Small tolerance for floating-point comparison
-    
-            # Make a copy of df_filtered to avoid SettingWithCopyWarning
+        
+            # Get our threshold criteria
+            operator = self.threshold_operator.combo.currentText()
+            threshold_value = float(self.threshold_value.text())
+        
+            # Make a copy of df_filtered
             working_df = self.df_filtered.copy()
-    
+        
             for attribute in attributes:
                 print(f"Processing attribute: {attribute}")
-        
-                # Create a copy of the column and process it
+            
+                # Handle nulls and convert to numeric
                 working_df.loc[:, attribute] = working_df[attribute].fillna(0)
                 working_df.loc[:, attribute] = pd.to_numeric(working_df[attribute], errors='coerce').fillna(0)
-        
+            
                 if pd.api.types.is_numeric_dtype(working_df[attribute]):
-                    median_value = working_df[attribute].median()
-                    q1 = working_df[attribute].quantile(0.25)
-                    q3 = working_df[attribute].quantile(0.75)
-            
-                    # Calculate count of values above and below median
-                    above_median_count = (working_df[attribute] > median_value + tolerance).sum()
-                    below_median_count = (working_df[attribute] < median_value - tolerance).sum()
-            
-                    # Determine the condition based on distribution
-                    if above_median_count > below_median_count:
-                        # If mostly above median, provide a range description
-                        condition = f"between {median_value:.2f} and {q3:.2f}"
-                    elif below_median_count > above_median_count:
-                        # If mostly below median, provide a range description
-                        condition = f"between {q1:.2f} and {median_value:.2f}"
-                    else:
-                        # If evenly distributed, provide a broader range
-                        condition = f"between {q1:.2f} and {q3:.2f}"
-            
-                    # Add to analysis results
-                    analysis_results.append({
-                        "Attribute": attribute, 
-                        "Condition": condition
-                    })
-            
-                    print(f"Analysis for {attribute}: {condition}")
-    
+                    # Find matching rows based on our criteria
+                    if operator == '>':
+                        matching_rows = working_df[outcome] > threshold_value
+                    elif operator == '<':
+                        matching_rows = working_df[outcome] < threshold_value
+                    elif operator == '=':
+                        matching_rows = np.abs(working_df[outcome] - threshold_value) < 1e-6
+                    elif operator == '>=':
+                        matching_rows = working_df[outcome] >= threshold_value
+                    elif operator == '<=':
+                        matching_rows = working_df[outcome] <= threshold_value
+                
+                    # Get attribute values where our condition is met
+                    matching_values = working_df.loc[matching_rows, attribute]
+                
+                    if not matching_values.empty:
+                        q1 = matching_values.quantile(0.25)
+                        q3 = matching_values.quantile(0.75)
+                    
+                        # Add to analysis results
+                        analysis_results.append({
+                            "Attribute": attribute,
+                            "Condition": f"between {q1:.2f} and {q3:.2f}"
+                        })
+                    
+                        print(f"Analysis for {attribute}: between {q1:.2f} and {q3:.2f}")
+        
             print("Final analysis results:", analysis_results)
-
-            # Directly call show_result_dialog with the analysis results
             self.show_result_dialog(analysis_results)
-
 
         except Exception as e:
             print(f"Error analyzing most likely values: {e}")
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")
 
-    def plot_decision_tree(self, attributes, outcome, threshold):
+    def plot_decision_tree(self, attributes, outcome, threshold_value):
         try:
             X = self.df_filtered[attributes]
             y = self.df_filtered[outcome]
-
+        
+            # Clean data
             X = X.replace([np.inf, -np.inf], np.nan).dropna()
             y = y[X.index]
 
@@ -237,30 +278,50 @@ class DecisionTreeDialog(QDialog):
                 QMessageBox.warning(self, "No Valid Data", "No valid data found after cleaning.")
                 return None
 
+            # Get operator
+            operator = self.threshold_operator.combo.currentText()
+
+            # Fit the tree
             is_continuous = y.dtype.kind in 'fc'
             tree_model = DecisionTreeRegressor(random_state=42) if is_continuous else DecisionTreeClassifier(random_state=42)
             tree_model.fit(X, y)
 
-            # Predict probabilities
+            # Make predictions on the filtered dataset to maintain consistency
             if is_continuous:
-                y_pred_proba = tree_model.predict(self.master_df[attributes])
+                y_pred = tree_model.predict(X)
             else:
-                y_pred_proba = tree_model.predict_proba(self.master_df[attributes])[:, 1]
+                y_pred = tree_model.predict_proba(X)[:, 1]
 
-            # Create a prediction series
-            predicted_bad_fracs = (y_pred_proba >= threshold).astype(int)
-        
-            print("Prediction details:")
-            print(f"Total predicted bad stages: {predicted_bad_fracs.sum()}")
-            print("Matching indices with original bad stages:")
-            matching_indices = np.where((predicted_bad_fracs == 1) & (self.master_df[outcome] == 1))[0]
-            print(f"Number of matching bad stages: {len(matching_indices)}")
+            # Apply the selected comparison
+            if operator == '>':
+                predicted_outcomes = (y_pred > threshold_value).astype(int)
+                original_outcomes = (y > threshold_value).astype(int)
+            elif operator == '<':
+                predicted_outcomes = (y_pred < threshold_value).astype(int)
+                original_outcomes = (y < threshold_value).astype(int)
+            elif operator == '=':
+                predicted_outcomes = (np.abs(y_pred - threshold_value) < 1e-6).astype(int)
+                original_outcomes = (np.abs(y - threshold_value) < 1e-6).astype(int)
+            elif operator == '>=':
+                predicted_outcomes = (y_pred >= threshold_value).astype(int)
+                original_outcomes = (y >= threshold_value).astype(int)
+            elif operator == '<=':
+                predicted_outcomes = (y_pred <= threshold_value).astype(int)
+                original_outcomes = (y <= threshold_value).astype(int)
 
-            # Open the highlight dialog with these predictions
-            most_likely_values = self._generate_most_likely_values(attributes, predicted_bad_fracs)
+            # Print prediction details
+            print("\nPrediction details:")
+            print(f"Total predicted outcomes: {predicted_outcomes.sum()}")
+            print("Matching indices with original outcomes:")
+            matching_indices = np.where((predicted_outcomes == 1) & (original_outcomes == 1))[0]
+            print(f"Number of matching outcomes: {len(matching_indices)}")
+            print(f"Accuracy: {(predicted_outcomes == original_outcomes).mean():.2%}")
+
+            # Generate and show most likely values
+            most_likely_values = self._generate_most_likely_values(attributes, predicted_outcomes)
             self.show_result_dialog(most_likely_values)
 
-            return predicted_bad_fracs
+            return predicted_outcomes
 
         except Exception as e:
             print(f"Error in decision tree analysis: {e}")
@@ -270,19 +331,26 @@ class DecisionTreeDialog(QDialog):
     def _generate_most_likely_values(self, attributes, predictions):
         """Generate most likely values based on prediction patterns"""
         most_likely_values = []
+        operator = self.threshold_operator.combo.currentText()
+        threshold_value = self.threshold_value.text()
+    
+        print(f"Finding attribute ranges where outcome is {operator} {threshold_value}")
+    
         for attr in attributes:
-            # Find significant differences in the attribute for predicted bad stages
-            bad_stage_values = self.master_df[predictions == 1][attr]
+            # Get values where predictions match our criteria
+            matching_values = self.master_df[predictions == 1][attr]
         
-            # Calculate range for bad stages
-            if not bad_stage_values.empty:
-                lower = bad_stage_values.quantile(0.25)
-                upper = bad_stage_values.quantile(0.75)
+            if not matching_values.empty:
+                lower = matching_values.quantile(0.25)
+                upper = matching_values.quantile(0.75)
             
                 most_likely_values.append({
                     "Attribute": attr,
                     "Condition": f"between {lower:.2f} and {upper:.2f}"
                 })
+            
+                print(f"{attr}: typically between {lower:.2f} and {upper:.2f} "
+                      f"when criteria is met")
     
         return most_likely_values
 
@@ -314,31 +382,31 @@ class DecisionTreeDialog(QDialog):
         """
         Reset the master DataFrame and available columns when the outcome is changed.
         """
-        # Reset the available attributes list
-        self.attribute_available_listbox.clear()
-        self.attribute_selected_listbox.clear()
-
-        # Repopulate the available attributes, excluding the selected outcome
-        selected_outcome = self.outcome_dropdown.currentText()
+        # Get the currently selected outcome
+        selected_outcome = self.outcome_dropdown.combo.currentText()
+    
+        # Get available columns excluding the selected outcome
         available_columns = sorted([col for col in self.master_df.columns if col != selected_outcome])
     
-        for item in available_columns:
-            QListWidgetItem(item, self.attribute_available_listbox)
+        # Reset the attribute selector with new available columns
+        self.attribute_selector.clear_lists()  # Clear both lists
+        self.attribute_selector.set_left_items(available_columns)  # Set new available items
 
     def show_result_dialog(self, most_likely_values):
         try:
+            print("\n===== SHOW RESULT DIALOG =====")
             # Prepare the criteria DataFrame
             criteria_records = []
             for result in most_likely_values:
                 attribute = result['Attribute']
                 condition = result['Condition']
-            
+    
                 # Parse the 'between' condition
                 if 'between' in condition:
                     parts = condition.split('between')
                     lower_bound = float(parts[1].split('and')[0].strip())
                     upper_bound = float(parts[1].split('and')[1].strip())
-                
+        
                     # Create two criteria records for lower and upper bounds
                     criteria_records.extend([
                         {
@@ -348,7 +416,7 @@ class DecisionTreeDialog(QDialog):
                             'Operator': '>=',
                             'Value': str(lower_bound),
                             'Logical Operator': 'AND',
-                            'Color': '#FFFF00'  # Default yellow
+                            'Color': '#FFFF00'
                         },
                         {
                             'Name': 'Decision Tree Criteria',
@@ -357,7 +425,7 @@ class DecisionTreeDialog(QDialog):
                             'Operator': '<=',
                             'Value': str(upper_bound),
                             'Logical Operator': 'AND',
-                            'Color': '#FFFF00'  # Default yellow
+                            'Color': '#FFFF00'
                         }
                     ])
                 else:
@@ -371,34 +439,67 @@ class DecisionTreeDialog(QDialog):
                             'Operator': parts[0],
                             'Value': parts[1],
                             'Logical Operator': 'AND',
-                            'Color': '#FFFF00'  # Default yellow
+                            'Color': '#FFFF00'
                         })
-        
-            # Create the criteria DataFrame
+    
             criteria_df = pd.DataFrame(criteria_records)
-        
-            # Open the HighlightCriteriaDialog directly
+            print("Generated Criteria:")
+            print(criteria_df)
+
+            # Create highlight dialog
             highlight_dialog = HighlightCriteriaDialog(
+                db_manager=self.db_manager,
                 columns=list(self.master_df.columns), 
-                existing_criteria_df=criteria_df, 
                 parent=self
             )
-        
-            # Pre-fill the criteria name
-            highlight_dialog.criteria_name_dropdown.setCurrentText('Decision Tree Criteria')
-        
+            # Explicitly set the criteria name
+
+            # Temporarily block signals to prevent multiple triggers
+            highlight_dialog.criteria_name_dropdown.blockSignals(True)
+
+            # Add each criterion to the dialog
+            # Add each criterion to the dialog
+            for _, row in criteria_df.iterrows():
+                # Set the column dropdown to the current column
+                column_index = highlight_dialog.column_dropdown.combo.findText(row['Column'])
+                if column_index != -1:
+                    highlight_dialog.column_dropdown.combo.setCurrentIndex(column_index)  # Fix: Use `.combo`
+
+                # Set operator
+                operator_index = highlight_dialog.operator_dropdown.combo.findText(row['Operator'])  # Fix: Use `.combo`
+                if operator_index != -1:
+                    highlight_dialog.operator_dropdown.combo.setCurrentIndex(operator_index)
+
+                # Set value
+                highlight_dialog.value_entry.setText(str(row['Value']))
+
+                # Add the criterion
+                highlight_dialog.add_criterion()
+
+            # Unblock signals
+            highlight_dialog.criteria_name_dropdown.blockSignals(False)
+
             # Execute the dialog
             if highlight_dialog.exec_() == QDialog.Accepted:
-                # Emit the signal with the new criteria
-                self.criteriaGenerated.emit(highlight_dialog.criteria_df)
-                return highlight_dialog.criteria_name
+                # Find the original ZoneViewerDialog
+                parent = self.parent()
+                while parent and not hasattr(parent, 'populate_criteria_dropdowns'):
+                    parent = parent.parent()
     
+                if parent:
+                    parent.populate_criteria_dropdowns()
+    
+                # Emit the generated criteria
+                self.criteriaGenerated.emit(criteria_df)
+                return 'Decision Tree Criteria'
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
             print(f"Error in show_result_dialog: {e}")
-    
-        return None
+            import traceback
+            traceback.print_exc()
 
+        return None
 # Test code
 if __name__ == "__main__":
     import sys
@@ -414,6 +515,15 @@ if __name__ == "__main__":
     }
     master_df = pd.DataFrame(data)
 
+    # Mock db_manager for testing
+    class MockDBManager:
+        def load_criteria_names(self):
+            return []
+        def save_criteria(self, *args, **kwargs):
+            return True, "Success"
+        def load_criteria_by_name(self, name):
+            return "#FFFF00", []
+        
     app = QApplication(sys.argv)
-    dialog = DecisionTreeDialog(master_df)
+    dialog = DecisionTreeDialog(master_df, db_manager=MockDBManager())
     dialog.exec_()

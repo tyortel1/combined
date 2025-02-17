@@ -43,7 +43,7 @@ class Ui_MainWindow:
                 frame.setFixedHeight(fixed_height)  # Set fixed height if provided
                 frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Prevent stretching
 
-            #  Apply 3D Drop Shadow
+            # Apply 3D Drop Shadow
             shadow = QGraphicsDropShadowEffect()
             shadow.setBlurRadius(10)  # Softer shadow
             shadow.setXOffset(3)  # Slight right shadowF

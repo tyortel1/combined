@@ -16,6 +16,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from DeclineCurveAnalysis import DeclineCurveAnalysis
 from PUDProperties import PUDPropertiesDialog
+from StyledDropdown import StyledDropdown
+from StyledButton import StyledButton
+from StyledTwoListSelector import TwoListSelector 
+
 
 
 class ScenarioNameDialog(QDialog):
@@ -73,108 +77,7 @@ class ScenarioNameDialog(QDialog):
         dialog.exec_()
 
 
-class DualListSelector(QWidget):
-    def __init__(self, title: str, parent=None):
-        super().__init__(parent)
-        self.setup_ui(title)
 
-    def setup_ui(self, title: str):
-        main_layout = QVBoxLayout(self)
-
-        # Title label
-        label = QLabel(title)
-        main_layout.addWidget(label)
-
-        # Search bar
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search...")
-        main_layout.addWidget(self.search_bar)
-        self.search_bar.textChanged.connect(self._filter_available_list)
-
-        # Horizontal layout for the lists and buttons
-        list_layout = QHBoxLayout()
-
-        # Available items list
-        self.available_list = QListWidget()
-        self.available_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        list_layout.addWidget(self.available_list)
-
-        # Transfer buttons
-        button_layout = QVBoxLayout()
-        self.add_button = QPushButton(">")
-        self.add_all_button = QPushButton(">>")
-        self.remove_button = QPushButton("<")
-        self.remove_all_button = QPushButton("<<")
-
-        button_layout.addStretch()
-        button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.add_all_button)
-        button_layout.addWidget(self.remove_button)
-        button_layout.addWidget(self.remove_all_button)
-        button_layout.addStretch()
-
-        list_layout.addLayout(button_layout)
-
-        # Selected items list
-        self.selected_list = QListWidget()
-        self.selected_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        list_layout.addWidget(self.selected_list)
-
-        main_layout.addLayout(list_layout)
-
-        # Store original items for filtering
-        self.all_available_items = []
-
-        # Connect signals
-        self.add_button.clicked.connect(self._move_selected_to_right)
-        self.add_all_button.clicked.connect(self._move_all_to_right)
-        self.remove_button.clicked.connect(self._move_selected_to_left)
-        self.remove_all_button.clicked.connect(self._move_all_to_left)
-
-    def add_items(self, items):
-        """Add items to the available list and store them for filtering."""
-        self.all_available_items = sorted(items)  # Store full list
-        self.available_list.addItems(self.all_available_items)
-
-    def get_selected_items(self):
-        """Get items from the selected list."""
-        return [self.selected_list.item(i).text() for i in range(self.selected_list.count())]
-
-    def _filter_available_list(self):
-        """Filter available list based on search input."""
-        filter_text = self.search_bar.text().strip().lower()
-        self.available_list.clear()
-
-        if not filter_text:
-            self.available_list.addItems(self.all_available_items)
-        else:
-            filtered_items = [item for item in self.all_available_items if filter_text in item.lower()]
-            self.available_list.addItems(filtered_items)
-
-    def _move_items(self, source_list, target_list, items):
-        """Move items between lists while preventing duplicates."""
-        existing_items = {target_list.item(i).text() for i in range(target_list.count())}
-        for item in items:
-            text = item.text()
-            if text not in existing_items:
-                source_list.takeItem(source_list.row(item))
-                target_list.addItem(text)
-
-    def _move_selected_to_right(self):
-        items = self.available_list.selectedItems()
-        self._move_items(self.available_list, self.selected_list, items)
-
-    def _move_all_to_right(self):
-        items = [self.available_list.item(i) for i in range(self.available_list.count())]
-        self._move_items(self.available_list, self.selected_list, items)
-
-    def _move_selected_to_left(self):
-        items = self.selected_list.selectedItems()
-        self._move_items(self.selected_list, self.available_list, items)
-
-    def _move_all_to_left(self):
-        items = [self.selected_list.item(i) for i in range(self.selected_list.count())]
-        self._move_items(self.selected_list, self.available_list, items)
 
 
 class WeightsDialog(QDialog):
@@ -256,6 +159,8 @@ class WeightsDialog(QDialog):
         
             self.weights_layout.addRow(f"{attr}:", slider)
             self.weight_sliders[attr] = slider
+
+
 class WellComparisonDialog(QDialog):
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
@@ -267,7 +172,6 @@ class WellComparisonDialog(QDialog):
         self.normalize_values = False
         self.zero_outliers = False
         self.iqr_multiplier = 1.5
-     
 
     def setup_ui(self):
         self.setWindowTitle("Well Comparison")
@@ -277,42 +181,56 @@ class WellComparisonDialog(QDialog):
         self.selected_attributes = []
         main_layout = QHBoxLayout(self)
 
-        # === LEFT PANEL ===
         left_layout = QVBoxLayout()
-
+    
         # Attribute Selection Mode Group
-        selection_mode_group = QGroupBox("Attribute Selection Mode")
-        selection_mode_layout = QVBoxLayout()
-
-        # Radio buttons for selection mode
+        selection_mode_group = QWidget()
+        selection_mode_layout = QVBoxLayout(selection_mode_group)
+    
         self.manual_mode_radio = QRadioButton("Manual Attribute Selection")
         self.regression_mode_radio = QRadioButton("Use Regression Attributes")
     
-        # Set manual mode as default
         self.manual_mode_radio.setChecked(True)
     
         selection_mode_layout.addWidget(self.manual_mode_radio)
         selection_mode_layout.addWidget(self.regression_mode_radio)
-        selection_mode_group.setLayout(selection_mode_layout)
     
-        # Add to left layout
+        self.manual_mode_radio.toggled.connect(self.toggle_attribute_selection)
+        self.regression_mode_radio.toggled.connect(self.toggle_attribute_selection)
+    
         left_layout.addWidget(selection_mode_group)
 
-        # Regression Selection Group
-        regression_group = QGroupBox("Regression Selection")
-        regression_layout = QVBoxLayout()
-    
-        self.regression_dropdown = QComboBox()
-        self.regression_dropdown.addItem("Select Regression")
+        labels = ["Regression"]
+        StyledDropdown.calculate_label_width(labels)  # Update the label width
+
+        regression_layout = QHBoxLayout()
+
+        # Now create the dropdown after updating the width
+        self.regression_dropdown = StyledDropdown("Regression")
+        self.regression_dropdown.setEnabled(False)
+
+        # 🔹 Add the dropdown first to keep it aligned left
         regression_layout.addWidget(self.regression_dropdown)
-    
-        regression_group.setLayout(regression_layout)
-        left_layout.addWidget(regression_group)
+
+        # 🔹 Add stretch AFTER to push any additional elements to the right
+        regression_layout.addStretch(1)
+
+        # 🔹 Finally, add the layout to the main layout
+        left_layout.addLayout(regression_layout)
+
+
+        # Connect dropdown signal
+        self.regression_dropdown.combo.currentIndexChanged.connect(self.update_attributes_from_regression)
+
+
+
+
+
 
         # Selectors
-        self.planned_selector = DualListSelector("Planned Wells")
-        self.active_selector = DualListSelector("Active Wells")
-        self.attr_selector = DualListSelector("Attributes")
+        self.planned_selector = TwoListSelector("Available Planned Wells", "Selected Planned Wells")
+        self.active_selector = TwoListSelector("Available Active Wells", "Selected Active Wells")
+        self.attr_selector = TwoListSelector("Available Attributes", "Selected Attributes")
 
         left_layout.addWidget(self.planned_selector)
         left_layout.addWidget(self.active_selector)
@@ -331,35 +249,34 @@ class WellComparisonDialog(QDialog):
         right_layout.addWidget(self.results_table, 1)
 
         # Buttons layout
+        # Buttons layout
         button_layout = QHBoxLayout()
 
         # Create buttons
-        self.weights_button = QPushButton("Weights")
-        self.calculate_button = QPushButton("Calculate")
-        self.decline_curve_button = QPushButton("Assign Type Curve")
-        self.export_button = QPushButton("Export")
+        self.weights_button = StyledButton("Weights", button_type="function")
+        self.calculate_button = StyledButton("Calculate", button_type="function")
+        self.decline_curve_button = StyledButton("Assign DC", button_type="function")
+        self.export_button = StyledButton("Export", button_type="export")
+        self.close_button = StyledButton("Close", button_type="close")
 
-        # Set fixed width to 1.5 inches (~144 pixels)
-        button_width = 144
-        self.weights_button.setFixedWidth(button_width)
-        self.calculate_button.setFixedWidth(button_width)
-        self.decline_curve_button.setFixedWidth(button_width)
-        self.export_button.setFixedWidth(button_width)
+        # Set fixed width for all buttons (reduced width)
+        button_width = 100 # Reduced from 150 to 120
+        for button in [self.weights_button, self.calculate_button, 
+                       self.decline_curve_button, self.export_button, self.close_button]:
+            button.setFixedWidth(button_width)
 
         # Add a spacer to push buttons to the right
         button_layout.addStretch()
+
+        # Add buttons in the desired order
         button_layout.addWidget(self.weights_button)
         button_layout.addWidget(self.calculate_button)
         button_layout.addWidget(self.decline_curve_button)
         button_layout.addWidget(self.export_button)
-
-        # Wrap the button layout inside a vertical layout
-        button_wrapper = QVBoxLayout()
-        button_wrapper.addStretch()
-        button_wrapper.addLayout(button_layout)
+        button_layout.addWidget(self.close_button)
 
         # Add buttons BELOW the table
-        right_layout.addLayout(button_wrapper, 0)
+        right_layout.addLayout(button_layout)
 
         # Create right widget
         right_widget = QWidget()
@@ -370,10 +287,10 @@ class WellComparisonDialog(QDialog):
         main_layout.addWidget(right_widget, 2)
 
         # Connect signals
-        self.manual_mode_radio.toggled.connect(self.toggle_attribute_selection)
-        self.regression_dropdown.currentIndexChanged.connect(self.update_attributes_from_regression)
 
-        # Ensure button signals are connected
+
+        # Connect button signals
+        self.close_button.clicked.connect(self.reject)
         self.weights_button.clicked.connect(self.open_weights_dialog)
         self.calculate_button.clicked.connect(self.run_comparison)
         self.decline_curve_button.clicked.connect(self.assign_type_curve)
@@ -436,11 +353,9 @@ class WellComparisonDialog(QDialog):
                 self.regression_dropdown.addItem(regression_name)
 
             # Populate lists
-            self.planned_selector.add_items(planned_wells)
-            self.active_selector.add_items(filtered_active_wells)
-        
-            # Always load all numeric attributes initially
-            self.attr_selector.add_items(sorted(numeric_columns))
+            self.planned_selector.set_left_items(planned_wells)
+            self.active_selector.set_left_items(filtered_active_wells)
+            self.attr_selector.set_left_items(sorted(numeric_columns))
     
         except Exception as e:
             print(f"Error loading data: {e}")
@@ -668,7 +583,7 @@ class WellComparisonDialog(QDialog):
 
     def open_weights_dialog(self):
         dialog = WeightsDialog(self)
-        selected_attributes = self.attr_selector.get_selected_items()
+        selected_attributes = self.attr_selector.get_right_items()
 
         if not selected_attributes:
             QMessageBox.warning(self, "No Attributes Selected", 
@@ -698,9 +613,9 @@ class WellComparisonDialog(QDialog):
         """Execute the well comparison."""
         try:
             # Get selected items
-            selected_attributes = self.attr_selector.get_selected_items()
-            planned_wells = self.planned_selector.get_selected_items()
-            active_wells = self.active_selector.get_selected_items()
+            selected_attributes = self.attr_selector.get_right_items()
+            planned_wells = self.planned_selector.get_right_items()
+            active_wells = self.active_selector.get_right_items()
 
             # Debugging output
             print(f"Selected Attributes: {selected_attributes}")
@@ -984,19 +899,16 @@ class WellComparisonDialog(QDialog):
     
 
     def toggle_attribute_selection(self):
-        """Toggle between manual and regression-based attribute selection"""
+        """Enable regression dropdown and update attributes when switching modes."""
         is_regression_mode = self.regression_mode_radio.isChecked()
-    
-        # Enable/disable regression dropdown
         self.regression_dropdown.setEnabled(is_regression_mode)
     
         if is_regression_mode:
-            # Clear current attribute selections if a regression is selected
-            if self.regression_dropdown.currentIndex() > 0:
+            if self.regression_dropdown.currentIndex() > 0:  # Ensure a regression is selected
                 self.update_attributes_from_regression()
         else:
-            # Restore original attributes in manual mode
             self.load_original_attributes()
+
 
     def load_original_attributes(self):
         """Reload original numeric attributes when switching back to manual mode"""
@@ -1015,11 +927,11 @@ class WellComparisonDialog(QDialog):
             print(f"Error loading original attributes: {e}")
 
     def update_attributes_from_regression(self):
-        """Update attribute selector based on selected regression"""
-        # Only update if in regression mode and a regression is selected
+        """Update the attribute selector and weight sliders when a regression is selected."""
+        # Ensure we are in regression mode
         if not self.regression_mode_radio.isChecked():
             return
-
+    
         selected_regression = self.regression_dropdown.currentText()
     
         if selected_regression and selected_regression != "Select Regression":
@@ -1027,20 +939,22 @@ class WellComparisonDialog(QDialog):
             attributes = self.db_manager.get_regression_attributes(selected_regression)
         
             # Clear existing attribute selections
-            self.attr_selector.available_list.clear()
-            self.attr_selector.selected_list.clear()
+        
+            self.attr_selector.clear()
         
             # Add attributes to available list
             if attributes:
                 # Assuming attributes is a list of tuples or just attribute names
                 attribute_names = [attr[0] if isinstance(attr, tuple) else attr for attr in attributes]
-                self.attr_selector.add_items(attribute_names)
+                self.attr_selector.set_left_items(attribute_names)
         
             # Fetch and set weights from the regression
             self.load_regression_weights(selected_regression)
         else:
             # If no regression selected, restore original attributes
             self.load_original_attributes()
+
+ 
 
     def load_regression_weights(self, regression_name):
         """Load weights from the regression table"""

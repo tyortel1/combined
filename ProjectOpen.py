@@ -97,10 +97,6 @@ class ProjectLoader:
             self.parent.wellZoneDropdown.combo.setCurrentText("Select Well Zone")
             self.parent.zoneDropdown.combo.setCurrentText("Select Zone")
 
-            # Set all color bar dropdowns to "Rainbow"
-            self.parent.grid_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
-            self.parent.zone_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
-            self.parent.well_colorbar.colorbar_dropdown.combo.setCurrentText("Rainbow")
 
             self.parent.gridDropdown.combo.blockSignals(False)
             self.parent.zoneDropdown.combo.blockSignals(False)
