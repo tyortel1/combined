@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QMessageBox
 from PySide6.QtCore import Qt
 import pandas as pd
 from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget

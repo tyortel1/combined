@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from StyledTwoListSelector import TwoListSelector
 from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget
 from StyledButton import StyledButton
-
+#
 
 class CalculateCorrelations(QDialog):
     def __init__(self, master_df, parent=None):
@@ -308,7 +308,7 @@ class CalculateCorrelations(QDialog):
         ax_heatmap.set_xticklabels(ax_heatmap.get_xticklabels(), rotation=75, ha='right', fontsize=5, color='white')
         ax_heatmap.set_yticklabels(ax_heatmap.get_yticklabels(), fontsize=5, color='white')
 
-        # Adjust spacing so labels don’t overlap cross-plot
+        # Adjust spacing so labels donï¿½t overlap cross-plot
         plt.subplots_adjust(bottom=0.1, top=0.95)
     
         # Cyan borders

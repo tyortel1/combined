@@ -302,91 +302,149 @@ class DataLoadGridDialog(QDialog):
             loading_dialog.close()
 
     def store_depth_grid_data(self):
+        """Store depth grid data and create KD trees"""
         self.depth_grid_data = []
         conversion_factor = 0.3048
         is_feet_selected = self.grid_unit_dropdown.currentText() == "Feet"
 
+        # Check if there are any selected depth grids
+        if not self.selected_depth_grids:
+            print("No depth grid data found.")
+            self.depth_grid_data_df = pd.DataFrame(columns=['Grid', 'X', 'Y', 'Z'])
+            self.kd_tree_depth_grids = {}
+            return
+
+        # Process each selected depth grid
         for grid_name in self.selected_depth_grids:
-            selected_grid_object = None
-            for grid, name in self.grid_objects_with_names:
-                if name == grid_name:
-                    selected_grid_object = grid
-                    break
+            # Find the corresponding grid object
+            selected_grid_object = next((grid for grid, name in self.grid_objects_with_names if name == grid_name), None)
+        
+            if not selected_grid_object:
+                print(f"Grid object not found for {grid_name}")
+                continue
 
             try:
+                # Populate grid values
                 self.login_instance.GridManager().PopulateValues(selected_grid_object)
+                grid_values = SeisWare.GridValues()
+                selected_grid_object.Values(grid_values)
+                grid_values_list = list(grid_values.Data())
+
+                # Get grid definition for coordinates
+                grid_def = selected_grid_object.Definition()
+                x_range = grid_def.RangeX()
+                y_range = grid_def.RangeY()
+
+                # Process grid data
+                for i in range(grid_values.Height()):
+                    for j in range(grid_values.Width()):
+                        x_coord = x_range.start + j * x_range.delta
+                        y_coord = y_range.start + i * y_range.delta
+                        z_value = grid_values_list[i * grid_values.Width() + j]
+
+                        # Apply feet to meters conversion if needed
+                        if is_feet_selected:
+                            z_value = z_value * conversion_factor
+
+                        # Only add points with reasonable Z values
+                        if -1000000 <= z_value <= 1000000:
+                            self.depth_grid_data.append({
+                                'Grid': grid_name,
+                                'X': x_coord,
+                                'Y': y_coord,
+                                'Z': z_value
+                            })
+
             except RuntimeError as err:
-                self.show_error_message("Failed to populate the values of grid %s from the project" % grid_name, err)
-                return
+                print(f"Failed to process grid {grid_name}: {str(err)}")
+                continue
 
-            grid_values = SeisWare.GridValues()
-            selected_grid_object.Values(grid_values)
-
-            grid_values_list = list(grid_values.Data())
-            for i in range(grid_values.Height()):
-                for j in range(grid_values.Width()):
-                    z_value = grid_values_list[i * grid_values.Width() + j]
-
-                    if is_feet_selected:
-                        z_value = z_value * conversion_factor
-
-
-
-                    # Check if Z is within the desired range before appending
-                    if -1000000 <= z_value <= 1000000:
-                        self.depth_grid_data.append({
-                            'Grid': grid_name,
-                            'X': selected_grid_object.Definition().RangeX().start + j * selected_grid_object.Definition().RangeX().delta,
-                            'Y': selected_grid_object.Definition().RangeY().start + i * selected_grid_object.Definition().RangeY().delta,
-                            'Z': z_value
-                        })
+        # Create DataFrame if we have data
         if self.depth_grid_data:
-            print("Depth Grid data sample:", self.depth_grid_data[0])
+            self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
+            print(f"Created depth grid DataFrame with columns: {self.depth_grid_data_df.columns.tolist()}")
+            print(f"First row of depth data: {self.depth_grid_data_df.iloc[0].to_dict()}")
+        
+            # Create KD trees for each grid
+            self.kd_tree_depth_grids = {}
+            for grid in self.depth_grid_data_df['Grid'].unique():
+                grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid]
+                if not grid_data.empty:
+                    self.kd_tree_depth_grids[grid] = KDTree(grid_data[['X', 'Y']].values)
+                    print(f"Created KD tree for grid: {grid}")
         else:
-            print("No depth grid data found.")
-
-        self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
-        self.kd_tree_depth_grids = {grid: KDTree(self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.depth_grid_data_df['Grid'].unique()}
-    
+            print("No depth grid data to process")
+            self.depth_grid_data_df = pd.DataFrame(columns=['Grid', 'X', 'Y', 'Z'])
+            self.kd_tree_depth_grids = {}
 
 
     def store_attribute_grid_data(self):
+        """Store attribute grid data and create KD trees"""
         self.attribute_grid_data = []
+
+        # Check if there are any selected attribute grids
+        if not self.selected_attribute_grids:
+            print("No attribute grid data found.")
+            self.attribute_grid_data_df = pd.DataFrame(columns=['Grid', 'X', 'Y', 'Z'])
+            self.kd_tree_att_grids = {}
+            return
+
+        # Process each selected attribute grid
         for grid_name in self.selected_attribute_grids:
-            selected_grid_object = None
-            for grid, name in self.grid_objects_with_names:
-                if name == grid_name:
-                    selected_grid_object = grid
-                    break
+            # Find the corresponding grid object
+            selected_grid_object = next((grid for grid, name in self.grid_objects_with_names if name == grid_name), None)
+        
+            if not selected_grid_object:
+                print(f"Grid object not found for {grid_name}")
+                continue
 
             try:
+                # Populate grid values
                 self.login_instance.GridManager().PopulateValues(selected_grid_object)
+                grid_values = SeisWare.GridValues()
+                selected_grid_object.Values(grid_values)
+                grid_values_list = list(grid_values.Data())
+
+                # Get grid definition for coordinates
+                grid_def = selected_grid_object.Definition()
+                x_range = grid_def.RangeX()
+                y_range = grid_def.RangeY()
+
+                # Process grid data
+                for i in range(grid_values.Height()):
+                    for j in range(grid_values.Width()):
+                        x_coord = x_range.start + j * x_range.delta
+                        y_coord = y_range.start + i * y_range.delta
+                        z_value = grid_values_list[i * grid_values.Width() + j]
+
+                        self.attribute_grid_data.append({
+                            'Grid': grid_name,
+                            'X': x_coord,
+                            'Y': y_coord,
+                            'Z': z_value
+                        })
+
             except RuntimeError as err:
-                self.show_error_message("Failed to populate the values of grid %s from the project" % grid_name, err)
-                return
+                print(f"Failed to process grid {grid_name}: {str(err)}")
+                continue
 
-            grid_values = SeisWare.GridValues()
-            selected_grid_object.Values(grid_values)
-
-            grid_values_list = list(grid_values.Data())
-            for i in range(grid_values.Height()):
-                for j in range(grid_values.Width()):
-                    self.attribute_grid_data.append({
-                        'Grid': grid_name,
-                        'X': selected_grid_object.Definition().RangeX().start + j * selected_grid_object.Definition().RangeX().delta,
-                        'Y': selected_grid_object.Definition().RangeY().start + i * selected_grid_object.Definition().RangeY().delta,
-                        'Z': grid_values_list[i * grid_values.Width() + j]
-                    })
-
+        # Create DataFrame if we have data
         if self.attribute_grid_data:
-            print("Attribute Grid data sample:", self.attribute_grid_data[0])
+            self.attribute_grid_data_df = pd.DataFrame(self.attribute_grid_data)
+            print(f"Created attribute grid DataFrame with columns: {self.attribute_grid_data_df.columns.tolist()}")
+            print(f"First row of attribute data: {self.attribute_grid_data_df.iloc[0].to_dict()}")
+        
+            # Create KD trees for each grid
+            self.kd_tree_att_grids = {}
+            for grid in self.attribute_grid_data_df['Grid'].unique():
+                grid_data = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid]
+                if not grid_data.empty:
+                    self.kd_tree_att_grids[grid] = KDTree(grid_data[['X', 'Y']].values)
+                    print(f"Created KD tree for grid: {grid}")
         else:
-            print("No attribute grid data found.")
-
-        self.attribute_grid_data_df = pd.DataFrame(self.attribute_grid_data)
-      
-        self.kd_tree_att_grids = {grid: KDTree(self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid][['X', 'Y']].values) for grid in self.attribute_grid_data_df['Grid'].unique()}
-
+            print("No attribute grid data to process")
+            self.attribute_grid_data_df = pd.DataFrame(columns=['Grid', 'X', 'Y', 'Z'])
+            self.kd_tree_att_grids = {}
 
     def zone_color(self):
         # Get the names of the depth grids directly from the selected items

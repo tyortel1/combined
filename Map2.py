@@ -1,4 +1,4 @@
-﻿# main.pydef well
+# main.pydef well
 from email.policy import default
 import subprocess
 import sys
@@ -2308,7 +2308,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.currentLine = []
         self.scaled_points = []
 
-        actions_to_toggle = [self.plot_tool_action, self.export_action, self.data_loader_menu_action]
+        actions_to_toggle = [self.plot_tool_action,  self.data_loader_menu_action]
         if self.drawing:
             print("Drawing mode is ON")
             self.gun_barrel_action.setChecked(True)
@@ -2501,7 +2501,19 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Show the window
         self.plot_gb.show()
-        self.plot_gb.closed.connect(lambda: self.plot_gb_windows.remove(self.plot_gb))
+        self.plot_gb.closed.connect(lambda: self.handle_plot_gb_closed())
+
+    def handle_plot_gb_closed(self):
+        # Remove the plot GB window from the list
+        self.plot_gb_windows.remove(self.plot_gb)
+        self.currentLine.clear()
+        self.drawingArea.clearCurrentLineAndIntersections()
+    
+ 
+    
+
+
+
 
     def crossPlot(self):
         self.cross_plot_dialog = CrossPlot3D(self.db_manager)

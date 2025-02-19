@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                              QGroupBox, QCheckBox, QMessageBox)
+                              QGroupBox, QCheckBox, QMessageBox, QFormLayout)
 from StyledDropdown import StyledDropdown
 from StyledButton import StyledButton
 from StyledDropdown import StyledInputBox
 from StyledTwoListSelector import TwoListSelector
 import pandas as pd
 import numpy as np
+from PySide6.QtCore import Qt
 
 class ZoneAttributeCalculator(QDialog):
     def __init__(self, db_manager, parent=None):
@@ -16,31 +17,46 @@ class ZoneAttributeCalculator(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
+        # Main layout
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Zone Selection Group
         zone_group = QGroupBox("Zone Selection")
-        zone_layout = QVBoxLayout()
+        zone_layout = QFormLayout()
+        zone_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Define labels for alignment
+        labels = ["Source", "Zone Name"]
+        StyledDropdown.calculate_label_width(labels)
+        
+        # Helper functions
+        def create_dropdown(label, items=None):
+            dropdown = StyledDropdown(label)
+            if items:
+                dropdown.addItems(items)
+            return dropdown
+            
+        def create_input(label, default_value=""):
+            input_box = StyledInputBox(label, default_value)
+            input_box.label.setFixedWidth(StyledDropdown.label_width)
+            return input_box
 
         # Source Zone Dropdown
-        self.zone_combo = StyledDropdown(
-            label_text="Source Zone",
-            parent=self
-        )
-        zone_layout.addWidget(self.zone_combo)
+        self.zone_combo = create_dropdown("Source")
+        zone_layout.addRow(self.zone_combo.label, self.zone_combo.combo)
 
         # New Zone Name Input
-        self.new_zone_name = StyledInputBox(
-            label_text="New Zone Name",
-            parent=self
-        )
-        zone_layout.addWidget(self.new_zone_name)
+        self.new_zone_name = create_input("Zone Name")
+        zone_layout.addRow(self.new_zone_name.label, self.new_zone_name.input_field)
 
         zone_group.setLayout(zone_layout)
         layout.addWidget(zone_group)
 
         # Calculation Method Selector
+        calc_group = QGroupBox("Calculation Methods")
+        calc_layout = QVBoxLayout()
         self.calc_selector = TwoListSelector(
             left_title="Available Calculations",
             right_title="Selected Calculations"
@@ -51,14 +67,20 @@ class ZoneAttributeCalculator(QDialog):
             "Standard Deviation", "Variance", "Count"
         ]
         self.calc_selector.set_left_items(calc_methods)
-        layout.addWidget(self.calc_selector)
+        calc_layout.addWidget(self.calc_selector)
+        calc_group.setLayout(calc_layout)
+        layout.addWidget(calc_group)
 
-        # Attribute Selection using TwoListSelector
+        # Attribute Selection Group
+        attr_group = QGroupBox("Attributes")
+        attr_layout = QVBoxLayout()
         self.attribute_selector = TwoListSelector(
             left_title="Available Attributes",
             right_title="Selected Attributes"
         )
-        layout.addWidget(self.attribute_selector)
+        attr_layout.addWidget(self.attribute_selector)
+        attr_group.setLayout(attr_layout)
+        layout.addWidget(attr_group)
 
         # Bottom Buttons
         button_layout = QHBoxLayout()
@@ -75,6 +97,8 @@ class ZoneAttributeCalculator(QDialog):
         
         layout.addLayout(button_layout)
 
+        self.setLayout(layout)
+        
         # Populate zones and connect signals
         self.populate_zones()
         self.zone_combo.combo.currentTextChanged.connect(self.zone_changed)

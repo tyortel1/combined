@@ -13189,3 +13189,11 @@ Supported signatures:
 2025-02-17 14:51:07,633 - root - INFO - No scenarios to load.
 2025-02-17 14:51:07,633 - root - INFO - PUDPropertiesDialog initialized
 2025-02-17 14:51:10,053 - root - INFO - Dialog closed successfully
+2025-02-18 09:48:32,745 - root - DEBUG - Toolbar setup completed
+2025-02-18 09:48:32,747 - root - DEBUG - Scenario dropdown setup completed
+2025-02-18 09:48:32,754 - root - DEBUG - Table setup completed
+2025-02-18 09:48:32,754 - root - DEBUG - UI setup completed successfully
+2025-02-18 09:48:32,757 - root - DEBUG - Signal connections established
+2025-02-18 09:48:32,760 - root - INFO - No scenarios to load.
+2025-02-18 09:48:32,760 - root - INFO - PUDPropertiesDialog initialized
+2025-02-18 09:48:48,290 - root - INFO - Dialog closed successfully

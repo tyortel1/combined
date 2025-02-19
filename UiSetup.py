@@ -1,4 +1,4 @@
-﻿import os
+import os
 from PySide6.QtWidgets import QWidget, QHBoxLayout,QSpinBox, QFrame, QVBoxLayout, QGraphicsDropShadowEffect, QComboBox, QCheckBox, QLabel, QSlider, QScrollArea, QSizePolicy, QMenuBar, QMenu, QToolBar, QToolButton
 from PySide6.QtCore import Qt, QMetaObject, QSize
 from PySide6.QtGui import QIcon,  QPalette, QColor, QAction

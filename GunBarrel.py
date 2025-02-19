@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QDialog, QSlider, QVBoxLayout, QHBoxLayout, QSizePolicy, QLabel, QComboBox, QFormLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QSizePolicy, QFrame, QGraphicsDropShadowEffect, QMessageBox, QDialog, QSlider, QVBoxLayout, QHBoxLayout, QSizePolicy, QLabel, QComboBox, QFormLayout, QSpacerItem, QSizePolicy
 import math
 from PySide6.QtCore import Qt, QPointF, Signal, Slot
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -10,6 +10,9 @@ import plotly.graph_objects as go
 import plotly.offline as py_offline
 import numpy as np
 from scipy.spatial import KDTree
+from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget
+from StyledButton import StyledButton
+from StyledColorbar import StyledColorBar 
 
 class PlotGB(QDialog):
     hoverEvent = Signal(str)
@@ -44,75 +47,154 @@ class PlotGB(QDialog):
         event.accept()
 
     def setupUi(self):
+        self.labels = [
+            "Zone",
+            "Attribute",
+            "Color Bar",
+            "Dot Size"
+        ]
+        StyledDropdown.calculate_label_width(self.labels)
+
+        def create_dropdown(label):
+            dropdown = StyledDropdown(label)
+            dropdown.setStyleSheet("""
+                QLabel, QComboBox {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return dropdown
+
+        def create_section(frame_name, fixed_height=None):
+            frame = QFrame()
+            frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
+            frame.setStyleSheet("""
+                QFrame {
+                    background-color: white;
+                    border: 2px solid #A0A0A0;
+                    border-radius: 6px;
+                    padding: 4px;
+                }
+            """)
+            if fixed_height:
+                frame.setFixedHeight(fixed_height)
+                frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setBlurRadius(10)
+            shadow.setXOffset(3)
+            shadow.setYOffset(3)
+            shadow.setColor(QColor(0, 0, 0, 100))
+            frame.setGraphicsEffect(shadow)
+
+            layout = QVBoxLayout(frame)
+            layout.setSpacing(1)
+            layout.setContentsMargins(5, 5, 5, 5)
+            layout.setAlignment(Qt.AlignTop)
+            return frame, layout
+
+        def create_colorbar():
+            colorbar = StyledColorBar("Color Bar")
+            colorbar.colorbar_dropdown.label.setFixedWidth(StyledDropdown.label_width)
+            colorbar.setStyleSheet("""
+                QLabel {
+                    background-color: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            """)
+            return colorbar
+
         # Create plot widget
         self.plot_widget = QWebEngineView()
         self.plot_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Create controls layout
-        self.controls_layout = QVBoxLayout()
-        self.controls_layout.addSpacing(5)
-        self.controls_layout.setContentsMargins(5, 5, 5, 5)
-
-        # Dropdown to select Well Zone
-        self.WellZoneLabel = QLabel("Select Well Zone:", self)
-        self.controls_layout.addWidget(self.WellZoneLabel)
-        self.WellZoneDropdown = QComboBox(self)
-        self.WellZoneDropdown.addItem("Select Well Zone")
-        self.WellZoneDropdown.currentIndexChanged.connect(self.well_zone_selected)
-        self.controls_layout.addWidget(self.WellZoneDropdown)
-
-        # Dropdown to select Well Attribute
-        self.WellAttributeLabel = QLabel("Select Well Attribute:", self)
-        self.controls_layout.addWidget(self.WellAttributeLabel)
-        self.WellAttributeDropdown = QComboBox(self)
-        self.WellAttributeDropdown.addItem("Select Well Attribute")
-        self.WellAttributeDropdown.currentIndexChanged.connect(self.well_attribute_selected)
+        # Zone and Attribute Section with Colorbar
+        zoneAttrFrame, zoneAttrLayout = create_section("Zone and Attribute", fixed_height=170)
+    
+        # Well Zone Dropdown
+        self.WellZoneDropdown = create_dropdown("Zone")
+        self.WellZoneDropdown.combo.addItem("Select Well Zone")
+        self.WellZoneDropdown.combo.currentIndexChanged.connect(self.well_zone_selected)
+    
+        # Well Attribute Dropdown
+        self.WellAttributeDropdown = create_dropdown("Attribute")
+        self.WellAttributeDropdown.combo.addItem("Select Well Attribute")
+        self.WellAttributeDropdown.combo.currentIndexChanged.connect(self.well_attribute_selected)
         self.WellAttributeDropdown.setEnabled(False)
-        self.controls_layout.addWidget(self.WellAttributeDropdown)
+    
+        # Color Bar
+        self.colorbar = create_colorbar()
+        self.colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.on_colorbar_palette_changed)
 
-        # Color range display for Well Attribute
-        self.WellAttributeColorRangeDisplay = QLabel(self)
-        self.WellAttributeColorRangeDisplay.setFixedHeight(50)
-        self.WellAttributeColorRangeDisplay.setFixedWidth(220)
-        self.WellAttributeColorRangeDisplay.setStyleSheet("background-color: white; border: 1px solid black;")
-        self.controls_layout.addWidget(self.WellAttributeColorRangeDisplay)
+    
+        # Add widgets to zone attribute layout
+        zoneAttrLayout.addWidget(self.WellZoneDropdown)
+        zoneAttrLayout.addWidget(self.WellAttributeDropdown)
+        zoneAttrLayout.addWidget(self.colorbar)
 
-        # Dropdown to select Well Color Bar
-        self.WellAttributeColorBarLabel = QLabel("Select Well Color Bar:", self)
-        self.controls_layout.addWidget(self.WellAttributeColorBarLabel)
-        self.WellAttributeColorBarDropdown = QComboBox(self)
-        self.WellAttributeColorBarDropdown.addItem("Rainbow")
-        self.WellAttributeColorBarDropdown.currentIndexChanged.connect(self.well_attribute_selected)
-        self.controls_layout.addWidget(self.WellAttributeColorBarDropdown)
+        # Dot Size Section
+        dotSizeFrame, dotSizeLayout = create_section("Dot Size", fixed_height=70)
+    
+        # Dot size slider with label
+        sliderLabel = QLabel("Dot Size:")
+        sliderLabel.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
 
-
-    # Dot size slider
         self.dotSizeSlider = QSlider(Qt.Horizontal)
         self.dotSizeSlider.setMinimum(1)
         self.dotSizeSlider.setMaximum(30)
-        self.dotSizeSlider.setValue(16)  # Default size
-        self.dotSizeSlider.setFixedWidth(192)  # Set width to 2 inches (approximately 192 pixels)
+        self.dotSizeSlider.setValue(16)
+        self.dotSizeSlider.setFixedWidth(192)
         self.dotSizeSlider.valueChanged.connect(self.on_dot_size_changed)
-        self.controls_layout.addWidget(QLabel("Dot Size:"))
-        self.controls_layout.addWidget(self.dotSizeSlider)
-        self.controls_layout.addStretch()
 
-        # Create main layout and add widgets
+        # Add widgets to dot size layout
+        dotSizeLayout.addWidget(sliderLabel)
+        dotSizeLayout.addWidget(self.dotSizeSlider)
+
+        # Create main layout
         main_layout = QHBoxLayout()
-        main_layout.addLayout(self.controls_layout)
-        main_layout.addWidget(self.plot_widget)
+    
+        # Left side - controls
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(zoneAttrFrame)
+        left_layout.addWidget(dotSizeFrame)
+        left_layout.addStretch()
+    
+        left_frame = QFrame()
+        left_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: none;
+            }
+        """)
+        left_frame.setLayout(left_layout)
+
+        # Add left frame and plot widget to main layout
+        main_layout.addWidget(left_frame, stretch=1)
+        main_layout.addWidget(self.plot_widget, stretch=7)
+    
         self.setLayout(main_layout)
+
+        # Set window properties
+        self.setWindowTitle("Gun Barrel Plot")
+        self.setGeometry(100, 100, 1500, 800)
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setWindowIcon(QIcon("icons/gunb.ico"))
 
-        # Set up QWebChannel
-        self.channel = QWebChannel()
-        self.channel.registerObject('pyqtConnector', self)
-        self.plot_widget.page().setWebChannel(self.channel)
-
-        # Initial plot
-        self.populate_color_bar_dropdown()
         self.populate_well_zone_dropdown()
         self.plot_intersection_line()
+
+
 
     def plot_intersection_line(self):
         try:
@@ -403,57 +485,91 @@ class PlotGB(QDialog):
         self.main_app.handle_hover_event(UWI)
 
     def populate_well_zone_dropdown(self):
-        """Populates the dropdown with unique zone names where the Attribute Type is 'Well'."""
-
         # Clear the dropdown and set a default option
-        self.WellZoneDropdown.blockSignals(True)
-        self.WellZoneDropdown.clear()
-        self.WellZoneDropdown.addItem("Select Well Zone")
+        self.WellZoneDropdown.combo.blockSignals(True)  # Changed
+        self.WellZoneDropdown.combo.clear()  # Changed
+        self.WellZoneDropdown.combo.addItem("Select Well Zone")  # Changed
     
         zone_names = self.db_manager.fetch_zone_names_by_type("Well")
         if zone_names:
-            # Extract first element from each tuple and sort
-            zone_names = [name[0] for name in zone_names if name[0].strip()]  # Also strip whitespace
+            zone_names = [name[0] for name in zone_names if name[0].strip()]
             self.well_zone_names = sorted(zone_names)
-            self.WellZoneDropdown.addItems(self.well_zone_names)
+            self.WellZoneDropdown.combo.addItems(self.well_zone_names)  # Changed
 
-        self.WellZoneDropdown.blockSignals(False)
-    def populate_color_bar_dropdown(self):
-        """Populate the color bar dropdown with file names from the Palettes directory."""
-        palettes_path = os.path.join(os.path.dirname(__file__), 'Palettes')
-        try:
-            color_bar_files = [f.split('.')[0] for f in os.listdir(palettes_path) if f.endswith('.pal')]
-            self.WellAttributeColorBarDropdown.addItems(color_bar_files)
-        except FileNotFoundError:
-            print(f"Directory not found: {palettes_path}")
-        except Exception as e:
-            print(f"Error populating color bar dropdown: {e}")
+        self.WellZoneDropdown.combo.blockSignals(False)  # Changed
+
 
     def well_zone_selected(self):
-        """Handles the selection of a zone from the dropdown."""
-        self.selected_zone = self.WellZoneDropdown.currentText()
+        print("Selected Zone:", self.WellZoneDropdown.combo.currentText())
+        self.selected_zone = self.WellZoneDropdown.combo.currentText()
  
         if self.selected_zone == "Select Well Zone":
-            self.WellAttributeDropdown.setEnabled(False)
-            self.WellAttributeDropdown.clear()
+            print("No zone selected, disabling attribute dropdown")
+            # Clear attribute dropdown
+            self.WellAttributeDropdown.combo.clear()
+            self.WellAttributeDropdown.combo.addItem("Select Well Attribute")
+            self.WellAttributeDropdown.combo.setEnabled(False)
+        
+            # Reset all intersection points to black
+            try:
+                fig = self.current_figure
+                # Find the trace corresponding to the intersection points
+                intersection_trace = next(
+                    (trace for trace in fig.data if trace.name == 'Intersection Points'), 
+                    None
+                )
+            
+                if intersection_trace is not None:
+                    # Update to set all points to black
+                    fig.update_traces(
+                        selector=dict(name='Intersection Points'),
+                        marker=dict(color='black', size=self.current_dot_size)
+                    )
+                
+                    # Update the plot without redrawing everything
+                    self.plot_widget.page().runJavaScript(f"""
+                        Plotly.restyle(document.getElementsByClassName('plotly-graph-div')[0], 
+                                       {{marker: {{color: 'black', size: {self.current_dot_size}}}}}, 
+                                       {fig.data.index(intersection_trace)});
+                    """)
+            
+                # Clear the color range display
+                self.colorbar.display_color_range(0, 1)  # Reset to default range
+            
+            except Exception as e:
+                print(f"Error resetting intersection colors: {e}")
+            
             return
 
-        self.WellAttributeDropdown.blockSignals(True)
-        self.WellAttributeDropdown.clear()
+        print("Preparing to populate attribute dropdown")
+        self.WellAttributeDropdown.combo.blockSignals(True)
+        self.WellAttributeDropdown.combo.clear()
         self.populate_well_attribute_dropdown()
-        self.WellAttributeDropdown.blockSignals(False)
+        self.WellAttributeDropdown.combo.blockSignals(False)
+
+        # Debug prints
+        print("Attribute Dropdown Item Count:", self.WellAttributeDropdown.combo.count())
+        print("Is Attribute Dropdown Enabled?", self.WellAttributeDropdown.isEnabled())
+        print("Is Attribute Dropdown Combo Enabled?", self.WellAttributeDropdown.combo.isEnabled())
+
+        # Explicitly set to "Select Well Attribute"
+        self.WellAttributeDropdown.combo.setCurrentIndex(0)
         self.WellAttributeDropdown.setEnabled(True)
+        self.WellAttributeDropdown.combo.setEnabled(True)
+
+
+    def on_colorbar_palette_changed(self):
+        print("Colorbar palette changed")
+        # If an attribute is already selected, reapply the color mapping
+        if self.selected_attribute and self.selected_attribute != "Select Well Attribute":
+            self.well_attribute_selected()
 
     def populate_well_attribute_dropdown(self):
-        """Populate the well attribute dropdown with numeric attributes for the selected well zone."""
+        selected_well_zone = self.WellZoneDropdown.combo.currentText()  # Changed
     
-        # Get the selected well zone from the well zone dropdown
-        selected_well_zone = self.WellZoneDropdown.currentText()
-    
-        # Clear the dropdown before populating
-        self.WellAttributeDropdown.blockSignals(True)
-        self.WellAttributeDropdown.clear()
-        self.WellAttributeDropdown.addItem("Select Well Attribute")
+        self.WellAttributeDropdown.combo.blockSignals(True)  # Changed
+        self.WellAttributeDropdown.combo.clear()  # Changed
+        self.WellAttributeDropdown.combo.addItem("Select Well Attribute")  # Changed
 
         if selected_well_zone != "Select Well Zone":
             # Fetch the data for the selected zone
@@ -481,23 +597,23 @@ class PlotGB(QDialog):
                     non_null_columns = [col for col in combined_columns if remaining_df[col].notnull().any()]
                     non_null_columns.sort()
                 
-                    if non_null_columns:
-                        self.WellAttributeDropdown.addItems(non_null_columns)
-                        self.WellAttributeDropdown.setEnabled(True)
-                    else:
-                        self.WellAttributeDropdown.addItem("No Attributes Available")
-                        self.WellAttributeDropdown.setEnabled(False)
+                if non_null_columns:
+                    self.WellAttributeDropdown.combo.addItems(non_null_columns)  # Changed
+                    self.WellAttributeDropdown.combo.setEnabled(True)  # Changed
+                else:
+                    self.WellAttributeDropdown.combo.addItem("No Attributes Available")  # Changed
+                    self.WellAttributeDropdown.combo.setEnabled(False)  # Changed
                     
             except Exception as e:
                 print(f"Error populating well attributes: {e}")
-                self.WellAttributeDropdown.addItem("Error Loading Attributes")
-                self.WellAttributeDropdown.setEnabled(False)
+                self.WellAttributeDropdown.combo.addItem("Error Loading Attributes")
+                self.WellAttributeDropdown.combo.setEnabled(False)
     
-        self.WellAttributeDropdown.blockSignals(False)
+        self.WellAttributeDropdown.combo.blockSignals(False) 
 
     def well_attribute_selected(self):
         """Handle the event when a well attribute is selected."""
-        self.selected_attribute = self.WellAttributeDropdown.currentText()
+        self.selected_attribute = self.WellAttributeDropdown.combo.currentText() 
     
         if self.selected_attribute == "Select Well Attribute" or not self.selected_attribute:
             return
@@ -527,35 +643,31 @@ class PlotGB(QDialog):
             # Calculate the min and max values for the selected attribute
             min_value = filtered_df[self.selected_attribute].min()
             max_value = filtered_df[self.selected_attribute].max()
-        
-            # Load color palette
-            color_bar_name = self.WellAttributeColorBarDropdown.currentText()
-            palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-            file_path = os.path.join(palettes_dir, f"{color_bar_name}.pal")  # Add .pal extension
-        
-            color_palette = self.load_color_palette(file_path)
-        
+
+            # Update the color bar display
+            self.colorbar.display_color_range(min_value, max_value)
+    
+            # Get the color palette from StyledColorBar
+            color_palette = self.colorbar.selected_color_palette
+    
             # Create color map for each UWI
             UWI_color_map = {}
             for UWI in valid_intersection_UWIs:
                 UWI_values = filtered_df[filtered_df['UWI'] == UWI][self.selected_attribute]
                 if not UWI_values.empty:
-                    value = UWI_values.iloc[0]  # Take first value instead of mean
-                    print(f"UWI: {UWI}, Value: {value}")
-                    if pd.notnull(value):  # Check for null values
-                        color = self.map_value_to_color(value, min_value, max_value, color_palette)
+                    value = UWI_values.iloc[0]
+                    if pd.notnull(value):
+                        color = self.colorbar.map_value_to_color(value, min_value, max_value, color_palette)
                         UWI_color_map[UWI] = color
-        
-            print("Final UWI Color Map:", UWI_color_map)
-        
-            # Update displays
-            self.display_color_range(self.WellAttributeColorRangeDisplay, color_palette, min_value, max_value)
+
+            # Update the plot
             self.update_intersection_plot(UWI_color_map)
-        
+
         except Exception as e:
             print(f"Error in well_attribute_selected: {str(e)}")
             import traceback
             traceback.print_exc()
+
 
 
     def on_dot_size_changed(self):
@@ -636,106 +748,6 @@ class PlotGB(QDialog):
             r, g, b = qcolor[:3]
             return f"#{r:02x}{g:02x}{b:02x}"
         return "#000000"  # Default black
-
-    def load_color_palette(self, file_path):
-        """Load color palette and return list of QColors."""
-        base_path = file_path.replace('.pal.pal', '.pal')
-        color_palette = []
-    
-        try:
-            with open(base_path, 'r') as file:
-                lines = file.readlines()
-                for line in lines:
-                    if line.strip() and not line.strip().startswith(('struct', 'Name', 'Colors', '}', 'ColorPalette')):
-                        try:
-                            r, g, b = map(int, line.strip().split())
-                            color_palette.append(QColor(r, g, b))
-                        except ValueError:
-                            continue
-        except Exception as e:
-            print(f"Error loading color palette from {base_path}: {e}")
-            return [QColor(0, 0, 0)]  # Return default black QColor
-    
-        return color_palette if color_palette else [QColor(0, 0, 0)]
-
-    def map_value_to_color(self, value, min_value, max_value, color_palette):
-        """Map a value to a QColor using the provided color palette."""
-        if not color_palette:
-            return QColor(0, 0, 0)
-        
-        if math.isnan(value) or math.isnan(min_value) or math.isnan(max_value):
-            return QColor(0, 0, 0)  # Return black for NaN values
-        
-        if max_value == min_value:
-            return color_palette[0]
-        
-        try:
-            normalized_value = (value - min_value) / (max_value - min_value)
-            normalized_value = max(0.0, min(1.0, normalized_value))  # Clamp between 0 and 1
-        
-            index = int(normalized_value * (len(color_palette) - 1))
-            index = max(0, min(index, len(color_palette) - 1))  # Ensure index is in bounds
-        
-            return color_palette[index]
-        except Exception as e:
-            print(f"Error in map_value_to_color: {e}")
-            return QColor(0, 0, 0)  # Return black on error
-
-    def display_color_range(self, color_range_display, color_palette, min_attr, max_attr):
-        if not color_palette or min_attr is None or max_attr is None:
-            print("Unable to display color range.")
-            color_range_display.setPixmap(QPixmap(color_range_display.size()))
-            return
-
-        pixmap = QPixmap(color_range_display.size())
-        pixmap.fill(Qt.white)
-
-        painter = QPainter(pixmap)
-        margin = 5
-        dash_height = 5
-        text_height = 10
-        color_bar_height = 20
-        total_height = margin + text_height + dash_height + color_bar_height + margin
-        color_bar_y = total_height - color_bar_height - margin
-        edge_padding = 10
-
-        gradient = QLinearGradient(edge_padding, color_bar_y, 
-                                   color_range_display.width() - edge_padding, color_bar_y)
-        for i, color in enumerate(color_palette):
-            gradient.setColorAt(i / (len(color_palette) - 1), color)
-
-        painter.setBrush(QBrush(gradient))
-        painter.drawRect(edge_padding, color_bar_y, 
-                         color_range_display.width() - 2 * edge_padding, color_bar_height)
-
-        painter.setPen(Qt.black)
-        font = painter.font()
-        font.setPointSize(5)
-        painter.setFont(font)
-
-        num_intervals = 4
-        interval = (max_attr - min_attr) / num_intervals
-        values = [round(min_attr + i * interval) for i in range(num_intervals + 1)]
-
-        for i, value in enumerate(values):
-            x = int(i * (color_range_display.width() - 2 * edge_padding) / num_intervals) + edge_padding
-
-            painter.drawLine(x, color_bar_y - dash_height, x, color_bar_y)
-
-            text = f"{value}"
-            text_width = painter.fontMetrics().horizontalAdvance(text)
-
-            if i == 0:
-                text_x = edge_padding
-            elif i == num_intervals:
-                text_x = color_range_display.width() - text_width - edge_padding
-            else:
-                text_x = x - text_width / 2
-
-            painter.drawText(text_x, margin + text_height, text)
-
-        painter.end()
-        color_range_display.setPixmap(pixmap)
 
 
 

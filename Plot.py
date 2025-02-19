@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import plotly.graph_objs as go
 import json
@@ -307,26 +307,12 @@ class Plot(QDialog):
 
         self.zone_selector.combo.currentIndexChanged.connect(self.zone_selected)
         self.zone_attribute_selector.combo.currentIndexChanged.connect(self.attribute_selected)
+        self.color_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.palette_selected)
         self.zone_attribute_selector.combo.setEnabled(False)
 
         self.populate_zone_names()
-        self.set_default_tvd_range()
+  
         self.plot_current_well()
-
-    def set_default_tvd_range(self):
-        depth_grids = self.grid_info_df[self.grid_info_df['Type'] == 'Depth']
-    
-        if not depth_grids.empty:
-            min_z = depth_grids['min_z'].min()
-            max_z = depth_grids['max_z'].max()
-    
-            # Set default TVD range with +/- 50 adjustment
-            self.min_tvd_input.setText(str(min_z - 50))
-            self.max_tvd_input.setText(str(max_z + 100))
-        else:
-            # Set some sensible defaults if no depth grids are found
-            self.min_tvd_input.setText(str(-100))
-            self.max_tvd_input.setText(str(1000))
 
 
     def palette_selected(self):
@@ -417,30 +403,56 @@ class Plot(QDialog):
     
     def zone_selected(self):
         # Get the selected zone name from the zone selector
+        selected_text = self.zone_selector.currentText()
+        if not selected_text:  # Handle empty selection
+            print("Empty zone selection")
+            return
         
-        self.selected_zone = self.zone_selector.currentText().replace(" ", "_")
-        print(self.selected_zone)
-        
-
-
-        if self.selected_zone != "Select Zone":
-            # Filter the master_df to grab the relevant UWI and Zone data
-            self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
-
-
-        
-
-
-            # Trigger replot with the new selected zone data
-            if self.next_well == False:
-                self.plot_current_well()
-        else:
-            # If "Select Zone" is selected, clear the zone data
+        self.selected_zone = selected_text.replace(" ", "_")
+        print(f"Selected zone: {self.selected_zone}")
+    
+        # Clear attributes selector
+        self.zone_attribute_selector.clear()
+        self.zone_attribute_selector.addItem("Select Zone Attribute")
+    
+        if self.selected_zone == "Select_Zone":
+            # Clear the zone data
             self.selected_zone_df = None
-      
-            if self.next_well == False:
-                self.plot_current_well()
+            self.attributes_names = []
+        
+            # Remove existing tick traces and zone fills
+            if hasattr(self, 'fig'):
+                # Filter out tick traces and zone fills
+                new_data = []
+                for trace in self.fig.data:
+                    # Check trace properties using proper Plotly attribute access
+                    if hasattr(trace, 'line'):
+                        line_color = trace.line.color if hasattr(trace.line, 'color') else None
+                        if line_color not in ['red', 'blue']:  # not a tick mark or zone boundary
+                            new_data.append(trace)
+                    else:
+                        new_data.append(trace)
+            
+                self.fig.data = tuple(new_data)  # Update figure data
+            
+                # Update the plot
+                if not self.next_well:
+                    file_path = os.path.join(os.getcwd(), "plot.html")
+                    py_offline.plot(self.fig, filename=file_path, auto_open=False)
+                    self.plot_widget.load(QUrl.fromLocalFile(file_path))
+        else:
+            try:
+                # Filter the master_df to grab the relevant UWI and Zone data
+                self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
+            
+                # Trigger replot with the new selected zone data
+                if not self.next_well:
+                    self.plot_current_well()
+            except Exception as e:
+                print(f"Error fetching zone data: {str(e)}")
+                self.selected_zone_df = None
 
+        # Update the attribute selector
         self.populate_zone_attribute()
 
 
@@ -599,6 +611,33 @@ class Plot(QDialog):
             grid_values = {grid_name: df[grid_name].tolist() for grid_name in valid_grids}
             sorted_grids = sorted(grid_values.keys(), key=lambda grid: min(grid_values[grid]))
 
+            all_z_values = []
+            for grid_name in sorted_grids:
+                all_z_values.extend(grid_values[grid_name])
+            
+            if all_z_values:
+                min_z = min(all_z_values)
+                max_z = max(all_z_values)
+                
+                # Add padding (2% of range)
+                z_range = max_z - min_z
+                padding = z_range * 0.02
+                
+                final_min = min_z - padding
+                final_max = max_z + padding
+                
+                print(f"Grid Z range: {round(min_z)} to {round(max_z)}")
+                print(f"Final TVD range: {round(final_min)} to {round(final_max)}")
+                
+                self.min_tvd_input.setText(f"{round(final_min)}")
+                self.max_tvd_input.setText(f"{round(final_max)}")
+                
+                # Update plot's y-axis range
+                fig.update_yaxes(range=[round(final_min), round(final_max)])
+
+
+
+
             # Overlay grids on the seismic plot and fill between them
             for i, grid_name in enumerate(sorted_grids):
                 try:
@@ -729,21 +768,81 @@ class Plot(QDialog):
 
 
 
+    def zone_selected(self):
+        # Get the selected zone name from the zone selector
+        selected_text = self.zone_selector.currentText()
+        if not selected_text:  # Handle empty selection
+            print("Empty zone selection")
+            return
+        
+        self.selected_zone = selected_text.replace(" ", "_")
+        print(f"Selected zone: {self.selected_zone}")
+    
+        # Clear attributes selector
+        self.zone_attribute_selector.clear()
+        self.zone_attribute_selector.addItem("Select Zone Attribute")
+    
+        if self.selected_zone == "Select_Zone":
+            # Clear the zone data
+            self.selected_zone_df = None
+            self.attributes_names = []
+        
+            # Remove existing tick traces and zone fills
+            if hasattr(self, 'fig'):
+                # Filter out tick traces and zone fills
+                new_data = []
+                for trace in self.fig.data:
+                    # Check trace properties using proper Plotly attribute access
+                    if hasattr(trace, 'line'):
+                        line_color = trace.line.color if hasattr(trace.line, 'color') else None
+                        if line_color not in ['red', 'blue']:  # not a tick mark or zone boundary
+                            new_data.append(trace)
+                    else:
+                        new_data.append(trace)
+            
+                self.fig.data = tuple(new_data)  # Update figure data
+            
+                # Update the plot
+                if not self.next_well:
+                    file_path = os.path.join(os.getcwd(), "plot.html")
+                    py_offline.plot(self.fig, filename=file_path, auto_open=False)
+                    self.plot_widget.load(QUrl.fromLocalFile(file_path))
+        else:
+            try:
+                # Filter the master_df to grab the relevant UWI and Zone data
+                self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
+            
+                # Trigger replot with the new selected zone data
+                if not self.next_well:
+                    self.plot_current_well()
+            except Exception as e:
+                print(f"Error fetching zone data: {str(e)}")
+                self.selected_zone_df = None
+
+        # Update the attribute selector
+        self.populate_zone_attribute()
+
     def update_zone_ticks(self):
-        if self.selected_zone is None or self.selected_zone == 'Select Zone':
-            print("No valid zone selected for tick update.")
+        # Early return if no zone is selected or if "Select Zone" is chosen
+        if self.selected_zone is None or self.selected_zone == "Select_Zone":
+            print("No valid zone selected, skipping tick update.")
             return
 
         try:
             tick_traces = []
             zone_fills = []
 
+            # Safety check for selected_zone_df
+            if self.selected_zone_df is None:
+                print("No zone data available")
+                return
+
             attribute = self.zone_attribute_selector.currentText()
             color_zones = attribute != "Select Zone Attribute"
 
             # Filter the master_df for the current UWI and selected zone
-            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI]
-        
+            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI].copy()
+    
             if zone_data.empty:
                 print(f"No data found for UWI {self.current_UWI} and zone {self.selected_zone}")
                 return
@@ -752,64 +851,64 @@ class Plot(QDialog):
                 if attribute not in zone_data.columns:
                     print(f"Selected attribute '{attribute}' not found in the data.")
                     color_zones = False  # Prevent it from blocking tick drawing
-
-                self.min_attr = zone_data[attribute].min()
-                self.max_attr = zone_data[attribute].max()
+                else:
+                    self.min_attr = zone_data[attribute].min()
+                    self.max_attr = zone_data[attribute].max()
+                    self.color_colorbar.display_color_range(self.min_attr, self.max_attr)
 
             for _, zone_row in zone_data.iterrows():
-                top_md = zone_row['Top_Depth']
-                base_md = zone_row['Base_Depth']
+                try:
+                    top_md = zone_row['Top_Depth']
+                    base_md = zone_row['Base_Depth']
 
-                top_cum_dist = self.interpolate_value(top_md, 'Cumulative Distance')
-                base_cum_dist = self.interpolate_value(base_md, 'Cumulative Distance')
-                top_tvd = self.interpolate_value(top_md, 'TVD')
-                base_tvd = self.interpolate_value(base_md, 'TVD')
+                    top_cum_dist = self.interpolate_value(top_md, 'Cumulative Distance')
+                    base_cum_dist = self.interpolate_value(base_md, 'Cumulative Distance')
+                    top_tvd = self.interpolate_value(top_md, 'TVD')
+                    base_tvd = self.interpolate_value(base_md, 'TVD')
 
-                if all(v is not None for v in [top_cum_dist, base_cum_dist, top_tvd, base_tvd]):
-                    # Always add tick marks, even if no attribute is selected
-                    for cum_dist, tvd, name in [(top_cum_dist, top_tvd, 'Top'), (base_cum_dist, base_tvd, 'Base')]:
-                        tick_traces.append(go.Scatter(
-                            x=[cum_dist, cum_dist],
-                            y=[tvd - self.tick_size_value/2, tvd + self.tick_size_value/2],
-                            mode='lines',
-                            line=dict(color='red', width=2),
-                            showlegend=False,
-                            hoverinfo='skip'
-                        ))
+                    if all(v is not None for v in [top_cum_dist, base_cum_dist, top_tvd, base_tvd]):
+                        # Only add tick marks if a valid zone is selected
+                        for cum_dist, tvd, name in [(top_cum_dist, top_tvd, 'Top'), (base_cum_dist, base_tvd, 'Base')]:
+                            tick_traces.append(go.Scatter(
+                                x=[cum_dist, cum_dist],
+                                y=[tvd - self.tick_size_value/2, tvd + self.tick_size_value/2],
+                                mode='lines',
+                                line=dict(color='red', width=2),
+                                showlegend=False,
+                                hoverinfo='skip'
+                            ))
 
-                    if color_zones:
-                        attribute_value = zone_row[attribute]
-                        color = self.color_colorbar.map_value_to_color(attribute_value, self.min_attr, self.max_attr, self.color_colorbar.selected_color_palette)
+                        if color_zones and attribute in zone_row:
+                            attribute_value = zone_row[attribute]
+                            color = self.color_colorbar.map_value_to_color(attribute_value, self.min_attr, self.max_attr, self.color_colorbar.selected_color_palette)
 
-                        zone_fills.append(go.Scatter(
-                            x=[top_cum_dist, base_cum_dist],
-                            y=[top_tvd, base_tvd],
-                            mode='lines',
-                            line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value/3)),
-                            name=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}',
-                            showlegend=False,
-                            hoverinfo='text',
-                            text=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}'
-                        ))
-                    else:
-                        # Always add zone boundary even if no attribute is selected
-                        tick_traces.append(go.Scatter(
-                            x=[top_cum_dist, base_cum_dist],
-                            y=[top_tvd, base_tvd],
-                            mode='lines',
-                            line=dict(color='blue', width=2, dash='dash'),
-                            name=f'{self.selected_zone} Boundary'
-                        ))
+                            zone_fills.append(go.Scatter(
+                                x=[top_cum_dist, base_cum_dist],
+                                y=[top_tvd, base_tvd],
+                                mode='lines',
+                                line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value/3)),
+                                name=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}',
+                                showlegend=False,
+                                hoverinfo='text',
+                                text=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}'
+                            ))
+                        else:
+                            # Add zone boundary
+                            tick_traces.append(go.Scatter(
+                                x=[top_cum_dist, base_cum_dist],
+                                y=[top_tvd, base_tvd],
+                                mode='lines',
+                                line=dict(color='blue', width=2, dash='dash'),
+                                name=f'{self.selected_zone} Boundary'
+                            ))
 
-                else:
-                    print(f"Unable to create visualization for {self.selected_zone} due to missing interpolated values")
+                except Exception as e:
+                    print(f"Error processing zone row: {str(e)}")
+                    continue
 
             if tick_traces or zone_fills:
-                self.fig.add_traces(zone_fills)
-                self.fig.add_traces(tick_traces)
-
-                html_content = py_offline.plot(self.fig, include_plotlyjs='cdn', output_type='div')
-                self.plot_widget.setHtml(html_content)
+                # Add all traces at once
+                self.fig.add_traces(zone_fills + tick_traces)
 
                 file_path = os.path.join(os.getcwd(), "plot.html")
                 py_offline.plot(self.fig, filename=file_path, auto_open=False)
@@ -817,7 +916,7 @@ class Plot(QDialog):
 
         except Exception as e:
             print(f"Error updating zone ticks and fills: {str(e)}")
-            print("Zone data columns:", zone_data.columns.tolist())
+            print("Zone data columns:", zone_data.columns.tolist() if 'zone_data' in locals() else "No zone data available")
             import traceback
             traceback.print_exc()
 

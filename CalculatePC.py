@@ -27,9 +27,10 @@ class PCDialog(QDialog):
         param_layout = QVBoxLayout()
         param_layout.setSpacing(10)  # Add spacing between elements
 
-        # Grid layout for inputs to ensure alignment
+        # Change to QHBoxLayout for each input row to control alignment
         input_layout = QVBoxLayout()
         input_layout.setSpacing(10)
+        input_layout.setAlignment(Qt.AlignLeft)  # Align the entire layout to the left
 
         # Create all inputs first with consistent label widths
         input_params = [
@@ -46,21 +47,29 @@ class PCDialog(QDialog):
             test_label = QLabel(label_text)
             label_width = max(label_width, test_label.sizeHint().width() + 30)  # Add padding
 
-        # Create inputs with consistent label width
+        # Create inputs with consistent label width and left alignment
         self.inputs = {}
         for label_text, create_func, *args in input_params:
+            # Create a horizontal layout for each row
+            row_layout = QHBoxLayout()
+            row_layout.setAlignment(Qt.AlignLeft)  # Align the row contents to the left
+            
             if create_func == self.create_dropdown:
                 widget = self.create_dropdown(label_text, label_width)
                 self.scenario_combo = widget  # Keep reference for scenario combo
             else:
                 widget = self.create_input(label_text, args[0], label_width)
                 self.inputs[label_text] = widget
-            input_layout.addWidget(widget)
+            
+            row_layout.addWidget(widget)
+            row_layout.addStretch()  # Add stretch after the widget to push everything to the left
+            input_layout.addLayout(row_layout)
 
         param_layout.addLayout(input_layout)
         param_group.setLayout(param_layout)
         layout.addWidget(param_group)
 
+        # Rest of the code remains the same...
         # Results group
         results_group = QGroupBox("Analysis Results")
         results_layout = QVBoxLayout()

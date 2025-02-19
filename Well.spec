@@ -1,4 +1,3 @@
-# Map2.spec
 from pathlib import Path
 import os
 
@@ -10,9 +9,9 @@ a = Analysis(
     pathex=[root_dir],
     binaries=[],
     datas=[
-        # Correct paths for your data directories
-        (os.path.join(root_dir, 'Icons'), 'Icons'),  # Fixed path to Icons
-        (os.path.join(root_dir, 'Palettes'), 'Palettes'),  # Fixed path to Palettes
+        # Ensure these paths are correctly included
+        (os.path.join(root_dir, 'Icons'), 'Icons'),
+        (os.path.join(root_dir, 'Palettes'), 'Palettes'),
     ],
     hiddenimports=[
         # GUI
@@ -20,24 +19,48 @@ a = Analysis(
         'PySide6.QtGui',
         'PySide6.QtWidgets',
         'PySide6.QtCharts',
+        'PySide6.QtPrintSupport',
+        'PySide6.QtSvg',
         
-        # Scientific packages
+        # Scientific & Data Processing Packages
         'numpy',
         'pandas',
         'matplotlib',
         'matplotlib.backends.backend_qt5agg',
+        'matplotlib.backends.backend_qt5cairo',
         'scipy',
         'seaborn',
         'segyio',
         'shapely',
         'sklearn',
+        'statsmodels',
+        'pingouin',
         'plotly',
+        'mplcursors',
+        'openpyxl',
+        'ujson',
+        'pystray',
+        'cryptography',
+        'datrie',
+        'networkx',
+        'certifi',
+        'lxml',
+        'mpl_toolkits',
+        'PyPI',
+        'PySide6.QtTest',
         
-        # Your custom modules
+        # Standard Library Modules (ensure explicit inclusion if needed)
+        'queue', 'html', 'http', 'ssl', 'unicodedata',
+        'uuid', 'email', 'urllib', 'tkinter', 'pickle', 'bz2', 'sqlite3',
+        'pyparsing', 'hashlib', 'termios', 'socks', 'py_compile', 'difflib',
+        'shlex', 'plistlib', 'tempfile', 'zipfile', 'fnmatch', 'calendar', 'logging',
+        
+        # Your Custom Modules
         'CalculateCorrelationMatrix',
         'CalculateCorrelations',
         'CalculatePC',
         'CalculateWellComparisons',
+        'CalculateZoneAttributes',
         'Calculations',
         'ColorEdit',
         'ColumnSelectDialog',
@@ -105,7 +128,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # Set to False for a windowless application
+    console=True,  # Change to False for a windowless application
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,

@@ -1,4 +1,4 @@
-﻿from pickle import TRUE
+from pickle import TRUE
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QToolBar, QTableWidget, QComboBox,
     QSizePolicy, QTableWidgetItem, QMessageBox, QStyledItemDelegate,

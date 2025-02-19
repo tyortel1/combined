@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QComboBox, 
                               QPushButton, QLabel, QMessageBox, QCheckBox, QListWidget,
-                              QAbstractItemView, QSizePolicy, QSpacerItem)
+                              QAbstractItemView, QSizePolicy, QSpacerItem, QFormLayout)
 
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Qt
 from StyledTwoListSelector import TwoListSelector
 from StyledDropdown import StyledDropdown
 from StyledButton import StyledButton
-from StyledDropdown import StyledInputBox
+from StyledDropdown import StyledInputBox, StyledBaseWidget
 import numpy as np
 import pandas as pd
 
@@ -186,26 +186,34 @@ class StagesCalculationDialog(QDialog):
     def __init__(self, db_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Calculate Stages")
-        self.setMinimumSize(300, 100)
-
+        self.setMinimumSize(400, 150)
         self.db_manager = db_manager
         self.zone_names = [zone[0] for zone in self.db_manager.fetch_zone_names_by_type('Zone')]
-
+        
         # Standardize directional survey DataFrame
         self.directional_surveys_df = pd.DataFrame(self.db_manager.get_directional_surveys_dataframe())
         self.directional_surveys_df.columns = self.directional_surveys_df.columns.str.lower().str.strip()
-
+        
         # Rename columns
         column_mapping = {
             "uwi": "UWI", "md": "MD", "tvd": "TVD",
             "x offset": "X Offset", "y offset": "Y Offset"
         }
         self.directional_surveys_df.rename(columns=column_mapping, inplace=True)
-
         self.setup_ui()
 
     def setup_ui(self):
+        # Main layout
         layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        # Calculate label widths
+        labels = ["Stage Length", "Zone Name"]
+        StyledDropdown.calculate_label_width(labels)
+        
+        # Create form layout
+        form_layout = QFormLayout()
         
         # Average Stage Length input
         self.avg_stage_length_input = StyledInputBox(
@@ -214,8 +222,8 @@ class StagesCalculationDialog(QDialog):
             validator=QDoubleValidator(),
             parent=self
         )
-        layout.addWidget(self.avg_stage_length_input)
-
+        form_layout.addRow(self.avg_stage_length_input.label, self.avg_stage_length_input.input_field)
+        
         # Zone Name dropdown
         initial_items = ["Select Zone"] + self.zone_names if self.zone_names else ["Select Zone"]
         self.zone_name_dropdown = StyledDropdown(
@@ -224,12 +232,15 @@ class StagesCalculationDialog(QDialog):
             editable=True,
             parent=self
         )
-        layout.addWidget(self.zone_name_dropdown)
-
+        form_layout.addRow(self.zone_name_dropdown.label, self.zone_name_dropdown.combo)
+        
+        layout.addLayout(form_layout)
+        layout.addStretch()
+        
         # Button Layout (Side-by-Side on the Right)
         button_layout = QHBoxLayout()
-        button_layout.addStretch()  # Push buttons to the right
-
+        button_layout.addStretch()
+        
         self.calculate_button = StyledButton(
             text="Calculate",
             button_type="function",
@@ -240,12 +251,12 @@ class StagesCalculationDialog(QDialog):
             button_type="close",
             parent=self
         )
-
+        
         button_layout.addWidget(self.calculate_button)
         button_layout.addWidget(self.close_button)
-
+        
         layout.addLayout(button_layout)
-
+        
         # Connect buttons
         self.calculate_button.clicked.connect(self.calculate_stages)
         self.close_button.clicked.connect(self.accept)

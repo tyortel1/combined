@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import QDialog, QVBoxLayout, QListWidgetItem, QHBoxLayout, QLabel, QListWidget, QFormLayout, QColorDialog, QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QListWidgetItem, QHBoxLayout, QLabel, QListWidget, QFormLayout, QColorDialog, QMessageBox
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtCore import Qt
 import pandas as pd

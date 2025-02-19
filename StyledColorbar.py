@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
 from PySide6.QtGui import QPixmap, QPainter, QLinearGradient, QBrush, QColor, QPen
 from PySide6.QtCore import Qt
 import os

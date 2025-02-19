@@ -1,4 +1,4 @@
-﻿from PySide6.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog, QApplication, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, QDateTimeEdit
 )
 from PySide6.QtCore import Qt, QDate

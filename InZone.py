@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QDialog, QLabel, QComboBox, QMessageBox, 
-                               QPushButton, QVBoxLayout, QWidget, QVBoxLayout, QHBoxLayout)
+                               QPushButton, QVBoxLayout, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout)
 from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 import pandas as pd
 from shapely.geometry import LineString
 import numpy as np
@@ -8,7 +9,6 @@ from PySide6.QtWidgets import QProgressDialog
 from StyledTwoListSelector import TwoListSelector
 from StyledDropdown import StyledDropdown
 from StyledButton import StyledButton
-from PySide6.QtWidgets import QProgressDialog
 
 class InZoneDialog(QDialog):
     def __init__(self, db_manager, directional_surveys_df, grid_info_df, kd_tree_depth_grids,
@@ -25,17 +25,28 @@ class InZoneDialog(QDialog):
         self.attribute_grid_data_dict = attribute_grid_data_dict
         self.sorted_grid_order = []
         self.total_laterals = []
-
         self.setup_ui()
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Calculate label width for consistency
+        labels = ["Zone Name"]
+        StyledDropdown.calculate_label_width(labels)
+        
+        # Create form layout for the zone name dropdown
+        form_layout = QFormLayout()
+        form_layout.setContentsMargins(10, 0, 10, 0)
         
         # Zone Name Selection using StyledDropdown
         self.zone_name_dropdown = StyledDropdown("Zone Name", parent=self)
         self.zone_name_dropdown.combo.setEditable(True)
         self.zone_name_dropdown.setItems(self.zone_names)
-        layout.addWidget(self.zone_name_dropdown)
+        form_layout.addRow(self.zone_name_dropdown.label, self.zone_name_dropdown.combo)
+        
+        layout.addLayout(form_layout)
         
         # Create the grid selector
         self.grid_selector = TwoListSelector(
@@ -52,13 +63,14 @@ class InZoneDialog(QDialog):
         self.calculate_button = StyledButton("Calculate", "function")
         self.calculate_button.clicked.connect(self.create_grid_dataframe)
         button_layout.addWidget(self.calculate_button)
-
+        
         self.close_button = StyledButton("Close", "close")
         self.close_button.clicked.connect(self.accept)
         button_layout.addWidget(self.close_button)
-
+        
         layout.addLayout(button_layout)
         self.setLayout(layout)
+        
         self.update_grid_selection()
 
 

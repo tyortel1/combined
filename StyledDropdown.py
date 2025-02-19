@@ -1,7 +1,8 @@
-﻿from PySide6.QtWidgets import QWidget, QLabel,QTextEdit, QComboBox, QLineEdit, QHBoxLayout, QDateTimeEdit
+from PySide6.QtWidgets import QWidget, QLabel,QTextEdit, QComboBox, QLineEdit, QHBoxLayout, QDateTimeEdit
 from PySide6.QtCore import Qt, QDate
 from PySide6.QtGui import QDoubleValidator, QTextOption
 from PySide6.QtCore import Signal
+
 
 
 
@@ -31,7 +32,6 @@ class StyledBaseWidget(QWidget):
         super().__init__(parent)
         self.setupUi(label_text, input_widget)
     
-    
     def setupUi(self, label_text, input_widget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -51,13 +51,6 @@ class StyledBaseWidget(QWidget):
         self.input_widget = input_widget
         self.input_widget.setFixedWidth(200)
     
-        layout.addWidget(self.label)
-        layout.addWidget(self.input_widget)
-        layout.addStretch()
-        layout.setAlignment(Qt.AlignLeft)
-
-        self.selected_color_palette = []
-        
         layout.addWidget(self.label)
         layout.addWidget(self.input_widget)
         layout.addStretch()
@@ -213,3 +206,155 @@ class StyledDateSelector(StyledBaseWidget):
         """ Returns the selected date as a string """
         return self.date_edit.date().toString(format)
 
+
+
+
+# Dark Mode Components
+class DarkStyledBaseWidget(StyledBaseWidget):
+    # Dark theme colors
+    DARK_BG = "#1e1e1e"
+    DARK_WIDGET_BG = "#2d2d2d"
+    DARK_BORDER = "#3d3d3d"
+    DARK_TEXT = "#ffffff"  # White text for dark mode
+    DARK_ACCENT = "#0f84d8"
+    DARK_DISABLED = "#404040"
+
+    def setupUi(self, label_text, input_widget):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Updated Label Style
+        self.label = QLabel(label_text, self)
+        self.label.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-weight: 500;
+                font-size: 13px;
+                padding: 5px;
+                background: transparent;
+            }
+        """)
+        self.label.setFixedWidth(self.label_width)
+
+        self.input_widget = input_widget
+        self.input_widget.setFixedWidth(200)
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.input_widget)
+        layout.addStretch()
+        layout.setAlignment(Qt.AlignLeft)
+
+class DarkStyledDropdown(StyledDropdown):
+    def __init__(self, label_text, items=None, editable=False, parent=None):
+        super().__init__(label_text, items, editable, parent)
+        
+        # Explicitly set label color to white
+        self.label.setStyleSheet("""
+            QLabel {
+                color: white !important;
+                background: transparent;
+                border: none;
+            }
+        """)
+        
+        # Additional styling for the dropdown
+        self.combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+                border: 1px solid {DarkStyledBaseWidget.DARK_BORDER};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QComboBox:focus {{
+                border: 1px solid {DarkStyledBaseWidget.DARK_ACCENT};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                background: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid {DarkStyledBaseWidget.DARK_TEXT};
+                margin-right: 5px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+                selection-background-color: {DarkStyledBaseWidget.DARK_ACCENT};
+                selection-color: {DarkStyledBaseWidget.DARK_TEXT};
+                border: 1px solid {DarkStyledBaseWidget.DARK_BORDER};
+            }}
+            QComboBox:disabled {{
+                background-color: {DarkStyledBaseWidget.DARK_DISABLED};
+                color: #808080;
+            }}
+        """)
+
+class DarkStyledInputBox(StyledInputBox):
+    def __init__(self, label_text, default_value="", validator=None, parent=None):
+        super().__init__(label_text, default_value, validator, parent)
+        self.input_field.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+                border: 1px solid {DarkStyledBaseWidget.DARK_BORDER};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {DarkStyledBaseWidget.DARK_ACCENT};
+            }}
+            QLineEdit:disabled {{
+                background-color: {DarkStyledBaseWidget.DARK_DISABLED};
+                color: #808080;
+            }}
+        """)
+
+class DarkStyledDateSelector(StyledDateSelector):
+    def __init__(self, label_text, default_date=None, parent=None):
+        super().__init__(label_text, default_date, parent)
+        self.date_edit.setStyleSheet(f"""
+            QDateTimeEdit {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+                border: 1px solid {DarkStyledBaseWidget.DARK_BORDER};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QDateTimeEdit:focus {{
+                border: 1px solid {DarkStyledBaseWidget.DARK_ACCENT};
+            }}
+            QDateTimeEdit::up-button, QDateTimeEdit::down-button {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                border: none;
+            }}
+            QDateTimeEdit::up-arrow {{
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-bottom: 5px solid {DarkStyledBaseWidget.DARK_TEXT};
+            }}
+            QDateTimeEdit::down-arrow {{
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid {DarkStyledBaseWidget.DARK_TEXT};
+            }}
+            QCalendarWidget {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+            }}
+            QCalendarWidget QToolButton {{
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+            }}
+            QCalendarWidget QMenu {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+            }}
+            QCalendarWidget QSpinBox {{
+                background-color: {DarkStyledBaseWidget.DARK_WIDGET_BG};
+                color: {DarkStyledBaseWidget.DARK_TEXT};
+            }}
+        """)
