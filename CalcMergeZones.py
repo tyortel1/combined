@@ -4,6 +4,7 @@ from StyledButton import StyledButton
 import pandas as pd
 from scipy.interpolate import interp1d
 import numpy as np
+from PySide6.QtCore import Qt, QMetaObject, QSize
 
 class CalcMergeZoneDialog(QDialog):
     def __init__(self, db_manager, parent=None):

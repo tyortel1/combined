@@ -73,6 +73,10 @@ from CalculateZoneAttributes import ZoneAttributeCalculator
 from CalcRegressionAnalyzer import CalcRegressionAnalyzer
 from StyledColorbar import StyledColorBar  # Add this import
 from PropertiesMap import MapPropertiesDialog
+#from properties_dialogs.zone_properties import ZonePropertiesDialog
+#from properties_dialogs.grid_properties import GridPropertiesDialog
+#from properties_dialogs.seismic_properties import SeismicPropertiesDialog
+#from properties_dialogs.regression_properties import RegressionPropertiesDialog
 
 
 
@@ -222,6 +226,14 @@ class Map(QMainWindow, Ui_MainWindow):
         
         self.zone_viewer_action.triggered.connect(self.launch_zone_viewer)
         self.map_properties_action.triggered.connect(self.map_properties)
+
+
+        # Add new connections
+        #self.zone_properties_action.triggered.connect(self.launch_zone_properties)
+        #self.grid_properties_action.triggered.connect(self.launch_grid_properties)
+        #self.seismic_properties_action.triggered.connect(self.launch_seismic_properties)
+        #self.regression_properties_action.triggered.connect(self.launch_regression_properties)
+
         self.zoomOut.triggered.connect(self.zoom_out)
         self.zoomIn.triggered.connect(self.zoom_in)
 
@@ -1593,7 +1605,37 @@ class Map(QMainWindow, Ui_MainWindow):
             print("Map Properties Updated!")
 
 
+        def launch_zone_properties(self):
+            """Launch the Zone Properties dialog."""
+            try:
+                dialog = ZonePropertiesDialog(self.db_manager, parent=self)
+                dialog.exec_()
+            except Exception as e:
+                self.show_error_message("Error launching Zone Properties", str(e))
 
+        def launch_grid_properties(self):
+            """Launch the Grid Properties dialog."""
+            try:
+                dialog = GridPropertiesDialog(self.db_manager, parent=self)
+                dialog.exec_()
+            except Exception as e:
+                self.show_error_message("Error launching Grid Properties", str(e))
+
+        def launch_seismic_properties(self):
+            """Launch the Seismic Properties dialog."""
+            try:
+                dialog = SeismicPropertiesDialog(self.db_manager, parent=self)
+                dialog.exec_()
+            except Exception as e:
+                self.show_error_message("Error launching Seismic Properties", str(e))
+
+        def launch_regression_properties(self):
+            """Launch the Regression Properties dialog."""
+            try:
+                dialog = RegressionPropertiesDialog(self.db_manager, parent=self)
+                dialog.exec_()
+            except Exception as e:
+                self.show_error_message("Error launching Regression Properties", str(e))
 
 ########################################CREATE OPEN
 
@@ -2582,6 +2624,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def calculate_zone_attributes(self):
     
         dialog = ZoneAttributeCalculator(self.db_manager)
+        self.populate_well_zone_dropdown()
         dialog.exec()
 
     def well_comparison(self):

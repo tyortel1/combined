@@ -81,7 +81,7 @@ class InZoneDialog(QDialog):
 
     def create_grid_dataframe(self):
         """Create and process the grid data."""
-        zone_name = self.zone_name_combo.currentText().strip()
+        zone_name = self.zone_name_dropdown.combo.currentText().strip()
 
         if not zone_name:
             QMessageBox.warning(self, "Error", "Zone name cannot be empty. Please enter a valid zone name.")
@@ -313,7 +313,7 @@ class InZoneDialog(QDialog):
         df_intersections = pd.DataFrame(intersections_list)
         
         # Add required columns
-        zone_name = self.zone_name_combo.currentText().strip()
+        zone_name = self.zone_name_dropdown.combo.currentText().strip()
         zone_type = 'Intersections'
 
 
@@ -334,7 +334,7 @@ class InZoneDialog(QDialog):
         """
         percentage_data = []
         # Construct the zone name and type
-        base_zone_name = self.zone_name_combo.currentText().strip()
+        base_zone_name = self.zone_name_dropdown.combo.currentText().strip()
         if not base_zone_name:
             raise ValueError("Zone name cannot be empty.")
         zone_name = f"{base_zone_name}_Percentages"

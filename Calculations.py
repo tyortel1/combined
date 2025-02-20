@@ -33,7 +33,7 @@ class GridToZone(QDialog):
         
         # Zone Name Selection - Initialize with empty items list
         self.zone_dropdown = StyledDropdown(
-            label_text="Zone Name",
+            label_text="Name",
             items=[],  # Will be populated later
             parent=self
         )
@@ -89,7 +89,8 @@ class GridToZone(QDialog):
         cleaned_names = [name[0] for name in zone_names if name and name[0]]
     
         if cleaned_names:
-            print(f"Cleaned zone names: {cleaned_names}")  # Debug print
+            print(f"Cleaned zone names: {cleaned_names}")
+            self.zone_dropdown.clear()# Debug print
             self.zone_dropdown.setItems(cleaned_names)
         else:
             print("No valid zone names to populate")

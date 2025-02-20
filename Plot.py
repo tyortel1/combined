@@ -49,7 +49,8 @@ class Plot(QDialog):
         self.zones =[]
         self.combined_distances = []
         self.tick_traces = [] 
-        self.tvd_values = []
+
+
         self.attributes_names = []
         self.UWI_att_data = pd.DataFrame()
         self.selected_zone_df = pd.DataFrame()
@@ -95,9 +96,8 @@ class Plot(QDialog):
             "Zone",
             "Attribute",
             "Color Bar",  # Add this
-            "Tick Size",
-            "Max TVD",
-            "Min TVD"
+            "Tick Size"
+
         ]
         StyledDropdown.calculate_label_width(labels)
 
@@ -263,27 +263,72 @@ class Plot(QDialog):
        
         # Tick Settings Section
 
+    # Tick Settings Section
         tickFrame, tickLayout = create_section("Tick Settings", fixed_height=110)
 
-        # Tick Size Input
-        self.tick_size_input = create_input("Tick Size", default_value='50')
-        self.tick_size_input.editingFinished.connect(self.change_tick_size_from_input)
+        # Create a horizontal layout for the slider and its label
+        tick_slider_layout = QHBoxLayout()
+    
+        # Create label for the slider
+        tick_size_label = QLabel("Tick Size:")
+        tick_size_label.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+    
+        # Create the slider
+        self.tick_size_slider = QSlider(Qt.Horizontal)
+        self.tick_size_slider.setMinimum(10)
+        self.tick_size_slider.setMaximum(200)
+        self.tick_size_slider.setValue(50)
+        self.tick_size_slider.setTickPosition(QSlider.TicksBelow)
+        self.tick_size_slider.setTickInterval(10)
+        self.tick_size_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                border: 1px solid #999999;
+                height: 8px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);
+                margin: 2px 0;
+            }
+            QSlider::handle:horizontal {
+                background: #ffffff;
+                border: 1px solid #5c5c5c;
+                width: 18px;
+                margin: -2px 0;
+                border-radius: 3px;
+            }
+        """)
+    
+        # Create value display label
+        self.tick_size_value_label = QLabel("50")
+        self.tick_size_value_label.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+                min-width: 30px;
+            }
+        """)
+    
+        # Add widgets to the horizontal layout
+        tick_slider_layout.addWidget(tick_size_label)
+        tick_slider_layout.addWidget(self.tick_size_slider)
+        tick_slider_layout.addWidget(self.tick_size_value_label)
+    
+        # Add the horizontal layout to the tick frame
+        tickLayout.addLayout(tick_slider_layout)
+    
+        # Connect the slider to update functions
+        self.tick_size_slider.valueChanged.connect(self.update_tick_size_value_label)
+ 
 
-        # TVD Range Inputs
-        tvd_validator = QIntValidator()
 
-        # TVD Range Inputs with integer validation
-        self.max_tvd_input = create_input("Max TVD", default_value='0', validator=tvd_validator)
-        self.min_tvd_input = create_input("Min TVD", default_value='0', validator=tvd_validator)
 
-        # Connect inputs to update plot
-        self.min_tvd_input.editingFinished.connect(self.plot_current_well)
-        self.max_tvd_input.editingFinished.connect(self.plot_current_well)
-
-        # Add widgets to tick frame
-        tickLayout.addWidget(self.tick_size_input)
-        tickLayout.addWidget(self.max_tvd_input)
-        tickLayout.addWidget(self.min_tvd_input)
 
         # Control Layout
         control_layout = QVBoxLayout()
@@ -317,11 +362,42 @@ class Plot(QDialog):
 
     def palette_selected(self):
         if self.next_well == False:
-            self.plot_current_well()
+            # If a zone is already selected, update the zone ticks with the new color palette
+            if self.selected_zone and self.selected_zone != "Select_Zone":
+                self.update_zone_ticks()
 
     def attribute_selected(self):
-        if self.next_well == False:
-            self.plot_current_well()
+        if self.next_well:
+            return
+
+        # Get the current attribute selection
+        attribute = self.zone_attribute_selector.currentText()
+    
+        # Early return if no valid attribute is selected
+        if attribute == "Select Zone Attribute" or not attribute:
+            return
+
+        try:
+            # Use JavaScript to update traces with the selected attribute
+            js_code = f"""
+            var plotDiv = document.getElementById('plotly-div');
+            if (plotDiv) {{
+                plotDiv.data.forEach((trace, i) => {{
+                    if (trace.name && trace.name.startsWith('{self.selected_zone}')) {{
+                        var newText = '{self.selected_zone}: {attribute} = ' + 
+                                      (trace.userdata ? trace.userdata['{attribute}'] : 'N/A');
+                        Plotly.restyle(plotDiv, {{
+                            'hovertext': newText,
+                            'text': newText
+                        }}, i);
+                    }}
+                }});
+            }}
+            """
+            self.plot_widget.page().runJavaScript(js_code)
+
+        except Exception as e:
+            print(f"Error updating attribute display: {e}")
 
     def change_tick_size_from_input(self):
      
@@ -401,60 +477,139 @@ class Plot(QDialog):
 
 
     
-    def zone_selected(self):
-        # Get the selected zone name from the zone selector
-        selected_text = self.zone_selector.currentText()
-        if not selected_text:  # Handle empty selection
-            print("Empty zone selection")
+
+
+    def update_tick_size_value_label(self, value):
+        """Update tick size without reloading the entire plot"""
+        self.tick_size_value_label.setText(str(value))
+        self.tick_size_value = value
+
+        js_code = """
+        var plotDiv = document.getElementById('plotly-div');
+        if (!plotDiv) return;
+
+        plotDiv.data.forEach((trace, i) => {
+            if (trace.error_y && trace.line.color === 'red') {
+                Plotly.restyle(plotDiv, {
+                    'error_y.value': """ + str(value / 2) + """,
+                    'error_y.thickness': 2,
+                    'line.width': 2
+                }, i);
+            }
+        });
+        """
+        self.plot_widget.page().runJavaScript(js_code)
+
+
+
+
+
+
+    def update_zone_ticks(self):
+        """Updates zone tick marks dynamically without legend entries or flashing issues."""
+    
+        if self.selected_zone is None or self.selected_zone == "Select_Zone":
+            print("No valid zone selected, skipping tick update.")
             return
-        
-        self.selected_zone = selected_text.replace(" ", "_")
-        print(f"Selected zone: {self.selected_zone}")
-    
-        # Clear attributes selector
-        self.zone_attribute_selector.clear()
-        self.zone_attribute_selector.addItem("Select Zone Attribute")
-    
-        if self.selected_zone == "Select_Zone":
-            # Clear the zone data
-            self.selected_zone_df = None
-            self.attributes_names = []
-        
-            # Remove existing tick traces and zone fills
-            if hasattr(self, 'fig'):
-                # Filter out tick traces and zone fills
-                new_data = []
-                for trace in self.fig.data:
-                    # Check trace properties using proper Plotly attribute access
-                    if hasattr(trace, 'line'):
-                        line_color = trace.line.color if hasattr(trace.line, 'color') else None
-                        if line_color not in ['red', 'blue']:  # not a tick mark or zone boundary
-                            new_data.append(trace)
-                    else:
-                        new_data.append(trace)
-            
-                self.fig.data = tuple(new_data)  # Update figure data
-            
-                # Update the plot
-                if not self.next_well:
-                    file_path = os.path.join(os.getcwd(), "plot.html")
-                    py_offline.plot(self.fig, filename=file_path, auto_open=False)
-                    self.plot_widget.load(QUrl.fromLocalFile(file_path))
-        else:
-            try:
-                # Filter the master_df to grab the relevant UWI and Zone data
-                self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
-            
-                # Trigger replot with the new selected zone data
-                if not self.next_well:
-                    self.plot_current_well()
-            except Exception as e:
-                print(f"Error fetching zone data: {str(e)}")
-                self.selected_zone_df = None
 
-        # Update the attribute selector
-        self.populate_zone_attribute()
+        try:
+            tick_traces = []  # Store tick traces only (no zone fills)
 
+            if self.selected_zone_df is None or self.selected_zone_df.empty:
+                print("No zone data available")
+                return
+
+            attribute = self.zone_attribute_selector.currentText()
+            color_zones = attribute != "Select Zone Attribute"
+
+            # Filter the data for the selected UWI and zone
+            zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI].copy()
+
+            if zone_data.empty:
+                print(f"No data found for UWI {self.current_UWI} and zone {self.selected_zone}")
+                return
+
+            if color_zones:
+                if attribute not in zone_data.columns:
+                    print(f"Selected attribute '{attribute}' not found in the data.")
+                    color_zones = False
+                else:
+                    self.min_attr = zone_data[attribute].min()
+                    self.max_attr = zone_data[attribute].max()
+                    self.color_colorbar.display_color_range(self.min_attr, self.max_attr)
+
+            for _, zone_row in zone_data.iterrows():
+                try:
+                    top_md = zone_row['Top_Depth']
+                    base_md = zone_row['Base_Depth']
+
+                    top_cum_dist = self.interpolate_value(top_md, 'Cumulative Distance')
+                    base_cum_dist = self.interpolate_value(base_md, 'Cumulative Distance')
+                    top_tvd = self.interpolate_value(top_md, 'TVD')
+                    base_tvd = self.interpolate_value(base_md, 'TVD')
+
+                    if all(v is not None for v in [top_cum_dist, base_cum_dist, top_tvd, base_tvd]):
+                        # Top Tick
+                        tick_traces.append({
+                            "x": [top_cum_dist, top_cum_dist],
+                            "y": [top_tvd, top_tvd],
+                            "mode": "lines",
+                            "line": {"color": "red", "width": 2},
+                            "error_y": {
+                                "type": "constant",
+                                "symmetric": True,
+                                "value": self.tick_size_value / 2,
+                                "thickness": 2,
+                                "color": "red"
+                            },
+                            "showlegend": False,  # Prevent legend entry
+                            "hoverinfo": "skip",
+                            "name": ""  # Empty name prevents title
+                        })
+
+                        # Base Tick
+                        tick_traces.append({
+                            "x": [base_cum_dist, base_cum_dist],
+                            "y": [base_tvd, base_tvd],
+                            "mode": "lines",
+                            "line": {"color": "red", "width": 2},
+                            "error_y": {
+                                "type": "constant",
+                                "symmetric": True,
+                                "value": self.tick_size_value / 2,
+                                "thickness": 2,
+                                "color": "red"
+                            },
+                            "showlegend": False,  # Prevent legend entry
+                            "hoverinfo": "skip",
+                            "name": ""  # Empty name prevents title
+                        })
+
+                except Exception as e:
+                    print(f"Error processing zone row: {str(e)}")
+                    continue
+
+            if tick_traces:
+                json_traces = json.dumps(tick_traces)
+                js_code = f"""
+                var plotDiv = document.getElementById('plotly-div');
+                if (plotDiv) {{
+                    var newTraces = {json_traces};
+                
+                    // Remove existing tick traces first
+                    var updatedData = plotDiv.data.filter(trace => trace.line && trace.line.color !== 'red');
+                    updatedData = updatedData.concat(newTraces);
+
+                    // Update the plot without full re-rendering
+                    Plotly.react(plotDiv, updatedData, plotDiv.layout);
+                }}
+                """
+                self.plot_widget.page().runJavaScript(js_code)
+
+        except Exception as e:
+            print(f"Error updating zone ticks: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 
 
@@ -626,11 +781,6 @@ class Plot(QDialog):
                 final_min = min_z - padding
                 final_max = max_z + padding
                 
-                print(f"Grid Z range: {round(min_z)} to {round(max_z)}")
-                print(f"Final TVD range: {round(final_min)} to {round(final_max)}")
-                
-                self.min_tvd_input.setText(f"{round(final_min)}")
-                self.max_tvd_input.setText(f"{round(final_max)}")
                 
                 # Update plot's y-axis range
                 fig.update_yaxes(range=[round(final_min), round(final_max)])
@@ -687,13 +837,13 @@ class Plot(QDialog):
                     print(f"Error processing grid {grid_name}: {e}")
 
             # Plot well path as black lines
-            fig.update_yaxes(range=[float(self.min_tvd_input.text()), float(self.max_tvd_input.text())])
+
 
             # Store the figure object as an instance variable
             self.fig = fig
 
 
-            self.update_zone_ticks()  # Call a new method to add/update zone ticks
+            #self.update_zone_ticks()  # Call a new method to add/update zone ticks
 
 
 
@@ -710,30 +860,68 @@ class Plot(QDialog):
 
 
 
-            # Update layout to improve plot appearance
             fig.update_layout(
                 title='Seismic Trace and Grid Overlay',
                 xaxis_title='Cumulative Distance',
                 yaxis_title='Time (ms) / Depth',
                 margin=dict(l=0, r=0, t=50, b=50),
-                xaxis=dict(showline=True, showgrid=False, showticklabels=True, ticks='inside'),
-                yaxis=dict(showline=True, showgrid=False, showticklabels=True, ticks='inside'),
+                font=dict(size=12),  # Ensures text size remains constant
+                xaxis=dict(
+                    showline=True, 
+                    showgrid=False, 
+                    showticklabels=True, 
+                    ticks='inside',
+                    fixedrange=True  # Locks horizontal zooming
+                ),
+                yaxis=dict(
+                    showline=True, 
+                    showgrid=False, 
+                    showticklabels=True, 
+                    ticks='inside',
+                    fixedrange=False  # Allows vertical zooming
+                ),
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 showlegend=True
             )
 
-            # Save Plotly figure to an HTML file for testing
             file_path = os.path.join(os.getcwd(), "plot.html")
-            py_offline.plot(fig, filename=file_path, auto_open=False)
+
+
+            config = {
+                'scrollZoom': True,              # Enable scroll zoom
+                'modeBarButtonsToAdd': ['zoom'], # Add zoom button to mode bar
+                'displayModeBar': True,          # Show the mode bar
+                'doubleClick': 'reset',          # Double click to reset view
+                'showAxisDragHandles': True,     # Show axis drag handles
+                'displaylogo': False,            # Hide Plotly logo
+                'toImageButtonOptions': {
+                    'height': None,
+                    'width': None,
+                },
+                # This is the key part that prevents text scaling:
+                'responsive': True
+            }
+            py_offline.plot(fig, filename=file_path, config=config, auto_open=False)
           
+            fig.layout.xaxis.fixedrange = True
+
             url = QUrl.fromLocalFile(file_path)
             self.plot_widget.load(url)
+
+
+
 
         except Exception as e:
             print(f"Error plotting seismic and grid data: {e}")
 
-
+        js_code = """
+        var plotDiv = document.getElementsByClassName('plotly-graph-div')[0];
+        if (plotDiv) {
+            plotDiv.id = 'plotly-div';
+        }
+        """
+        self.plot_widget.page().runJavaScript(js_code)
 
         
 
@@ -769,60 +957,88 @@ class Plot(QDialog):
 
 
     def zone_selected(self):
-        # Get the selected zone name from the zone selector
         selected_text = self.zone_selector.currentText()
-        if not selected_text:  # Handle empty selection
+        if not selected_text:  
             print("Empty zone selection")
             return
-        
+
         self.selected_zone = selected_text.replace(" ", "_")
         print(f"Selected zone: {self.selected_zone}")
-    
-        # Clear attributes selector
+
         self.zone_attribute_selector.clear()
         self.zone_attribute_selector.addItem("Select Zone Attribute")
-    
+
         if self.selected_zone == "Select_Zone":
-            # Clear the zone data
             self.selected_zone_df = None
             self.attributes_names = []
-        
-            # Remove existing tick traces and zone fills
-            if hasattr(self, 'fig'):
-                # Filter out tick traces and zone fills
-                new_data = []
-                for trace in self.fig.data:
-                    # Check trace properties using proper Plotly attribute access
-                    if hasattr(trace, 'line'):
-                        line_color = trace.line.color if hasattr(trace.line, 'color') else None
-                        if line_color not in ['red', 'blue']:  # not a tick mark or zone boundary
-                            new_data.append(trace)
-                    else:
-                        new_data.append(trace)
-            
-                self.fig.data = tuple(new_data)  # Update figure data
-            
-                # Update the plot
-                if not self.next_well:
-                    file_path = os.path.join(os.getcwd(), "plot.html")
-                    py_offline.plot(self.fig, filename=file_path, auto_open=False)
-                    self.plot_widget.load(QUrl.fromLocalFile(file_path))
+    
+            # More comprehensive JavaScript to remove zone-related traces
+            js_code = """
+            var plotDiv = document.getElementById('plotly-div');
+            if (plotDiv) {
+                var newData = plotDiv.data.filter(function(trace) {
+                    // Remove traces with red or blue lines, and any zone-related fills
+                    return !(
+                        (trace.line && (trace.line.color === 'red' || trace.line.color === 'blue')) ||
+                        (trace.name && trace.name.includes('Zone')) ||
+                        (trace.error_y && trace.error_y.color === 'red')
+                    );
+                });
+                Plotly.react(plotDiv, newData, plotDiv.layout);
+            }
+            """
+            self.plot_widget.page().runJavaScript(js_code)
         else:
             try:
-                # Filter the master_df to grab the relevant UWI and Zone data
+                # Fetch zone data
                 self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
-            
-                # Trigger replot with the new selected zone data
-                if not self.next_well:
-                    self.plot_current_well()
+        
+                # Remove existing zone-related traces before adding new ones
+                js_code = """
+                var plotDiv = document.getElementById('plotly-div');
+                if (plotDiv) {
+                    var newData = plotDiv.data.filter(function(trace) {
+                        return !(
+                            (trace.line && (trace.line.color === 'red' || trace.line.color === 'blue')) ||
+                            (trace.name && trace.name.includes('Zone')) ||
+                            (trace.error_y && trace.error_y.color === 'red')
+                        );
+                    });
+                    Plotly.react(plotDiv, newData, plotDiv.layout);
+                }
+                """
+                self.plot_widget.page().runJavaScript(js_code)
+
+                # Update zone ticks and attributes
+                self.update_zone_ticks()
+                self.populate_zone_attribute()
+        
             except Exception as e:
                 print(f"Error fetching zone data: {str(e)}")
                 self.selected_zone_df = None
+        
 
-        # Update the attribute selector
-        self.populate_zone_attribute()
+        
+
+
 
     def update_zone_ticks(self):
+
+        js_code = """
+        var plotDiv = document.getElementById('plotly-div');
+        if (plotDiv) {
+            var newData = plotDiv.data.filter(function(trace) {
+                return !(
+                    (trace.line && (trace.line.color === 'red' || trace.line.color === 'blue')) ||
+                    (trace.name && trace.name.includes('Zone')) ||
+                    (trace.error_y && trace.error_y.color === 'red')
+                );
+            });
+            Plotly.react(plotDiv, newData, plotDiv.layout);
+        }
+        """
+        self.plot_widget.page().runJavaScript(js_code)
+
         # Early return if no zone is selected or if "Select Zone" is chosen
         if self.selected_zone is None or self.selected_zone == "Select_Zone":
             print("No valid zone selected, skipping tick update.")
@@ -842,7 +1058,7 @@ class Plot(QDialog):
 
             # Filter the master_df for the current UWI and selected zone
             zone_data = self.selected_zone_df[self.selected_zone_df['UWI'] == self.current_UWI].copy()
-    
+
             if zone_data.empty:
                 print(f"No data found for UWI {self.current_UWI} and zone {self.selected_zone}")
                 return
@@ -867,13 +1083,23 @@ class Plot(QDialog):
                     base_tvd = self.interpolate_value(base_md, 'TVD')
 
                     if all(v is not None for v in [top_cum_dist, base_cum_dist, top_tvd, base_tvd]):
-                        # Only add tick marks if a valid zone is selected
-                        for cum_dist, tvd, name in [(top_cum_dist, top_tvd, 'Top'), (base_cum_dist, base_tvd, 'Base')]:
+                        # Draw tick marks with pixel-based size
+                        for cum_dist, tvd in [(top_cum_dist, top_tvd), (base_cum_dist, base_tvd)]:
                             tick_traces.append(go.Scatter(
-                                x=[cum_dist, cum_dist],
-                                y=[tvd - self.tick_size_value/2, tvd + self.tick_size_value/2],
+                                x=[cum_dist, cum_dist],  # Vertical line at the cumulative distance
+                                y=[tvd, tvd],  # Single y-point as reference
                                 mode='lines',
-                                line=dict(color='red', width=2),
+                                line=dict(
+                                    color='red',
+                                    width=2
+                                ),
+                                error_y=dict(
+                                    type='constant',
+                                    symmetric=True,
+                                    value=self.tick_size_value/2,  # Half the tick size for symmetric error bars
+                                    thickness=2,
+                                    color='red'
+                                ),
                                 showlegend=False,
                                 hoverinfo='skip'
                             ))
@@ -886,21 +1112,23 @@ class Plot(QDialog):
                                 x=[top_cum_dist, base_cum_dist],
                                 y=[top_tvd, base_tvd],
                                 mode='lines',
-                                line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value/3)),
+                                line=dict(color=f'rgb({color.red()}, {color.green()}, {color.blue()})', width=(self.tick_size_value)),
                                 name=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}',
                                 showlegend=False,
                                 hoverinfo='text',
                                 text=f'{self.selected_zone}: {attribute} = {attribute_value:.2f}'
                             ))
                         else:
-                            # Add zone boundary
+                            # Add hidden zone boundary
                             tick_traces.append(go.Scatter(
                                 x=[top_cum_dist, base_cum_dist],
                                 y=[top_tvd, base_tvd],
                                 mode='lines',
                                 line=dict(color='blue', width=2, dash='dash'),
-                                name=f'{self.selected_zone} Boundary'
+                                name="",  #Empty name to hide from the legend
+                                showlegend=False  # Ensure it's completely hidden from the legend
                             ))
+
 
                 except Exception as e:
                     print(f"Error processing zone row: {str(e)}")
@@ -914,6 +1142,9 @@ class Plot(QDialog):
                 py_offline.plot(self.fig, filename=file_path, auto_open=False)
                 self.plot_widget.load(QUrl.fromLocalFile(file_path))
 
+
+
+
         except Exception as e:
             print(f"Error updating zone ticks and fills: {str(e)}")
             print("Zone data columns:", zone_data.columns.tolist() if 'zone_data' in locals() else "No zone data available")
@@ -921,13 +1152,21 @@ class Plot(QDialog):
             traceback.print_exc()
 
 
+
+
     def on_well_selected(self, index):
         try:
-            selected_UWI = self.well_selector.currentText()  # Get UWI directly from the selector
+            selected_UWI = self.well_selector.currentText()
             if selected_UWI in self.UWI_list:
                 self.current_UWI = selected_UWI
-                self.current_index = index  # Add this line
-                self.plot_current_well()  # Update the plot for the selected UWI
+                self.current_index = index
+            
+                # Only plot the current well's seismic and grid data
+                self.plot_current_well()
+            
+                # Optionally add zone ticks if a zone is selected
+                if self.selected_zone and self.selected_zone != "Select_Zone":
+                    self.update_zone_ticks()
             else:
                 print(f"Selected UWI {selected_UWI} not found in UWI list.")
         except Exception as e:
@@ -937,10 +1176,16 @@ class Plot(QDialog):
         """Navigate to the next well in alphabetical order."""
         try:
             current_index = self.UWI_list.index(self.current_UWI)
-            next_index = (current_index + 1) % len(self.UWI_list)  # Ensure it wraps around
+            next_index = (current_index + 1) % len(self.UWI_list)
             self.current_UWI = self.UWI_list[next_index]
             self.update_well_selector_to_current_UWI()
+        
+            # Only plot the current well's seismic and grid data
             self.plot_current_well()
+        
+            # Optionally add zone ticks if a zone is selected
+            if self.selected_zone and self.selected_zone != "Select_Zone":
+                self.update_zone_ticks()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the next well: {str(e)}")
 
@@ -948,12 +1193,20 @@ class Plot(QDialog):
         """Navigate to the previous well in alphabetical order."""
         try:
             current_index = self.UWI_list.index(self.current_UWI)
-            prev_index = (current_index - 1) % len(self.UWI_list)  # Ensure it wraps around
+            prev_index = (current_index - 1) % len(self.UWI_list)
             self.current_UWI = self.UWI_list[prev_index]
             self.update_well_selector_to_current_UWI()
+        
+            # Only plot the current well's seismic and grid data
             self.plot_current_well()
+        
+            # Optionally add zone ticks if a zone is selected
+            if self.selected_zone and self.selected_zone != "Select_Zone":
+                self.update_zone_ticks()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the previous well: {str(e)}")
+
+
     def update_well_selector_to_current_UWI(self):
         """Set the dropdown to the current UWI."""
         try:

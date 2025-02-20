@@ -19,6 +19,7 @@ import openpyxl
 from openpyxl.styles import PatternFill
 import numpy as np
 import traceback
+import mplcursors
 
 
 class SaveRegressionDialog(QDialog):
@@ -331,9 +332,9 @@ class CorrelationDisplayDialog(QDialog):
                 border-left-style: solid;
             }
         """)
-    
+
         layout = QVBoxLayout(left_panel)
-    
+
         # View selector
         view_layout = QHBoxLayout()
         view_label = QLabel("View:")
@@ -344,7 +345,7 @@ class CorrelationDisplayDialog(QDialog):
         view_layout.addWidget(view_label)
         view_layout.addWidget(self.view_selector)
         layout.addLayout(view_layout)
-    
+
         # Create stacked widget for visualizations
         self.viz_stack = QStackedWidget()
 
@@ -368,7 +369,8 @@ class CorrelationDisplayDialog(QDialog):
         self.viz_stack.addWidget(self.heatmap_widget)
         self.viz_stack.addWidget(self.network_widget)
         layout.addWidget(self.viz_stack)
-    
+
+        # Crossplot (always visible below)
         self.crossplot_fig = Figure(figsize=(6, 5), facecolor='#2c2c2c', edgecolor='none', dpi=100)
         self.crossplot_canvas = FigureCanvasQTAgg(self.crossplot_fig)
         self.crossplot_ax = self.crossplot_fig.add_subplot(111)
@@ -379,10 +381,11 @@ class CorrelationDisplayDialog(QDialog):
         self.crossplot_ax.spines['top'].set_color('white')
         self.crossplot_ax.spines['left'].set_color('white')
         self.crossplot_ax.spines['right'].set_color('white')
-    
+        layout.addWidget(self.crossplot_canvas)
+
         # Connect heatmap click event
         self.heatmap_canvas.mpl_connect('button_press_event', self.on_heatmap_click)
-    
+
         return left_panel
 
 
@@ -539,24 +542,37 @@ class CorrelationDisplayDialog(QDialog):
         print("Left List Items:", self.attr_selector.get_left_items())
 
     def move_attributes_to_selected(self, x_col, y_col):
-        """Moves both attributes from the important attributes list to the selected attributes list."""
-        for attr in [x_col, y_col]:  # Loop through both attributes
-            # Check if the attribute is already in the selected list
-            already_selected = False
-            for i in range(self.selected_attrs_list.count()):
-                if self.selected_attrs_list.item(i).text() == attr:
-                    already_selected = True
-                    break
-
-            if not already_selected:  # Add only if it's not already there
-                self.selected_attrs_list.addItem(attr)
-
-            # Find and remove from the "important attributes" list
-            for i in range(self.important_attrs.count()):
-                if self.important_attrs.item(i).text() == attr:
-                    self.important_attrs.takeItem(i)  # Remove from important list
-                    break  # Stop after removing to prevent index shifting issues
-
+        """Moves both attributes from the left list to the right list."""
+        print("Move attributes called")
+        print(f"X Column: {x_col}, Y Column: {y_col}")
+    
+        # Get current items in left and right lists
+        current_left_items = self.attr_selector.get_left_items()
+        current_right_items = self.attr_selector.get_right_items()
+    
+        print("Current left items:", current_left_items)
+        print("Current right items:", current_right_items)
+    
+        for attr in [x_col, y_col]:
+            # Convert to string to ensure compatibility
+            attr = str(attr)
+            print(f"Processing attribute: {attr}")
+        
+            # Check if attribute is in left list and not already in right list
+            if attr in current_left_items and attr not in current_right_items:
+                print(f"Moving {attr} to right list")
+            
+                # Find the item in the left list
+                for i in range(self.attr_selector.left_list.count()):
+                    item = self.attr_selector.left_list.item(i)
+                    if item.text() == attr:
+                        # Move the item to the right list
+                        self.attr_selector.right_list.addItem(
+                            self.attr_selector.left_list.takeItem(i)
+                        )
+                        break
+            else:
+                print(f"Cannot move {attr}")
 
     def update_threshold(self):
         """Updates correlation threshold and filters attributes accordingly"""
@@ -584,22 +600,37 @@ class CorrelationDisplayDialog(QDialog):
             QMessageBox.warning(self, "Invalid Input", "Please enter a valid numeric value for the threshold.")
             return
 
-        # Set to track which attributes should be moved (ensure order is preserved)
+        # Store attributes that need to be moved
         moved_attrs = set()
 
-        # Iterate over the correlation matrix
+        # Iterate over the correlation matrix (only checking upper triangle to avoid duplicates)
         for i in range(len(self.correlation_matrix.index)):
-            for j in range(i + 1, len(self.correlation_matrix.columns)):  # Only check upper triangle to avoid duplicates
-                corr_value = abs(self.correlation_matrix.iloc[i, j])  # Get absolute correlation value
-
+            for j in range(i + 1, len(self.correlation_matrix.columns)):
+                corr_value = abs(self.correlation_matrix.iloc[i, j])  # Absolute correlation value
+            
                 if corr_value >= threshold:
                     x_col = self.correlation_matrix.columns[j]
                     y_col = self.correlation_matrix.index[i]
-                    moved_attrs.add((x_col, y_col))  #   Store as a tuple (x_col, y_col)
+                    moved_attrs.update([x_col, y_col])  # Store attributes to be moved
 
-        # Move identified attributes to the selected list
-        for x_col, y_col in moved_attrs:  #   Ensure correct parameter order
-            self.move_attributes_to_selected(x_col, y_col)  #   Now correctly sending both
+        # Get current list items
+        current_right_items = set(self.attr_selector.get_right_items())  # Use set for fast lookup
+        current_left_items = {self.attr_selector.left_list.item(i).text() for i in range(self.attr_selector.left_list.count())}
+
+        # Move only attributes that exist in the left list and are not already in the right list
+        attributes_to_move = [attr for attr in moved_attrs if attr in current_left_items and attr not in current_right_items]
+
+        # **Fix: Select and move attributes programmatically**
+        for attr in attributes_to_move:
+            items = self.attr_selector.left_list.findItems(attr, Qt.MatchExactly)
+            if items:
+                items[0].setSelected(True)  # Select the item
+            self.attr_selector.move_selected_items_right()  # Now move all selected items
+
+        # Redraw visualizations to reflect the new threshold
+        self.draw_heatmap()
+        self.draw_network()
+
 
 
 
@@ -624,14 +655,14 @@ class CorrelationDisplayDialog(QDialog):
 
 
 
-
     def draw_heatmap(self):
-        """Draws an optimized heatmap with a smooth Red → Background Color → Green transition."""
-        plt.close('all')  # Ensure clean slate
+        """Draws an optimized heatmap with shortened labels and working hover tooltips."""
+
+        plt.close('all')  
         self.heatmap_ax.clear()
 
-        # **Set Dark Mode Background**
-        bg_color = "#2C2C2C"  # Dark gray background (same as the UI theme)
+        # **Dark Mode Background**
+        bg_color = "#2C2C2C"
         self.heatmap_fig.patch.set_facecolor(bg_color)
         self.heatmap_ax.set_facecolor(bg_color)
 
@@ -642,62 +673,57 @@ class CorrelationDisplayDialog(QDialog):
             N=256
         )
 
-        # **Generate Heatmap with Custom Colors**
+        # **Generate Heatmap**
         heatmap = sns.heatmap(
             self.correlation_matrix, 
-            annot=True, 
-            cmap=red_gray_green_cmap,  # 🎨 Red → Background Gray → Green gradient
+            annot=True,  # ✅ Keep numbers visible
+            cmap=red_gray_green_cmap,
             center=0,
             fmt='.2f', 
             vmin=-1, vmax=1,  
             ax=self.heatmap_ax, 
-            cbar=True, 
+            cbar=False,  # 🚀 Remove colorbar
             square=False,
             robust=True,
-            cbar_kws={'label': 'Correlation Coefficient', 'extend': 'both'},
-            annot_kws={"size": 6, "fontweight": "bold"},
-            xticklabels=True,
-            yticklabels=True
+            annot_kws={"size": 6, "fontweight": "bold"}
         )
 
-        plt.setp(self.heatmap_ax.get_xticklabels(), 
-                 rotation=15, ha='center', va='top', rotation_mode='anchor',
-                 fontsize=7, color='#e0e0e0')
+        # **Shorten Labels (Max 10 characters)**
+        def shorten_label(label, max_length=10):
+            return label[:max_length] + '...' if len(label) > max_length else label
 
-        # **Fix Y-Axis Labels (-45° Rotation)**
-        plt.setp(self.heatmap_ax.get_yticklabels(), 
-                 rotation=-45, ha='right', va='center', rotation_mode='anchor',
-                 fontsize=7, color='#e0e0e0')
+        short_xticks = [shorten_label(label) for label in self.correlation_matrix.columns]
+        short_yticks = [shorten_label(label) for label in self.correlation_matrix.index]
 
-        # **Customize Colorbar for Better Visibility**
-        cbar = heatmap.collections[0].colorbar
-        cbar.ax.set_ylabel('Correlation Coefficient', rotation=270, labelpad=15, color='#e0e0e0')
+        self.heatmap_ax.set_xticklabels(short_xticks, rotation=15, ha='right', fontsize=7, color='#e0e0e0')
+        self.heatmap_ax.set_yticklabels(short_yticks, rotation=-45, ha='right', fontsize=7, color='#e0e0e0')
 
-        # **Increase Colorbar Font Size**
-        cbar.ax.tick_params(labelsize=9, colors='#e0e0e0', width=1.5, length=4)
-        cbar.ax.yaxis.label.set_color('#e0e0e0')
+        # **Enable Hover Tooltips for Full Labels**
+        cursor = mplcursors.cursor(heatmap.findobj(plt.Text), hover=True)  # ✅ Attach only to text elements
+        row_labels = list(self.correlation_matrix.index)
+        col_labels = list(self.correlation_matrix.columns)
 
-        # **Customize Title and Labels**
-        self.heatmap_ax.set_title("Correlation Heatmap", fontsize=10, color='#e0e0e0', pad=12)
-
-        # **Adjust Axis Colors and Tick Parameters**
-        self.heatmap_ax.tick_params(axis='both', colors='#e0e0e0')
-        for spine in self.heatmap_ax.spines.values():
-            spine.set_edgecolor('#e0e0e0')
-
-        # **Highlight Strong Correlations with White/Black Text**
-        for i in range(self.correlation_matrix.shape[0]):
-            for j in range(self.correlation_matrix.shape[1]):
+        @cursor.connect("add")
+        def on_hover(sel):
+            try:
+                # Get heatmap cell position
+                i, j = sel.index
+                row_label = row_labels[i]
+                col_label = col_labels[j]
                 value = self.correlation_matrix.iloc[i, j]
-                color = 'white' if value < 0 else 'black'  # White for negative, black for positive
-                if abs(value) > 0.5:  # Only highlight strong correlations
-                    self.heatmap_ax.text(j + 0.5, i + 0.5, f'{value:.2f}', 
-                                         ha='center', va='center', 
-                                         color=color, fontsize=6, fontweight='bold')
+
+                # Update annotation text
+                sel.annotation.set_text(f'{row_label} ↔ {col_label}\nCorrelation: {value:.2f}')
+                sel.annotation.get_bbox_patch().set(fc="black", alpha=0.8)
+            except Exception:
+                sel.annotation.set_visible(False)  # Prevent crashes on bad hover
+
+        # **Customize Title**
+        self.heatmap_ax.set_title("Correlation Heatmap", fontsize=10, color='#e0e0e0', pad=12)
 
         # **Ensure Proper Spacing & Draw**
         self.heatmap_fig.tight_layout()
-        plt.subplots_adjust(bottom=0.3, left=0.25, right=0.95)  # Adjust space for long labels
+        plt.subplots_adjust(bottom=0.3, left=0.25, right=0.95)
         self.heatmap_canvas.draw()
 
 
@@ -814,13 +840,21 @@ class CorrelationDisplayDialog(QDialog):
 
 
 
+
+
     def on_heatmap_click(self, event):
         """Handles left-click for crossplot and right-click to move attributes to the selected list."""
         if event.inaxes == self.heatmap_ax:  # Ensure click is inside the heatmap
             try:
+                print("Heatmap click event detected")
+                print(f"Event button: {event.button}")
+            
                 col = round(event.xdata - 0.5)  # Get column index
                 row = round(event.ydata - 0.5)  # Get row index
-
+            
+                print(f"Column: {col}, Row: {row}")
+                print(f"Correlation Matrix Shape: {self.correlation_matrix.shape}")
+            
                 # Validate indices and avoid diagonal self-correlation
                 if (0 <= row < len(self.correlation_matrix.index) and 
                     0 <= col < len(self.correlation_matrix.columns) and 
@@ -828,16 +862,24 @@ class CorrelationDisplayDialog(QDialog):
 
                     x_col = self.correlation_matrix.columns[col]  # Get X-axis attribute
                     y_col = self.correlation_matrix.index[row]    # Get Y-axis attribute
+                
+                    print(f"X Column: {x_col}")
+                    print(f"Y Column: {y_col}")
 
                     if event.button == 1:  # Left-click → Update Crossplot
+                        print("Updating crossplot")
                         self.update_crossplot(row, col)
 
                     elif event.button == 3:  # Right-click → Move attributes to selection
+                        print("Moving attributes to selection")
                         self.move_attributes_to_selected(x_col, y_col)
 
             except (TypeError, ValueError, IndexError) as e:
                 print(f"Heatmap click error: {e}")
-
+            except Exception as e:
+                print(f"Unexpected heatmap click error: {e}")
+                import traceback
+                traceback.print_exc()
 
     def switch_view(self, view_type):
         """Switch between correlation matrix and network graph views"""
@@ -1246,7 +1288,7 @@ class GenerateCorrelationMatrix(QDialog):
                 QMessageBox.warning(self, "Invalid Input", "Please enter a valid numeric value for the threshold.")
                 return
 
-            #   Call `fetch_correlation_data` from `db_manager`
+            #   Call fetch_correlation_data from db_manager
             results = self.db_manager.fetch_correlation_data(UWIs, selected_attrs)
 
             if not results:
@@ -1326,6 +1368,3 @@ if __name__ == '__main__':
     dialog = GenerateCorrelationMatrix(db_manager)
     dialog.show()
     sys.exit(app.exec())
-
-
-

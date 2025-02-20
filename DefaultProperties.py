@@ -14,8 +14,8 @@ class DefaultProperties(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Default Decline Curve Parameters")
-        self.setGeometry(590, 257, 800, 500)  # Wider dialog
-        self.setMinimumSize(800, 500)
+        self.setGeometry(590, 257, 800, 600)  # Wider dialog
+        self.setMinimumSize(800, 600)
 
         self.properties = {}
         self.initUI()
@@ -68,36 +68,58 @@ class DefaultProperties(QDialog):
         """Create Decline Curve Parameters section inside a GroupBox with proper alignment"""
         group_box = QGroupBox("Decline Curve Parameters")
         group_layout = QVBoxLayout()
-
         # Minimal margins and spacing
         group_layout.setContentsMargins(0, 0, 0, 0)
         group_layout.setSpacing(5)
+    
+        self.labels = [
+            "Iterate",
+            "Production Type",
+            "Curve Type",
+            "B Factor Gas",
+            "Min Decline Gas",
+            "B Factor Oil",
+            "Min Decline Oil"
+        ]
+        StyledDropdown.calculate_label_width(self.labels)
+    
+        def create_dropdown(label, items=None):
+            dropdown = StyledDropdown(label)
+            if items:
+                dropdown.addItems(items)
+            return dropdown
+
+        def create_input(label, default_value="", validator=None):
+            # Pass the validator directly to StyledInputBox
+            input_box = StyledInputBox(label, default_value, validator)
+            input_box.label.setFixedWidth(StyledDropdown.label_width) 
+            return input_box
 
         # Iteration Options
-        self.iterate_di_dropdown = StyledDropdown("Iterate:", ["True", "False"])
+        self.iterate_di_dropdown = create_dropdown("Iterate", ["True", "False"])
         group_layout.addWidget(self.iterate_di_dropdown, alignment=Qt.AlignTop)
-
+    
         # Graph Options
-        self.option1_dropdown = StyledDropdown("Production Type:", ["Both", "Oil", "Gas"])
-        self.option2_dropdown = StyledDropdown("Curve Type:", ["Exponential", "Normal"])
+        self.option1_dropdown = create_dropdown("Production Type", ["Both", "Oil", "Gas"])
+        self.option2_dropdown = create_dropdown("Curve Type", ["Exponential", "Normal"])
         group_layout.addWidget(self.option1_dropdown)
         group_layout.addWidget(self.option2_dropdown)
-
+    
         # Validators
         double_validator = QDoubleValidator()
         percent_validator = QDoubleValidator(0.0, 100.0, 2)
-
+    
         # Decline Curve Inputs
-        self.gas_b_factor_input = StyledInputBox("B Factor Gas:", ".6", double_validator)
-        self.min_dec_gas = StyledInputBox("Min Decline Gas:", "6.00", percent_validator)
-        self.oil_b_factor_input = StyledInputBox("B Factor Oil:", ".6", double_validator)
-        self.min_dec_oil = StyledInputBox("Min Decline Oil:", "6.00", percent_validator)
-
+        self.gas_b_factor_input = create_input("B Factor Gas", ".6", double_validator)
+        self.min_dec_gas = create_input("Min Decline Gas", "6.00", percent_validator)
+        self.oil_b_factor_input = create_input("B Factor Oil", ".6", double_validator)
+        self.min_dec_oil = create_input("Min Decline Oil", "6.00", percent_validator)
+    
         group_layout.addWidget(self.gas_b_factor_input)
         group_layout.addWidget(self.min_dec_gas)
         group_layout.addWidget(self.oil_b_factor_input)
         group_layout.addWidget(self.min_dec_oil)
-
+    
         # Push everything to the top
         group_layout.addStretch(1)
         group_box.setLayout(group_layout)
@@ -107,36 +129,62 @@ class DefaultProperties(QDialog):
         """Create Cash Flow Parameters section inside a GroupBox with proper alignment"""
         group_box = QGroupBox("Cash Flow Parameters")
         group_layout = QVBoxLayout()
-
         # Minimal margins and spacing
-        group_layout.setContentsMargins(5, 5, 5, 5)
+        group_layout.setContentsMargins(0, 0, 0, 0)
         group_layout.setSpacing(5)
 
+        # Add labels for width calculation
+        self.labels = [
+            "Forecast Limit",
+            "Economic Limit Date",
+            "Oil Price $",
+            "Gas Price $",
+            "Oil Differential BBL $",
+            "Gas Differential MCF $",
+            "Working Interest %",
+            "Royalty Interest %",
+            "Revenue Discount %",
+            "Total Rate %",
+            "Operating Cost Monthly",
+            "Total Capex",
+            "Net Oil Price $",
+            "Net Gas Price $"
+        ]
+        StyledDropdown.calculate_label_width(self.labels)
+
+        def create_dropdown(label, items=None):
+            dropdown = StyledDropdown(label)
+            if items:
+                dropdown.addItems(items)
+            return dropdown
+
+        def create_input(label, default_value="", validator=None):
+            input_box = StyledInputBox(label, default_value, validator)
+            input_box.label.setFixedWidth(StyledDropdown.label_width)
+            return input_box
+
         # Forecast Limit Dropdown
-        self.end_forcast_type = StyledDropdown("Forecast Limit:", ["Net Dollars", "End Date", "GOR"])
-        self.end_forcast_type.setMinimumHeight(30)
+        self.end_forcast_type = create_dropdown("Forecast Limit", ["Net Dollars", "End Date", "GOR"])
         group_layout.addWidget(self.end_forcast_type)
 
         # Economic Limit Date
-        # **Replace QDateTimeEdit with StyledDateSelector**
-        self.ecl_date = StyledDateSelector("Economic Limit Date:", default_date=QDate.currentDate().addYears(10))
+        self.ecl_date = StyledDateSelector("Economic Limit Date", default_date=QDate.currentDate().addYears(10))
         self.ecl_date.setEnabled(False)
+        self.ecl_date.label.setFixedWidth(StyledDropdown.label_width)
         group_layout.addWidget(self.ecl_date)
 
         # Connect forecast type to enable/disable economic limit date
         self.end_forcast_type.combo.currentIndexChanged.connect(self.on_forcast_option_changed)
-
-
 
         # Validators
         double_validator = QDoubleValidator()
         percent_validator = QDoubleValidator(0.0, 100.0, 2)
 
         # Pricing Inputs
-        self.oil_price = StyledInputBox("Oil Price $", "70", double_validator)
-        self.gas_price = StyledInputBox("Gas Price $", "2.5", double_validator)
-        self.oil_price_dif = StyledInputBox("Oil Differential BBL $", "2.5", double_validator)
-        self.gas_price_dif = StyledInputBox("Gas Differential MCF $", ".5", double_validator)
+        self.oil_price = create_input("Oil Price $", "70", double_validator)
+        self.gas_price = create_input("Gas Price $", "2.5", double_validator)
+        self.oil_price_dif = create_input("Oil Differential BBL $", "2.5", double_validator)
+        self.gas_price_dif = create_input("Gas Differential MCF $", ".5", double_validator)
 
         group_layout.addWidget(self.oil_price)
         group_layout.addWidget(self.gas_price)
@@ -144,10 +192,10 @@ class DefaultProperties(QDialog):
         group_layout.addWidget(self.gas_price_dif)
 
         # Percentage Inputs
-        self.working_interest = StyledInputBox("Working Interest %", "100", percent_validator)
-        self.royalty = StyledInputBox("Royalty Interest %", "12.5", percent_validator)
-        self.discount_rate = StyledInputBox("Revenue Discount %", "12.5", percent_validator)
-        self.tax_rate = StyledInputBox("Total Rate %", "7", percent_validator)
+        self.working_interest = create_input("Working Interest %", "100", percent_validator)
+        self.royalty = create_input("Royalty Interest %", "12.5", percent_validator)
+        self.discount_rate = create_input("Revenue Discount %", "12.5", percent_validator)
+        self.tax_rate = create_input("Total Rate %", "7", percent_validator)
 
         group_layout.addWidget(self.working_interest)
         group_layout.addWidget(self.royalty)
@@ -155,16 +203,15 @@ class DefaultProperties(QDialog):
         group_layout.addWidget(self.tax_rate)
 
         # Cost Parameters
-        self.operating_expenditures = StyledInputBox("Operating Cost Monthly", "10000", double_validator)
-        self.capital_expenditures = StyledInputBox("Total Capex", "10000000", double_validator)
+        self.operating_expenditures = create_input("Operating Cost Monthly", "10000", double_validator)
+        self.capital_expenditures = create_input("Total Capex", "10000000", double_validator)
 
         group_layout.addWidget(self.operating_expenditures)
         group_layout.addWidget(self.capital_expenditures)
 
-
-                # Net Price Calculation (Results)
-        self.net_price_oil = StyledInputBox("Net Oil Price $", "0.0", double_validator)
-        self.net_price_gas = StyledInputBox("Net Gas Price $", "0.0", double_validator)
+        # Net Price Calculation (Results)
+        self.net_price_oil = create_input("Net Oil Price $", "0.0", double_validator)
+        self.net_price_gas = create_input("Net Gas Price $", "0.0", double_validator)
 
         # Disable editing since these are calculated fields
         self.net_price_oil.setEnabled(False)
@@ -177,7 +224,6 @@ class DefaultProperties(QDialog):
         group_layout.addStretch(1)
         group_box.setLayout(group_layout)
         return group_box
-
 
 
 

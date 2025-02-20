@@ -13197,3 +13197,46 @@ Supported signatures:
 2025-02-18 09:48:32,760 - root - INFO - No scenarios to load.
 2025-02-18 09:48:32,760 - root - INFO - PUDPropertiesDialog initialized
 2025-02-18 09:48:48,290 - root - INFO - Dialog closed successfully
+2025-02-19 10:17:03,025 - root - DEBUG - Toolbar setup completed
+2025-02-19 10:17:03,027 - root - DEBUG - Scenario dropdown setup completed
+2025-02-19 10:17:03,030 - root - DEBUG - Table setup completed
+2025-02-19 10:17:03,030 - root - DEBUG - UI setup completed successfully
+2025-02-19 10:17:03,033 - root - DEBUG - Signal connections established
+2025-02-19 10:17:03,036 - root - INFO - No scenarios to load.
+2025-02-19 10:17:03,036 - root - INFO - PUDPropertiesDialog initialized
+2025-02-19 10:17:13,271 - root - INFO - Scenario 'Frist' added successfully with ID 2. Active: 0
+2025-02-19 10:17:13,309 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg1
+2025-02-19 10:17:13,315 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg2
+2025-02-19 10:17:13,323 - root - INFO - Inserting new well pad for UWI: WP1L1Side1Leg3
+2025-02-19 10:17:13,329 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg1
+2025-02-19 10:17:13,338 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg2
+2025-02-19 10:17:13,345 - root - INFO - Inserting new well pad for UWI: WP2L1Side1Leg3
+2025-02-19 10:17:13,351 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg1
+2025-02-19 10:17:13,359 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg2
+2025-02-19 10:17:13,364 - root - INFO - Inserting new well pad for UWI: WP3L1Side1Leg3
+2025-02-19 10:17:13,371 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg1
+2025-02-19 10:17:13,379 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg2
+2025-02-19 10:17:13,386 - root - INFO - Inserting new well pad for UWI: WP4L1Side1Leg3
+2025-02-19 10:17:13,393 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg1
+2025-02-19 10:17:13,400 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg2
+2025-02-19 10:17:13,406 - root - INFO - Inserting new well pad for UWI: WP5L1Side1Leg3
+2025-02-19 10:17:13,413 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg1
+2025-02-19 10:17:13,421 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg2
+2025-02-19 10:17:13,427 - root - INFO - Inserting new well pad for UWI: WP6L1Side1Leg3
+2025-02-19 10:17:13,435 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg1
+2025-02-19 10:17:13,441 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg2
+2025-02-19 10:17:13,450 - root - INFO - Inserting new well pad for UWI: WP7L1Side1Leg3
+2025-02-19 10:17:13,455 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg1
+2025-02-19 10:17:13,462 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg2
+2025-02-19 10:17:13,470 - root - INFO - Inserting new well pad for UWI: WP8L1Side1Leg3
+2025-02-19 10:17:13,477 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg1
+2025-02-19 10:17:13,485 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg2
+2025-02-19 10:17:13,494 - root - INFO - Inserting new well pad for UWI: WP9L1Side1Leg3
+2025-02-19 10:17:14,984 - root - INFO - Scenario 2 updated with 27 wells.
+2025-02-19 10:17:16,308 - root - INFO - Processed 5/27 wells
+2025-02-19 10:17:17,598 - root - INFO - Processed 10/27 wells
+2025-02-19 10:17:18,872 - root - INFO - Processed 15/27 wells
+2025-02-19 10:17:20,159 - root - INFO - Processed 20/27 wells
+2025-02-19 10:17:21,447 - root - INFO - Processed 25/27 wells
+2025-02-19 10:17:23,350 - root - INFO - Well pads table populated successfully.
+2025-02-19 10:17:29,101 - root - INFO - Dialog closed successfully

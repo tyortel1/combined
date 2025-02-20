@@ -15,6 +15,7 @@ class HighlightCriteriaDialog(QDialog):
         self.columns = columns
         self.highlight_color = QColor(Qt.yellow)  
         self.criteria_df = pd.DataFrame(columns=['Name', 'Type', 'Column', 'Operator', 'Value', 'Logical Operator', 'Color'])
+        self.criteria_name = None
 
         # Define labels for alignment
         labels = ["Criteria Name", "Column", "Operator", "Value", "Operator"]
@@ -316,6 +317,8 @@ class HighlightCriteriaDialog(QDialog):
             QMessageBox.warning(self, "Error", "Criteria Name cannot be blank.")
             return
 
+        self.criteria_name = criteria_name  # ✅ Store the criteria name so it can be retrieved later
+
         criteria_list = []
         for i in range(self.criteria_list.count()):
             criterion_text = self.criteria_list.item(i).text()
@@ -338,10 +341,8 @@ class HighlightCriteriaDialog(QDialog):
         success, message = self.db_manager.save_criteria(criteria_name, self.highlight_color.name(), criteria_list)
         if success:
             QMessageBox.information(self, "Success", message)
-            self.accept()
+            self.accept()  # ✅ Close the dialog
         else:
-
-
             QMessageBox.warning(self, "Error", message)
 
 

@@ -254,19 +254,35 @@ class Ui_MainWindow:
         MainWindow.dataload_segy_action = QAction("Import Segy", MainWindow)
         MainWindow.import_menu.addAction(MainWindow.dataload_segy_action)
 
-        # Properties Menu (Unchanged)
         MainWindow.properties_menu = MainWindow.menu_bar.addMenu("Properties")
         MainWindow.properties_menu.setEnabled(True)
 
+        # Well Properties
         MainWindow.well_properties_action = QAction("Well Properties", MainWindow)
         MainWindow.properties_menu.addAction(MainWindow.well_properties_action)
 
-        MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)
+        # Zone related actions
+        MainWindow.zone_viewer_action = QAction("Zone Viewer", MainWindow)  # Renamed from Zone Properties
         MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
 
-        MainWindow.map_properties_action = QAction("Map Properties", MainWindow)
-        MainWindow.properties_menu.addAction(MainWindow.map_properties_action )
+        MainWindow.zone_properties_action = QAction("Zone Properties", MainWindow)  # New action
+        MainWindow.properties_menu.addAction(MainWindow.zone_properties_action)
 
+        # Map Properties
+        MainWindow.map_properties_action = QAction("Map Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.map_properties_action)
+
+        # Grid Properties
+        MainWindow.grid_properties_action = QAction("Grid Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.grid_properties_action)
+
+        # Seismic Properties
+        MainWindow.seismic_properties_action = QAction("Seismic Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.seismic_properties_action)
+
+        # Regression Properties
+        MainWindow.regression_properties_action = QAction("Regression Properties", MainWindow)
+        MainWindow.properties_menu.addAction(MainWindow.regression_properties_action)
 
 
 

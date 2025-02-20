@@ -112,52 +112,62 @@ class CalculateCorrelations(QDialog):
     def create_crossplot(self, attr1, attr2):
         # Clear previous crossplot
         self.ax_crossplot.clear()
-    
+
+        # Get data for selected attributes
+        x = self.last_correlation_df[attr1]
+        y = self.last_correlation_df[attr2]
+
+        # ✅ Exclude zero values only for plotting (but not for calculations)
+        non_zero_mask = (x != 0) & (y != 0)
+        x = x[non_zero_mask]
+        y = y[non_zero_mask]
+
+        if x.empty or y.empty:
+            self.ax_crossplot.set_title("No valid data to plot after zero filtering", fontsize=8, color='red')
+            self.heatmap_canvas.draw()
+            return
+
         # Set dark background
-        self.ax_crossplot.set_facecolor('#1E1E1E')  # Dark background
-    
+        self.ax_crossplot.set_facecolor('#1E1E1E')
+
         # Create scatter plot with neon-like colors
         scatter = self.ax_crossplot.scatter(
-            self.last_correlation_df[attr1], 
-            self.last_correlation_df[attr2],
+            x, y,
             alpha=0.7,
-            c=self.last_correlation_df[attr1],  # Color based on first attribute
+            c=x,  # Color based on first attribute
             cmap='plasma',  # Vibrant color map
             edgecolors='cyan',  # Neon cyan edge
             linewidth=1.5
         )
-    
+
         # Add line of best fit with neon style
-        x = self.last_correlation_df[attr1]
-        y = self.last_correlation_df[attr2]
         m, b = np.polyfit(x, y, 1)
         self.ax_crossplot.plot(x, m*x + b, color='magenta', linestyle='--', linewidth=2, label=f'y = {m:.2f}x + {b:.2f}')
-    
+
         # Calculate correlation
-        correlation = self.last_correlation_df[attr1].corr(self.last_correlation_df[attr2])
-    
+        correlation = x.corr(y)
+
         # Set title and labels with light colors
         self.ax_crossplot.set_title(f'Scatter Plot: {attr1} vs {attr2}\nCorrelation: {correlation:.2f}', 
-                                     fontsize=8, 
-                                     color='white')
+                                     fontsize=8, color='white')
         self.ax_crossplot.set_xlabel(attr1, fontsize=6, color='cyan')
         self.ax_crossplot.set_ylabel(attr2, fontsize=6, color='cyan')
-    
+
         # Style axes
         self.ax_crossplot.spines['bottom'].set_color('cyan')
         self.ax_crossplot.spines['top'].set_color('cyan')
         self.ax_crossplot.spines['left'].set_color('cyan')
         self.ax_crossplot.spines['right'].set_color('cyan')
-    
+
         # Tick colors
         self.ax_crossplot.tick_params(colors='white', which='both')
-    
+
         # Add legend with neon style
         self.ax_crossplot.legend(fontsize=6, facecolor='#2C2C2C', edgecolor='magenta', labelcolor='white')
-    
+
         # Grid with subtle neon effect
         self.ax_crossplot.grid(color='cyan', linestyle='--', linewidth=0.5, alpha=0.3)
-    
+
         # Redraw the canvas
         self.heatmap_canvas.draw()
     def calculate_and_display_correlation(self):
@@ -188,32 +198,39 @@ class CalculateCorrelations(QDialog):
 
     def calculate_correlation_analysis(self, df):
         self.reset_state()
-        # Check if the user wants to exclude zeros
-        if self.exclude_zeros_checkbox.isChecked():
-            df = df.replace(0, np.nan)  # Replace zeros with NaN to exclude from correlation
 
-        # Calculate the correlation matrix
-        corr_matrix = df.corr()
+        # ✅ Filter only numeric columns
+        numeric_df = df.select_dtypes(include=[np.number])  # Keeps only numeric columns
+
+        if numeric_df.empty:
+            QMessageBox.warning(self, "Error", "No numeric columns available for correlation analysis.")
+            return pd.DataFrame()  # Return an empty DataFrame to prevent crashes
+
+        # ✅ If the user selects "Exclude Zeros", replace them with NaN (but don’t remove rows!)
+        if self.exclude_zeros_checkbox.isChecked():
+            numeric_df = numeric_df.replace(0, np.nan)  # ✅ Keeps rows but excludes zeros in correlation calculation
+
+        # ✅ Compute correlation only on numeric columns
+        corr_matrix = numeric_df.corr()
 
         # Prepare a DataFrame to store results
         results = []
 
-        # Calculate the correlation and standard error
+        # Calculate correlation and standard error
         for i in range(len(corr_matrix.columns)):
-            for j in range(i+1, len(corr_matrix.columns)):
+            for j in range(i + 1, len(corr_matrix.columns)):  # Avoid duplicate pairs
                 attr1 = corr_matrix.columns[i]
                 attr2 = corr_matrix.columns[j]
                 r = corr_matrix.iloc[i, j]
-                n = len(df.dropna(subset=[attr1, attr2]))  # Drop NaN rows for correct sample size
-                se = np.sqrt((1 - r**2) / (n - 2)) if n > 2 else np.nan  # Avoid division by zero
+
+                # Get valid sample size (excluding NaN values from the correlation calculation)
+                n = numeric_df[[attr1, attr2]].dropna().shape[0]  # ✅ Drops NaN only when counting valid samples
+
+                # Compute standard error (avoid division by zero)
+                se = np.sqrt((1 - r**2) / (n - 2)) if n > 2 else np.nan
 
                 # Determine correlation type
-                if r > 0:
-                    corr_type = "Positive"
-                elif r < 0:
-                    corr_type = "Negative"
-                else:
-                    corr_type = "Flat"
+                corr_type = "Positive" if r > 0 else "Negative" if r < 0 else "Flat"
 
                 results.append({
                     "Attribute 1": attr1,
