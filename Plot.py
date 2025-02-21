@@ -302,6 +302,41 @@ class SeismicGraphicsView(QGraphicsView):
             self.timing_lines.append(label)
 
 
+    def updateTimingLines(self):
+        """Update timing lines dynamically when tick size or zoom changes."""
+        if not hasattr(self, 'seismic_item') or self.seismic_item is None:
+            return
+
+        # ✅ Clear existing timing lines before adding new ones
+        for line in getattr(self, 'timing_lines', []):
+            self.scene_obj.removeItem(line)
+        self.timing_lines = []
+
+        # ✅ Calculate timing intervals based on seismic data
+        time_step = (max(self.seismic_data['time_axis']) - min(self.seismic_data['time_axis'])) / 10
+        time_intervals = np.arange(min(self.seismic_data['time_axis']), max(self.seismic_data['time_axis']), time_step)
+
+        # ✅ Refresh timing lines
+        seismic_rect = self.seismic_item.boundingRect()
+        seismic_pos = self.seismic_item.pos()
+        start_x = seismic_pos.x()
+        end_x = start_x + seismic_rect.width() * self.seismic_item.scale()
+
+        for time in time_intervals:
+            y = seismic_pos.y() + time * self.seismic_item.transform().m22()
+
+            # ✅ Darker color for visibility
+            line = self.scene_obj.addLine(start_x, y, end_x, y, QPen(QColor(100, 100, 100), 1))
+            line.setZValue(2)  # Ensure it's visible above seismic but below well path
+            self.timing_lines.append(line)
+
+            # ✅ Add time label
+            label = self.scene_obj.addText(f"{time:.0f}")
+            label.setPos(start_x - 40, y - 10)  # Adjust position
+            label.setDefaultTextColor(QColor(200, 200, 200))  # Lighter but visible text
+            self.timing_lines.append(label)
+
+        print("✅ Timing Lines Updated")
 
     def update_well_path(self, path_points):
         """Update well path display"""
