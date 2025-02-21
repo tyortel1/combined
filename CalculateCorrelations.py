@@ -12,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from StyledTwoListSelector import TwoListSelector
 from StyledDropdown import StyledDropdown, StyledInputBox, StyledBaseWidget
 from StyledButton import StyledButton
+from scipy.stats import linregress
 #
 
 class CalculateCorrelations(QDialog):
@@ -114,62 +115,114 @@ class CalculateCorrelations(QDialog):
         self.ax_crossplot.clear()
 
         # Get data for selected attributes
-        x = self.last_correlation_df[attr1]
-        y = self.last_correlation_df[attr2]
+        x = self.last_correlation_df[attr1].to_numpy()
+        y = self.last_correlation_df[attr2].to_numpy()
 
-        # ✅ Exclude zero values only for plotting (but not for calculations)
-        non_zero_mask = (x != 0) & (y != 0)
-        x = x[non_zero_mask]
-        y = y[non_zero_mask]
+        # If "Exclude Zeros" is checked, remove rows with zeros
+        if self.exclude_zeros_checkbox.isChecked():
+            mask = (x != 0) & (y != 0)
+            x = x[mask]
+            y = y[mask]
 
-        if x.empty or y.empty:
-            self.ax_crossplot.set_title("No valid data to plot after zero filtering", fontsize=8, color='red')
+        # Remove any NaN values
+        valid_mask = ~np.isnan(x) & ~np.isnan(y)
+        x_clean = x[valid_mask]
+        y_clean = y[valid_mask]
+
+
+        # Check for sufficient valid data points
+        if len(x_clean) < 2:  # Need at least 2 points for regression
+            self.ax_crossplot.set_title("Insufficient valid data for regression", fontsize=8, color='red')
             self.heatmap_canvas.draw()
             return
 
         # Set dark background
         self.ax_crossplot.set_facecolor('#1E1E1E')
 
-        # Create scatter plot with neon-like colors
-        scatter = self.ax_crossplot.scatter(
-            x, y,
+        # Create scatter plot
+        self.ax_crossplot.scatter(
+            x_clean, y_clean,
             alpha=0.7,
-            c=x,  # Color based on first attribute
-            cmap='plasma',  # Vibrant color map
-            edgecolors='cyan',  # Neon cyan edge
+            edgecolors='cyan',
             linewidth=1.5
         )
 
-        # Add line of best fit with neon style
-        m, b = np.polyfit(x, y, 1)
-        self.ax_crossplot.plot(x, m*x + b, color='magenta', linestyle='--', linewidth=2, label=f'y = {m:.2f}x + {b:.2f}')
+        # Compute trendline using `linregress` with error handling
+        try:
+            # Ensure data is finite
+            finite_mask = np.isfinite(x_clean) & np.isfinite(y_clean)
+            if not np.any(finite_mask):
+                raise ValueError("No finite values available for regression")
 
-        # Calculate correlation
-        correlation = x.corr(y)
+            x_finite = x_clean[finite_mask]
+            y_finite = y_clean[finite_mask]
 
-        # Set title and labels with light colors
-        self.ax_crossplot.set_title(f'Scatter Plot: {attr1} vs {attr2}\nCorrelation: {correlation:.2f}', 
-                                     fontsize=8, color='white')
+            if len(x_finite) < 2:
+                raise ValueError("Need at least two finite points for regression")
+
+            slope, intercept, r_value, p_value, std_err = linregress(x_finite, y_finite)
+
+            # Check if regression results are valid
+            if np.isfinite(slope) and np.isfinite(intercept):
+                # Create line of best fit
+                line_x = np.array([np.min(x_finite), np.max(x_finite)])
+                line_y = slope * line_x + intercept
+
+                # Plot the trendline
+                self.ax_crossplot.plot(
+                    line_x, line_y, 
+                    color='magenta', 
+                    linestyle='--', 
+                    linewidth=2,
+                    label=f'y = {slope:.2f}x + {intercept:.2f}\nR² = {r_value**2:.2f}'
+                )
+
+                # Add legend
+                self.ax_crossplot.legend(fontsize=6, facecolor='#2C2C2C', edgecolor='magenta', labelcolor='white')
+            else:
+                print("Invalid regression results:", slope, intercept)
+                raise ValueError("Invalid regression coefficients")
+
+        except Exception as e:
+            print(f"Trendline error: {e}")
+            self.ax_crossplot.text(
+                0.5, 0.5, 
+                f"Could not calculate trendline:\n{str(e)}", 
+                ha='center', 
+                va='center',
+                color='red',
+                fontsize=8,
+                transform=self.ax_crossplot.transAxes
+            )
+
+        # Compute correlation for valid data
+        correlation = np.corrcoef(x_finite, y_finite)[0, 1] if len(x_finite) > 1 else np.nan
+
+        # Set title color based on correlation
+        title_color = 'red' if correlation > 0 else 'blue' if correlation < 0 else 'white'
+
+        # Set title and labels
+        self.ax_crossplot.set_title(
+            f'Scatter Plot: {attr1} vs {attr2}\nCorrelation: {correlation:.2f}', 
+            fontsize=8, 
+            color=title_color
+        )
         self.ax_crossplot.set_xlabel(attr1, fontsize=6, color='cyan')
         self.ax_crossplot.set_ylabel(attr2, fontsize=6, color='cyan')
 
         # Style axes
-        self.ax_crossplot.spines['bottom'].set_color('cyan')
-        self.ax_crossplot.spines['top'].set_color('cyan')
-        self.ax_crossplot.spines['left'].set_color('cyan')
-        self.ax_crossplot.spines['right'].set_color('cyan')
+        for spine in ['bottom', 'top', 'left', 'right']:
+            self.ax_crossplot.spines[spine].set_color('cyan')
 
         # Tick colors
         self.ax_crossplot.tick_params(colors='white', which='both')
-
-        # Add legend with neon style
-        self.ax_crossplot.legend(fontsize=6, facecolor='#2C2C2C', edgecolor='magenta', labelcolor='white')
 
         # Grid with subtle neon effect
         self.ax_crossplot.grid(color='cyan', linestyle='--', linewidth=0.5, alpha=0.3)
 
         # Redraw the canvas
         self.heatmap_canvas.draw()
+
     def calculate_and_display_correlation(self):
         # Get selected attributes
         selected_attributes = self.attribute_selector.get_right_items()
@@ -227,7 +280,12 @@ class CalculateCorrelations(QDialog):
                 n = numeric_df[[attr1, attr2]].dropna().shape[0]  # ✅ Drops NaN only when counting valid samples
 
                 # Compute standard error (avoid division by zero)
-                se = np.sqrt((1 - r**2) / (n - 2)) if n > 2 else np.nan
+                # Compute standard error (avoid division by zero)
+                if n > 2:
+                    se = np.sqrt((1 - r**2) / max(n - 2, 1))  # Ensure denominator is at least 1
+                else:
+                    se = np.nan  # If not enough data, set to NaN
+
 
                 # Determine correlation type
                 corr_type = "Positive" if r > 0 else "Negative" if r < 0 else "Flat"
@@ -262,57 +320,87 @@ class CalculateCorrelations(QDialog):
                 self.results_table.setItem(row_idx, 4, QTableWidgetItem(f"{row['Standard Error']:.4f}"))
 
     def populate_filter_dropdown(self, attributes):
+        # Remove any empty strings
+        attributes = [attr for attr in attributes if attr and attr.strip()]
+
         # Show the filter dropdown and populate it with selected attributes
         self.filter_dropdown.setVisible(True)
         self.filter_dropdown.combo.clear()  # Clear existing items
         self.filter_dropdown.combo.addItem("Show All")  # Add the "Show All" option
-        self.filter_dropdown.combo.addItems(attributes)  # Add selected attributes
+    
+        # Add non-empty attributes
+        if attributes:
+            self.filter_dropdown.combo.addItems(attributes)
 
     def filter_results_by_attribute(self):
         selected_attribute = self.filter_dropdown.combo.currentText()
     
-        # If only one attribute is selected, update the heatmap with bar chart
-        if selected_attribute != "Show All":
-            self.update_filtered_heatmap(selected_attribute)
-        else:
-            # Revert to full heatmap
+        print("Debug - Filter Dropdown Items:")
+        for i in range(self.filter_dropdown.combo.count()):
+            print(f"Item {i}: '{self.filter_dropdown.combo.itemText(i)}'")
+
+        print(f"Selected attribute: '{selected_attribute}'")
+        print(f"Type of selected attribute: {type(selected_attribute)}")
+
+        # If "Show All" is selected, revert to full heatmap
+        if selected_attribute == "Show All":
+            # Reuse the existing figure if possible
             self.display_correlation_heatmap(self.last_correlation_df)
     
+            # Show all rows in the table
+            for row in range(self.results_table.rowCount()):
+                self.results_table.setRowHidden(row, False)
+        
+            return
+
+        # If a specific attribute is selected, update the heatmap
+        try:
+            self.update_filtered_heatmap(selected_attribute)
+        except Exception as e:
+            print(f"Error updating filtered heatmap: {e}")
+            # Fallback to full heatmap
+            self.display_correlation_heatmap(self.last_correlation_df)
+
         # Filter the table
         for row in range(self.results_table.rowCount()):
             self.results_table.setRowHidden(row, False)  # First, show all rows
-        
-            if selected_attribute != "Show All":
-                attr1 = self.results_table.item(row, 0).text()
-                attr2 = self.results_table.item(row, 1).text()
-            
-                # Hide rows that don't contain the selected attribute
-                if selected_attribute not in [attr1, attr2]:
-                    self.results_table.setRowHidden(row, True)
+    
+            attr1 = self.results_table.item(row, 0).text()
+            attr2 = self.results_table.item(row, 1).text()
+    
+            # Hide rows that don't contain the selected attribute
+            if selected_attribute not in [attr1, attr2]:
+                self.results_table.setRowHidden(row, True)
 
     def display_correlation_heatmap(self, df):
-        # Clear previous plot
-        self.heatmap_figure = plt.figure(figsize=(10, 8), dpi=100, facecolor='black')
-    
+        # Check if figure already exists and is valid
+        if not hasattr(self, 'heatmap_figure') or not plt.fignum_exists(self.heatmap_figure.number):
+            # Clear previous plot
+            self.heatmap_figure = plt.figure(figsize=(10, 8), dpi=100, facecolor='black')
+        else:
+            # Clear existing axes
+            for ax in self.heatmap_figure.get_axes():
+                ax.clear()
+
         # Create a grid of subplots
-        gs = self.heatmap_figure.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.5)
-    
+        gs = self.heatmap_figure.add_gridspec(2, 1, height_ratios=[2, 1], hspace=.8)
+
         # Heatmap subplot
         ax_heatmap = self.heatmap_figure.add_subplot(gs[0])
         ax_heatmap.set_facecolor('black')
-    
+
         # Calculate correlation matrix
         corr_matrix = df.corr()
-    
+
         # Create heatmap with seaborn
         heatmap = sns.heatmap(
             corr_matrix, 
             annot=True,          # Show correlation values
-            cmap='coolwarm',     # Red-Blue color map
+            cmap='coolwarm_r',   # Reversed Red-Blue color map (blue for positive, red for negative)
             center=0,            # Center color map at 0
             vmin=-1, 
             vmax=1,
-            square=True,          # Make squares equal
+            square=False,         # Allow non-square cells
             ax=ax_heatmap,
             fmt='.2f',            # Format to 2 decimal places
             cbar=False,           # Remove color bar
@@ -320,64 +408,69 @@ class CalculateCorrelations(QDialog):
             linewidths=0.5,       # Add grid lines
             linecolor='cyan'      # Cyan grid lines
         )
-    
+
         ax_heatmap.tick_params(axis='both', colors='white', labelsize=5)  # Smaller font
         ax_heatmap.set_xticklabels(ax_heatmap.get_xticklabels(), rotation=75, ha='right', fontsize=5, color='white')
         ax_heatmap.set_yticklabels(ax_heatmap.get_yticklabels(), fontsize=5, color='white')
 
-        # Adjust spacing so labels don�t overlap cross-plot
-        plt.subplots_adjust(bottom=0.1, top=0.95)
-    
+        # Adjust spacing to maximize horizontal space
+        plt.subplots_adjust(left=0.1, right=0.95, bottom=0.2, top=0.95)
+
         # Cyan borders
         for spine in ax_heatmap.spines.values():
             spine.set_edgecolor('cyan')
-    
+
         # Remove x and y labels
         ax_heatmap.set_xlabel('')
         ax_heatmap.set_ylabel('')
-    
+
         # Remove title
         ax_heatmap.set_title('')
-    
+
         # Cross-plot subplot (initially empty)
         self.ax_crossplot = self.heatmap_figure.add_subplot(gs[1])
         self.ax_crossplot.clear()
         self.ax_crossplot.set_facecolor('black')
-    
+
         # Styled initial title
         self.ax_crossplot.set_title('Click heatmap to show scatter plot', 
                                      fontsize=8, 
                                      color='cyan')
         self.ax_crossplot.set_xlabel('')
         self.ax_crossplot.set_ylabel('')
-    
+
         # Connect click event
         def on_cell_click(event):
             if event.inaxes == ax_heatmap:
                 # Get the column and row indices
                 col_index = int(event.xdata)
                 row_index = int(event.ydata)
-            
+        
                 # Get the column names
                 col_name = corr_matrix.columns[col_index]
                 row_name = corr_matrix.index[row_index]
-            
+        
                 # Create cross-plot
                 self.create_crossplot(col_name, row_name)
-    
+
         # Add click event
         self.heatmap_figure.canvas.mpl_connect('button_press_event', on_cell_click)
-    
-        # Replace the canvas
+
+        # Replace the canvas safely
         if hasattr(self, 'heatmap_canvas'):
-            self.heatmap_widget.layout().removeWidget(self.heatmap_canvas)
-            self.heatmap_canvas.deleteLater()
-    
+            try:
+                self.heatmap_widget.layout().removeWidget(self.heatmap_canvas)
+                self.heatmap_canvas.setParent(None)  # Fully detach widget before deletion
+                self.heatmap_canvas.deleteLater()
+            except RuntimeError as e:
+                print(f"Canvas deletion error: {e}")
+
+        # Now create the new canvas
         self.heatmap_canvas = FigureCanvas(self.heatmap_figure)
         self.heatmap_widget.layout().addWidget(self.heatmap_canvas)
-    
-        # Adjust layout and redraw
-        self.heatmap_figure.tight_layout()
+
+
+
         self.heatmap_canvas.draw()
 
 
@@ -407,103 +500,123 @@ class CalculateCorrelations(QDialog):
             self.filter_dropdown.combo.setCurrentIndex(index)
 
     def update_filtered_heatmap(self, selected_attribute):
-        # Clear previous plot
-        self.heatmap_figure = plt.figure(figsize=(8, 8), dpi=100, facecolor='black')
+        # Early return if "Show All" is passed
+        if selected_attribute == "Show All":
+            return
+
+        try:
+            # Close any existing figure to prevent memory leaks
+            plt.close(self.heatmap_figure) if hasattr(self, 'heatmap_figure') else None
+        
+            # Create new figure
+            self.heatmap_figure = plt.figure(figsize=(8, 8), dpi=100, facecolor='black')
     
-        # Create a grid of subplots
-        gs = self.heatmap_figure.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.4)
+            # Create a grid of subplots
+            gs = self.heatmap_figure.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.8)
     
-        # Bar graph subplot
-        ax_bargraph = self.heatmap_figure.add_subplot(gs[0])
-        ax_bargraph.set_facecolor('black')
+            # Bar graph subplot
+            ax_bargraph = self.heatmap_figure.add_subplot(gs[0])
+            ax_bargraph.set_facecolor('black')
 
-        # Get the full correlation matrix
-        corr_matrix = self.last_correlation_df.corr()
+            # Get the full correlation matrix
+            corr_matrix = self.last_correlation_df.corr()
 
-        # Get correlations for the selected attribute
-        attr_correlations = corr_matrix.loc[selected_attribute].drop(selected_attribute)
+            # Safety check for the selected attribute
+            if selected_attribute not in corr_matrix.columns:
+                print(f"Attribute {selected_attribute} not found in correlation matrix")
+                return
+
+            # Get correlations for the selected attribute
+            attr_correlations = corr_matrix.loc[selected_attribute].drop(selected_attribute)
     
-        # Sort correlations by absolute value
-        attr_correlations_sorted = attr_correlations.reindex(
-            attr_correlations.abs().sort_values(ascending=False).index
-        )
-
-        # Create bar plot with neon styling
-        bars = ax_bargraph.bar(
-            attr_correlations_sorted.index, 
-            attr_correlations_sorted.values, 
-            color=[plt.cm.coolwarm(0.5 + 0.5 * val) for val in attr_correlations_sorted.values],
-            edgecolor='cyan'
-        )
-
-        # Style the bar graph
-        ax_bargraph.set_facecolor('black')
-        ax_bargraph.spines['bottom'].set_color('cyan')
-        ax_bargraph.spines['top'].set_color('cyan')
-        ax_bargraph.spines['left'].set_color('cyan')
-        ax_bargraph.spines['right'].set_color('cyan')
-
-        # Rotate x-axis labels
-        plt.sca(ax_bargraph)
-        plt.xticks(rotation=45, ha='right', fontsize=6, color='white')
-        plt.yticks(color='white')
-
-        # Add value labels on top of each bar
-        for bar in bars:
-            height = bar.get_height()
-            ax_bargraph.text(
-                bar.get_x() + bar.get_width()/2., 
-                height,
-                f'{height:.2f}',
-                ha='center', 
-                va='bottom', 
-                fontsize=6,
-                color='white'
+            # Sort correlations by absolute value
+            attr_correlations_sorted = attr_correlations.reindex(
+                attr_correlations.abs().sort_values(ascending=False).index
             )
 
-        # Set title and labels
-        ax_bargraph.set_title(f'Correlations with {selected_attribute}', fontsize=8, color='cyan')
-        ax_bargraph.set_xlabel('Attributes', fontsize=6, color='cyan')
-        ax_bargraph.set_ylabel('Correlation Coefficient', fontsize=6, color='cyan')
+            # Create bar plot with neon styling
+            bars = ax_bargraph.bar(
+                attr_correlations_sorted.index, 
+                attr_correlations_sorted.values, 
+                color=[plt.cm.coolwarm(0.5 + 0.5 * val) for val in attr_correlations_sorted.values],
+                edgecolor='cyan'
+            )
 
-        # Add a horizontal line at y=0
-        ax_bargraph.axhline(y=0, color='cyan', linestyle='--', linewidth=0.5)
+            # Style the bar graph
+            ax_bargraph.set_facecolor('black')
+            ax_bargraph.spines['bottom'].set_color('cyan')
+            ax_bargraph.spines['top'].set_color('cyan')
+            ax_bargraph.spines['left'].set_color('cyan')
+            ax_bargraph.spines['right'].set_color('cyan')
 
-        # Cross-plot subplot (initially empty)
-        self.ax_crossplot = self.heatmap_figure.add_subplot(gs[1])
-        self.ax_crossplot.clear()
-        self.ax_crossplot.set_facecolor('black')
-        self.ax_crossplot.set_title(f'Click bar to show scatter plot for {selected_attribute}', 
-                                     fontsize=8, 
-                                     color='cyan')
+            # Rotate x-axis labels
+            plt.sca(ax_bargraph)
+            plt.xticks(rotation=45, ha='right', fontsize=6, color='white')
+            plt.yticks(color='white')
 
-        # Connect click event for bar graph
-        def on_bar_click(event):
-            if event.inaxes == ax_bargraph:
-                # Get the x-index of the clicked bar
-                x_index = int(event.xdata)
+            # Add value labels on top of each bar
+            for bar in bars:
+                height = bar.get_height()
+                ax_bargraph.text(
+                    bar.get_x() + bar.get_width()/2., 
+                    height,
+                    f'{height:.2f}',
+                    ha='center', 
+                    va='bottom', 
+                    fontsize=6,
+                    color='white'
+                )
+
+            # Set title and labels
+            ax_bargraph.set_title(f'Correlations with {selected_attribute}', fontsize=8, color='cyan')
+            ax_bargraph.set_xlabel('Attributes', fontsize=6, color='cyan')
+            ax_bargraph.set_ylabel('Correlation Coefficient', fontsize=6, color='cyan')
+
+            # Add a horizontal line at y=0
+            ax_bargraph.axhline(y=0, color='cyan', linestyle='--', linewidth=0.5)
+
+            # Cross-plot subplot (initially empty)
+            self.ax_crossplot = self.heatmap_figure.add_subplot(gs[1])
+            self.ax_crossplot.clear()
+            self.ax_crossplot.set_facecolor('black')
+            self.ax_crossplot.set_title(f'Click bar to show scatter plot for {selected_attribute}', 
+                                         fontsize=8, 
+                                         color='cyan')
+
+            # Connect click event for bar graph
+            def on_bar_click(event):
+                if event.inaxes == ax_bargraph:
+                    # Get the x-index of the clicked bar
+                    x_index = int(event.xdata)
             
-                # Get the attribute name
-                clicked_attr = attr_correlations_sorted.index[x_index]
+                    # Get the attribute name
+                    clicked_attr = attr_correlations_sorted.index[x_index]
             
-                # Create cross-plot
-                self.create_crossplot(selected_attribute, clicked_attr)
+                    # Create cross-plot
+                    self.create_crossplot(selected_attribute, clicked_attr)
 
-        # Add click event
-        self.heatmap_figure.canvas.mpl_connect('button_press_event', on_bar_click)
+            # Add click event
+            self.heatmap_figure.canvas.mpl_connect('button_press_event', on_bar_click)
 
-        # Replace the canvas
-        if hasattr(self, 'heatmap_canvas'):
-            self.heatmap_widget.layout().removeWidget(self.heatmap_canvas)
-            self.heatmap_canvas.deleteLater()
+            # Replace the canvas
+            if hasattr(self, 'heatmap_canvas'):
+                try:
+                    self.heatmap_widget.layout().removeWidget(self.heatmap_canvas)
+                    self.heatmap_canvas.deleteLater()
+                except Exception as e:
+                    print(f"Error removing previous canvas: {e}")
 
-        self.heatmap_canvas = FigureCanvas(self.heatmap_figure)
-        self.heatmap_widget.layout().addWidget(self.heatmap_canvas)
+            self.heatmap_canvas = FigureCanvas(self.heatmap_figure)
+            self.heatmap_widget.layout().addWidget(self.heatmap_canvas)
 
-        # Adjust layout and redraw
-        self.heatmap_figure.tight_layout()
-        self.heatmap_canvas.draw()
+            # Adjust layout and redraw
+            plt.tight_layout(pad=1.0)
+            self.heatmap_canvas.draw()
 
+        except Exception as e:
+            print(f"Comprehensive error in update_filtered_heatmap: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 # Example usage

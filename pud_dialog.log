@@ -13240,3 +13240,12 @@ Supported signatures:
 2025-02-19 10:17:21,447 - root - INFO - Processed 25/27 wells
 2025-02-19 10:17:23,350 - root - INFO - Well pads table populated successfully.
 2025-02-19 10:17:29,101 - root - INFO - Dialog closed successfully
+2025-02-20 11:42:24,664 - root - DEBUG - Toolbar setup completed
+2025-02-20 11:42:24,666 - root - DEBUG - Scenario dropdown setup completed
+2025-02-20 11:42:24,670 - root - DEBUG - Table setup completed
+2025-02-20 11:42:24,670 - root - DEBUG - UI setup completed successfully
+2025-02-20 11:42:24,671 - root - DEBUG - Signal connections established
+2025-02-20 11:42:24,733 - root - INFO - Well pads table populated successfully.
+2025-02-20 11:42:24,733 - root - INFO - Initial data loaded successfully.
+2025-02-20 11:42:24,733 - root - INFO - PUDPropertiesDialog initialized
+2025-02-20 11:42:50,576 - root - INFO - Dialog closed successfully

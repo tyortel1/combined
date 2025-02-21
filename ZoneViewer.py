@@ -274,9 +274,9 @@ class ZoneViewerDialog(QDialog):
         font.setPointSize(8)  # Adjust the font size as needed
         self.table_view.setFont(font)
         self.table_view.setSortingEnabled(True)
-
-        # Connect the sort indicator changed signal to the custom handler
         self.table_view.horizontalHeader().sortIndicatorChanged.connect(self.handle_sort_indicator_changed)
+
+
 
         # Add the table view to the layout
         self.right_layout.addWidget(self.table_view)
@@ -785,33 +785,56 @@ class ZoneViewerDialog(QDialog):
         self.load_data()       
         
     def handle_sort_indicator_changed(self, logicalIndex, order):
+        print("\n=== Sort Indicator Changed ===")
+        print(f"Sorting column index: {logicalIndex}")
+        print(f"Order: {'Ascending' if order == Qt.AscendingOrder else 'Descending'}")
+
         # Get the column name based on the logical index
         sort_column = self.table_view.horizontalHeader().model().headerData(logicalIndex, Qt.Horizontal)
+        print(f"Sorting column: {sort_column}")
+    
+        # Debug: Print some sample values and NaN count
+        print("\nNaN count in column:", self.filtered_df[sort_column].isna().sum())
+        print("First few values in column before sorting:")
+        print(self.filtered_df[sort_column].head().tolist())
 
-        # Save the current sort column and order
-        self.saved_sort_column = sort_column
-        self.saved_sort_order = Qt.AscendingOrder if order == Qt.AscendingOrder else Qt.DescendingOrder
+        try:
+            # Create a clean numeric series for sorting
+            def convert_to_numeric(x):
+                if pd.isna(x):
+                    return float('inf') if order == Qt.AscendingOrder else float('-inf')
+                try:
+                    # Try direct conversion first
+                    return float(x)
+                except (ValueError, TypeError):
+                    try:
+                        # Try to extract numbers if direct conversion fails
+                        nums = ''.join(c for c in str(x) if c.isdigit() or c == '.')
+                        return float(nums) if nums else (float('inf') if order == Qt.AscendingOrder else float('-inf'))
+                    except:
+                        return float('inf') if order == Qt.AscendingOrder else float('-inf')
 
-        # Determine if the column is numeric and sort accordingly
-        if pd.api.types.is_numeric_dtype(self.filtered_df[sort_column]):
+            # Sort with proper NaN handling
             self.filtered_df.sort_values(
                 by=sort_column,
                 ascending=order == Qt.AscendingOrder,
                 inplace=True,
-                key=pd.to_numeric
+                key=lambda x: x.map(convert_to_numeric),
+                na_position='last' if order == Qt.AscendingOrder else 'first'
             )
-        else:
-            self.filtered_df.sort_values(
-                by=sort_column,
-                ascending=order == Qt.AscendingOrder,
-                inplace=True
-            )
+
+            print("\nFirst few values in column after sorting:")
+            print(self.filtered_df[sort_column].head().tolist())
+
+        except Exception as e:
+            print(f"Error during sorting: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
         # Reset the current page and reload the data
         self.current_page = 0
         self.update_page_label()
         self.load_data()
-        
 
 
 
@@ -988,9 +1011,6 @@ class ZoneViewerDialog(QDialog):
             # Update the page label
             if hasattr(self, 'update_page_label'):
                 self.update_page_label()
-
-            # Enable sorting
-            self.table_view.setSortingEnabled(True)
 
             print(f"Successfully loaded {model.rowCount()} rows with {model.columnCount()} columns")
 

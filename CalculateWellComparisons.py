@@ -392,7 +392,7 @@ class WellComparisonDialog(QDialog):
       # Update active scenario
 
         # Step 3: Get selected wells from planned list
-        selected_planned_wells = self.planned_selector.get_selected_items()
+        selected_planned_wells = self.planned_selector.get_right_items()
 
         if not selected_planned_wells:
             QMessageBox.warning(self, "No Selection", "Please select at least one planned well.")
@@ -612,12 +612,12 @@ class WellComparisonDialog(QDialog):
     def run_comparison(self):
         """Execute the well comparison."""
         try:
-            # Get selected items
+            # Get selected items with debug logging
             selected_attributes = self.attr_selector.get_right_items()
             planned_wells = self.planned_selector.get_right_items()
             active_wells = self.active_selector.get_right_items()
 
-            # Debugging output
+            print("\nDEBUG: Initial Selection")
             print(f"Selected Attributes: {selected_attributes}")
             print(f"Planned Wells: {planned_wells}")
             print(f"Active Wells: {active_wells}")
@@ -625,42 +625,110 @@ class WellComparisonDialog(QDialog):
             # Validate selections
             if not self._validate_selections(selected_attributes, planned_wells, active_wells):
                 return
-        
-            # Get well data
-            planned_data = self.db_manager.get_well_attributes(planned_wells, selected_attributes)
-            active_data = self.db_manager.get_well_attributes(active_wells, selected_attributes)
 
-            # Validate retrieved data
+            # Get well data from database with error handling
+            try:
+                planned_data = self.db_manager.get_well_attributes(planned_wells, selected_attributes)
+                print("\nDEBUG: Retrieved Planned Data")
+                print(f"Shape: {planned_data.shape}")
+                print(f"Columns: {planned_data.columns.tolist()}")
+                print("\nSample of planned data:")
+                print(planned_data.head())
+            
+                active_data = self.db_manager.get_well_attributes(active_wells, selected_attributes)
+                print("\nDEBUG: Retrieved Active Data")
+                print(f"Shape: {active_data.shape}")
+                print(f"Columns: {active_data.columns.tolist()}")
+                print("\nSample of active data:")
+                print(active_data.head())
+
+            except Exception as e:
+                print(f"Error retrieving data: {str(e)}")
+                QMessageBox.critical(self, "Data Error", 
+                    f"Failed to retrieve well data from database: {str(e)}")
+                return
+
+            # Validate data exists and has content
             if planned_data.empty:
-                QMessageBox.warning(self, "No Data", "No data found for the selected planned wells and attributes.")
+                QMessageBox.warning(self, "No Data", 
+                    "No data found for the selected planned wells and attributes.")
                 return
         
             if active_data.empty:
-                QMessageBox.warning(self, "No Data", "No data found for the selected active wells and attributes.")
+                QMessageBox.warning(self, "No Data", 
+                    "No data found for the selected active wells and attributes.")
                 return
-        
-            # Debugging output
-            print("Planned Well Data:")
-            print(planned_data)
-            print("Active Well Data:")
-            print(active_data)
+
+            # Check for missing columns
+            missing_cols = set(selected_attributes) - set(planned_data.columns)
+            if missing_cols:
+                print(f"Warning: Missing columns in planned data: {missing_cols}")
+                QMessageBox.warning(self, "Missing Data", 
+                    f"Some selected attributes are missing from planned wells: {missing_cols}")
+            
+            missing_cols = set(selected_attributes) - set(active_data.columns)
+            if missing_cols:
+                print(f"Warning: Missing columns in active data: {missing_cols}")
+                QMessageBox.warning(self, "Missing Data", 
+                    f"Some selected attributes are missing from active wells: {missing_cols}")
+
+            # Print data statistics
+            print("\nDEBUG: Data Statistics")
+            print("\nPlanned Wells Data Statistics:")
+            for col in planned_data.columns:
+                non_null = planned_data[col].count()
+                total = len(planned_data)
+                print(f"{col}: {non_null}/{total} non-null values")
+            
+            print("\nActive Wells Data Statistics:")
+            for col in active_data.columns:
+                non_null = active_data[col].count()
+                total = len(active_data)
+                print(f"{col}: {non_null}/{total} non-null values")
 
             # Run appropriate comparison
-            if len(selected_attributes) == 1:
-                results = self._single_attribute_comparison(planned_data, active_data)
-            else:
-                results = self._multi_attribute_comparison(planned_data, active_data)
+            try:
+                if len(selected_attributes) == 1:
+                    print("\nRunning single attribute comparison")
+                    results = self._single_attribute_comparison(planned_data, active_data)
+                else:
+                    print("\nRunning multi-attribute comparison")
+                    results = self._multi_attribute_comparison(planned_data, active_data)
 
-            # Display results and pass selected_attributes
-            if results:
-                self._display_results(results, selected_attributes)  # Pass selected_attributes
-            else:
-                QMessageBox.warning(self, "Comparison Failed", "No valid comparisons could be made.")
-    
+                # Validate results
+                if not results:
+                    QMessageBox.warning(self, "Comparison Failed", 
+                        "No valid comparisons could be made with the selected data.")
+                    return
+
+                print("\nDEBUG: Comparison Results")
+                print(f"Number of results: {len(results)}")
+                print("First result sample:", results[0])
+
+                # Display results
+                try:
+                    self._display_results(results, selected_attributes)
+                    print("\nResults displayed successfully")
+                except Exception as e:
+                    print(f"Error displaying results: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    QMessageBox.critical(self, "Display Error", 
+                        f"Error displaying comparison results: {str(e)}")
+
+            except Exception as e:
+                print(f"Error during comparison: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                QMessageBox.critical(self, "Comparison Error", 
+                    f"Error performing comparison: {str(e)}")
+
         except Exception as e:
-            error_message = f"Comparison Error: {str(e)}"
-            print(error_message)
-            QMessageBox.critical(self, "Comparison Error", error_message)
+            print(f"Error in run_comparison: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Error", 
+                f"An error occurred while running the comparison: {str(e)}")
 
 
 
@@ -771,131 +839,173 @@ class WellComparisonDialog(QDialog):
         
 
     def _multi_attribute_comparison(self, planned_data: pd.DataFrame, active_data: pd.DataFrame) -> List[Dict]:
-        """Compare wells using multiple attributes with weights and calculate overall similarity."""
+        """Compare wells using multiple attributes with weights."""
         results = []
-
+    
         try:
-            # Get numeric columns and filter data
+            print("\nDEBUG: Starting Multi-Attribute Comparison")
+            print("Planned data shape:", planned_data.shape)
+            print("Active data shape:", active_data.shape)
+        
+            # Get numeric columns with detailed logging
             numeric_cols = planned_data.select_dtypes(include=['int64', 'float64']).columns
+            print(f"\nNumeric columns found: {numeric_cols.tolist()}")
+        
             if numeric_cols.empty:
                 raise ValueError("No numeric columns available for comparison")
 
-            planned_data = planned_data[numeric_cols]
-            active_data = active_data[numeric_cols]
-            print(planned_data)
-            print(active_data)
+            # Print data sample for debugging
+            print("\nPlanned Data Sample:")
+            print(planned_data.head())
+            print("\nActive Data Sample:")
+            print(active_data.head())
 
-
-            # Mask outliers
-
-
-            planned_data = self.mask_outliers(planned_data)
-            active_data = self.mask_outliers(active_data)
-
-            if self.normalize_values:
-                for column in planned_data.columns:
+            # Handle data normalization if enabled
+            normalized_planned = planned_data.copy()
+            normalized_active = active_data.copy()
+        
+            if hasattr(self, 'normalize_values') and self.normalize_values:
+                print("\nNormalizing data...")
+                for column in numeric_cols:
                     all_values = pd.concat([planned_data[column], active_data[column]])
-                    median_val = all_values.median()
-                    mad = (all_values - median_val).abs().median()
+                    mean_val = all_values.mean()
+                    std_val = all_values.std()
+                
+                    if std_val > 0:
+                        normalized_planned[column] = (planned_data[column] - mean_val) / std_val
+                        normalized_active[column] = (active_data[column] - mean_val) / std_val
+                        print(f"Normalized {column} - Mean: {mean_val}, Std: {std_val}")
 
-                    if mad > 0:
-                        normalized_planned[column] = (planned_data[column] - median_val) / mad
-                        normalized_active[column] = (active_data[column] - median_val) / mad
-                    else:
-                        normalized_planned[column] = planned_data[column] - median_val
-                        normalized_active[column] = active_data[column] - median_val
-
-                    # Moved print statements inside the loop
-                    print("Normalized planned:", normalized_planned[column].head())
-                    print("Normalized active:", normalized_active[column].head())
+            # Get or create weights
+            weights = {}
+            if hasattr(self, 'weight_sliders') and self.weight_sliders:
+                print("\nUsing custom weights:", self.weight_sliders)
+                total_weight = sum(self.weight_sliders.values())
+                weights = {col: self.weight_sliders.get(col, 1.0) / total_weight 
+                          for col in numeric_cols}
             else:
-                normalized_planned = planned_data.copy()
-                normalized_active = active_data.copy()
+                print("\nUsing equal weights")
+                weight_value = 1.0 / len(numeric_cols)
+                weights = {col: weight_value for col in numeric_cols}
 
-            # Ensure we have weights for all attributes
-            total_weight = sum(self.weight_sliders.values()) if self.weight_sliders else len(numeric_cols)
-            weights = {col: self.weight_sliders.get(col, 1.0) / total_weight for col in numeric_cols}
+            print("\nFinal weights being used:", weights)
 
-            # Compare each planned well with all active wells
-            for planned_well in normalized_planned.index:
-                planned_values = normalized_planned.loc[planned_well]
-                original_planned = planned_data.loc[planned_well]
-                best_match = None
-                best_similarity = -float('inf')
-                best_details = {}
-
-                # Compare with each active well
-                for active_well in normalized_active.index:
-                    active_values = normalized_active.loc[active_well]
-                    original_active = active_data.loc[active_well]
-
-                    # Calculate similarity for each attribute
-                    similarities = []
-                    attr_details = {}
-                    valid_comparison = False
-
-                    for attr in numeric_cols:
-                        if pd.isna(planned_values[attr]) or pd.isna(active_values[attr]):
-                            continue
-
+            # Compare each planned well
+            for planned_well in planned_data.index:
+                try:
+                    print(f"\nProcessing planned well: {planned_well}")
+                    planned_values = normalized_planned.loc[planned_well]
+                    best_match = None
+                    best_similarity = -float('inf')
+                    best_details = {}
+                
+                    print(f"Values for {planned_well}:")
+                    for col in numeric_cols:
+                        print(f"{col}: {planned_values[col]}")
+                
+                    # Compare with each active well
+                    for active_well in active_data.index:
                         try:
-                            # Calculate normalized difference
-                            diff = abs(planned_values[attr] - active_values[attr])
+                            active_values = normalized_active.loc[active_well]
+                            similarities = []
+                            attr_details = {}
+                            valid_comparisons = 0
+                            non_zero_comparisons = 0
+                        
+                            print(f"\nComparing with active well: {active_well}")
+                        
+                            # Compare each attribute
+                            for attr in numeric_cols:
+                                try:
+                                    p_val = float(planned_values[attr])
+                                    a_val = float(active_values[attr])
+                                
+                                    # Skip if both values are 0 unless it's specifically meaningful
+                                    if p_val == 0 and a_val == 0 and not any(x in attr.lower() for x in ['count', 'parent']):
+                                        print(f"Skipping {attr} - both values are 0")
+                                        continue
+                                    
+                                    valid_comparisons += 1
+                                    if p_val != 0 or a_val != 0:
+                                        non_zero_comparisons += 1
+                                
+                                    # Calculate normalized difference
+                                    diff = abs(p_val - a_val)
+                                    max_val = max(abs(p_val), abs(a_val), 1e-10)
+                                    normalized_diff = diff / max_val
+                                
+                                    # Calculate similarity score (0-1)
+                                    attr_similarity = 1 / (1 + normalized_diff)
+                                
+                                    # Apply weight
+                                    weight = weights[attr]
+                                    weighted_similarity = attr_similarity * weight
+                                    similarities.append(weighted_similarity)
+                                
+                                    # Store comparison details
+                                    attr_details[attr] = {
+                                        'planned_val': float(planned_data.loc[planned_well, attr]),
+                                        'active_val': float(active_data.loc[active_well, attr]),
+                                        'weight': weight,
+                                        'similarity': float(attr_similarity),
+                                        'diff': float(normalized_diff)
+                                    }
+                                
+                                    print(f"Compared {attr}: similarity={attr_similarity:.3f}, "
+                                          f"weight={weight:.3f}, weighted={weighted_similarity:.3f}")
+                                
+                                except Exception as e:
+                                    print(f"Error comparing {attr}: {str(e)}")
+                                    continue
 
-                            # Convert to similarity score (0-1)
-                            attr_similarity = 1 / (1 + diff)
-
-                            # Apply weight
-                            weight = weights[attr]
-                            weighted_similarity = attr_similarity * weight
-                            similarities.append(weighted_similarity)
-
-                            # Store details
-                            attr_details[attr] = {
-                                'planned_val': original_planned[attr],
-                                'active_val': original_active[attr],
-                                'weight': weight,
-                                'similarity': attr_similarity,
-                                'diff': diff  # Storing difference for easier access
-                            }
-                            valid_comparison = True
-
+                            # Calculate overall similarity if we have enough valid comparisons
+                            min_required_comparisons = max(3, len(numeric_cols) * 0.3)
+                            if valid_comparisons >= min_required_comparisons and non_zero_comparisons > 0:
+                                # Calculate weighted average similarity
+                                overall_similarity = sum(similarities) / sum(weights[attr] 
+                                    for attr in attr_details.keys())
+                            
+                                print(f"Overall similarity with {active_well}: {overall_similarity:.3f} "
+                                      f"({valid_comparisons} valid, {non_zero_comparisons} non-zero)")
+                            
+                                if overall_similarity > best_similarity:
+                                    best_similarity = overall_similarity
+                                    best_match = active_well
+                                    best_details = attr_details
+                            else:
+                                print(f"Skipping {active_well} - insufficient comparisons "
+                                      f"(valid: {valid_comparisons}, non-zero: {non_zero_comparisons}, "
+                                      f"required: {min_required_comparisons})")
+                    
                         except Exception as e:
-                            print(f"Error comparing {attr}: {str(e)}")
+                            print(f"Error processing active well {active_well}: {str(e)}")
                             continue
 
-                    # Calculate overall similarity if we have valid comparisons
-                    if valid_comparison:
-                        overall_similarity = sum(similarities) / sum(weights[attr] for attr in attr_details.keys())
-
-                        if overall_similarity > best_similarity:
-                            best_similarity = overall_similarity
-                            best_match = active_well
-                            best_details = attr_details
-
-                # Format results
-                if best_match and best_similarity > -float('inf'):
-                    results.append({
+                    # Store results for this planned well
+                    result = {
                         'planned_well': planned_well,
-                        'matched_well': best_match,
-                        'similarity': best_similarity,
-                        **best_details  # Store structured attributes separately
-                    })
-                else:
-                    results.append({
-                        'planned_well': planned_well,
-                        'matched_well': 'No Match',
-                        'similarity': -1,
-                        'details': 'No valid comparison possible'
-                    })
+                        'matched_well': best_match if best_match else 'No Match',
+                        'similarity': float(best_similarity) if best_similarity > -float('inf') else 0.0
+                    }
+                    result.update(best_details)  # Add all attribute details
+                    results.append(result)
+                
+                    print(f"\nFinal match for {planned_well}: {result['matched_well']} "
+                          f"(similarity: {result['similarity']:.3f})")
+                    print("Attribute details:", best_details)
+
+                except Exception as e:
+                    print(f"Error processing planned well {planned_well}: {str(e)}")
+                    continue
 
         except Exception as e:
             print(f"Error in multi-attribute comparison: {str(e)}")
+            import traceback
+            traceback.print_exc()
             QMessageBox.warning(self, "Comparison Error", f"Error performing comparison: {str(e)}")
             return []
 
         return results
-
     
 
     def toggle_attribute_selection(self):
@@ -916,12 +1026,9 @@ class WellComparisonDialog(QDialog):
             # Get numeric attributes only
             numeric_columns = self.db_manager.get_numeric_attributes()
     
-            # Clear existing selections
-            self.attr_selector.available_list.clear()
-            self.attr_selector.selected_list.clear()
-    
-            # Repopulate with original numeric attributes
-            self.attr_selector.add_items(sorted(numeric_columns))
+            self.attr_selector.clear_left_items()
+            self.attr_selector.clear_right_items() 
+            self.attr_selector.set_left_items(sorted(numeric_columns))
     
         except Exception as e:
             print(f"Error loading original attributes: {e}")
@@ -940,7 +1047,9 @@ class WellComparisonDialog(QDialog):
         
             # Clear existing attribute selections
         
-            self.attr_selector.clear()
+                        # CORRECT
+            self.attr_selector.clear_left_items()
+            self.attr_selector.clear_right_items()
         
             # Add attributes to available list
             if attributes:
@@ -993,69 +1102,94 @@ class WellComparisonDialog(QDialog):
 
 
 
-    def _display_results(self, results, selected_attributes):
-        """Display comparison results in table with each attribute in its own column."""
-    
-        # Define base columns
-        base_columns = ["Planned Well", "Matched Active Well", "Similarity Score"]
-    
-        # Create dynamic column headers for attributes
-        columns = base_columns + selected_attributes
-    
-        # Set the table column count
-        self.results_table.setColumnCount(len(columns))
-        self.results_table.setHorizontalHeaderLabels(columns)
-    
-        self.results_table.setRowCount(len(results))
+    def _display_results(self, results: List[Dict], selected_attributes: List[str]):
+        """Display comparison results in table."""
+        try:
+            print("\nDisplaying Results")
+            
+            # Set up table columns
+            columns = ["Planned Well", "Matched Active Well", "Similarity Score"] + selected_attributes
+            self.results_table.setColumnCount(len(columns))
+            self.results_table.setHorizontalHeaderLabels(columns)
+            self.results_table.setRowCount(len(results))
 
-        for row, result in enumerate(results):
-            # Debugging: Ensure the result structure is as expected
-            print(f"Processing row {row}: {result}")  # Debugging line
-        
-            # Planned Well
-            self.results_table.setItem(row, 0, QTableWidgetItem(str(result['planned_well'])))
-
-            # Matched Well
-            self.results_table.setItem(row, 1, QTableWidgetItem(str(result['matched_well'])))
-
-            # Similarity Score
-            similarity = result['similarity']
-            if similarity >= 0:
-                score_text = f"{similarity:.3f}"
-                score_item = QTableWidgetItem(score_text)
-
-                # Color code based on similarity
-                if similarity >= 0.8:
-                    score_item.setBackground(QColor(144, 238, 144))  # Light green
-                elif similarity >= 0.5:
-                    score_item.setBackground(QColor(255, 255, 224))  # Light yellow
-                else:
-                    score_item.setBackground(QColor(255, 182, 193))  # Light red
-            else:
-                score_item = QTableWidgetItem("N/A")
-
-            self.results_table.setItem(row, 2, score_item)
-
-            # Add each attribute in a separate column
-            for col_idx, attr in enumerate(selected_attributes, start=3):
-                # Debugging: Check if the attribute exists in the result
-                if attr not in result:
-                    print(f"Warning: Attribute '{attr}' missing in result for row {row}")  # Debugging line
-                    continue
-
-                attr_details = result[attr]
-                if attr_details:  # Ensure attr_details is not None or empty
-                    attr_text = (
-                        f"Planned: {attr_details.get('planned_val', 'N/A'):.2f}\n"
-                        f"Active: {attr_details.get('active_val', 'N/A'):.2f}\n"
-                        f"Weight: {attr_details.get('weight', 'N/A'):.2f}\n"
-                        f"Diff: {attr_details.get('diff', 0) * 100:.1f}%"
-                    )
+            # Populate table
+            for row, result in enumerate(results):
+                print(f"\nProcessing result row {row}:")
+                print(result)
                 
-                    attr_item = QTableWidgetItem(f"{attr_details.get('diff', 0) * 100:.1f}%")
-                    attr_item.setToolTip(attr_text)  # Full details in tooltip
-                
-                    self.results_table.setItem(row, col_idx, attr_item)
-                else:
-                    print(f"Warning: No details for attribute '{attr}' in row {row}")  # Debugging line
+                # Add planned well
+                self.results_table.setItem(row, 0, 
+                    QTableWidgetItem(str(result['planned_well'])))
 
+                # Add matched well
+                self.results_table.setItem(row, 1, 
+                    QTableWidgetItem(str(result['matched_well'])))
+
+                # Add similarity score with color coding
+                similarity = result['similarity']
+                if similarity >= 0:
+                    score_item = QTableWidgetItem(f"{similarity:.3f}")
+                    
+                    # Color code based on similarity
+                    if similarity >= 0.8:
+                        score_item.setBackground(QColor(144, 238, 144))  # Light green
+                    elif similarity >= 0.5:
+                        score_item.setBackground(QColor(255, 255, 224))  # Light yellow
+                    else:
+                        score_item.setBackground(QColor(255, 182, 193))  # Light red
+                else:
+                    score_item = QTableWidgetItem("N/A")
+                
+                self.results_table.setItem(row, 2, score_item)
+
+                # Add attribute details
+                for col_idx, attr in enumerate(selected_attributes, start=3):
+                    if attr in result:
+                        attr_details = result[attr]
+                        if isinstance(attr_details, dict):
+                            similarity = attr_details.get('similarity', 0)
+                            weight = attr_details.get('weight', 0)
+                            weighted = similarity * weight
+                            
+                            # Format cell text to show similarity score
+                            cell_text = f"{similarity:.3f}"
+                            
+                            # Format the tooltip with all details
+                            attr_text = (
+                                f"Attribute: {attr}\n"
+                                f"Planned Value: {attr_details['planned_val']:.3f}\n"
+                                f"Active Value: {attr_details['active_val']:.3f}\n"
+                                f"Similarity: {similarity:.3f}\n"
+                                f"Weight: {weight:.3f}\n"
+                                f"Weighted Score: {weighted:.3f}"
+                            )
+                            
+                            # Create cell item
+                            diff_item = QTableWidgetItem(cell_text)
+                            diff_item.setToolTip(attr_text)
+                            
+                            # Color code based on similarity
+                            if similarity >= 0.8:
+                                diff_item.setBackground(QColor(144, 238, 144))  # Light green
+                            elif similarity >= 0.5:
+                                diff_item.setBackground(QColor(255, 255, 224))  # Light yellow
+                            else:
+                                diff_item.setBackground(QColor(255, 182, 193))  # Light red
+                                
+                            self.results_table.setItem(row, col_idx, diff_item)
+                        else:
+                            self.results_table.setItem(row, col_idx, 
+                                QTableWidgetItem("Invalid data"))
+                    else:
+                        self.results_table.setItem(row, col_idx, 
+                            QTableWidgetItem("No data"))
+
+            # Auto-adjust column widths
+            self.results_table.resizeColumnsToContents()
+
+        except Exception as e:
+            print(f"Error displaying results: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Display Error", str(e))

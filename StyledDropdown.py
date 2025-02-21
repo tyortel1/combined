@@ -64,13 +64,18 @@ class StyledDropdown(StyledBaseWidget):
         self.combo = QComboBox()
         self.combo.setStyleSheet("""
             QComboBox {
-                background-color: white;
+                background-color: transparent;
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 5px;
             }
             QComboBox:focus {
                 border: 1px solid #3498db;
+            }
+            QComboBox QAbstractItemView {
+                selection-background-color: #3498db;
+                background-color: transparent;
+                border: 1px solid #bdc3c7;
             }
         """)
         

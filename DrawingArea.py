@@ -227,6 +227,7 @@ class DrawingArea(QGraphicsView):
                 ellipse.setPen(QPen(Qt.NoPen))
                 ellipse.setZValue(1)
                 ellipse.setData(0, 'drainage')
+                ellipse.setVisible(self.drainage_visible)
                 new_items.append(ellipse)
 
             # Existing well line drawing code
@@ -766,32 +767,31 @@ class DrawingArea(QGraphicsView):
 
     def togglegradientVisibility(self, visible):
         """Toggle the visibility of the drainage area."""
+        print(f"\nToggling drainage visibility:")
+        print(f"Input visible parameter: {visible}")
+        print(f"Current drainage_visible state: {self.drainage_visible}")
+    
+        # Convert to boolean if it's a Qt.CheckState
+        if isinstance(visible, Qt.CheckState):
+            visible = (visible == Qt.Checked)
+    
         self.drainage_visible = visible
-
-        print(f"Toggling drainage visibility: {visible}")
-
+    
         try:
             drainage_items = [item for item in self.scene.items() if item.data(0) == "drainage"]
-
-            if not visible:
-                # Hide drainage items
-                for item in drainage_items:
-                    item.setOpacity(0.0)
-            else:
-                #   If turning ON, ensure drainage is redrawn
-                if not drainage_items:
-                    print("  Redrawing drainage")
-                    self.setScaledData(self.scaled_data)  #   Redraw well paths and drainage
-                else:
-                    for item in drainage_items:
-                        item.setOpacity(1.0)  # Show existing drainage
-
+            print(f"Found {len(drainage_items)} drainage items")
+        
+            for item in drainage_items:
+                item.setVisible(visible)  # Use setVisible instead of opacity
+                print(f"Set drainage item visibility to {visible}")
+        
             self.scene.update()
             self.viewport().update()
-
+        
+            print(f"Final drainage visibility state: {self.drainage_visible}")
+        
         except Exception as e:
-            print(f"Error toggling drainage visibility: {e}")
-   
+            print(f"Error in togglegradientVisibility: {e}")
 
    
     def setUWIOpacity(self, opacity):
