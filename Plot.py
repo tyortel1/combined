@@ -4,9 +4,10 @@ import os
 from PySide6.QtGui import QPainterPath, QTransform
 from PySide6.QtGui import QIcon,  QColor, QPainter, QBrush, QPixmap, QPainterPath, QTransform
 from PySide6.QtWidgets import (
-    QApplication, QVBoxLayout,QSpacerItem,QSizePolicy, QHBoxLayout,QGraphicsDropShadowEffect, QPushButton, QSlider, 
+    QApplication, QVBoxLayout,QSpacerItem,QSizePolicy, QHBoxLayout,QGraphicsDropShadowEffect, QPushButton, QSlider,
    QDialog, QSizePolicy, QLabel, QFrame, QMessageBox
 )
+from superqt import QRangeSlider
 import numpy as np
 from scipy.spatial import KDTree
 from scipy import interpolate
@@ -18,6 +19,7 @@ from PySide6.QtCore import Signal,  Qt, QRectF
 from PySide6.QtCore import QUrl
 from StyledDropdown import StyledDropdown, StyledInputBox
 from StyledColorbar import StyledColorBar 
+from StyledSliders import StyledSlider, StyledRangeSlider
 
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QFrame
 from PySide6.QtCore import Qt
@@ -662,7 +664,11 @@ class Plot(QDialog):
             "Zone",
             "Attribute",
             "Color Bar",
-            "Tick Size"
+            "Tick Size",
+            "Display",
+            "Heat",
+            "Tick Size",
+            "Transparency"
         ]
         StyledDropdown.calculate_label_width(labels)
 
@@ -681,73 +687,6 @@ class Plot(QDialog):
 
 
 
-        def create_dropdown(label):
-            dropdown = StyledDropdown(label)
-            dropdown.setStyleSheet("""
-                QLabel, QComboBox {
-                    background-color: transparent;
-                    border: none;
-                    padding: 0;
-                    margin: 0;
-                }
-            """)
-            return dropdown
-
-        def create_section(frame_name, fixed_height=None):
-            frame = QFrame()
-            frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
-            frame.setStyleSheet("""
-                QFrame {
-                    background-color: white;
-                    border: 2px solid #A0A0A0;
-                    border-radius: 6px;
-                    padding: 4px;
-                }
-            """)
-            if fixed_height:
-                frame.setFixedHeight(fixed_height)
-                frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-
-            shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(10)
-            shadow.setXOffset(3)
-            shadow.setYOffset(3)
-            shadow.setColor(QColor(0, 0, 0, 100))
-            frame.setGraphicsEffect(shadow)
-
-            layout = QVBoxLayout(frame)
-            layout.setSpacing(1)
-            layout.setContentsMargins(5, 5, 5, 5)
-            layout.setAlignment(Qt.AlignTop)
-            return frame, layout
-
-        def create_input(label, default_value='', validator=None):
-            input_box = StyledInputBox(label, default_value, validator)
-            input_box.label.setFixedWidth(StyledDropdown.label_width)  # Use the same width
-            input_box.setStyleSheet("""
-                QLabel {
-                    background-color: transparent;
-                    border: none;
-                    padding: 0;
-                    margin: 0;
-                }
-            """)
-            return input_box
-
-        def create_colorbar():
-            colorbar = StyledColorBar("Color Bar")  # Make sure to pass the label text
-            colorbar.colorbar_dropdown.label.setFixedWidth(StyledDropdown.label_width)  # Use the calculated width
-    
-            # Apply consistent styling
-            colorbar.setStyleSheet("""
-                QLabel {
-                    background-color: transparent;
-                    border: none;
-                    padding: 0;
-                    margin: 0;
-                }
-            """)
-            return colorbar
 
         # Create main layout first
         main_layout = QHBoxLayout(self)  # Parent to self immediately
@@ -759,14 +698,18 @@ class Plot(QDialog):
         wellFrame, wellLayout = self.create_section("Well Navigation", fixed_height=90)
         self.setup_well_section(wellFrame, wellLayout)
     
+        seismicFrame, seismicLayout = self.create_section("Seismic Display", fixed_height=200)
+        self.setup_seismic_section(seismicFrame, seismicLayout)
+    
         zoneFrame, zoneLayout = self.create_section("Zone and Attribute", fixed_height=170)
         self.setup_zone_section(zoneFrame, zoneLayout)
     
-        tickFrame, tickLayout = self.create_section("Tick Settings", fixed_height=110)
+        tickFrame, tickLayout = self.create_section("Tick Settings", fixed_height=150)  # Increased height for transparency
         self.setup_tick_section(tickFrame, tickLayout)
     
         # Add frames to control layout
         control_layout.addWidget(wellFrame)
+        control_layout.addWidget(seismicFrame)
         control_layout.addWidget(zoneFrame)
         control_layout.addWidget(tickFrame)
         control_layout.addStretch()
@@ -831,8 +774,8 @@ class Plot(QDialog):
 
 
     def setup_well_section(self, frame, layout):
-        # Well Selector setup
-        self.well_selector = StyledDropdown("Well")
+            # Well Selector setup
+        self.well_selector = self.create_dropdown("Well")
         self.well_selector.addItems(self.UWI_list)
         current_index = self.UWI_list.index(self.current_UWI)
         self.well_selector.setCurrentIndex(current_index)
@@ -868,9 +811,9 @@ class Plot(QDialog):
         layout.addLayout(button_layout)
 
     def setup_zone_section(self, frame, layout):
-        self.zone_selector = StyledDropdown("Zone")
-        self.zone_attribute_selector = StyledDropdown("Attribute")
-        self.color_colorbar = StyledColorBar("Color Bar")
+        self.zone_selector = self.create_dropdown("Zone")
+        self.zone_attribute_selector = self.create_dropdown("Attribute")
+        self.color_colorbar = self.create_colorbar()
     
         layout.addWidget(self.zone_selector)
         layout.addWidget(self.zone_attribute_selector)
@@ -878,11 +821,72 @@ class Plot(QDialog):
         
         self.zone_attribute_selector.combo.setEnabled(False)
 
-    def setup_tick_section(self, frame, layout):
-        tick_slider_layout = QHBoxLayout()
+
+    def create_dropdown(self, label):
+        dropdown = StyledDropdown(label)
+        dropdown.setStyleSheet("""
+            QLabel, QComboBox {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        return dropdown
+
+
+
+    def create_input(self, label, default_value='', validator=None):
+        input_box = StyledInputBox(label, default_value, validator)
+        input_box.label.setFixedWidth(StyledDropdown.label_width)  # Use the same width
+        input_box.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        return input_box
+
+    def create_colorbar(self):
+        colorbar = StyledColorBar("Color Bar")  # Make sure to pass the label text
+        colorbar.colorbar_dropdown.label.setFixedWidth(StyledDropdown.label_width)  # Use the calculated width
     
-        tick_size_label = QLabel("Tick Size:")
-        tick_size_label.setStyleSheet("""
+        # Apply consistent styling
+        colorbar.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        """)
+        return colorbar
+
+    def create_slider(self, label_text, slider_type='single'):
+        """
+        Create a styled slider with consistent appearance
+    
+        Args:
+            label_text (str): Label for the slider
+            slider_type (str): 'single' for regular slider, 'range' for range slider
+    
+        Returns:
+            StyledSlider or StyledRangeSlider: Configured slider
+        """
+        if slider_type == 'single':
+            slider = StyledSlider(label_text)
+        elif slider_type == 'range':
+            slider = StyledRangeSlider(label_text)
+        else:
+            raise ValueError("slider_type must be 'single' or 'range'")
+    
+        # Set consistent label width
+        slider.label.setFixedWidth(StyledDropdown.label_width)
+    
+        # Apply consistent styling
+        slider.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 border: none;
@@ -891,20 +895,75 @@ class Plot(QDialog):
             }
         """)
     
-        self.tick_size_slider = QSlider(Qt.Horizontal)
-        self.tick_size_slider.setMinimum(5)
-        self.tick_size_slider.setMaximum(50)
+        return slider
+
+
+    def setup_seismic_section(self, frame, layout):
+        # Get seismic data range
+        seismic_min = np.min(self.seismic_data['trace_data'])
+        seismic_max = np.max(self.seismic_data['trace_data'])
+
+        # Colorbar for seismic
+        self.seismic_colorbar = self.create_colorbar()
+        layout.addWidget(self.seismic_colorbar)
+
+        # Display Range section
+        display_range_layout = QHBoxLayout()
+    
+        # Range slider for seismic display
+        self.seismic_range_slider = self.create_slider("Display", slider_type='range')
+        self.seismic_range_slider.setRange(seismic_min, seismic_max)
+        self.seismic_range_slider.setValue([seismic_min, seismic_max])
+
+
+        display_range_layout.addWidget(self.seismic_range_slider)
+
+        layout.addLayout(display_range_layout)
+
+        # Heat Clipping section
+        heat_layout = QHBoxLayout()
+    
+        # Heat slider with automatic value label
+        self.heat_slider = self.create_slider("Heat", slider_type='single')
+        self.heat_slider.setRange(0, 100)
+        self.heat_slider.setValue(0)
+
+  
+
+        heat_layout.addWidget(self.heat_slider)
+
+        layout.addLayout(heat_layout)
+
+
+
+
+
+    def setup_tick_section(self, frame, layout):
+        # Existing tick size controls
+        tick_slider_layout = QHBoxLayout()
+    
+        # Tick Size slider
+        self.tick_size_slider = self.create_slider("Tick Size", slider_type='single')
+        self.tick_size_slider.setRange(5, 50)
         self.tick_size_slider.setValue(20)
-        self.tick_size_slider.setTickPosition(QSlider.TicksBelow)
-        self.tick_size_slider.setTickInterval(4)
-    
-        self.tick_size_value_label = QLabel("20")
-    
-        tick_slider_layout.addWidget(tick_size_label)
+
+        # Add tick position and interval if needed
+        self.tick_size_slider.slider.setTickPosition(QSlider.TicksBelow)
+        self.tick_size_slider.slider.setTickInterval(4)
+
         tick_slider_layout.addWidget(self.tick_size_slider)
-        tick_slider_layout.addWidget(self.tick_size_value_label)
-    
+
         layout.addLayout(tick_slider_layout)
+
+        # Transparency slider section
+        transparency_layout = QHBoxLayout()
+
+        self.transparency_slider = self.create_slider("Transparency", slider_type='single')
+        self.transparency_slider.setRange(0, 100)
+        self.transparency_slider.setValue(100)
+
+        transparency_layout.addWidget(self.transparency_slider)
+        layout.addLayout(transparency_layout)
 
     def setup_connections(self):
         self.well_selector.combo.currentIndexChanged.connect(self.on_well_selected)
@@ -913,7 +972,36 @@ class Plot(QDialog):
         self.zone_selector.combo.currentIndexChanged.connect(self.zone_selected)
         self.zone_attribute_selector.combo.currentIndexChanged.connect(self.attribute_selected)
         self.color_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.palette_selected)
-        self.tick_size_slider.valueChanged.connect(self.update_tick_size_value_label)
+    
+        # Corrected connections for sliders
+        self.tick_size_slider.slider.valueChanged.connect(self.update_tick_size_value_label)
+        self.seismic_range_slider.slider.rangeChanged.connect(self.update_seismic_range)
+        self.heat_slider.slider.valueChanged.connect(self.update_heat_value)
+        self.transparency_slider.slider.valueChanged.connect(self.update_transparency_value)
+
+
+    def update_seismic_range(self):
+        min_val, max_val = self.seismic_range_slider.value()
+        # The value labels are now handled internally by the StyledRangeSlider
+
+    def update_heat_value(self):
+        value = self.heat_slider.value()
+        # The value label is now handled internally by the StyledSlider
+
+    def update_tick_size_value_label(self):
+        value = self.tick_size_slider.value()
+        # The value label is now handled internally by the StyledSlider
+
+    def update_transparency_value(self):
+        value = self.transparency_slider.value()
+    
+        if hasattr(self, 'plot_widget'):
+            opacity = value / 100.0  # Convert percentage to decimal
+            for zone_fill in self.plot_widget.zone_fills:
+                zone_fill.setOpacity(opacity)
+
+
+
 
     def palette_selected(self):
         """Update zone ticks when a new color palette is selected"""
@@ -1048,7 +1136,6 @@ class Plot(QDialog):
     def update_tick_size_value_label(self, value):
         """Update tick size without reloading the entire plot"""
         self.tick_size_value = max(2, min(self.tick_size_slider.value(), 20))
-        self.tick_size_value_label.setText(str(value))
         self.tick_size_value = value
     
         # If a zone is selected, update the ticks with new size

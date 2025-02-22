@@ -64,7 +64,8 @@ class StyledDropdown(StyledBaseWidget):
         self.combo = QComboBox()
         self.combo.setStyleSheet("""
             QComboBox {
-                background-color: transparent;
+                background-color: #ffffff;
+                color: #000000;  /* Explicit black text */
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 5px;
@@ -74,9 +75,12 @@ class StyledDropdown(StyledBaseWidget):
             }
             QComboBox QAbstractItemView {
                 selection-background-color: #3498db;
-                background-color: transparent;
+                selection-color: #ffffff;  /* White text for selected items */
+                background-color: #ffffff;
+                color: #000000;  /* Explicit black text for dropdown items */
                 border: 1px solid #bdc3c7;
             }
+
         """)
         
         if items:

@@ -61,7 +61,7 @@ class StyledColorBar(QWidget):
     def scan_palette_directory(self):
         """Scan the Palettes directory for .pal files and return their names without extension."""
         palette_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        print(f"Looking for palettes in: {palette_dir}")  # Debug print
+   
         
         palette_options = []
         try:
@@ -70,13 +70,13 @@ class StyledColorBar(QWidget):
                 return []
                 
             files = os.listdir(palette_dir)
-            print(f"Files found in directory: {files}")  # Debug print
+         
             
             for file in files:
                 if file.endswith('.pal'):
                     palette_name = os.path.splitext(file)[0]
                     palette_options.append(palette_name)
-                    print(f"Added palette: {palette_name}")  # Debug print
+               
                     
             return sorted(palette_options)
         except Exception as e:
@@ -113,7 +113,7 @@ class StyledColorBar(QWidget):
             print("Error: No color palette selected.")
             return
     
-        print(f"📂 Loading Palette: {selected_palette_name}")
+ 
         self.selected_color_palette = self.load_color_palette(selected_palette_name)
     
         if hasattr(self, 'min_value') and hasattr(self, 'max_value'):

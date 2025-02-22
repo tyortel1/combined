@@ -1,78 +1,45 @@
 # main.pydef well
-from email.policy import default
-import subprocess
 import sys
-import csv
-import os
-import subprocess
-from itertools import groupby
-import json
-import numpy
-from collections import defaultdict
-#from numpy.typing import _96Bit
+print("1")
 import pandas as pd
+print("1")
 import math
+print("1")
 import numpy as np
-from pandas.core.base import NoNewAttributesMixin
-from scipy.spatial import KDTree
-from PySide6.QtWidgets import QGraphicsView, QApplication, QFileDialog, QToolButton, QMainWindow, QSpinBox, QSpacerItem, QToolBar, QCheckBox, QSlider, QLabel
-from PySide6.QtWidgets import QSizePolicy, QMessageBox, QErrorMessage, QDialog, QWidget, QSystemTrayIcon, QVBoxLayout, QHBoxLayout, QMenu, QMenuBar, QPushButton, QListWidget, QComboBox, QLineEdit, QScrollArea
 import atexit
-from PySide6.QtGui import QIcon, QColor, QPainter, QPen, QFont, QWheelEvent, QBrush, QPixmap, QLinearGradient, QAction
-from PySide6.QtCore import Qt, QPointF, QCoreApplication, QMetaObject, QPoint
-from datetime import datetime
-from shapely.geometry import LineString
-from PySide6.QtCore import QDateTime, QDate, QTime
-from datetime import datetime, timedelta
-import platform
-from SeisWare import seisware_sdk_312 as SeisWare
 
-#from Exporting import ExportDialog
-from DataLoadGrid import DataLoadGridDialog
+from scipy.spatial import KDTree
+print("1")
+from PySide6.QtWidgets import QGraphicsView, QApplication, QMainWindow, QMessageBox, QDialog
+from PySide6.QtGui import QIcon, QColor, QPainter,  QBrush, QPixmap, QLinearGradient
+from PySide6.QtCore import Qt, QPointF, QCoreApplication
+print("2.5")
 from ZoneViewer import ZoneViewerDialog
 from SwPropertiesEdit import SWPropertiesEdit
-from DataLoadWellZone import DataLoadWellZonesDialog
-from GunBarrel import PlotGB
 from Plot import Plot
-from pystray import Icon, Menu, MenuItem
-import threading
-from PIL import Image
+print("2")
+from SeisWare import seisware_sdk_312 as SeisWare
 from shapely.geometry import LineString, Point, MultiPoint, GeometryCollection
-from ColorEdit import ColorEditor
-import time
-import ujson as json 
-from DrawingArea import DrawingArea
 from ProjectSaver import ProjectSaver
 from ProjectOpen import ProjectLoader# Import the DrawingArea class
 from UiSetup import Ui_MainWindow
-from Calculations import StagesCalculationDialog, GridToZone, WellAttributesDialog
-from InZone import InZoneDialog
-from CrossPlot import CrossPlot3D
-from DataLoadSegy import DataLoadSegy
 import matplotlib.pyplot as plt
-import numpy as np
 from scipy.spatial import KDTree
-from ProjectDialog import ProjectDialog
 from DatabaseManager import DatabaseManager
-from SeisWareConnect import SeisWareConnectDialog 
-from ImportExcel import ImportExcelDialog
-from LoadProductions import LoadProductions
-from DefaultProperties import DefaultProperties
+print("3")
+
 from ModelProperties import ModelProperties
 from DeclineCurveAnalysis import DeclineCurveAnalysis
 from Main import MainWindow
-from WellProperties import WellPropertiesDialog
 from EurNpv import EurNpv
-from PUDProperties import PUDPropertiesDialog
-from CalculatePC import PCDialog
 from LaunchCombinedCashflow import LaunchCombinedCashflow
-from CalculateCorrelationMatrix import GenerateCorrelationMatrix
-from CalculateWellComparisons import WellComparisonDialog
-from CalcMergeZones import CalcMergeZoneDialog
-from CalculateZoneAttributes import ZoneAttributeCalculator
-from CalcRegressionAnalyzer import CalcRegressionAnalyzer
-from StyledColorbar import StyledColorBar  # Add this import
-from PropertiesMap import MapPropertiesDialog
+print("4")
+
+
+
+
+
+
 #from properties_dialogs.zone_properties import ZonePropertiesDialog
 #from properties_dialogs.grid_properties import GridPropertiesDialog
 #from properties_dialogs.seismic_properties import SeismicPropertiesDialog
@@ -186,7 +153,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.cached_well_zone_df = None
         self.cached_well_zone_name = None
 
-
+        print("7")
 
          # Create an instance of EurNpv
 
@@ -272,7 +239,7 @@ class Map(QMainWindow, Ui_MainWindow):
         # Launch menu cashflow connection
         self.cashflow_action.triggered.connect(self.launch_combined_cashflow)
 
-
+        print("6")
 
       
 
@@ -419,8 +386,7 @@ class Map(QMainWindow, Ui_MainWindow):
         # Update the active scenario in the database manager
         self.scenario_id = self.db_manager.get_scenario_id(selected_scenario)
     
-        # Update the local scenario ID
-        print(self.scenario_id)
+     
         self.scenario_id = self.db_manager.set_active_scenario(self.scenario_id)
 
 
@@ -462,7 +428,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Get grid names from the grid_info_df, sort them alphabetically, and add them to the dropdown
         grid_names = sorted(self.grid_info_df['Grid'].tolist())
-        print(grid_names)
+       
         self.gridDropdown.combo.addItems(grid_names)
 
         # Unblock signals after populating the dropdown
@@ -507,6 +473,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """
         Display the Parent-Child Well Analysis dialog and process the results.
         """
+        from CalculatePC import PCDialog
         dialog = PCDialog(self.db_manager)
         if dialog.exec() == QDialog.Accepted:
             # Get current scenario ID and results
@@ -522,7 +489,7 @@ class Map(QMainWindow, Ui_MainWindow):
         
             # Convert to list of tuples (UWI, count)
             UWI_count_list = [(UWI, count) for UWI, count in UWI_counts.items()]
-            print(UWI_count_list, scenario_id)    
+           
             # Update parent well counts in database
             try:
                 self.db_manager.update_parent_well_counts(UWI_count_list, scenario_id)
@@ -659,10 +626,6 @@ class Map(QMainWindow, Ui_MainWindow):
         self.selected_zone = self.zoneDropdown.currentText().replace(" ", "_")
 
 
-        print(self.selected_zone)
-
-        print(self.selected_zone)
-
         if not self.selected_zone or self.selected_zone.strip() == "Select_Zone":
             # Clear the zones in the plotting area
             self.processed_data = []
@@ -733,7 +696,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """Simplified method to apply grid name colors directly when Zone Name equals Grid Name."""
         # Filter the DataFrame for the selected zone
         zone_df = self.cached_zone_df
-        print(zone_df)
+    
 
         if zone_df.empty:
             QMessageBox.warning(self, "Warning", f"No data found for zone '{self.selected_zone}'.")
@@ -991,7 +954,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def plot_zones(self, zone_name):
        self.zone_data_df = self.db_manager.fetch_zone_data(zone_name)
 
-       print(self.zone_data_df)
+
 
        if self.zone_data_df['Angle_Top'].isnull().any():
            for UWI in self.zone_data_df['UWI'].unique():
@@ -1108,7 +1071,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 # Sort zones alphabetically
                 zones = [zone[0] for zone in zones if zone[0].strip()] 
                 zones = sorted(zones)
-                print(zones)
+            
                 # Populate the dropdown with sorted zone names
                 self.wellZoneDropdown.combo.addItems(zones)
             else:
@@ -1184,7 +1147,7 @@ class Map(QMainWindow, Ui_MainWindow):
         ]
         if not well_zone_df.empty:
             remaining_df = well_zone_df.drop(columns=columns_to_exclude, errors='ignore')
-        print(remaining_df)
+   
 
         # Ensure datetime columns are converted
         for col in remaining_df.columns:
@@ -1197,11 +1160,11 @@ class Map(QMainWindow, Ui_MainWindow):
         # Find numeric columns
         numeric_columns = remaining_df.select_dtypes(include=[np.number]).columns.tolist()
         numeric_columns = [col for col in numeric_columns if remaining_df[col].max() - remaining_df[col].min() > 0]
-        print("Numeric columns:", numeric_columns)
+  
 
         # Find date columns
         date_columns = remaining_df.select_dtypes(include=['datetime64[ns]', 'datetime64']).columns.tolist()
-        print("Date columns:", date_columns)
+
 
         # Combine numeric and date columns
         combined_columns = numeric_columns + date_columns
@@ -1209,7 +1172,7 @@ class Map(QMainWindow, Ui_MainWindow):
         # Further filter to only include columns with at least one non-null value
         non_null_columns = [col for col in combined_columns if remaining_df[col].notnull().any()]
         non_null_columns.sort()
-        print("Non-null numeric and date columns:", non_null_columns)
+      
 
         # Populate dropdown
         if non_null_columns:
@@ -1263,7 +1226,7 @@ class Map(QMainWindow, Ui_MainWindow):
         else:
             # Use cached well zone data for other zones
             well_zone_df = self.cached_well_zone_df.copy()
-            print(well_zone_df)
+        
 
 
         # Ensure the selected attribute exists in the DataFrame
@@ -1334,7 +1297,7 @@ class Map(QMainWindow, Ui_MainWindow):
             self.well_colorbar.display_color_range(min_value, max_value)
 
 
-        print("DataFrame head:\n", well_zone_df.head())
+   
 
         # Map UWI coordinates to colors
         UWI_coordinates = {
@@ -1547,6 +1510,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def map_properties(self):
         """Open the Map Properties Dialog and apply changes on 'Apply'."""
+        from PropertiesMap import MapPropertiesDialog
         dialog = MapPropertiesDialog(self)
 
         # Debugging before opening dialog
@@ -1564,23 +1528,16 @@ class Map(QMainWindow, Ui_MainWindow):
         dialog.lineWidthSlider.setValue(self.drawingArea.line_width)
         dialog.lineOpacitySlider.setValue(int(self.drawingArea.line_opacity * 100))
 
-        # Print checkbox state BEFORE dialog opens
-        print(f"🟡 Dialog Checkbox States BEFORE Opening:")
-        print(f"   - Show UWI Labels: {dialog.UWICheckbox.isChecked()}")
-        print(f"   - Show Ticks: {dialog.ticksCheckbox.isChecked()}")
-        print(f"   - Show Drainage: {dialog.gradientCheckbox.isChecked()}")  # ⬅️ Should be `True`
+
 
         if dialog.exec():  # User clicked "Apply"
-            print("Applying Map Properties")
+       
 
             # Store values in `DrawingArea`
             self.drawingArea.show_UWIs = dialog.UWICheckbox.isChecked()
             self.drawingArea.show_ticks = dialog.ticksCheckbox.isChecked()
             self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()  # ⬅️ This is flipping to `False`!
             self.drawingArea.drainage_size = dialog.gradientSizeSpinBox.value()
-
-            # Debug After Applying Values
-            print(f"After Apply: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
 
             self.drawingArea.toggleTextItemsVisibility(self.drawingArea.show_UWIs)
             self.drawingArea.toggleticksVisibility(self.drawingArea.show_ticks)
@@ -1602,7 +1559,6 @@ class Map(QMainWindow, Ui_MainWindow):
             self.drawingArea.scene.update()
             self.drawingArea.viewport().update()
 
-            print("Map Properties Updated!")
 
 
         def launch_zone_properties(self):
@@ -1677,7 +1633,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.clear_current_project()
         
         self.project_loader.open_from_file()
-        print(self.directional_surveys_df)
+  
         self.setData(True)
         
         self.drawingArea.setScaledData(self.well_data)
@@ -1709,6 +1665,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def create_new_project(self):
+        from ProjectDialog import ProjectDialog
         # Create an instance of the custom dialog
         dialog = ProjectDialog()
 
@@ -1828,6 +1785,7 @@ class Map(QMainWindow, Ui_MainWindow):
             QMessageBox.critical(self, "Error", "Database path is not specified.", QMessageBox.Ok)
 
     def dataloadgrids(self):
+        from DataLoadGrid import DataLoadGridDialog
         dialog = DataLoadGridDialog(self.import_options_df)
         if dialog.exec() == QDialog.Accepted:
         
@@ -1881,7 +1839,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def connectToSeisWare(self):
-
+        from SeisWareConnect import SeisWareConnectDialog 
         dialog = SeisWareConnectDialog()
         if dialog.exec() == QDialog.Accepted:
             production_data, directional_survey_values, well_data_df, self.selected_UWIs = dialog.production_data, dialog.directional_survey_values, dialog.well_data_df, dialog.selected_UWIs
@@ -1889,7 +1847,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
             self.well_list = well_data_df['UWI'].tolist()
-            print(self.well_list)
+      
             # Assign well_data_df only if it's valid
             if not well_data_df.empty:
                 self.well_data_df = well_data_df
@@ -1910,6 +1868,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 print("No valid well data to process.")
 
     def import_excel(self):
+        from ImportExcel import ImportExcelDialog
         dialog = ImportExcelDialog()
         if dialog.exec() == QDialog.Accepted:
             production_data = dialog.production_data
@@ -1925,8 +1884,9 @@ class Map(QMainWindow, Ui_MainWindow):
 
         print('Data Prepared')
         self.production_data = sorted(production_data, key=lambda x: (x['UWI'], x['date']))
-        print(self.production_data)
+        
         if production_data:
+            from LoadProductions import LoadProductions
             load_productions = LoadProductions()
             self.combined_df, self.UWI_list = load_productions.prepare_data(production_data,self.db_path) 
             #print(self.combined_df)
@@ -1941,7 +1901,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.insert_survey_dataframe_into_db(directional_survey_values, )
                 self.directional_surveys_df = directional_survey_values
                 self.setData(True)
-                print(well_data_df)
+           
                 self.db_manager.save_UWI_data(well_data_df)
 
             else:
@@ -1953,11 +1913,12 @@ class Map(QMainWindow, Ui_MainWindow):
             self.eur_npv.calculate_payback_months()
 
     def handle_default_parameters(self):
+        from DefaultProperties import DefaultProperties
         self.default_properties_dialog = DefaultProperties()
 
         self.default_properties_dialog.exec()
         self.default_properties = self.default_properties_dialog.properties
-        print(self.default_properties)
+   
     
 
 
@@ -1972,11 +1933,12 @@ class Map(QMainWindow, Ui_MainWindow):
    
 
     def dataload_well_zones(self):
+        
         if not self.selected_UWIs:
             # Show error message if no UWI is selected
             QMessageBox.warning(self, "Error", "Load Wells First")
             return
-
+        from DataLoadWellZone import DataLoadWellZonesDialog
         self.selected_UWIs = self.db_manager.get_UWIs()
         dialog = DataLoadWellZonesDialog(self.selected_UWIs, self.directional_surveys_df)
       
@@ -2015,6 +1977,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def dataload_segy(self):
+        from DataLoadSegy import DataLoadSegy
         # Create and launch the DataLoadSegy dialog
         dialog = DataLoadSegy(self)
 
@@ -2024,7 +1987,7 @@ class Map(QMainWindow, Ui_MainWindow):
         # Now, assuming the file is loaded and SEGY data is available
         if dialog.segy_file:
             self.seismic_data = dialog.get_seismic_data()
-            print(self.seismic_data)
+        
             self.bounding_box = dialog.get_bounding_box()
 
             if self.seismic_data and 'x_coords' in self.seismic_data and 'y_coords' in self.seismic_data:
@@ -2091,13 +2054,13 @@ class Map(QMainWindow, Ui_MainWindow):
         self.dca = DeclineCurveAnalysis(self.combined_df, self.model_data, self.iterate_di, self.UWI_list)
         self.prod_rates_all, self.sum_of_errors, self.model_data = self.dca.calculate_production_rates()
         self.model_data_df = pd.DataFrame(self.model_data)
-        print(self.model_data)
+
  
 
      
 
         self.sum_of_errors.iloc[:, 1:] = self.sum_of_errors.iloc[:, 1:].round(2)
-        print(self.sum_of_errors)
+      
         
         # Ensure database manager is initialized and connected
         if self.db_manager:
@@ -2107,13 +2070,13 @@ class Map(QMainWindow, Ui_MainWindow):
             self.db_manager.set_active_scenario(self.scenario_id)
             self.scenario_id = self.db_manager.get_scenario_id(self.scenario_name)
             self.scenario_names = self.db_manager.get_all_scenario_names()
-            print(self.scenario_id, self.scenario_name)  # Corrected print statement
+     
 
 
             self.db_manager.prod_rates_all(self.prod_rates_all, 'prod_rates_all', self.scenario_id)
             self.db_manager.store_model_data(self.model_data_df, self.scenario_id)
             self.db_manager.store_sum_of_errors_dataframe(self.sum_of_errors, self.scenario_id)
-            print(self.sum_of_errors)
+      
             
                 # Close the connection after the operation
         
@@ -2280,7 +2243,7 @@ class Map(QMainWindow, Ui_MainWindow):
             for action in actions_to_toggle:
                 action.setEnabled(True)
             self.drawingArea.setIntersectionPoints(self.originalIntersectionPoints)
-            print(self.intersections)
+          
             self.plot_gun_barrel()
 
     def map_to_data_coords(self, point):
@@ -2421,9 +2384,7 @@ class Map(QMainWindow, Ui_MainWindow):
             else:
                 model_data_df = df_scenario_1
 
-        print(model_data_df)
-        print(combined_data)
-        print(date_ranges)
+
 
         # Merge combined data with model data
         merged_df = pd.merge(date_ranges, model_data_df, on='UWI', how='inner')
@@ -2519,6 +2480,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def plot_gun_barrel(self):
+        from GunBarrel import PlotGB
         new_line_coords = [(point.x(), point.y()) for point  in self.currentLine]
         
         if len(new_line_coords) < 2:
@@ -2558,6 +2520,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def crossPlot(self):
+        from CrossPlot import CrossPlot3D
         self.cross_plot_dialog = CrossPlot3D(self.db_manager)
         self.cross_plot_dialog.show()
 
@@ -2575,7 +2538,7 @@ class Map(QMainWindow, Ui_MainWindow):
     def open_color_editor(self):
         if self.project_saver is None:
             raise ValueError("Project saver is not initialized. Ensure the project file is set.")
-
+        from ColorEdit import ColorEditor
         editor = ColorEditor(self.grid_info_df, self)
         editor.color_changed.connect(self.update_grid_info_df)
         editor.exec()  # Display the color editor dialog
@@ -2584,7 +2547,7 @@ class Map(QMainWindow, Ui_MainWindow):
         self.grid_info_df = updated_grid_info_df
         self.project_saver.save_grid_info(self.grid_info_df)
         self.refresh_open_windows()
-        print("Updated grid colors saved")
+
 
     def refresh_open_windows(self):
         for window in self.open_windows:
@@ -2593,7 +2556,7 @@ class Map(QMainWindow, Ui_MainWindow):
             window.update_data(self.grid_info_df)
 
     def handle_hover_event(self, UWI):
-        print(UWI)
+      
         self.drawingArea.updateHoveredUWI(UWI)
 
             
@@ -2605,35 +2568,36 @@ class Map(QMainWindow, Ui_MainWindow):
 ###########################Calcs#################################
 
     def generate_correlation_matrix(self):
-    
+        from CalculateCorrelationMatrix import GenerateCorrelationMatrix 
         dialog = GenerateCorrelationMatrix(self.db_manager)
         dialog.exec()
 
     def merge_zones(self):
-    
+        from CalcMergeZones import CalcMergeZoneDialog
         dialog = CalcMergeZoneDialog(self.db_manager)
         dialog.exec()
 
 
     def attribute_analyzer(self):
-    
+        from CalcRegressionAnalyzer import CalcRegressionAnalyzer
         dialog = CalcRegressionAnalyzer(self.db_manager)
         dialog.exec()
 
 
     def calculate_zone_attributes(self):
-    
+        from CalculateZoneAttributes import ZoneAttributeCalculator
         dialog = ZoneAttributeCalculator(self.db_manager)
         self.populate_well_zone_dropdown()
         dialog.exec()
 
     def well_comparison(self):
-        
+        from CalculateWellComparisons import WellComparisonDialog
         dialog = WellComparisonDialog(self.db_manager)
         dialog.exec()
 
 
     def open_stages_dialog(self):
+        from Calculations import StagesCalculationDialog
         dialog = StagesCalculationDialog(self.db_manager)
         result = dialog.exec()
     
@@ -2646,6 +2610,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def grid_to_zone(self):
+        from Calculations import  GridToZone
         print(self.zone_names)
         dialog = GridToZone(
             self.db_manager,
@@ -2661,10 +2626,12 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def open_well_attributes_dialog(self):
+        from Calculations import WellAttributesDialog
         dialog = WellAttributesDialog(self)
         dialog.exec()
 
     def inzone_dialog(self):
+        from InZone import InZoneDialog
         dialog = InZoneDialog(
             self.db_manager,  # Pass the database manager
             self.directional_surveys_df,
@@ -2865,7 +2832,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """Launch the Well Properties dialog."""
         self.well_data_df = self.db_manager.get_all_UWIs()
 
-
+        from WellProperties import WellPropertiesDialog
         dialog = WellPropertiesDialog(self.well_data_df)
         if dialog.exec() == QDialog.Accepted:
             # Update well_data_df with edited data
@@ -2879,6 +2846,7 @@ class Map(QMainWindow, Ui_MainWindow):
             print("Well data saved to the database.")
 
     def pud_properties(self):
+        from PUDProperties import PUDPropertiesDialog
         # Assuming self.db_manager exists in the parent class
         dialog = PUDPropertiesDialog(self.db_manager, parent=self)
         dialog.exec_()
