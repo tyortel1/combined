@@ -8,6 +8,7 @@ from StyledDropdown import StyledDropdown
 class StyledColorBar(QWidget):
     def __init__(self, label_text="Color Bar", items=None, parent=None):
         super().__init__(parent)
+        self._palette_cache = {} 
         
         # Create main vertical layout
         layout = QVBoxLayout(self)
@@ -84,25 +85,43 @@ class StyledColorBar(QWidget):
             return []
 
     def load_color_palette(self, palette_name):
-        """Load a color palette from the Palettes directory."""
+        """Load a color palette from the Palettes directory with better error handling."""
         color_palette = []
         file_path = os.path.join(os.path.dirname(__file__), 'Palettes', palette_name + ".pal")
         try:
             with open(file_path, 'r') as file:
                 lines = file.readlines()
-                start_index = 2  # Assuming the first two lines are metadata
+                start_index = 2  # Skip first two lines
                 for line in lines[start_index:]:
-                    if line.strip():  # Ignore empty lines
-                        try:
-                            r, g, b = map(int, line.strip().split())
+                    line = line.strip()
+                    if not line:  # Skip empty lines
+                        continue
+                    try:
+                        values = line.split()
+                        if len(values) != 3:  # Skip lines that don't have exactly 3 values
+                            print(f"Skipping invalid line in palette {palette_name}: {line}")
+                            continue
+                        r, g, b = map(int, values)
+                        # Validate RGB values are in range
+                        if 0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255:
                             color_palette.append(QColor(r, g, b))
-                        except ValueError:
-                            continue  # Skip invalid lines
+                        else:
+                            print(f"Skipping out-of-range RGB values in {palette_name}: {r},{g},{b}")
+                    except ValueError as e:
+                        print(f"Skipping invalid line in palette {palette_name}: {line}")
+                        continue
+                    
+            if not color_palette:  # If no valid colors were found
+                print(f"No valid colors found in palette {palette_name}")
+                color_palette = [QColor(255, 255, 255)]  # Default to white
+            
         except FileNotFoundError:
             print(f"Error: The file '{file_path}' was not found.")
+            color_palette = [QColor(255, 255, 255)]  # Default to white
         except IOError:
             print(f"Error: An IOError occurred while trying to read '{file_path}'.")
-        
+            color_palette = [QColor(255, 255, 255)]  # Default to white
+    
         self.selected_color_palette = color_palette
         return color_palette
 
@@ -112,12 +131,37 @@ class StyledColorBar(QWidget):
         if not selected_palette_name:
             print("Error: No color palette selected.")
             return
-    
- 
+
         self.selected_color_palette = self.load_color_palette(selected_palette_name)
     
-        if hasattr(self, 'min_value') and hasattr(self, 'max_value'):
+        # Create a gradient with just the colors if min/max not set
+        if not hasattr(self, 'min_value') or not hasattr(self, 'max_value'):
+            self.display_color_gradient()
+        else:
             self.display_color_range(self.min_value, self.max_value)
+
+    def display_color_gradient(self):
+        """Display just the color gradient without min/max values."""
+        if not self.selected_color_palette:
+            return
+        
+        # Reuse existing pixmap if possible
+        pixmap = self.color_display.pixmap()
+        if not pixmap or pixmap.isNull():
+            pixmap = QPixmap(self.color_display.width(), self.color_display.height())
+    
+        painter = QPainter(pixmap)
+        painter.setCompositionMode(QPainter.CompositionMode_Source)  # Faster than filling
+    
+        gradient = QLinearGradient(0, 0, self.color_display.width(), 0)
+        for i, color in enumerate(self.selected_color_palette):
+            gradient.setColorAt(i / (len(self.selected_color_palette) - 1), color)
+    
+        painter.fillRect(pixmap.rect(), gradient)
+        painter.end()
+    
+        self.color_display.setPixmap(pixmap)
+
 
     def display_color_range(self, min_attr, max_attr):
         """Display the color range gradient with correctly aligned min/max labels."""

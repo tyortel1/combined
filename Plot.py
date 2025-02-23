@@ -1,33 +1,35 @@
 import sys
 import os
-
-from PySide6.QtGui import QPainterPath, QTransform
-from PySide6.QtGui import QIcon,  QColor, QPainter, QBrush, QPixmap, QPainterPath, QTransform
-from PySide6.QtWidgets import (
-    QApplication, QVBoxLayout,QSpacerItem,QSizePolicy, QHBoxLayout,QGraphicsDropShadowEffect, QPushButton, QSlider,
-   QDialog, QSizePolicy, QLabel, QFrame, QMessageBox
-)
-from superqt import QRangeSlider
 import numpy as np
+import pandas as pd
 from scipy.spatial import KDTree
 from scipy import interpolate
-from scipy.ndimage import gaussian_filter  #
-import pandas as pd
-import numpy as np
-from scipy.spatial import KDTree
-from PySide6.QtCore import Signal,  Qt, QRectF
-from PySide6.QtCore import QUrl
+from scipy.ndimage import gaussian_filter
+
+# PySide6 Core, GUI, and Widgets
+from PySide6.QtCore import Qt, Signal, QRectF, QUrl
+from PySide6.QtGui import (
+    QIcon, QColor, QPainter, QBrush, QPixmap, QPainterPath, 
+    QTransform, QImage, QPen
+)
+from PySide6.QtWidgets import (
+    QApplication, QVBoxLayout, QSpacerItem, QSizePolicy, QHBoxLayout,
+    QGraphicsDropShadowEffect, QPushButton, QSlider, QDialog, QLabel,
+    QFrame, QMessageBox, QGraphicsView, QGraphicsScene
+)
+
+# Custom Styled UI Components
 from StyledDropdown import StyledDropdown, StyledInputBox
-from StyledColorbar import StyledColorBar 
+from StyledColorbar import StyledColorBar
 from StyledSliders import StyledSlider, StyledRangeSlider
 
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QFrame
-from PySide6.QtCore import Qt
-from PySide6.QtGui import (QPainter, QColor, QImage, QPen, 
-                          QBrush, QPainterPath)
-import numpy as np
+# SuperQt Extension
+from superqt import QRangeSlider
+
 
 class SeismicGraphicsView(QGraphicsView):
+    seismic_range_changed = Signal(float, float)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.scene_obj = QGraphicsScene(self)
@@ -37,6 +39,7 @@ class SeismicGraphicsView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.scale(1, -1)  # Flip vertically AFTER setting up everything
+        self.scene_obj.setBackgroundBrush(Qt.white)  
         
         # Store references to data and kdtree
         self.seismic_kdtree = None
@@ -63,19 +66,18 @@ class SeismicGraphicsView(QGraphicsView):
         self.zone_fills = []
         self.seismic_kdtree = None
         self.seismic_data = None
+        self.last_smoothed_data = None
+        self.last_max_abs_value = None
+        self.original_colors = None
         
         # Scale factors for coordinate transformation
         self.scale_x = 1.0
         self.scale_y = 1.0
 
-    def set_seismic_kdtree(self, kdtree, seismic_data):
-        """Set the KDTree for seismic data"""
-        self.seismic_kdtree = kdtree
-        self.seiscmi_data = seismic_data
+
 
     def update_seismic_data(self, seismic_data, well_coords, combined_distances, time_axis, grid_start, grid_end):
-        if self.seismic_item:
-            self.scene_obj.removeItem(self.seismic_item)
+
 
         if seismic_data is None or self.seismic_kdtree is None:
             print("DEBUG: seismic_data or kdtree is None")
@@ -83,7 +85,7 @@ class SeismicGraphicsView(QGraphicsView):
 
         try:
             distances, indices = self.seismic_kdtree.query(well_coords)
-            print("KDTree indices range:", indices.min(), "to", indices.max())
+        
 
             # Add distance-based filtering
             max_distance = 100  # Maximum distance in same units as your coordinates
@@ -122,29 +124,49 @@ class SeismicGraphicsView(QGraphicsView):
             # Apply Gaussian smoothing
             smoothed_data = gaussian_filter(interpolated_data, sigma=(5, 2))  # Adjust sigma as needed
 
-            # Normalize the smoothed data
-            normalized = (smoothed_data - np.min(smoothed_data)) / (np.max(smoothed_data) - np.min(smoothed_data))
 
+            # Normalize the smoothed data
+            max_abs_value = np.max(np.abs(interpolated_data))
+            self.last_smoothed_data = smoothed_data
+            self.last_max_abs_value = max_abs_value
             # Create image
-            height, width = normalized.shape
+            height, width = interpolated_data.shape
             image = QImage(width, height, QImage.Format_RGB32)
 
+            # Get color palette from the seismic colorbar
+            color_palette = self.parent().seismic_colorbar.selected_color_palette
+            self.parent().seismic_colorbar.display_color_range(-max_abs_value, max_abs_value)
+            self.parent().seismic_range_slider.setRange(-max_abs_value, max_abs_value)
+            self.parent().seismic_range_slider.setValue([-max_abs_value, max_abs_value])
+            
+            # Ensure color palette is available
+            assert color_palette is not None and len(color_palette) > 0, "Color palette must be provided"
+
+            # ✅ Store original colors in the parent so `update_seismic_range` can read them
+            self.parent().original_colors = np.zeros((height, width), dtype=object)
+
+            # Map data to color palette
             for i in range(height):
                 for j in range(width):
-                    value = int(255 * normalized[i, j])
-                    if value > 127:
-                        r = 255
-                        g = b = int(255 * (1 - (value - 128) / 127))
-                    else:
-                        b = 255
-                        r = g = int(255 * value / 127)
-                    image.setPixelColor(j, i, QColor(r, g, b))
+                    # Scale the value relative to max_abs_value
+                    scaled_value = smoothed_data[i, j] / max_abs_value
+
+                    # Map scaled value to palette index
+                    palette_index = int(((scaled_value + 1) / 2) * (len(color_palette) - 1))
+                    palette_index = max(0, min(palette_index, len(color_palette) - 1))
+
+                    color = color_palette[palette_index]
+                    image.setPixelColor(j, i, color)
+
+                    # ✅ Save to parent `original_colors`
+                    self.parent().original_colors[i, j] = color  # Now accessible by `update_seismic_range`
 
             pixmap = QPixmap.fromImage(image)
 
             # Create and position the seismic item
             self.seismic_item = self.scene_obj.addPixmap(pixmap)
             self.seismic_item.setZValue(0)
+
 
             # Set position and scale
             min_distance = grid_start
@@ -166,16 +188,16 @@ class SeismicGraphicsView(QGraphicsView):
             time_intervals = np.arange(min_time, max_time, time_step)
             self.add_timing_lines(time_intervals)
 
-            print(f"Seismic position: ({min_distance}, {min_time})")
-            print(f"Scale factors: x={scale_x}, y={scale_y}")
-            print(f"Distance range: {distance_range}")
-            print(f"Time range: {time_range}")
+
 
         except Exception as e:
             print(f"Error updating seismic data: {e}")
             import traceback
             traceback.print_exc()
     
+
+
+
     def load_seismic_data(self, well_coords, cumulative_distances, seismic_kdtree, seismic_data):
         self.seismic_data = seismic_data
         """
@@ -194,24 +216,11 @@ class SeismicGraphicsView(QGraphicsView):
             return None
 
         try:
-            # Print debug information
-            print("Seismic data shape:", self.seismic_data['trace_data'].shape if 'trace_data' in self.seismic_data else "No trace_data found")
-            print("Time axis length:", len(self.seismic_data['time_axis']) if 'time_axis' in self.seismic_data else "No time_axis found")
 
-            print("Well coordinates shape:", well_coords.shape)
-            print("Well X range:", well_coords[:, 0].min(), "to", well_coords[:, 0].max())
-            print("Well Y range:", well_coords[:, 1].min(), "to", well_coords[:, 1].max())
-
-            # Use the provided seismic_kdtree for querying
-            print("First few seismic coordinates from KDTree:")
-            print(seismic_kdtree.data[:5])
-            print("\nSeismic coordinate ranges:")
-            print("X range:", seismic_kdtree.data[:, 0].min(), "to", seismic_kdtree.data[:, 0].max())
-            print("Y range:", seismic_kdtree.data[:, 1].min(), "to", seismic_kdtree.data[:, 1].max())
 
             # Batch query for all well path points to find nearest seismic traces
             distances, indices = seismic_kdtree.query(well_coords)
-            print("KDTree indices range:", indices.min(), "to", indices.max())
+  
 
             # Add distance-based filtering
             max_distance = 100  # Maximum distance in same units as your coordinates
@@ -387,7 +396,7 @@ class SeismicGraphicsView(QGraphicsView):
         if len(points) < 2:
             return
 
-        print(f"🟡 Adding Zone Fill from {points[0]} to {points[1]} with color RGB({color.red()}, {color.green()}, {color.blue()})")
+     
 
         path = QPainterPath()
 
@@ -405,7 +414,7 @@ class SeismicGraphicsView(QGraphicsView):
         fill_item.setOpacity(0.7)  # ✅ Keep visibility high
         self.zone_fills.append(fill_item)
 
-        print(f"✔️ Zone fill added with tick size: {tick_size} | Opacity: {fill_item.opacity()} | ZValue: {fill_item.zValue()}")
+   
 
         # ✅ Refresh scene
         self.scene_obj.update()
@@ -493,8 +502,7 @@ class SeismicGraphicsView(QGraphicsView):
             label.setDefaultTextColor(QColor(*color))
             self.timing_lines.append(label)
 
-        print("Updated timing lines with darker color.")
-
+      
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
@@ -548,7 +556,7 @@ class SeismicGraphicsView(QGraphicsView):
         # ✅ Clear old items properly
         self.clear_zone_items()
     
-        print('Updating zones...')
+    
 
         for zone in zone_data:
             # ✅ Add top marker
@@ -626,9 +634,7 @@ class Plot(QDialog):
         self.seismic_kdtree = seismic_kdtree
         self.zones =[]
         self.combined_distances = []
-        print(seismic_data)
-        print(seismic_kdtree)
-        print("Seismic data shape:", self.seismic_data['trace_data'].shape if 'trace_data' in self.seismic_data else "No trace_data found")
+
     
 
 
@@ -975,18 +981,111 @@ class Plot(QDialog):
     
         # Corrected connections for sliders
         self.tick_size_slider.slider.valueChanged.connect(self.update_tick_size_value_label)
-        self.seismic_range_slider.slider.rangeChanged.connect(self.update_seismic_range)
-        self.heat_slider.slider.valueChanged.connect(self.update_heat_value)
+        self.seismic_range_slider.slider.valueChanged.connect(
+            lambda values: self.seismic_range_slider._update_value_labels(values)
+        )
+        # Do the heavy pixel updates only on release
+        self.seismic_range_slider.slider.sliderReleased.connect(
+            lambda: self.update_seismic_range(*self.seismic_range_slider.value())
+        )
+        self.heat_slider.slider.valueChanged.connect(
+            lambda value: self.heat_slider._update_value_label(value)
+        )
+
+        # Apply heavy update only when slider is released
+        self.heat_slider.slider.sliderReleased.connect(
+            lambda: self.update_heat_value(self.heat_slider.value())
+)
         self.transparency_slider.slider.valueChanged.connect(self.update_transparency_value)
+        self.seismic_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.update_seismic_colorbar)
 
 
-    def update_seismic_range(self):
-        min_val, max_val = self.seismic_range_slider.value()
-        # The value labels are now handled internally by the StyledRangeSlider
 
-    def update_heat_value(self):
-        value = self.heat_slider.value()
-        # The value label is now handled internally by the StyledSlider
+    def update_heat_value(self, value):
+        if not hasattr(self.plot_widget, 'seismic_item') or self.plot_widget.seismic_item is None:
+            return
+
+        existing_pixmap = self.plot_widget.seismic_item.pixmap()
+        image = existing_pixmap.toImage()
+
+        smoothed_data = self.plot_widget.last_smoothed_data
+        max_abs_value = self.plot_widget.last_max_abs_value
+        color_palette = self.seismic_colorbar.selected_color_palette
+
+        scale_factor = 1 - (value / 100)
+        adjusted_min = -max_abs_value * scale_factor
+        adjusted_max = max_abs_value * scale_factor
+
+        # ✅ Update Display Range & Colorbar dynamically
+        self.seismic_colorbar.display_color_range(adjusted_min, adjusted_max)
+        self.seismic_range_slider.setRange(adjusted_min, adjusted_max)
+        self.seismic_range_slider.setValue([adjusted_min, adjusted_max])
+
+        height, width = smoothed_data.shape
+
+        # ✅ Store colors & intensity for later use in `update_seismic_range`
+        self.plot_widget.original_colors = np.empty((height, width), dtype=object)  # Stores QColor
+        self.plot_widget.original_intensities = np.zeros((height, width))  # Stores intensity values
+
+        for i in range(height):
+            for j in range(width):
+                data_value = smoothed_data[i, j]
+
+                # ✅ Clamp data within adjusted range
+                data_value = max(adjusted_min, min(adjusted_max, data_value))
+
+                # ✅ Store intensity values for range comparison
+                self.plot_widget.original_intensities[i, j] = data_value  # ✅ Now usable in update_seismic_range
+
+                # ✅ Scale value within range
+                scaled_value = (data_value - adjusted_min) / (adjusted_max - adjusted_min)
+
+                # ✅ Map to color palette
+                palette_index = int(scaled_value * (len(color_palette) - 1))
+                palette_index = max(0, min(palette_index, len(color_palette) - 1))
+                color = color_palette[palette_index]
+
+                # ✅ Store mapped color
+                self.plot_widget.original_colors[i, j] = color  # Now properly stored
+
+                # ✅ Apply the color immediately
+                image.setPixelColor(j, i, color)
+
+        self.plot_widget.seismic_item.setPixmap(QPixmap.fromImage(image))
+        self.plot_widget.update()
+
+
+    def update_seismic_range(self, min_val, max_val):
+        if not self.plot_widget or not self.plot_widget.seismic_item:
+            return
+
+        image = self.plot_widget.seismic_item.pixmap().toImage()
+
+        # ✅ Ensure stored data exists
+        if not hasattr(self.plot_widget, 'original_colors') or not hasattr(self.plot_widget, 'original_intensities'):
+            return  # Nothing to update if colors haven't been saved
+
+        height, width = self.plot_widget.original_colors.shape  # Get image dimensions
+        max_intensity = np.max(self.plot_widget.original_intensities)  # Get the highest intensity in the dataset
+
+        for y in range(height):
+            for x in range(width):
+                # ✅ Get the stored intensity value
+                data_value = self.plot_widget.original_intensities[y, x]
+
+                # ✅ Restore pixels only if they are within range OR if `max_val` is at max intensity
+                if (min_val <= data_value <= max_val) or (max_val >= max_intensity and data_value > max_val):
+                    image.setPixelColor(x, y, self.plot_widget.original_colors[y, x])
+                else:
+                    image.setPixelColor(x, y, QColor(255, 255, 255, 0))  # ✅ Make transparent if out of range
+
+        self.plot_widget.seismic_item.setPixmap(QPixmap.fromImage(image))
+        self.plot_widget.update()
+
+
+
+
+
 
     def update_tick_size_value_label(self):
         value = self.tick_size_slider.value()
@@ -1001,6 +1100,39 @@ class Plot(QDialog):
                 zone_fill.setOpacity(opacity)
 
 
+    def update_seismic_colorbar(self):
+        self.seismic_colorbar.color_selected()
+    
+        # Early returns if requirements aren't met
+        if not all(hasattr(self.plot_widget, attr) for attr in 
+                   ['seismic_item', 'last_smoothed_data', 'last_max_abs_value']):
+            return
+        if self.plot_widget.seismic_item is None:
+            return
+        
+        color_palette = self.seismic_colorbar.selected_color_palette
+        if not color_palette:
+            return
+        
+        smoothed_data = self.plot_widget.last_smoothed_data
+        max_abs_value = self.plot_widget.last_max_abs_value
+    
+        # Vectorized scaling
+        scaled_values = ((smoothed_data / max_abs_value) + 1) / 2
+        palette_indices = (scaled_values * (len(color_palette) - 1)).astype(int)
+        palette_indices = np.clip(palette_indices, 0, len(color_palette) - 1)
+    
+        # Create color array
+        height, width = smoothed_data.shape
+        color_array = np.array([color_palette[idx] for idx in palette_indices.flatten()])
+    
+        # Convert to QImage
+        image = QImage(width, height, QImage.Format_ARGB32)
+        for i, color in enumerate(color_array):
+            y, x = i // width, i % width
+            image.setPixelColor(x, y, color)
+    
+        self.plot_widget.seismic_item.setPixmap(QPixmap.fromImage(image))
 
 
     def palette_selected(self):
@@ -1079,7 +1211,7 @@ class Plot(QDialog):
                 # Sort zones alphabetically
                 zones = [zone[0] for zone in zones if zone[0].strip()] 
                 zones = sorted(zones)
-                print(zones)
+             
 
                 # Populate the dropdown with sorted zone names
                 self.zone_selector.addItems(zones)
@@ -1102,7 +1234,7 @@ class Plot(QDialog):
         self.zone_attribute_selector.setEnabled(True)
 
         zone_df = self.selected_zone_df
-        print(zone_df)
+      
         columns = self.selected_zone_df.columns.tolist() 
 
         # Columns to exclude
@@ -1116,7 +1248,7 @@ class Plot(QDialog):
         # Drop fixed columns and find columns with at least one non-null value
         zone_df = zone_df.drop(columns=columns_to_exclude, errors='ignore')
         self.attributes_names = sorted(zone_df.columns[zone_df.notna().any()].tolist())
-        print(self.attributes_names)
+      
         # Find attributes (columns with at least one non-null value)
  
     
@@ -1251,8 +1383,6 @@ class Plot(QDialog):
 
             self.tvd_values = self.current_well_data['TVD'].tolist()
             self.combined_distances = self.current_well_data['Cumulative Distance'].tolist()
-            print("Seismic data shape:", self.seismic_data['trace_data'].shape if 'trace_data' in self.seismic_data else "No trace_data found")
-            print("Time axis length:", len(self.seismic_data['time_axis']) if 'time_axis' in self.seismic_data else "No time_axis found")
 
         # Process seismic data if available
             if self.seismic_data and self.seismic_kdtree:
@@ -1375,7 +1505,7 @@ class Plot(QDialog):
             return
 
         self.selected_zone = selected_text.replace(" ", "_")
-        print(f"Selected zone: {self.selected_zone}")
+ 
 
         self.zone_attribute_selector.clear()
         self.zone_attribute_selector.addItem("Select Zone Attribute")
@@ -1387,7 +1517,7 @@ class Plot(QDialog):
             try:
                 # Fetch zone data
                 self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
-                print(f"Fetched data: {self.selected_zone_df}")  # Debugging
+                
 
                 # Update zone ticks and attributes
                 self.update_zone_ticks()
@@ -1433,38 +1563,30 @@ class Plot(QDialog):
             print(f"Error in on_well_selected: {e}")
 
     def on_next(self):
-        """Navigate to the next well in alphabetical order."""
+        """Navigate to the next well in alphabetical order, wrapping if needed."""
         try:
-            current_index = self.UWI_list.index(self.current_UWI)
-            next_index = (current_index + 1) % len(self.UWI_list)
-            self.current_UWI = self.UWI_list[next_index]
+            self.current_index = (self.current_index + 1) % len(self.UWI_list)
+            self.current_UWI = self.UWI_list[self.current_index]
             self.update_well_selector_to_current_UWI()
-        
-            # Only plot the current well's seismic and grid data
             self.plot_current_well()
-        
-            # Optionally add zone ticks if a zone is selected
             if self.selected_zone and self.selected_zone != "Select_Zone":
                 self.update_zone_ticks()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the next well: {str(e)}")
 
     def on_prev(self):
-        """Navigate to the previous well in alphabetical order."""
+        """Navigate to the previous well in alphabetical order, stopping at the first well."""
         try:
-            current_index = self.UWI_list.index(self.current_UWI)
-            prev_index = (current_index - 1) % len(self.UWI_list)
-            self.current_UWI = self.UWI_list[prev_index]
-            self.update_well_selector_to_current_UWI()
-        
-            # Only plot the current well's seismic and grid data
-            self.plot_current_well()
-        
-            # Optionally add zone ticks if a zone is selected
-            if self.selected_zone and self.selected_zone != "Select_Zone":
-                self.update_zone_ticks()
+            if self.current_index > 0:
+                self.current_index -= 1
+                self.current_UWI = self.UWI_list[self.current_index]
+                self.update_well_selector_to_current_UWI()
+                self.plot_current_well()
+                if self.selected_zone and self.selected_zone != "Select_Zone":
+                    self.update_zone_ticks()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred while processing the previous well: {str(e)}")
+
 
 
     def update_well_selector_to_current_UWI(self):
@@ -1499,10 +1621,10 @@ class Plot(QDialog):
     def interpolate_value(self, md, column):
         # Check if MD is within the range of our data
         if md < self.current_well_data['MD'].min():
-            print(f"MD {md} is below the range of the well data. Using minimum value.")
+      
             return self.current_well_data[column].iloc[0]
         elif md > self.current_well_data['MD'].max():
-            print(f"MD {md} is above the range of the well data. Using maximum value.")
+           
             return self.current_well_data[column].iloc[-1]
 
         # Find the indices where MD falls between
