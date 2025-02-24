@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import h5py
 from scipy.spatial import KDTree
 from scipy import interpolate
 from scipy.ndimage import gaussian_filter
@@ -22,6 +23,9 @@ from PySide6.QtWidgets import (
 from StyledDropdown import StyledDropdown, StyledInputBox
 from StyledColorbar import StyledColorBar
 from StyledSliders import StyledSlider, StyledRangeSlider
+from SeismicDatabaseManager import SeismicDatabaseManager  
+from DatabaseManager import DatabaseManager
+
 
 # SuperQt Extension
 from superqt import QRangeSlider
@@ -616,7 +620,7 @@ class SeismicGraphicsView(QGraphicsView):
 class Plot(QDialog):
     closed = Signal()
     
-    def __init__(self, UWI_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_UWI, depth_grid_data_dict, master_df,seismic_data,seismic_kdtree,db_manager, parent=None):
+    def __init__(self, UWI_list, directional_surveys_df, depth_grid_data_df, grid_info_df, kd_tree_depth_grids, current_UWI, depth_grid_data_dict, db_manager,seismic_db_manager, parent=None):
         super().__init__(parent)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint | Qt.Window)
 
@@ -629,19 +633,25 @@ class Plot(QDialog):
         self.current_index = self.UWI_list.index(current_UWI)
         self.current_UWI = current_UWI
         self.depth_grid_data_dict = depth_grid_data_dict
-        self.seismic_data = seismic_data
-        self.master_df = master_df
-        self.seismic_kdtree = seismic_kdtree
-        self.zones =[]
+        self.seismic_db_manager = seismic_db_manager
+        self.db_manager = db_manager
+        self.seismic_db_manager = seismic_db_manager
+        self.current_well_data = pd.DataFrame()
+  
+        self.zones = []
         self.combined_distances = []
+            # Initialize seismic-related attributes
+        self.seismic_data = None
+        self.seismic_kdtree = None
+        self.intersecting_files = []
 
-    
+
 
 
         self.attributes_names = []
         self.UWI_att_data = pd.DataFrame()
         self.selected_zone_df = pd.DataFrame()
-        self.current_well_data = pd.DataFrame()
+        
         self.selected_attribute = None
         self.min_attr = 0
         self.max_attr = 1
@@ -651,14 +661,27 @@ class Plot(QDialog):
       
 
         self.next_well = False
-        self.db_manager = db_manager
+        
      
+
+
+        self.current_well_data = self.directional_surveys_df[
+        self.directional_surveys_df['UWI'] == self.current_UWI].reset_index(drop=True)
+        well_coords = np.column_stack((
+            self.current_well_data['X Offset'],
+            self.current_well_data['Y Offset']
+                ))
+
+        self.intersecting_files = self.get_intersecting_seismic_files(well_coords)
        
         self.plot_widget = SeismicGraphicsView()  # New custom QGraphicsView
         self.plot_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.plot_widget.seismic_kdtree = seismic_kdtree
-        self.plot_widget.seismic_data = seismic_data
+
+
+
         self.init_ui()
+        self.populate_seismic_selector()
+
 
     def closeEvent(self, event):
         self.closed.emit()
@@ -674,7 +697,9 @@ class Plot(QDialog):
             "Display",
             "Heat",
             "Tick Size",
-            "Transparency"
+            "Transparency",
+            "Seismic"
+            
         ]
         StyledDropdown.calculate_label_width(labels)
 
@@ -730,10 +755,12 @@ class Plot(QDialog):
 
         # Set up connections
         self.setup_connections()
-      # Initial population
 
+        # Initial population
         self.populate_zone_names()
-        self.plot_current_well()
+
+        # Trigger well selection for the initial well
+        self.on_well_selected(self.current_index)
 
     def create_section(self, frame_name, fixed_height=None):
         """
@@ -905,9 +932,9 @@ class Plot(QDialog):
 
 
     def setup_seismic_section(self, frame, layout):
-        # Get seismic data range
-        seismic_min = np.min(self.seismic_data['trace_data'])
-        seismic_max = np.max(self.seismic_data['trace_data'])
+        # Create seismic selector first
+        self.seismic_selector = self.create_dropdown("Seismic")
+        layout.addWidget(self.seismic_selector)
 
         # Colorbar for seismic
         self.seismic_colorbar = self.create_colorbar()
@@ -916,30 +943,53 @@ class Plot(QDialog):
         # Display Range section
         display_range_layout = QHBoxLayout()
     
-        # Range slider for seismic display
+        # Placeholder range slider
         self.seismic_range_slider = self.create_slider("Display", slider_type='range')
-        self.seismic_range_slider.setRange(seismic_min, seismic_max)
-        self.seismic_range_slider.setValue([seismic_min, seismic_max])
-
-
         display_range_layout.addWidget(self.seismic_range_slider)
-
         layout.addLayout(display_range_layout)
 
         # Heat Clipping section
         heat_layout = QHBoxLayout()
-    
-        # Heat slider with automatic value label
         self.heat_slider = self.create_slider("Heat", slider_type='single')
-        self.heat_slider.setRange(0, 100)
-        self.heat_slider.setValue(0)
-
-  
-
         heat_layout.addWidget(self.heat_slider)
-
         layout.addLayout(heat_layout)
 
+        # After UI setup, find and load seismic data
+        self.update_seismic_selector()
+
+
+
+
+
+
+    def get_intersecting_seismic_files(self, well_coords):
+
+        """Check which seismic volumes intersect with well coordinates"""
+        intersecting_files = []
+    
+        try:
+            # Get all seismic file info from database
+            seismic_files = self.seismic_db_manager.get_all_seismic_files()
+        
+            # Get min/max coordinates of well path
+            well_x_min = np.min(well_coords[:, 0])
+            well_x_max = np.max(well_coords[:, 0])
+            well_y_min = np.min(well_coords[:, 1])
+            well_y_max = np.max(well_coords[:, 1])
+        
+            for file_info in seismic_files:
+                # Check if well path intersects seismic volume bounding box
+                if (well_x_min <= file_info['geometry']['x_max'] and 
+                    well_x_max >= file_info['geometry']['x_min'] and 
+                    well_y_min <= file_info['geometry']['y_max'] and 
+                    well_y_max >= file_info['geometry']['y_min']):
+                    intersecting_files.append(file_info)
+                
+            return intersecting_files
+        
+        except Exception as e:
+            print(f"Error checking seismic intersections: {e}")
+            return []
 
 
 
@@ -978,6 +1028,7 @@ class Plot(QDialog):
         self.zone_selector.combo.currentIndexChanged.connect(self.zone_selected)
         self.zone_attribute_selector.combo.currentIndexChanged.connect(self.attribute_selected)
         self.color_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.palette_selected)
+        self.seismic_selector.combo.currentIndexChanged.connect(self.on_seismic_selected)
     
         # Corrected connections for sliders
         self.tick_size_slider.slider.valueChanged.connect(self.update_tick_size_value_label)
@@ -998,8 +1049,6 @@ class Plot(QDialog):
 )
         self.transparency_slider.slider.valueChanged.connect(self.update_transparency_value)
         self.seismic_colorbar.colorbar_dropdown.combo.currentIndexChanged.connect(self.update_seismic_colorbar)
-
-
 
     def update_heat_value(self, value):
         if not hasattr(self.plot_widget, 'seismic_item') or self.plot_widget.seismic_item is None:
@@ -1083,9 +1132,103 @@ class Plot(QDialog):
         self.plot_widget.update()
 
 
+    def load_seismic_data_from_hdf5(self, hdf5_path):
+        """
+        Load seismic data from an HDF5 file
+    
+        Args:
+            hdf5_path (str): Path to the HDF5 file
+    
+        Returns:
+            dict: Loaded seismic data and KD-tree
+        """
+        try:
+            with h5py.File(hdf5_path, 'r') as f:
+                # Load seismic data
+                seismic_group = f['seismic_data']
+                seismic_data = {
+                    'trace_data': seismic_group['trace_data'][:],
+                    'time_axis': seismic_group['time_axis'][:],
+                    'distance_axis': seismic_group['distance_axis'][:]
+                }
+            
+                # Create KD-Tree for seismic data
+                seismic_coords = np.column_stack((
+                    np.repeat(seismic_data['distance_axis'], len(seismic_data['time_axis'])),
+                    np.tile(seismic_data['time_axis'], len(seismic_data['distance_axis']))
+                ))
+                seismic_kdtree = KDTree(seismic_coords)
+            
+                return {
+                    'seismic_data': seismic_data,
+                    'seismic_kdtree': seismic_kdtree
+                }
+    
+        except Exception as e:
+            print(f"Error loading seismic data from HDF5: {e}")
+            return None
 
+    def update_seismic_selector(self):
+        """Update seismic selector with intersecting volumes"""
+        try:
+            self.seismic_selector.blockSignals(True)
+            self.seismic_selector.clear()
+        
+            # Reset seismic-related attributes
+            self.seismic_data = None
+            self.seismic_kdtree = None
+        
+            # Get well coordinates
+            well_coords = np.column_stack((
+                self.current_well_data['X Offset'],
+                self.current_well_data['Y Offset']
+            ))
+        
+            # Find intersecting seismic files
+            intersecting_files = self.get_intersecting_seismic_files(well_coords)
+        
+            # Process intersecting files
+            for file_info in intersecting_files:
+                display_name = os.path.basename(file_info.get('original_segy_path', 'Unknown'))
+                hdf5_path = file_info.get('hdf5_path')
+        
+                if hdf5_path and os.path.exists(hdf5_path):
+                    self.seismic_selector.addItem(display_name, hdf5_path)
+        
+            # Automatically load first file if available
+            if self.seismic_selector.count() > 0:
+                first_hdf5_path = self.seismic_selector.itemData(0)
+                loaded_data = self.load_seismic_data_from_hdf5(first_hdf5_path)
+            
+                if loaded_data:
+                    self.seismic_data = loaded_data['seismic_data']
+                    self.seismic_kdtree = loaded_data['seismic_kdtree']
+    
+        except Exception as e:
+            print(f"Error updating seismic selector: {e}")
+    
+        finally:
+            self.seismic_selector.blockSignals(False)
 
-
+    def on_seismic_selected(self, index):
+        """Handle seismic volume selection"""
+        try:
+            # Get the HDF5 path from the current item's data
+            hdf5_path = self.seismic_selector.itemData(index)
+        
+            if hdf5_path and os.path.exists(hdf5_path):
+                loaded_data = self.load_seismic_data_from_hdf5(hdf5_path)
+            
+                if loaded_data:
+                    self.seismic_data = loaded_data['seismic_data']
+                    self.seismic_kdtree = loaded_data['seismic_kdtree']
+                
+                    # Replot the current well with new seismic data
+                    self.plot_current_well()
+    
+        except Exception as e:
+            print(f"Error loading seismic data: {e}")
+            QMessageBox.warning(self, "Seismic Load Error", f"Could not load seismic data: {e}")
 
     def update_tick_size_value_label(self):
         value = self.tick_size_slider.value()
@@ -1193,6 +1336,11 @@ class Plot(QDialog):
         if self.next_well == False:
             self.plot_current_well()
 
+
+
+
+
+
     def populate_zone_names(self):
 
         
@@ -1262,7 +1410,63 @@ class Plot(QDialog):
         self.zone_attribute_selector.blockSignals(False)
 
 
-    
+    def populate_seismic_selector(self):
+        """
+        Populate seismic selector with pre-fetched intersecting seismic files
+        and set the first seismic file as the selection
+        """
+        try:
+            # Block signals to prevent multiple triggers during population
+            self.seismic_selector.blockSignals(True)
+            self.seismic_selector.clear()
+
+            # Check if intersecting files exist
+            if not self.intersecting_files:
+                print("No intersecting seismic files found.")
+                return
+
+            # Process and add intersecting files to selector
+            valid_files_count = 0
+            for file_info in self.intersecting_files:
+                # Extract display name and HDF5 path
+                display_name = os.path.basename(file_info.get('original_segy_path', 'Unknown'))
+                hdf5_path = file_info.get('hdf5_path')
+        
+                # Validate HDF5 file existence
+                if hdf5_path and os.path.exists(hdf5_path):
+                    self.seismic_selector.addItem(display_name, hdf5_path)
+                    valid_files_count += 1
+                else:
+                    print(f"Warning: Invalid HDF5 path for {display_name}: {hdf5_path}")
+
+            # Log number of valid files
+            print(f"Added {valid_files_count} valid seismic files to selector")
+
+            # Set the first item as the selection if files exist
+            if valid_files_count > 0:
+                # Set the current index to the first item
+                self.seismic_selector.setCurrentIndex(0)
+            
+                # Manually trigger the selection of the first item
+                first_hdf5_path = self.seismic_selector.itemData(0)
+            
+                try:
+                    # Use existing method to load seismic data
+                    self.load_seismic_from_hdf5(first_hdf5_path)
+                    print(f"Successfully loaded seismic data from: {first_hdf5_path}")
+                except Exception as load_error:
+                    print(f"Error loading seismic data from {first_hdf5_path}: {load_error}")
+                    import traceback
+                    traceback.print_exc()
+
+        except Exception as e:
+            print(f"Unexpected error in populate_seismic_selector: {e}")
+            import traceback
+            traceback.print_exc()
+
+        finally:
+            # Always unblock signals, even if an error occurs
+            self.seismic_selector.blockSignals(False)
 
 
     def update_tick_size_value_label(self, value):
@@ -1552,6 +1756,7 @@ class Plot(QDialog):
                 self.current_index = index
             
                 # Only plot the current well's seismic and grid data
+                self.update_seismic_selector()
                 self.plot_current_well()
             
                 # Optionally add zone ticks if a zone is selected

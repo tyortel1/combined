@@ -7,6 +7,7 @@ import math
 print("1")
 import numpy as np
 import atexit
+import os
 
 from scipy.spatial import KDTree
 print("1")
@@ -26,6 +27,7 @@ from UiSetup import Ui_MainWindow
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 from DatabaseManager import DatabaseManager
+from SeismicDatabaseManager import SeismicDatabaseManager
 print("3")
 
 from ModelProperties import ModelProperties
@@ -1704,6 +1706,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
             # Save project data to JSON
             self.project_file_name = self.file_name
+
             self.project_saver = ProjectSaver(self.file_name)
             self.project_saver.project_data = self.project_data
             self.project_saver.save_project_data()
@@ -1770,6 +1773,9 @@ class Map(QMainWindow, Ui_MainWindow):
                 self.db_manager.create_zones_table()
                 self.db_manager.create_regression_table()
                 self.db_manager.create_criteria_tables()
+
+                self.seismic_db = SeismicDatabaseManager(self.db_path)
+                self.seismic_db.create_tables()
                 
                 # Additional database initialization if needed
                 # For example, creating tables or setting up initial data
@@ -1978,34 +1984,14 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def dataload_segy(self):
         from DataLoadSegy import DataLoadSegy
-        # Create and launch the DataLoadSegy dialog
-        dialog = DataLoadSegy(self)
-
-        # Instead of using exec(), use Tkinter's way of interacting with dialogs.
-        dialog.load_segy_file()  # Opens file dialog and loads the SEGY file
-
-        # Now, assuming the file is loaded and SEGY data is available
-        if dialog.segy_file:
+        dialog = DataLoadSegy(self, self.db_path)
+        segy_file, accepted = dialog.exec()
+        if accepted and segy_file:
             self.seismic_data = dialog.get_seismic_data()
-        
             self.bounding_box = dialog.get_bounding_box()
-
-            if self.seismic_data and 'x_coords' in self.seismic_data and 'y_coords' in self.seismic_data:
-                # Build the KDTree for seismic data
-                seismic_coords = np.column_stack((self.seismic_data['x_coords'], self.seismic_data['y_coords']))
-                self.seismic_kdtree = KDTree(seismic_coords)
-
-                # Save the seismic data, bounding box, and KDTree
-                self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box, self.seismic_kdtree)
-            else:
-                print("Invalid seismic data: Missing 'x_coords' or 'y_coords'.")
-
-        # Save the seismic data and bounding box, even if the user canceled
-        self.project_saver.save_seismic_data(self.seismic_data, self.bounding_box)
-
-        # Display seismic data (assuming 10 is the page or trace limit)
-        self.display_seismic_data(10)
-
+            self.seismic_kdtree = dialog.get_kdtree()
+        else:
+            print("SEG-Y file selection cancelled or no file was selected.")
 
 
 
@@ -2450,34 +2436,41 @@ class Map(QMainWindow, Ui_MainWindow):
             self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
 
     def plot_data(self, UWI=None):
-    
         if not self.directional_surveys_df.empty and not self.depth_grid_data_df.empty:
             try:
                 if UWI:
-                    # Select data for the specified UWI
                     current_UWI = UWI
-
                 else:
-                    # Select data for the first UWI in the list (assuming this is the "current" UWI)
                     current_UWI = self.well_list[0]
-                
-
+            
                 if current_UWI not in self.well_list:
                     raise ValueError(f"UWI {current_UWI} not found in well list.")
-                
-                navigator = Plot(self.well_list, self.directional_surveys_df, self.depth_grid_data_df, self.grid_info_df, self.kd_tree_depth_grids, current_UWI, self.depth_grid_data_dict, self.master_df, self.seismic_data, self.seismic_kdtree, self.db_manager, parent=self)
+            
+                seismic_db_manager = SeismicDatabaseManager(self.db_path)
+            
+                navigator = Plot(
+                    self.well_list, 
+                    self.directional_surveys_df, 
+                    self.depth_grid_data_df, 
+                    self.grid_info_df, 
+                    self.kd_tree_depth_grids, 
+                    current_UWI, 
+                    self.depth_grid_data_dict,
+                    self.db_manager,
+                    seismic_db_manager,
+                    
+                    parent=self
+                )
+            
                 self.open_windows.append(navigator)
-                
                 navigator.show()
                 navigator.closed.connect(lambda: self.open_windows.remove(navigator))
-
-
+            
             except Exception as e:
                 print(f"Error initializing Plot: {e}")
                 self.show_info_message("Error", f"Failed to initialize plot navigator: {e}")
         else:
             self.show_info_message("Info", "No grid well data available to plot.")
-
 
     def plot_gun_barrel(self):
         from GunBarrel import PlotGB
