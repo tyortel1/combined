@@ -139,6 +139,15 @@ class StyledDropdown(StyledBaseWidget):
         return self.combo.currentIndexChanged
 
 
+    def setItemData(self, index, value):
+        """Set the data for the item at the given index."""
+        self.combo.setItemData(index, value)
+
+    def itemData(self, index):
+        """Get the data associated with the item at the given index."""
+        return self.combo.itemData(index)
+
+
 
 
         

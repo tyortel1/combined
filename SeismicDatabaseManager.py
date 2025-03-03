@@ -202,6 +202,29 @@ class SeismicDatabaseManager:
         finally:
             self.disconnect()
 
+    def list_all_seismic_files(self):
+        """List all seismic files in the database for debugging"""
+        self.connect()
+    
+        try:
+            query = "SELECT id, name, hdf5_path, original_segy_path FROM seismic_files"
+            self.cursor.execute(query)
+        
+            results = self.cursor.fetchall()
+        
+            print("All Seismic Files in Database:")
+            for row in results:
+                print(f"ID: {row[0]}, Name: {row[1]}, HDF5 Path: {row[2]}, SEG-Y Path: {row[3]}")
+        
+            return results
+    
+        except sqlite3.Error as e:
+            print(f"Error listing seismic files: {e}")
+            return []
+        finally:
+            self.disconnect()
+
+
     def delete_seismic_file(self, name=None, hdf5_path=None):
         """
         Delete seismic file entry and associated geometry

@@ -1,111 +1,113 @@
-from pathlib import Path
 import os
+import site
+import glob
+from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs, collect_data_files
 
 # Get the root directory of your project
-root_dir = os.path.dirname(os.path.abspath('Map2.py'))
+root_dir = os.path.abspath(".")
+site_packages = site.getsitepackages()[0]
 
+# Path to the SeisWare SDK folder
+seisware_path = r"C:\Users\jerem\AppData\Local\Programs\Python\Python312\Lib\site-packages\SeisWare"
+
+
+# List of specific SeisWare binaries to include
+seisware_binaries = [
+    (os.path.join(seisware_path, "libzmq-mt-4_3_0.dll"), "."),
+    (os.path.join(seisware_path, "SWSDKCore.dll"), "."),
+    (os.path.join(seisware_path, "msvcp140.dll"), "."),
+    (os.path.join(seisware_path, "vcruntime140.dll"), "."),
+    (os.path.join(seisware_path, "mfc140u.dll"), "."),
+    (os.path.join(seisware_path, "_seisware_sdk_312.pyd"), "."),
+]
+
+# Collect SeisWare data files
+seisware_datas = collect_data_files("SeisWare")
+
+# Auto-collect all installed Python packages and their dynamic libraries
+all_binaries = (
+    collect_dynamic_libs("numpy") + 
+    collect_dynamic_libs("pandas") + 
+    collect_dynamic_libs("matplotlib") + 
+    collect_dynamic_libs("scipy") + 
+    collect_dynamic_libs("SeisWare") + 
+    seisware_binaries
+)
+
+# Auto-collect all necessary data files from installed packages
+all_datas = (
+    collect_data_files("numpy") +
+    collect_data_files("pandas") +
+    collect_data_files("SeisWare") +
+    seisware_datas
+)
+
+# Auto-collect all installed modules (ensures nothing is missing)
+hidden_imports = collect_submodules("SeisWare") + collect_submodules("PySide6")
+
+# Add your custom modules manually (ensures they are included)
+hidden_imports += [
+    "CalculateCorrelationMatrix",
+    "CalculateCorrelations",
+    "CalculatePC",
+    "CalculateWellComparisons",
+    "CalculateZoneAttributes",
+    "Calculations",
+    "ColorEdit",
+    "ColumnSelectDialog",
+    "ComboBoxDelegate",
+    "CriteriaToZone",
+    "CrossPlot",
+    "DataLoadSegy",
+    "DataLoadWellZone",
+    "DataLoader",
+    "DatabaseManager",
+    "DateDelegate",
+    "DecisionTreeDialog",
+    "DeclineCurveAnalysis",
+    "DefaultProperties",
+    "DeleteZone",
+    "DrawingArea",
+    "EurNpv",
+    "GunBarrel",
+    "HighlightCriteriaDialog",
+    "ImportExcel",
+    "InZone",
+    "LaunchCombinedCashflow",
+    "LoadProductions",
+    "ModelProperties",
+    "Plot",
+    "PlotTotals",
+    "ProjectDialog",
+    "ProjectOpen",
+    "ProjectSaver",
+    "PudWellSelector",
+    "SaveDeclineCurveDialog",
+    "ScenarioNameDialog",
+    "SeisWareConnect",
+    "SwPropertiesEdit",
+    "UiMain",
+    "UiSetup",
+    "WellProperties",
+    "ZoneViewer",
+    "numeric_table_widget_item",
+    "StyledSliders",
+]
+
+# Create the Analysis object (✅ Only ONE `Analysis` block)
 a = Analysis(
-    ['Map2.py'],  # Your main script
-    pathex=[root_dir],
-    binaries=[],
+    ["Map2.py"],  # ✅ Use the main script, not debug_launcher.py
+    pathex=[root_dir, seisware_path] if os.path.exists(seisware_path) else [root_dir],
+    binaries=all_binaries,
     datas=[
-        # Ensure these paths are correctly included
-        (os.path.join(root_dir, 'Icons'), 'Icons'),
-        (os.path.join(root_dir, 'Palettes'), 'Palettes'),
-    ],
-    hiddenimports=[
-        # GUI
-        'PySide6.QtCore',
-        'PySide6.QtGui',
-        'PySide6.QtWidgets',
-        'PySide6.QtCharts',
-        'PySide6.QtPrintSupport',
-        'PySide6.QtSvg',
-        
-        # Scientific & Data Processing Packages
-        'numpy',
-        'pandas',
-        'matplotlib',
-        'matplotlib.backends.backend_qt5agg',
-        'matplotlib.backends.backend_qt5cairo',
-        'scipy',
-        'seaborn',
-        'segyio',
-        'shapely',
-        'sklearn',
-        'statsmodels',
-        'pingouin',
-        'plotly',
-        'mplcursors',
-        'openpyxl',
-        'ujson',
-        'pystray',
-        'cryptography',
-        'datrie',
-        'networkx',
-        'certifi',
-        'lxml',
-        'mpl_toolkits',
-        'PyPI',
-        'PySide6.QtTest',
-        
-        # Standard Library Modules (ensure explicit inclusion if needed)
-        'queue', 'html', 'http', 'ssl', 'unicodedata',
-        'uuid', 'email', 'urllib', 'tkinter', 'pickle', 'bz2', 'sqlite3',
-        'pyparsing', 'hashlib', 'termios', 'socks', 'py_compile', 'difflib',
-        'shlex', 'plistlib', 'tempfile', 'zipfile', 'fnmatch', 'calendar', 'logging',
-        
-        # Your Custom Modules
-        'CalculateCorrelationMatrix',
-        'CalculateCorrelations',
-        'CalculatePC',
-        'CalculateWellComparisons',
-        'CalculateZoneAttributes',
-        'Calculations',
-        'ColorEdit',
-        'ColumnSelectDialog',
-        'ComboBoxDelegate',
-        'CriteriaToZone',
-        'CrossPlot',
-        'DataLoadSegy',
-        'DataLoadWellZone',
-        'DataLoader',
-        'DatabaseManager',
-        'DateDelegate',
-        'DecisionTreeDialog',
-        'DeclineCurveAnalysis',
-        'DefaultProperties',
-        'DeleteZone',
-        'DrawingArea',
-        'EurNpv',
-        'GunBarrel',
-        'HighlightCriteriaDialog',
-        'ImportExcel',
-        'InZone',
-        'LaunchCombinedCashflow',
-        'LoadProductions',
-        'ModelProperties',
-        'Plot',
-        'PlotTotals',
-        'ProjectDialog',
-        'ProjectOpen',
-        'ProjectSaver',
-        'PudWellSelector',
-        'SaveDeclineCurveDialog',
-        'ScenarioNameDialog',
-        'SeisWare',
-        'SeisWareConnect',
-        'SwPropertiesEdit',
-        'UiMain',
-        'UiSetup',
-        'WellProperties',
-        'ZoneViewer',
-        'numeric_table_widget_item',
-    ],
+        (os.path.join(root_dir, "Icons"), "Icons"),
+        (os.path.join(root_dir, "Palettes"), "Palettes"),
+    ] + all_datas,
+    hiddenimports=hidden_imports,  # ✅ Ensures ALL dependencies are included
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
-    excludes=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets'], 
+    runtime_hooks=[],  # ✅ No runtime hooks needed
+    excludes=["PyQt5"],  # ✅ Exclude PyQt5 to prevent conflicts
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,
@@ -121,15 +123,15 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='Map2',
-    debug=False,
+    name="Map2",
+    debug=False,  # ✅ Debug mode is OFF
     bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
+    strip=False,  # ✅ No Linux tools
+    upx=True,  # ✅ UPX compression enabled (set to False if unstable)
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,  # Change to False for a windowless application
-    disable_windowed_traceback=False,
+    console=True,  # ✅ No console window (set to True for CLI)
+    disable_windowed_traceback=True,  # ✅ Prevents traceback pop-ups
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,

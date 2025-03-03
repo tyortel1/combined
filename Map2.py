@@ -19,7 +19,11 @@ from ZoneViewer import ZoneViewerDialog
 from SwPropertiesEdit import SWPropertiesEdit
 from Plot import Plot
 print("2")
-from SeisWare import seisware_sdk_312 as SeisWare
+
+import SeisWare
+print("SeisWare is loaded from:", SeisWare.__file__)
+
+
 from shapely.geometry import LineString, Point, MultiPoint, GeometryCollection
 from ProjectSaver import ProjectSaver
 from ProjectOpen import ProjectLoader# Import the DrawingArea class

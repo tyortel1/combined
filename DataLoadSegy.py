@@ -5,7 +5,8 @@ import struct
 import h5py
 from scipy.spatial import KDTree
 from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout, 
-                               QWidget, QFileDialog, QMessageBox, QProgressDialog, QLineEdit, QLabel)
+                               QWidget, QFileDialog, QMessageBox, QProgressDialog, QLineEdit, QLabel,
+                               QInputDialog)
 from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -53,22 +54,16 @@ class DataLoadSegy(QDialog):
         self.db_path = db_path
         self.sample_rate = None
 
-
-                # Create the database manager if we have a path
-        # Create the seismic database manager if we have a path
+        # Create the database manager if we have a path
         if self.db_path:
-            from SeismicDatabaseManager import SeismicDatabaseManager
             self.seismic_db = SeismicDatabaseManager(self.db_path)
-
         else:
             self.seismic_db = None
         
         self.setupUi()
   
-
     def setupUi(self):
         main_layout = QVBoxLayout(self)
-
 
         self.name_input = StyledInputBox("Name", "Enter seismic data name")
         main_layout.addWidget(self.name_input)
@@ -104,13 +99,10 @@ class DataLoadSegy(QDialog):
             self.segy_file = file_path
             self.process_segy_file(self.segy_file)
 
-
-
-
-
     def process_segy_file(self, file_path):
         segy_format = self.format_dropdown.currentText()
-        datum = float(self.datum_dropdown.currentText()) if self.datum_dropdown.currentText() != "Custom" else None
+        datum_text = self.datum_dropdown.currentText()
+        datum = float(datum_text) if datum_text != "Custom" else self.get_custom_datum()
 
         try:
             if segy_format == "SeisWare":
@@ -172,81 +164,93 @@ class DataLoadSegy(QDialog):
                     x_coords = np.array(x_coords)
                     y_coords = np.array(y_coords)
 
-                    # Compute Bounding Box
-                    self.bounding_box = None
-                    if len(x_coords) > 1 and len(y_coords) > 1:
-                        self.bounding_box = {
-                            'min_x': np.min(x_coords),
-                            'max_x': np.max(x_coords),
-                            'min_y': np.min(y_coords),
-                            'max_y': np.max(y_coords)
-                        }
-
-                        print("\n--- Computed Bounding Box (SeisWare) ---")
-                        print(f"X Min: {self.bounding_box['min_x']}, X Max: {self.bounding_box['max_x']}")
-                        print(f"Y Min: {self.bounding_box['min_y']}, Y Max: {self.bounding_box['max_y']}")
-
-                        if self.bounding_box['max_x'] <= self.bounding_box['min_x'] or self.bounding_box['max_y'] <= self.bounding_box['min_y']:
-                            print("ERROR: Invalid bounding box! Resetting.")
-                            self.bounding_box = None
-
-                    self.seismic_data = {
-                        'trace_data': trace_data,
-                        'time_axis': time_axis,
-                        'x_coords': x_coords,
-                        'y_coords': y_coords,
-                        'inlines': inlines,
-                        'crosslines': crosslines
-                    }
-
-            else:
+            else:  # Native SEG-Y format
                 with segyio.open(file_path, "r", ignore_geometry=True) as segyfile:
                     total_traces = segyfile.tracecount
                     if total_traces == 0:
-                        raise Exception("The SEG-Y file contains no traces.")
+                        raise Exception("The SEGY file contains no traces.")
 
-                    trace_data = segyfile.trace.raw[:]
+                    # Load all traces into memory
+                    trace_data = np.zeros((total_traces, segyfile.samples.size))
+                    inlines = np.zeros(total_traces)
+                    crosslines = np.zeros(total_traces)
+                    x_coords = np.zeros(total_traces)
+                    y_coords = np.zeros(total_traces)
                     time_axis = segyfile.samples
 
-                    x_coords = segyfile.attributes(segyio.TraceField.SourceX)[:]
-                    y_coords = segyfile.attributes(segyio.TraceField.SourceY)[:]
-                    inlines = segyfile.attributes(segyio.TraceField.INLINE_3D)[:]
-                    crosslines = segyfile.attributes(segyio.TraceField.CROSSLINE_3D)[:]
+                    print("Reading headers for all traces:")
 
-                    if len(time_axis) > 1:
-                        self.sample_rate = time_axis[1] - time_axis[0]
+                    with open(file_path, "rb") as f:
+                        # Read binary header first to get sample interval
+                        f.seek(3200)  # Move to binary header
+                        bin_header = f.read(400)
+                        sample_interval = struct.unpack(">H", bin_header[16:18])[0]
+                        num_samples = struct.unpack(">H", bin_header[20:22])[0]
+                        data_format = struct.unpack(">H", bin_header[24:26])[0]
+    
+                        # Convert sample interval to seconds
+                        self.sample_rate = sample_interval / 1000.0  # Convert milliseconds to seconds
+    
+                        print(f"Global Sample Interval: {sample_interval} ms")
+                        print(f"Number of Samples: {num_samples}")
+                        print(f"Data Format: {data_format}")
 
-                    print(f"\n--- SEG-Y (segyio) Information ---")
-                    print(f"Sample Rate: {self.sample_rate} sec")
-                    print(f"Time Axis Length: {len(time_axis)}")
-                    print(f"Trace Data Shape: {trace_data.shape}")
+                        time_axis = np.arange(0, num_samples * sample_interval / 1000, sample_interval / 1000)
 
-                    # Compute Bounding Box
+                        for i in range(total_traces):
+                            trace_data[i, :] = segyfile.trace[i]  # Read trace data
+    
+                            # Move to the trace header of the current trace
+                            header_offset = 3600 + i * (240 + segyfile.samples.size * 4)  # 3600 = textual + binary headers
+                            f.seek(header_offset)
+    
+                            # Read the 240-byte trace header
+                            trace_header = f.read(240)
+
+                            # Extract inline and crossline using segyio (for convenience)
+                            header = segyfile.header[i]
+                            inlines[i] = header[segyio.TraceField.INLINE_3D]
+                            crosslines[i] = header[segyio.TraceField.CROSSLINE_3D]
+
+                            # Manually extract X and Y from byte 181 and byte 185 (4-byte integers)
+                            x_bytes = struct.unpack(">i", trace_header[180:184])[0]  # 181st byte
+                            y_bytes = struct.unpack(">i", trace_header[184:188])[0]  # 185th byte
+
+                            x_coords[i] = x_bytes
+                            y_coords[i] = y_bytes
+
+                            print(f"Trace {i}: Inline={inlines[i]}, Crossline={crosslines[i]}, X={x_coords[i]}, Y={y_coords[i]}")
+
+
+
+            # Compute Bounding Box
+            self.bounding_box = None
+            if len(x_coords) > 1 and len(y_coords) > 1:
+                self.bounding_box = {
+                    'min_x': np.min(x_coords),
+                    'max_x': np.max(x_coords),
+                    'min_y': np.min(y_coords),
+                    'max_y': np.max(y_coords)
+                }
+
+                print("\n--- Computed Bounding Box ---")
+                print(f"X Min: {self.bounding_box['min_x']}, X Max: {self.bounding_box['max_x']}")
+                print(f"Y Min: {self.bounding_box['min_y']}, Y Max: {self.bounding_box['max_y']}")
+
+                if self.bounding_box['max_x'] <= self.bounding_box['min_x'] or self.bounding_box['max_y'] <= self.bounding_box['min_y']:
+                    print("ERROR: Invalid bounding box! Resetting.")
                     self.bounding_box = None
-                    if len(x_coords) > 1 and len(y_coords) > 1:
-                        self.bounding_box = {
-                            'min_x': np.min(x_coords),
-                            'max_x': np.max(x_coords),
-                            'min_y': np.min(y_coords),
-                            'max_y': np.max(y_coords)
-                        }
 
-                        print("\n--- Computed Bounding Box ---")
-                        print(f"X Min: {self.bounding_box['min_x']}, X Max: {self.bounding_box['max_x']}")
-                        print(f"Y Min: {self.bounding_box['min_y']}, Y Max: {self.bounding_box['max_y']}")
+            # Store seismic data
+            self.seismic_data = {
+                'trace_data': trace_data,
+                'time_axis': time_axis,
+                'x_coords': x_coords,
+                'y_coords': y_coords,
+                'inlines': inlines,
+                'crosslines': crosslines
 
-                        if self.bounding_box['max_x'] <= self.bounding_box['min_x'] or self.bounding_box['max_y'] <= self.bounding_box['min_y']:
-                            print("ERROR: Invalid bounding box! Resetting.")
-                            self.bounding_box = None
-
-                    self.seismic_data = {
-                        'trace_data': trace_data,
-                        'time_axis': time_axis,
-                        'x_coords': x_coords,
-                        'y_coords': y_coords,
-                        'inlines': inlines,
-                        'crosslines': crosslines
-                    }
+            }
 
             # Apply datum shift
             if datum is not None:
@@ -255,7 +259,7 @@ class DataLoadSegy(QDialog):
             # Plot the data
             self.segy_viewer.plot_segy_slice(self.seismic_data["trace_data"], self.seismic_data["time_axis"], slice_index=0)
 
-            # --- Moved this out of the try-except ---
+            # Save processed data
             if self.seismic_data and self.bounding_box:
                 try:
                     progress = QProgressDialog("Building KD-tree...", None, 0, 100, self)
@@ -288,13 +292,22 @@ class DataLoadSegy(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to process SEG-Y file: {str(e)}")
             return 0
 
+    def get_custom_datum(self):
+        """Get custom datum value from user using Qt dialog"""
+        value, ok = QInputDialog.getDouble(
+            self, "Custom Datum", 
+            "Enter seismic datum value:", 
+            2000, 0, 10000, 1
+        )
+        if ok:
+            return value
+        return 2000  # Default value if canceled
 
     def get_seismic_data(self):
         return self.seismic_data
 
     def get_bounding_box(self):
         return self.bounding_box
-
 
     def save_to_hdf5(self, hdf5_path):
         """Save seismic data and KD-tree to HDF5 file"""
@@ -350,6 +363,7 @@ class DataLoadSegy(QDialog):
             return False
         finally:
             progress.close()
+
     def build_kdtree(self):
         """Build KD-tree from coordinate data"""
         if self.seismic_data and 'x_coords' in self.seismic_data and 'y_coords' in self.seismic_data:
@@ -411,7 +425,6 @@ class DataLoadSegy(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save to database: {str(e)}")
             return False
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

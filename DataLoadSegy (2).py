@@ -77,22 +77,13 @@ class DataLoadSegy:
                 # Apply datum shift to the time axis
                 self.apply_datum_shift()
 
-                self.bounding_box = self.calculate_bounding_box()
+                min_x = np.min(self.x_coords)
+                max_x = np.max(self.x_coords)
+                min_y = np.min(self.y_coords)
+                max_y = np.max(self.y_coords)
+                return {"min_x": min_x, "max_x": max_x, "min_y": min_y, "max_y": max_y}
 
-                # Only plot the first 100 traces
-                num_traces_to_plot = min(100, total_traces)
-                plt.figure()
-                ax = plt.gca()
 
-                # Plot the first 100 traces as a seismic image
-                im = ax.imshow(self.trace_data[:num_traces_to_plot, :].T, cmap='seismic', aspect='auto',
-                               extent=[0, num_traces_to_plot, self.time_axis[-1], self.time_axis[0]])
-
-                ax.set_title(f"First {num_traces_to_plot} SEGY Traces (Seismic Image)")
-                ax.set_xlabel("Trace Number")
-                ax.set_ylabel("Time (ms)")
-                plt.colorbar(im, ax=ax, label="Amplitude")
-                plt.show()
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
@@ -111,12 +102,7 @@ class DataLoadSegy:
         except ValueError:
             messagebox.showerror("Error", "Invalid datum value. Please enter a valid number.")
 
-    def calculate_bounding_box(self):
-        min_x = np.min(self.x_coords)
-        max_x = np.max(self.x_coords)
-        min_y = np.min(self.y_coords)
-        max_y = np.max(self.y_coords)
-        return {"min_x": min_x, "max_x": max_x, "min_y": min_y, "max_y": max_y}
+
 
     def get_seismic_data(self):
         return {

@@ -5,7 +5,12 @@ import pandas as pd
 import h5py
 from scipy.spatial import KDTree
 from scipy import interpolate
+from scipy.interpolate import griddata
 from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
+
+
+
 
 # PySide6 Core, GUI, and Widgets
 from PySide6.QtCore import Qt, Signal, QRectF, QUrl
@@ -73,6 +78,7 @@ class SeismicGraphicsView(QGraphicsView):
         self.last_smoothed_data = None
         self.last_max_abs_value = None
         self.original_colors = None
+        self.seismic_time_axis = None
         
         # Scale factors for coordinate transformation
         self.scale_x = 1.0
@@ -80,278 +86,91 @@ class SeismicGraphicsView(QGraphicsView):
 
 
 
-    def update_seismic_data(self, seismic_data, well_coords, combined_distances, time_axis, grid_start, grid_end):
-
-
-        if seismic_data is None or self.seismic_kdtree is None:
-            print("DEBUG: seismic_data or kdtree is None")
-            return
-
+    def update_seismic_data(self, seismic_data, seismic_distances, time_axis):
         try:
-            distances, indices = self.seismic_kdtree.query(well_coords)
+            # Print the shape to debug
+            print(f"Seismic data shape: {seismic_data.shape}")
+            print(f"Time axis length: {len(time_axis)}")
+            print(f"Distance axis length: {len(seismic_distances)}")
         
+            # Verify dimensions
+            if seismic_data.shape[0] != len(time_axis) or seismic_data.shape[1] != len(seismic_distances):
+                print("❌ WARNING: Dimensions mismatch between data and axes")
+                # If mismatch, we need to correct it - time should be on rows, distance on columns
+                if seismic_data.shape[0] == len(seismic_distances) and seismic_data.shape[1] == len(time_axis):
+                    print("Transposing seismic data to match axes")
+                    seismic_data = seismic_data.T
 
-            # Add distance-based filtering
-            max_distance = 100  # Maximum distance in same units as your coordinates
-            valid_traces = distances <= max_distance
-            indices = indices[valid_traces]
-            filtered_distances = distances[valid_traces]
-
-            seismic_trace_amplitudes = self.seismic_data['trace_data'][indices, :]
-
-            # Vectorized construction of seismic data
-            seismic_time_axis = np.tile(self.seismic_data['time_axis'], len(combined_distances))
-            seismic_amplitude_flattened = seismic_trace_amplitudes.flatten()
-
-            UWI_seismic_data = np.column_stack((
-                np.repeat(well_coords[:, 0], len(self.seismic_data['time_axis'])),
-                np.repeat(well_coords[:, 1], len(self.seismic_data['time_axis'])),
-                np.repeat(combined_distances, len(self.seismic_data['time_axis'])),
-                seismic_time_axis,
-                seismic_amplitude_flattened
-            ))
-
-            seismic_df = pd.DataFrame(UWI_seismic_data, columns=['x', 'y', 'cumulative_distance', 'time', 'amplitude'])
-            seismic_df = seismic_df.drop_duplicates(subset=['time', 'cumulative_distance'])
-            seismic_df = seismic_df.sort_values(['cumulative_distance', 'time'])
-
-            # Create a regular grid for interpolation
-            unique_distances = np.linspace(grid_start, grid_end, num=500)
-            unique_times = np.sort(seismic_df['time'].unique())
-            grid_distances, grid_times = np.meshgrid(unique_distances, unique_times)
-
-            # Perform 2D interpolation
-            points = seismic_df[['cumulative_distance', 'time']].values
-            values = seismic_df['amplitude'].values
-            interpolated_data = interpolate.griddata(points, values, (grid_distances, grid_times), method='cubic', fill_value=0)
-
-            # Apply Gaussian smoothing
-            smoothed_data = gaussian_filter(interpolated_data, sigma=(5, 2))  # Adjust sigma as needed
-
-
-            # Normalize the smoothed data
-            max_abs_value = np.max(np.abs(interpolated_data))
-            self.last_smoothed_data = smoothed_data
+            
+            self.last_smoothed_data = seismic_data
+            max_abs_value = np.max(np.abs(seismic_data))
+            if max_abs_value == 0:
+                max_abs_value = 1.0  # Prevent division by zero
             self.last_max_abs_value = max_abs_value
-            # Create image
-            height, width = interpolated_data.shape
-            image = QImage(width, height, QImage.Format_RGB32)
-
-            # Get color palette from the seismic colorbar
+            # Get dimensions - we expect time on rows (y) and distance on cols (x)
+            num_time_samples, num_dist_samples = seismic_data.shape
+        
+            # Create image - CRITICAL: Width = distance (columns), Height = time (rows)
+            image = QImage(num_dist_samples, num_time_samples, QImage.Format_RGB32)
+            image.fill(Qt.white)  # Start with white background
+        
+            # Get color palette
             color_palette = self.parent().seismic_colorbar.selected_color_palette
             self.parent().seismic_colorbar.display_color_range(-max_abs_value, max_abs_value)
-            self.parent().seismic_range_slider.setRange(-max_abs_value, max_abs_value)
-            self.parent().seismic_range_slider.setValue([-max_abs_value, max_abs_value])
-            
-            # Ensure color palette is available
-            assert color_palette is not None and len(color_palette) > 0, "Color palette must be provided"
-
-            # ✅ Store original colors in the parent so `update_seismic_range` can read them
-            self.parent().original_colors = np.zeros((height, width), dtype=object)
-
-            # Map data to color palette
-            for i in range(height):
-                for j in range(width):
-                    # Scale the value relative to max_abs_value
-                    scaled_value = smoothed_data[i, j] / max_abs_value
-
-                    # Map scaled value to palette index
+        
+            # Fill image with seismic data - x is distance (columns), y is time (rows)
+            for y in range(num_time_samples):     # Loop through time samples (rows)
+                for x in range(num_dist_samples):  # Loop through distance samples (columns)
+                    # Normalize value between -1 and 1
+                    scaled_value = seismic_data[y, x] / max_abs_value
+                    # Map to palette index
                     palette_index = int(((scaled_value + 1) / 2) * (len(color_palette) - 1))
                     palette_index = max(0, min(palette_index, len(color_palette) - 1))
-
+                
                     color = color_palette[palette_index]
-                    image.setPixelColor(j, i, color)
-
-                    # ✅ Save to parent `original_colors`
-                    self.parent().original_colors[i, j] = color  # Now accessible by `update_seismic_range`
-
+                    # Qt coordinates: (0,0) is top-left, y increases downward
+                    image.setPixelColor(x, y, color)
+        
+            # Convert to QPixmap and display
             pixmap = QPixmap.fromImage(image)
 
-            # Create and position the seismic item
+        
+            # Add new pixmap to scene
             self.seismic_item = self.scene_obj.addPixmap(pixmap)
             self.seismic_item.setZValue(0)
-
-
-            # Set position and scale
-            min_distance = grid_start
-            max_distance = grid_end
-            min_time = min(time_axis)
-            max_time = max(time_axis)
-            self.seismic_item.setPos(min_distance, min_time)
-
-            distance_range = max_distance - min_distance
-            time_range = max_time - min_time
-
-            scale_x = distance_range / width
-            scale_y = time_range / height
-            self.seismic_item.setScale(scale_x)
-            self.seismic_item.setTransform(QTransform().scale(1, scale_y / scale_x), True)
-
-            # Add timing lines
-            time_step = time_range / 10  # 10 intervals
-            time_intervals = np.arange(min_time, max_time, time_step)
-            self.add_timing_lines(time_intervals)
-
-
-
+        
+            # Positioning logic
+            if len(seismic_distances) > 0:
+                # Set position to top-left corner of our data area
+                min_distance = min(seismic_distances)
+                min_time = min(time_axis)
+            
+                # Place the image at the correct starting position
+                self.seismic_item.setPos(min_distance, min_time)
+            
+                # Calculate scaling to match the actual ranges
+                distance_range = max(seismic_distances) - min_distance
+                time_range = max(time_axis) - min_time
+            
+                # Scale factors for x and y dimensions
+                scale_x = distance_range / num_dist_samples
+                scale_y = time_range / num_time_samples
+            
+                # Apply scaling
+                transform = QTransform()
+                transform.scale(scale_x, scale_y)
+                self.seismic_item.setTransform(transform)
+            
+                print(f"Scaled seismic image: x={scale_x}, y={scale_y}")
+        
         except Exception as e:
             print(f"Error updating seismic data: {e}")
             import traceback
             traceback.print_exc()
-    
 
 
 
-    def load_seismic_data(self, well_coords, cumulative_distances, seismic_kdtree, seismic_data):
-        self.seismic_data = seismic_data
-        """
-        Load and process seismic data for the current well path
-    
-        Args:
-            well_coords (np.ndarray): X and Y coordinates of well path
-            cumulative_distances (np.ndarray): Cumulative distances along well path
-            seismic_kdtree (KDTree): KD-Tree of seismic coordinates
-    
-        Returns:
-            dict: Processed seismic data with trace_data, time_axis, and distance_axis
-        """
-        if seismic_data is None:
-            print("No seismic data available")
-            return None
 
-        try:
-
-
-            # Batch query for all well path points to find nearest seismic traces
-            distances, indices = seismic_kdtree.query(well_coords)
-  
-
-            # Add distance-based filtering
-            max_distance = 100  # Maximum distance in same units as your coordinates
-            valid_traces = distances <= max_distance
-            indices = indices[valid_traces]
-            filtered_distances = distances[valid_traces]
-
-            seismic_trace_amplitudes = self.seismic_data['trace_data'][indices, :]
-
-            # Vectorized construction of seismic data
-            seismic_time_axis = np.tile(self.seismic_data['time_axis'], len(cumulative_distances))
-            seismic_amplitude_flattened = seismic_trace_amplitudes.flatten()
-
-            UWI_seismic_data = np.column_stack((
-                np.repeat(well_coords[:, 0], len(self.seismic_data['time_axis'])),
-                np.repeat(well_coords[:, 1], len(self.seismic_data['time_axis'])),
-                np.repeat(cumulative_distances, len(self.seismic_data['time_axis'])),
-                seismic_time_axis,
-                seismic_amplitude_flattened
-            ))
-
-            seismic_df = pd.DataFrame(UWI_seismic_data, columns=['x', 'y', 'cumulative_distance', 'time', 'amplitude'])
-            seismic_df = seismic_df.drop_duplicates(subset=['time', 'cumulative_distance'])
-            seismic_df = seismic_df.sort_values(['cumulative_distance', 'time'])
-
-            # Create a regular grid for interpolation
-            unique_distances = np.linspace(seismic_df['cumulative_distance'].min(),
-                                           seismic_df['cumulative_distance'].max(),
-                                           num=500)
-            unique_times = np.sort(seismic_df['time'].unique())
-            grid_distances, grid_times = np.meshgrid(unique_distances, unique_times)
-
-            # Perform 2D interpolation
-            points = seismic_df[['cumulative_distance', 'time']].values
-            values = seismic_df['amplitude'].values
-            interpolated_data = interpolate.griddata(points, values, (grid_distances, grid_times), method='cubic', fill_value=0)
-
-            # Apply Gaussian smoothing
-            smoothed_data = gaussian_filter(interpolated_data, sigma=(5, 2))  # Adjust sigma as needed
-
-            # Create a new DataFrame with the smoothed data
-            smoothed_df = pd.DataFrame({
-                'cumulative_distance': grid_distances.flatten(),
-                'time': grid_times.flatten(),
-                'amplitude': smoothed_data.flatten()
-            })
-
-            seismic_data = smoothed_df.pivot(index='time', columns='cumulative_distance', values='amplitude').values
-            seismic_distances = unique_distances
-            seismic_time_axis = unique_times[::-1]  # Reverse the time axis if needed
-
-            max_amplitude = np.max(np.abs(seismic_data))
-
-            return {
-                'trace_data': seismic_data,
-                'time_axis': seismic_time_axis,
-                'distance_axis': seismic_distances
-            }
-
-        except Exception as e:
-            print(f"Error processing seismic data: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
-
-    def add_timing_lines(self, time_intervals, color=(200, 200, 200)):
-        # Remove existing timing lines
-        for line in getattr(self, 'timing_lines', []):
-            self.scene_obj.removeItem(line)
-        self.timing_lines = []
-
-        if not self.seismic_item:
-            return
-
-        seismic_rect = self.seismic_item.boundingRect()
-        seismic_pos = self.seismic_item.pos()
-        start_x = seismic_pos.x()
-        end_x = start_x + seismic_rect.width() * self.seismic_item.scale()
-
-        for time in time_intervals:
-            y = seismic_pos.y() + time * self.seismic_item.transform().m22()
-            line = self.scene_obj.addLine(start_x, y, end_x, y, QPen(QColor(*color)))
-            line.setZValue(1)  # Above seismic, below well path
-            self.timing_lines.append(line)
-
-            # Add time label
-            label = self.scene_obj.addText(f"{time:.0f}")
-            label.setPos(start_x - 40, y - 10)  # Adjust position as needed
-            label.setDefaultTextColor(QColor(*color))
-            self.timing_lines.append(label)
-
-
-    def updateTimingLines(self):
-        """Update timing lines dynamically when tick size or zoom changes."""
-        if not hasattr(self, 'seismic_item') or self.seismic_item is None:
-            return
-
-        # ✅ Clear existing timing lines before adding new ones
-        for line in getattr(self, 'timing_lines', []):
-            self.scene_obj.removeItem(line)
-        self.timing_lines = []
-
-        # ✅ Calculate timing intervals based on seismic data
-        time_step = (max(self.seismic_data['time_axis']) - min(self.seismic_data['time_axis'])) / 10
-        time_intervals = np.arange(min(self.seismic_data['time_axis']), max(self.seismic_data['time_axis']), time_step)
-
-        # ✅ Refresh timing lines
-        seismic_rect = self.seismic_item.boundingRect()
-        seismic_pos = self.seismic_item.pos()
-        start_x = seismic_pos.x()
-        end_x = start_x + seismic_rect.width() * self.seismic_item.scale()
-
-        for time in time_intervals:
-            y = seismic_pos.y() + time * self.seismic_item.transform().m22()
-
-            # ✅ Darker color for visibility
-            line = self.scene_obj.addLine(start_x, y, end_x, y, QPen(QColor(100, 100, 100), 1))
-            line.setZValue(2)  # Ensure it's visible above seismic but below well path
-            self.timing_lines.append(line)
-
-            # ✅ Add time label
-            label = self.scene_obj.addText(f"{time:.0f}")
-            label.setPos(start_x - 40, y - 10)  # Adjust position
-            label.setDefaultTextColor(QColor(200, 200, 200))  # Lighter but visible text
-            self.timing_lines.append(label)
-
-        print("✅ Timing Lines Updated")
 
     def update_well_path(self, path_points):
         """Update well path display"""
@@ -476,37 +295,112 @@ class SeismicGraphicsView(QGraphicsView):
             self.centerOn(sceneRect.center())
 
 
-    def add_timing_lines(self, time_intervals, color=(50, 50, 50)):  # Darker gray or black
-        """Add dark timing lines to the scene."""
+    def add_timing_lines(self, time_intervals, distance_intervals=None, color=(50, 50, 50)):
+        """
+        Add clear timing lines to the scene.
+    
+        Args:
+            time_intervals: List of time values to mark with horizontal lines
+            distance_intervals: Optional list of distance values to mark with vertical lines
+            color: RGB tuple for line color
+        """
         # Remove existing timing lines
         for line in getattr(self, 'timing_lines', []):
-            self.scene_obj.removeItem(line)
+            try:
+                self.scene_obj.removeItem(line)
+            except:
+                pass
         self.timing_lines = []
-
-        if not self.seismic_item:
+    
+        # Early return if no seismic item
+        if not hasattr(self, 'seismic_item') or self.seismic_item is None:
             return
-
-        seismic_rect = self.seismic_item.boundingRect()
-        seismic_pos = self.seismic_item.pos()
-        start_x = seismic_pos.x()
-        end_x = start_x + seismic_rect.width() * self.seismic_item.scale()
-
+    
+        # Get scene dimensions
+        scene_rect = self.scene_obj.sceneRect()
+    
+        # Get seismic data boundaries
+        pixmap_rect = self.seismic_item.boundingRect()
+        transform = self.seismic_item.transform()
+        pos = self.seismic_item.pos()
+    
+        # Calculate actual seismic bounds in scene coordinates
+        seismic_left = pos.x()
+        seismic_right = seismic_left + pixmap_rect.width() * transform.m11()
+        seismic_top = pos.y()
+        seismic_bottom = seismic_top + pixmap_rect.height() * transform.m22()
+    
+        # Add horizontal time lines
         for time in time_intervals:
-            y = seismic_pos.y() + time * self.seismic_item.transform().m22()
-
-            # ✅ Darker timing line
-            line = self.scene_obj.addLine(start_x, y, end_x, y, QPen(QColor(*color), 1.5))  # Thicker & darker
-            line.setZValue(2)  # Above seismic data
-
+            # Calculate y coordinate for this time value
+            y = seismic_top + (time - min(time_intervals)) * transform.m22() * pixmap_rect.height() / (max(time_intervals) - min(time_intervals))
+        
+            # Add line across the entire scene width
+            line = self.scene_obj.addLine(
+                scene_rect.left(), y, scene_rect.right(), y, 
+                QPen(QColor(*color), 1)
+            )
+            line.setZValue(3)  # Above seismic
             self.timing_lines.append(line)
-
-            # ✅ Darker text labels for timing lines
-            label = self.scene_obj.addText(f"{time:.0f}")
-            label.setPos(start_x - 40, y - 10)
+        
+            # Add label that won't be upside down
+            # Create a label with correct orientation
+            text = f"{time:.0f}"
+            label = self.scene_obj.addText(text)
+            label.setPos(seismic_left - 40, y - 10)
+        
+            # For correctly oriented text, use a QGraphicsTextItem with a transform
+            label.setTransform(QTransform().scale(1, -1))  # Flip text vertically
             label.setDefaultTextColor(QColor(*color))
             self.timing_lines.append(label)
+    
+        # Add vertical distance lines if provided
+        if distance_intervals is not None:
+            for distance in distance_intervals:
+                # Calculate x coordinate for this distance value
+                x = seismic_left + (distance - min(distance_intervals)) * transform.m11() * pixmap_rect.width() / (max(distance_intervals) - min(distance_intervals))
+            
+                # Add line from top to bottom of seismic
+                line = self.scene_obj.addLine(
+                    x, scene_rect.top(), x, scene_rect.bottom(), 
+                    QPen(QColor(*color), 1, Qt.DashLine)
+                )
+                line.setZValue(3)
+                self.timing_lines.append(line)
+            
+                # Add distance label
+                text = f"{distance:.0f}"
+                label = self.scene_obj.addText(text)
+                label.setPos(x - 20, seismic_bottom + 10)
+            
+                # Fix orientation
+                label.setTransform(QTransform().scale(1, -1))
+                label.setDefaultTextColor(QColor(*color))
+                self.timing_lines.append(label)
 
-      
+    def updateTimingLines(self):
+        """Update timing lines based on current seismic data"""
+        if not hasattr(self, 'seismic_time_axis') or self.seismic_time_axis is None:
+            return
+        
+        # Calculate time intervals (10 divisions)
+        time_min = min(self.seismic_time_axis)
+        time_max = max(self.seismic_time_axis)
+        time_step = (time_max - time_min) / 10
+        time_intervals = np.linspace(time_min, time_max, 11)
+    
+        # Calculate distance intervals if available
+        distance_intervals = None
+        if hasattr(self, 'raw_distance_axis') and self.raw_distance_axis is not None:
+            distance_min = min(self.raw_distance_axis)
+            distance_max = max(self.raw_distance_axis)
+            distance_step = (distance_max - distance_min) / 10
+            distance_intervals = np.linspace(distance_min, distance_max, 11)
+    
+        # Add the timing lines
+        self.add_timing_lines(time_intervals, distance_intervals)
+
+
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
@@ -643,6 +537,8 @@ class Plot(QDialog):
             # Initialize seismic-related attributes
         self.seismic_data = None
         self.seismic_kdtree = None
+        self.seismic_bounding_box = None
+        self.current_hdf5_path =None
         self.intersecting_files = []
 
 
@@ -985,7 +881,9 @@ class Plot(QDialog):
                     well_y_max >= file_info['geometry']['y_min']):
                     intersecting_files.append(file_info)
                 
+            
             return intersecting_files
+
         
         except Exception as e:
             print(f"Error checking seismic intersections: {e}")
@@ -1132,103 +1030,45 @@ class Plot(QDialog):
         self.plot_widget.update()
 
 
-    def load_seismic_data_from_hdf5(self, hdf5_path):
-        """
-        Load seismic data from an HDF5 file
-    
-        Args:
-            hdf5_path (str): Path to the HDF5 file
-    
-        Returns:
-            dict: Loaded seismic data and KD-tree
-        """
-        try:
-            with h5py.File(hdf5_path, 'r') as f:
-                # Load seismic data
-                seismic_group = f['seismic_data']
-                seismic_data = {
-                    'trace_data': seismic_group['trace_data'][:],
-                    'time_axis': seismic_group['time_axis'][:],
-                    'distance_axis': seismic_group['distance_axis'][:]
-                }
-            
-                # Create KD-Tree for seismic data
-                seismic_coords = np.column_stack((
-                    np.repeat(seismic_data['distance_axis'], len(seismic_data['time_axis'])),
-                    np.tile(seismic_data['time_axis'], len(seismic_data['distance_axis']))
-                ))
-                seismic_kdtree = KDTree(seismic_coords)
-            
-                return {
-                    'seismic_data': seismic_data,
-                    'seismic_kdtree': seismic_kdtree
-                }
-    
-        except Exception as e:
-            print(f"Error loading seismic data from HDF5: {e}")
-            return None
 
     def update_seismic_selector(self):
-        """Update seismic selector with intersecting volumes"""
         try:
+            # Block signals to prevent premature triggers
             self.seismic_selector.blockSignals(True)
-            self.seismic_selector.clear()
-        
+            self.seismic_selector.combo.clear()  # Use .combo to clear
+
             # Reset seismic-related attributes
             self.seismic_data = None
             self.seismic_kdtree = None
-        
+
             # Get well coordinates
             well_coords = np.column_stack((
                 self.current_well_data['X Offset'],
                 self.current_well_data['Y Offset']
             ))
-        
+
             # Find intersecting seismic files
             intersecting_files = self.get_intersecting_seismic_files(well_coords)
-        
+            print(intersecting_files)
+
             # Process intersecting files
             for file_info in intersecting_files:
-                display_name = os.path.basename(file_info.get('original_segy_path', 'Unknown'))
-                hdf5_path = file_info.get('hdf5_path')
-        
-                if hdf5_path and os.path.exists(hdf5_path):
-                    self.seismic_selector.addItem(display_name, hdf5_path)
-        
-            # Automatically load first file if available
-            if self.seismic_selector.count() > 0:
-                first_hdf5_path = self.seismic_selector.itemData(0)
-                loaded_data = self.load_seismic_data_from_hdf5(first_hdf5_path)
-            
-                if loaded_data:
-                    self.seismic_data = loaded_data['seismic_data']
-                    self.seismic_kdtree = loaded_data['seismic_kdtree']
-    
+            # Use the database name field for display
+                display_name = file_info.get('name', 'Unknown')
+                self.seismic_selector.combo.addItem(display_name)
+
+            # Automatically select first file if available
+            if self.seismic_selector.combo.count() > 0:
+                self.seismic_selector.combo.setCurrentIndex(0)
+
         except Exception as e:
             print(f"Error updating seismic selector: {e}")
-    
+            import traceback
+            traceback.print_exc()
         finally:
             self.seismic_selector.blockSignals(False)
 
-    def on_seismic_selected(self, index):
-        """Handle seismic volume selection"""
-        try:
-            # Get the HDF5 path from the current item's data
-            hdf5_path = self.seismic_selector.itemData(index)
-        
-            if hdf5_path and os.path.exists(hdf5_path):
-                loaded_data = self.load_seismic_data_from_hdf5(hdf5_path)
-            
-                if loaded_data:
-                    self.seismic_data = loaded_data['seismic_data']
-                    self.seismic_kdtree = loaded_data['seismic_kdtree']
-                
-                    # Replot the current well with new seismic data
-                    self.plot_current_well()
-    
-        except Exception as e:
-            print(f"Error loading seismic data: {e}")
-            QMessageBox.warning(self, "Seismic Load Error", f"Could not load seismic data: {e}")
+
 
     def update_tick_size_value_label(self):
         value = self.tick_size_slider.value()
@@ -1259,6 +1099,8 @@ class Plot(QDialog):
         
         smoothed_data = self.plot_widget.last_smoothed_data
         max_abs_value = self.plot_widget.last_max_abs_value
+
+
     
         # Vectorized scaling
         scaled_values = ((smoothed_data / max_abs_value) + 1) / 2
@@ -1411,62 +1253,283 @@ class Plot(QDialog):
 
 
     def populate_seismic_selector(self):
-        """
-        Populate seismic selector with pre-fetched intersecting seismic files
-        and set the first seismic file as the selection
-        """
         try:
-            # Block signals to prevent multiple triggers during population
             self.seismic_selector.blockSignals(True)
             self.seismic_selector.clear()
-
-            # Check if intersecting files exist
+        
             if not self.intersecting_files:
                 print("No intersecting seismic files found.")
                 return
-
-            # Process and add intersecting files to selector
-            valid_files_count = 0
+            
             for file_info in self.intersecting_files:
-                # Extract display name and HDF5 path
-                display_name = os.path.basename(file_info.get('original_segy_path', 'Unknown'))
-                hdf5_path = file_info.get('hdf5_path')
-        
-                # Validate HDF5 file existence
-                if hdf5_path and os.path.exists(hdf5_path):
-                    self.seismic_selector.addItem(display_name, hdf5_path)
-                    valid_files_count += 1
-                else:
-                    print(f"Warning: Invalid HDF5 path for {display_name}: {hdf5_path}")
-
-            # Log number of valid files
-            print(f"Added {valid_files_count} valid seismic files to selector")
-
-            # Set the first item as the selection if files exist
-            if valid_files_count > 0:
-                # Set the current index to the first item
+                # Use database name field instead of extracting from path
+                display_name = file_info.get('name', 'Unknown')
+                self.seismic_selector.addItem(display_name)
+            
+            if self.seismic_selector.count() > 0:
                 self.seismic_selector.setCurrentIndex(0)
-            
                 # Manually trigger the selection of the first item
-                first_hdf5_path = self.seismic_selector.itemData(0)
+                self.on_seismic_selected(0)
             
-                try:
-                    # Use existing method to load seismic data
-                    self.load_seismic_from_hdf5(first_hdf5_path)
-                    print(f"Successfully loaded seismic data from: {first_hdf5_path}")
-                except Exception as load_error:
-                    print(f"Error loading seismic data from {first_hdf5_path}: {load_error}")
-                    import traceback
-                    traceback.print_exc()
-
         except Exception as e:
             print(f"Unexpected error in populate_seismic_selector: {e}")
             import traceback
             traceback.print_exc()
-
         finally:
-            # Always unblock signals, even if an error occurs
             self.seismic_selector.blockSignals(False)
+
+    def on_seismic_selected(self, index):
+        try:
+            # Get the selected seismic name from the combo box
+            selected_display_name = self.seismic_selector.combo.currentText()
+            if not selected_display_name:
+                print("No seismic selected")
+                return
+        
+            print(f"Selected display name: {selected_display_name}")
+        
+            # Get file info by name
+            file_info = self.seismic_db_manager.get_seismic_file_info(name=selected_display_name)
+            print(f"File info: {file_info}")
+        
+            if not file_info:
+                print(f"Could not find seismic data info for: {selected_display_name}")
+                return
+        
+            # Extract HDF5 path
+            hdf5_path = file_info.get('hdf5_path')
+            print(f"HDF5 path from file_info: {hdf5_path}")
+        
+            if not hdf5_path:
+                print("No HDF5 path found in file info")
+                return
+        
+            # Verify file exists
+            if not os.path.exists(hdf5_path):
+                print(f"HDF5 file does not exist at path: {hdf5_path}")
+                return
+        
+            # Explicitly set the HDF5 path
+            self.current_hdf5_path = hdf5_path
+            print(f"Set self.current_hdf5_path to: {self.current_hdf5_path}")
+        
+            # Update the visualization
+            self.plot_current_well()
+        
+        except Exception as e:
+            print(f"Error in on_seismic_selected: {e}")
+            import traceback
+            traceback.print_exc()
+            
+
+
+
+
+
+
+    def plot_current_well(self):
+        """Find the closest seismic trace for each well point, store it, and interpolate the data."""
+        try:
+            # Clear scene before replotting
+            if self.plot_widget.scene_obj.items():
+                self.plot_widget.scene_obj.clear()
+
+            # ✅ Step 1: Load Well Data
+            self.current_well_data = self.directional_surveys_df[
+                self.directional_surveys_df['UWI'] == self.current_UWI
+            ].reset_index(drop=True)
+
+            if self.current_well_data.empty:
+                print(f"⚠ No well data found for UWI: {self.current_UWI}")
+                return
+
+            # ✅ Extract well coordinates and cumulative distances
+            well_coords = np.column_stack((self.current_well_data['X Offset'], self.current_well_data['Y Offset']))
+            self.tvd_values = self.current_well_data['TVD'].tolist()
+            self.combined_distances = np.array(self.current_well_data['Cumulative Distance'])
+
+            # ✅ Step 2: Verify HDF5 Path
+            if not self.current_hdf5_path or not os.path.exists(self.current_hdf5_path):
+                print("❌ ERROR: HDF5 file does not exist or is invalid!")
+                return
+
+            # ✅ Step 3: Open HDF5 File and Check Contents
+            with h5py.File(self.current_hdf5_path, 'r') as f:
+                if 'seismic_data' not in f:
+                    print("❌ ERROR: 'seismic_data' group not found in HDF5 file!")
+                    return
+                seismic_group = f['seismic_data']
+
+                # ✅ Ensure all required datasets exist
+                required_datasets = ['trace_data', 'time_axis', 'x_coords', 'y_coords']
+                for dataset in required_datasets:
+                    if dataset not in seismic_group:
+                        print(f"❌ ERROR: '{dataset}' dataset not found in seismic_data group!")
+                        return
+
+                # ✅ Load required datasets
+                time_axis = seismic_group['time_axis'][:]
+                x_coords = seismic_group['x_coords'][:]
+                y_coords = seismic_group['y_coords'][:]
+
+                if 'kdtree' in f:
+                    kdtree_data = f['kdtree']['data'][:]
+                    leafsize = f['kdtree'].attrs.get('leafsize', 16)
+                    seismic_kdtree = KDTree(kdtree_data, leafsize=leafsize)
+                else:
+                    # Fallback to creating a new KDTree if not found
+                    seismic_coords = np.column_stack((x_coords, y_coords))
+                    seismic_kdtree = KDTree(seismic_coords)
+
+                # ✅ Step 5: Query Nearest Seismic Traces
+                distances, indices = seismic_kdtree.query(well_coords)
+
+                # ✅ Step 6: Ensure indices are valid
+                max_index = seismic_group['trace_data'].shape[0] - 1
+                indices = np.clip(indices, 0, max_index)
+
+                # ✅ Step 7: Read Seismic Traces One by One
+                seismic_trace_amplitudes = []
+                for idx in indices:
+                    try:
+                        trace = seismic_group['trace_data'][idx, :]
+                        seismic_trace_amplitudes.append(trace)
+                    except Exception as e:
+                        print(f"❌ ERROR: Failed to load trace for index {idx}: {e}")
+
+                seismic_trace_amplitudes = np.array(seismic_trace_amplitudes)
+
+
+                # ✅ Step 8: Construct Seismic Data DataFrame
+            seismic_section = np.zeros((len(time_axis), len(self.combined_distances)))
+            for i in range(len(self.combined_distances)):
+                seismic_section[:, i] = seismic_trace_amplitudes[i]
+            
+            # Save this for later reference
+            self.raw_seismic_section = seismic_section
+            self.raw_time_axis = time_axis
+            self.raw_distance_axis = self.combined_distances
+
+            # ✅ Step 9: Create the DataFrame row by row (avoid complex reshaping)
+            print("🔍 Creating seismic DataFrame...")
+            seismic_data_rows = []
+            for i in range(len(self.combined_distances)):
+                x = well_coords[i, 0]
+                y = well_coords[i, 1]
+                distance = self.combined_distances[i]
+            
+                for j, t in enumerate(time_axis):
+                    amplitude = seismic_trace_amplitudes[i][j]
+                    seismic_data_rows.append([x, y, distance, t, amplitude])
+
+            seismic_df = pd.DataFrame(
+                seismic_data_rows, 
+                columns=['x', 'y', 'cumulative_distance', 'time', 'amplitude']
+            )
+            print(f"✅ Created DataFrame with {len(seismic_df)} rows")
+
+            # ✅ Step 10: Drop Duplicates and Sort for Interpolation
+            seismic_df = seismic_df.drop_duplicates(subset=['time', 'cumulative_distance'])
+            seismic_df = seismic_df.sort_values(['cumulative_distance', 'time'])
+
+            # ✅ Step 10: Perform 2D Interpolation
+            unique_distances = np.linspace(seismic_df['cumulative_distance'].min(),
+                                           seismic_df['cumulative_distance'].max(),
+                                           num=500)
+            unique_times = np.sort(seismic_df['time'].unique())
+            grid_distances, grid_times = np.meshgrid(unique_distances, unique_times)
+
+            points = seismic_df[['cumulative_distance', 'time']].values
+            values = seismic_df['amplitude'].values
+            interpolated_data = griddata(points, values, (grid_distances, grid_times), method='cubic', fill_value=0)
+
+            # ✅ Step 11: Apply Gaussian Smoothing
+            smoothed_data = gaussian_filter(interpolated_data, sigma=(5, 2))
+
+            # ✅ Step 12: Create Final Seismic Data Structure
+            seismic_data = smoothed_data.T  # Transpose to get time on y-axis
+            seismic_distances = unique_distances  # Cumulative distances on x-axis
+            seismic_time_axis = unique_times  # Time on y-axis
+
+            # ✅ Step 13: Send Data to Plot
+            self.plot_widget.update_seismic_data(
+                seismic_data,  # Time on y-axis
+                seismic_distances,  # Cumulative distances on x-axis
+                seismic_time_axis  # Time axis for reference
+            )
+
+            # Store data for timing lines
+            self.plot_widget.seismic_time_axis = seismic_time_axis
+            self.plot_widget.raw_distance_axis = self.combined_distances
+
+            # Update timing lines
+            self.plot_widget.updateTimingLines()
+
+            # ✅ Step 14: Process Grid Intersections
+            print("🔍 Processing grid intersections...")
+            grid_values = {}
+            sorted_grids = sorted(self.kd_tree_depth_grids.keys())
+
+            for grid_name in sorted_grids:
+                kdtree = self.kd_tree_depth_grids[grid_name]
+                grid_values[grid_name] = []
+
+                for x2, y2 in well_coords:
+                    if kdtree.data.size > 0:
+                        _, indices = kdtree.query((x2, y2))
+                        if indices < len(self.depth_grid_data_dict[grid_name]):
+                            grid_values[grid_name].append(self.depth_grid_data_dict[grid_name][indices])
+
+            # ✅ Step 15: Plot Grids and Fills
+            for i, grid_name in enumerate(sorted_grids):
+                try:
+                    grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name]
+                    if grid_row.empty:
+                        continue
+
+                    current_color = grid_row['Color (RGB)'].values[0]
+                    current_points = list(zip(self.combined_distances, grid_values[grid_name]))
+
+                    # Draw grid line
+                    self.plot_widget.add_grid_line(current_points, current_color)
+
+                    # Add fill between this grid and the next
+                    if i < len(sorted_grids) - 1:
+                        next_grid_name = sorted_grids[i + 1]
+                        next_points = list(zip(self.combined_distances, grid_values[next_grid_name]))
+
+                        path = QPainterPath()
+                        path.moveTo(current_points[0][0], current_points[0][1])
+
+                        for point in current_points:
+                            path.lineTo(point[0], point[1])
+
+                        for point in reversed(next_points):
+                            path.lineTo(point[0], point[1])
+
+                        path.lineTo(current_points[0][0], current_points[0][1])
+
+                        # Apply transparency to the fill
+                        color = QColor(*current_color)
+                        color.setAlpha(76)  # 30% opacity
+                        fill_item = self.plot_widget.scene_obj.addPath(
+                            path, QPen(Qt.NoPen), QBrush(color)
+                        )
+                        fill_item.setZValue(0)
+
+                except Exception as e:
+                    print(f"❌ Error processing grid {grid_name}: {e}")
+
+            # ✅ Step 16: Plot Well Path Last
+            path_points = list(zip(self.combined_distances, self.tvd_values))
+            self.plot_widget.update_well_path(path_points)
+
+            print("✅ Well plotting complete!")
+
+        except Exception as e:
+            print(f"❌ CRITICAL ERROR: {e}")
+            import traceback
+            traceback.print_exc()
 
 
     def update_tick_size_value_label(self, value):
@@ -1569,136 +1632,6 @@ class Plot(QDialog):
 
 
 
-    def plot_current_well(self):
-        """Plot well path and intersections using proven approach"""
-        try:
-            # Clear scene
-           
-            self.plot_widget.scene_obj.clear()
-
-            # Get well data
-            self.current_well_data = self.directional_surveys_df[
-                self.directional_surveys_df['UWI'] == self.current_UWI
-            ].reset_index(drop=True)
-
-            if self.current_well_data.empty:
-                print(f"No data found for UWI: {self.current_UWI}")
-                return
-
-            self.tvd_values = self.current_well_data['TVD'].tolist()
-            self.combined_distances = self.current_well_data['Cumulative Distance'].tolist()
-
-        # Process seismic data if available
-            if self.seismic_data and self.seismic_kdtree:
-                well_coords = np.column_stack((
-                    self.current_well_data['X Offset'],
-                    self.current_well_data['Y Offset']
-                ))
-
-                # Get grid extent
-                grid_start = min(self.combined_distances)
-                grid_end = max(self.combined_distances)
-
-                # Load and process seismic data
-                processed_seismic_data = self.plot_widget.load_seismic_data(
-                    well_coords, 
-                    self.combined_distances, 
-                    self.seismic_kdtree,
-                    self.seismic_data
-                )
-
-                if processed_seismic_data:
-                    # Update seismic display 
-                    self.plot_widget.update_seismic_data(
-                        processed_seismic_data['trace_data'],
-                        well_coords,
-                        self.combined_distances,
-                        processed_seismic_data['time_axis'],
-                        grid_start,
-                        grid_end
-                    )
-
-
-            # Process grid intersections
-            well_coords_grid = np.column_stack((
-                self.current_well_data['X Offset'],
-                self.current_well_data['Y Offset']
-            ))
-
-            # Create dictionary to store grid values
-            grid_values = {}
-        
-            # Get sorted grids for consistent order
-            sorted_grids = sorted(self.kd_tree_depth_grids.keys())
-
-            # Calculate grid values
-            for grid_name in sorted_grids:
-                kdtree = self.kd_tree_depth_grids[grid_name]
-                grid_values[grid_name] = []
-            
-                for x2, y2 in well_coords_grid:
-                    if kdtree.data.size > 0:
-                        distances, indices = kdtree.query((x2, y2))
-                        if indices < len(self.depth_grid_data_dict[grid_name]):
-                            grid_values[grid_name].append(self.depth_grid_data_dict[grid_name][indices])
-
-            # Plot grids and fills
-            for i, grid_name in enumerate(sorted_grids):
-                try:
-                    # Get grid colors
-                    grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name]
-                    if grid_row.empty:
-                        continue
-                    
-                    current_color = grid_row['Color (RGB)'].values[0]
-                
-                    # Create points list for current grid
-                    current_points = list(zip(self.combined_distances, grid_values[grid_name]))
-                
-                    # Draw the grid line
-                    self.plot_widget.add_grid_line(current_points, current_color)
-
-                    # Add fill between this grid and next grid
-                    if i < len(sorted_grids) - 1:
-                        next_grid_name = sorted_grids[i + 1]
-                        next_points = list(zip(self.combined_distances, grid_values[next_grid_name]))
-                    
-                        # Create fill path
-                        path = QPainterPath()
-                        path.moveTo(current_points[0][0], current_points[0][1])
-                    
-                        # Draw top line
-                        for point in current_points:
-                            path.lineTo(point[0], point[1])
-                        
-                        # Draw bottom line in reverse
-                        for point in reversed(next_points):
-                            path.lineTo(point[0], point[1])
-                        
-                        # Close path
-                        path.lineTo(current_points[0][0], current_points[0][1])
-                    
-                        # Create semi-transparent fill
-                        color = QColor(*current_color)
-                        color.setAlpha(76)  # 30% opacity (0-255)
-                        fill_item = self.plot_widget.scene_obj.addPath(
-                            path,
-                            QPen(Qt.NoPen),
-                            QBrush(color)
-                        )
-                        fill_item.setZValue(0)  # Put fill behind grid lines
-
-                except Exception as e:
-                    print(f"Error processing grid {grid_name}: {e}")
-
-            # Update well path last so it's on top
-            path_points = list(zip(self.combined_distances, self.tvd_values))
-            self.plot_widget.update_well_path(path_points)
-
-        except Exception as e:
-            print(f"Error in plot_current_well: {e}")
-            import traceback
-            traceback.print_exc()
 
     def zone_selected(self):
         print("zone_selected() was triggered!")  # Debugging
@@ -1737,16 +1670,6 @@ class Plot(QDialog):
                 self.selected_zone_df = None
 
         
-
-        
-
-
-
-    
-
-
-
-
 
     def on_well_selected(self, index):
         try:
