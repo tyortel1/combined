@@ -2,7 +2,6 @@
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, 
     QMessageBox
 )
-import os
 from PySide6.QtCore import Qt, QSignalBlocker
 import numpy as np
 import pandas as pd
@@ -90,132 +89,27 @@ class SeisWareConnectDialog(QDialog):
         self.setLayout(main_layout)
 
     def connect_to_seisware(self):
-        """Connect to SeisWare with detailed debugging information."""
-        print("\n=== Attempting to connect to SeisWare API ===")
-    
-        # Show the current working directory
-        print(f"Current directory: {os.getcwd()}")
-    
-        # Debug where CreateServer is looking for the API executables
-        print("\n=== DEBUGGING API SERVER SEARCH ===")
-    
-        # Get the executable directory
-        exe_dir = os.path.dirname(sys.executable)
-        print(f"Executable directory: {exe_dir}")
-    
-        # Check common locations for the API server executables
-        search_dirs = [
-            os.getcwd(),  # Current working directory
-            exe_dir,  # Executable directory
-            os.path.join(os.getcwd(), 'SeisWare'),  # SeisWare subdirectory
-            os.path.join(exe_dir, 'SeisWare'),  # SeisWare subdirectory in exe dir
-            os.path.join(os.environ.get('PROGRAMFILES', 'C:\\Program Files'), 'SeisWare'),
-            os.path.join(os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'), 'SeisWare'),
-        ]
-    
-        # Files to check for
-        api_files = ['SWAPIServer.exe', 'SWAPIService.exe', 'APIServer.exe']
-    
-        # Check each directory for the files
-        print("\nChecking for API Server executables:")
-        found_files = []
-    
-        for directory in search_dirs:
-            if not os.path.exists(directory):
-                continue
-            
-            print(f"\nSearching in: {directory}")
-            for file in api_files:
-                file_path = os.path.join(directory, file)
-                if os.path.exists(file_path):
-                    print(f"  FOUND: {file_path}")
-                    found_files.append(file_path)
-                else:
-                    print(f"  Not found: {file_path}")
-    
-        if found_files:
-            print(f"\nFound {len(found_files)} API Server executables:")
-            for file in found_files:
-                print(f"  {file}")
-        else:
-            print("\nNo API Server executables found in common locations!")
-    
-        print("=== END DEBUGGING INFO ===\n")
-    
+        # Connect to API
+        self.connection = SeisWare.Connection()
         try:
-            print("1. Creating SeisWare.Connection object...")
-            self.connection = SeisWare.Connection()
-            print("   ✓ Connection object created successfully")
-    
-            print("2. Calling SeisWare.Connection.CreateServer()...")
-        
-            # Try to get source code information about CreateServer (this is speculative)
-            try:
-                import inspect
-                createserver_source = inspect.getsource(SeisWare.Connection.CreateServer)
-                print(f"CreateServer source code:\n{createserver_source}")
-            except Exception as e:
-                print(f"Could not retrieve CreateServer source: {e}")
-        
             serverInfo = SeisWare.Connection.CreateServer()
-            print(f"   ✓ Server info created: Endpoint={serverInfo.Endpoint()}")
-    
-            print(f"3. Connecting to server at {serverInfo.Endpoint()}:50000...")
             self.connection.Connect(serverInfo.Endpoint(), 50000)
-            print("   ✓ Connection successful!")
-    
-            print("4. Getting project list...")
-            self.project_list = SeisWare.ProjectList()
-            self.connection.ProjectManager().GetAll(self.project_list)
-            print(f"   ✓ Retrieved {len(self.project_list)} projects")
-    
-            # Show project names
-            self.project_names = [project.Name() for project in self.project_list]
-            print(f"   Project names: {', '.join(self.project_names)}")
-    
-            # Populate project dropdown
-            with QSignalBlocker(self.project_dropdown.combo):
-                self.project_dropdown.setItems(self.project_names)
-                self.project_dropdown.setCurrentIndex(-1)
-        
         except RuntimeError as err:
-            print(f"❌ SeisWare API Error: {err}")
-            print(f"   Error type: {type(err)}")
-        
-            # Additional debug info for this specific error
-            if "APIServer executable could not be located" in str(err):
-                print("\n=== API SERVER LOCATION DEBUG ===")
-                print("The error indicates the SeisWare API cannot find its server executable.")
-                print("This file needs to be included in your packaged application.")
-            
-                # Print PATH environment variable
-                print("\nPATH environment variable:")
-                path_dirs = os.environ.get('PATH', '').split(os.pathsep)
-                for i, path in enumerate(path_dirs):
-                    print(f"  [{i}] {path}")
-                
-                # Search Python module directory
-                try:
-                    import SeisWare
-                    if hasattr(SeisWare, '__file__'):
-                        seisware_dir = os.path.dirname(SeisWare.__file__)
-                        print(f"\nSeisWare module directory: {seisware_dir}")
-                        print("Files in SeisWare module directory:")
-                        for file in os.listdir(seisware_dir):
-                            print(f"  - {file}")
-                except Exception as e:
-                    print(f"Error listing SeisWare directory: {e}")
-                
-                print("=== END API SERVER LOCATION DEBUG ===\n")
-        
             QMessageBox.critical(self,"Connection Error", f"Failed to connect to the server: {err}")
             return
-        except Exception as e:
-            print(f"❌ Unexpected Error: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            QMessageBox.critical(self,"Connection Error", f"Unexpected error: {e}")
+
+        self.project_list = SeisWare.ProjectList()
+        try:
+            self.connection.ProjectManager().GetAll(self.project_list)
+        except RuntimeError as err:
+            QMessageBox.critical(self,"Error", f"Failed to get the project list from the server: {err}")
             return
+
+        # Populate project dropdown
+        self.project_names = [project.Name() for project in self.project_list]
+        with QSignalBlocker(self.project_dropdown.combo):
+            self.project_dropdown.setItems(self.project_names)
+            self.project_dropdown.setCurrentIndex(-1)
 
     def on_project_select(self, index):
         # Enable filter dropdown

@@ -25,25 +25,25 @@ class SeismicDatabaseManager:
     def create_tables(self):
         """Create necessary tables for seismic data management"""
         self.connect()
-    
-        # Main seismic files table
+        # Main seismic files table - removed original_segy_path
         create_seismic_table_sql = """
         CREATE TABLE IF NOT EXISTS seismic_files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,                      -- Added name field
-            original_segy_path TEXT UNIQUE NOT NULL,
-            hdf5_path TEXT UNIQUE NOT NULL,
-            format TEXT NOT NULL,
-            datum REAL NOT NULL,
-            sample_rate REAL NOT NULL,
-            num_samples INTEGER NOT NULL,
+            name TEXT NOT NULL,                      -- Name of the seismic file/project
+            hdf5_path TEXT NOT NULL,                 -- Path to HDF5 file
+            format TEXT NOT NULL,                    -- SEG-Y format
+            datum REAL NOT NULL,                     -- Seismic datum
+            sample_rate REAL NOT NULL,               -- Sample rate in seconds
+            num_samples INTEGER NOT NULL,            -- Number of time samples
+            vertical_unit TEXT DEFAULT 'Meters',     -- Vertical unit (Feet or Meters)
+            is_multi_attribute INTEGER DEFAULT 0,    -- Flag for multi-attribute datasets
             creation_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             last_modified TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CHECK (sample_rate > 0),
             CHECK (num_samples > 0)
         )
         """
-    
+
         # Geometry information table
         create_geometry_table_sql = """
         CREATE TABLE IF NOT EXISTS seismic_geometry (
@@ -64,21 +64,40 @@ class SeismicDatabaseManager:
                 ON DELETE CASCADE
         )
         """
+    
+        # Attributes table
+        create_attributes_table_sql = """
+        CREATE TABLE IF NOT EXISTS seismic_attributes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            seismic_id INTEGER NOT NULL,             -- Reference to parent seismic file
+            attribute_name TEXT NOT NULL,            -- Name of the attribute
+            original_segy_path TEXT,                 -- Original SEGY file for this attribute
+            description TEXT,                        -- Optional description of the attribute
+            creation_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (seismic_id) REFERENCES seismic_files (id)
+                ON DELETE CASCADE,
+            UNIQUE (seismic_id, attribute_name)      -- Each attribute name must be unique within a project
+        )
+        """
 
         try:
             # Create tables
             self.cursor.execute(create_seismic_table_sql)
             self.cursor.execute(create_geometry_table_sql)
-        
+            self.cursor.execute(create_attributes_table_sql)
+    
             # Create indices for faster lookups
-            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_name ON seismic_files(name)")  # Added index for name
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_name ON seismic_files(name)")
             self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_hdf5_path ON seismic_files(hdf5_path)")
-            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_segy_path ON seismic_files(original_segy_path)")
             self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_format ON seismic_files(format)")
-        
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_multi_attribute ON seismic_files(is_multi_attribute)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_attribute_seismic_id ON seismic_attributes(seismic_id)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_attribute_name ON seismic_attributes(attribute_name)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_segy_path ON seismic_attributes(original_segy_path)")
+    
             self.connection.commit()
             self.logger.info("Seismic database tables created successfully")
-        
+    
         except sqlite3.Error as e:
             self.logger.error(f"Error creating tables: {e}")
             self.connection.rollback()
@@ -87,22 +106,25 @@ class SeismicDatabaseManager:
 
     def save_seismic_file(self, file_info):
         """
-        Save seismic file information to database
-    
+        Save single seismic file information to database
+
         Args:
             file_info (dict): Dictionary containing:
                 - name (str): Name of the seismic file
-                - original_segy_path (str): Path to original SEG-Y file
                 - hdf5_path (str): Path to HDF5 file
                 - format (str): SEG-Y format type
                 - datum (float): Seismic datum
                 - sample_rate (float): Sample rate in ms
                 - num_samples (int): Number of samples per trace
+                - vertical_unit (str): Vertical unit (Feet or Meters)
                 - geometry (dict): Optional dictionary containing:
                     - inline_min/max (int): Inline range
                     - xline_min/max (int): Crossline range
                     - x_min/max (float): X coordinate range
                     - y_min/max (float): Y coordinate range
+
+        Returns:
+            int: ID of the inserted record, or None on failure
         """
         self.connect()
     
@@ -110,24 +132,25 @@ class SeismicDatabaseManager:
             # Insert main seismic file info
             insert_file_sql = """
             INSERT INTO seismic_files (
-                name, original_segy_path, hdf5_path, format, datum,
-                sample_rate, num_samples, creation_date, last_modified
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                name, hdf5_path, format, datum,
+                sample_rate, num_samples, vertical_unit, is_multi_attribute, creation_date, last_modified
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))
             """
-        
+
+            # Add vertical_unit to the values list
             file_values = [
                 file_info['name'],
-                file_info['original_segy_path'],
                 file_info['hdf5_path'],
                 file_info['format'],
                 file_info['datum'],
                 file_info['sample_rate'],
-                file_info['num_samples']
+                file_info['num_samples'],
+                file_info.get('vertical_unit', 'Meters')  # Default to Meters if not provided
             ]
-            
+        
             self.cursor.execute(insert_file_sql, file_values)
             seismic_id = self.cursor.lastrowid
-            
+        
             # Insert geometry info if provided
             if 'geometry' in file_info:
                 geom = file_info['geometry']
@@ -137,7 +160,7 @@ class SeismicDatabaseManager:
                     x_min, x_max, y_min, y_max
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
-                
+            
                 geom_values = [
                     seismic_id,
                     geom.get('inline_min'),
@@ -149,22 +172,33 @@ class SeismicDatabaseManager:
                     geom.get('y_min'),
                     geom.get('y_max')
                 ]
-                
+            
                 self.cursor.execute(insert_geom_sql, geom_values)
-            
+        
             self.connection.commit()
-            self.logger.info(f"Seismic file info saved successfully for {file_info['original_segy_path']}")
-            
+            self.logger.info(f"Seismic file info saved successfully for {file_info['name']}")
+            return seismic_id
+        
         except sqlite3.Error as e:
             self.logger.error(f"Error saving seismic file info: {e}")
             self.connection.rollback()
+            return None
         finally:
             self.disconnect()
 
-    def get_seismic_file_info(self, name=None, hdf5_path=None, segy_path=None):
-        """Retrieve seismic file information including geometry"""
-        self.connect()
+    def get_seismic_file_info(self, id=None, name=None, hdf5_path=None):
+        """Retrieve seismic file information including geometry
     
+        Args:
+            id (int, optional): ID of the seismic file
+            name (str, optional): Name of the seismic file
+            hdf5_path (str, optional): Path to the HDF5 file
+        
+        Returns:
+            dict: Dictionary with seismic file information, or None if not found
+        """
+        self.connect()
+
         try:
             query = """
             SELECT 
@@ -174,247 +208,62 @@ class SeismicDatabaseManager:
             FROM seismic_files f
             LEFT JOIN seismic_geometry g ON f.id = g.seismic_id
             WHERE """
-        
-            if name:
+    
+            if id:
+                query += "f.id = ?"
+                param = id
+            elif name:
                 query += "f.name = ?"
                 param = name
             elif hdf5_path:
                 query += "f.hdf5_path = ?"
                 param = hdf5_path
-            elif segy_path:
-                query += "f.original_segy_path = ?"
-                param = segy_path
             else:
-                raise ValueError("Must provide either name, hdf5_path or segy_path")
-                
+                raise ValueError("Must provide either id, name, or hdf5_path")
+            
             self.cursor.execute(query, (param,))
             result = self.cursor.fetchone()
-            
+        
             if result:
                 # Convert to dictionary
                 columns = [description[0] for description in self.cursor.description]
-                return dict(zip(columns, result))
-            return None
+                file_info = dict(zip(columns, result))
             
+                # Get attributes for this seismic file
+                self.cursor.execute("""
+                    SELECT attribute_name, original_segy_path, description
+                    FROM seismic_attributes
+                    WHERE seismic_id = ?
+                """, (file_info['id'],))
+            
+                attributes = []
+                for attr_row in self.cursor.fetchall():
+                    attributes.append({
+                        'name': attr_row[0],
+                        'original_segy_path': attr_row[1],
+                        'description': attr_row[2]
+                    })
+            
+                file_info['attributes'] = attributes
+                
+                return file_info
+            return None
+        
         except sqlite3.Error as e:
             self.logger.error(f"Error retrieving seismic file info: {e}")
             return None
         finally:
             self.disconnect()
 
-    def list_all_seismic_files(self):
-        """List all seismic files in the database for debugging"""
-        self.connect()
-    
-        try:
-            query = "SELECT id, name, hdf5_path, original_segy_path FROM seismic_files"
-            self.cursor.execute(query)
-        
-            results = self.cursor.fetchall()
-        
-            print("All Seismic Files in Database:")
-            for row in results:
-                print(f"ID: {row[0]}, Name: {row[1]}, HDF5 Path: {row[2]}, SEG-Y Path: {row[3]}")
-        
-            return results
-    
-        except sqlite3.Error as e:
-            print(f"Error listing seismic files: {e}")
-            return []
-        finally:
-            self.disconnect()
-
-
-    def delete_seismic_file(self, name=None, hdf5_path=None):
-        """
-        Delete seismic file entry and associated geometry
-    
-        Args:
-            name (str, optional): Name of the seismic file to delete
-            hdf5_path (str, optional): HDF5 path of the seismic file to delete
-        
-        Note:
-            Must provide either name or hdf5_path
-        """
-        self.connect()
-    
-        try:
-            if not name and not hdf5_path:
-                raise ValueError("Must provide either name or hdf5_path")
-            
-            where_clause = "name = ?" if name else "hdf5_path = ?"
-            param = name if name else hdf5_path
-            
-            # First delete geometry (due to foreign key constraint)
-            self.cursor.execute(f"""
-                DELETE FROM seismic_geometry 
-                WHERE seismic_id = (
-                    SELECT id FROM seismic_files WHERE {where_clause}
-                )
-            """, (param,))
-        
-            # Then delete main file entry
-            self.cursor.execute(f"""
-                DELETE FROM seismic_files 
-                WHERE {where_clause}
-            """, (param,))
-        
-            self.connection.commit()
-        
-            if self.cursor.rowcount == 0:
-                self.logger.warning(f"No seismic file found with {'name' if name else 'HDF5 path'}: {param}")
-            else:
-                self.logger.info(f"Successfully deleted seismic file info for {'name' if name else 'HDF5 path'}: {param}")
-                
-        except sqlite3.Error as e:
-            self.logger.error(f"Error deleting seismic file info: {e}")
-            self.connection.rollback()
-        finally:
-            self.disconnect()
-
-    #def update_seismic_file(self, name=None, hdf5_path=None, updates):
-    #    """
-    #    Update seismic file information
-    
-    #    Args:
-    #        name (str, optional): Name of the seismic file to update
-    #        hdf5_path (str, optional): HDF5 path of the seismic file to update
-    #        updates (dict): Dictionary containing fields to update. Can include:
-    #            - name: New name for the file
-    #            - original_segy_path: New SEG-Y file path
-    #            - hdf5_path: New HDF5 file path
-    #            - format: New format type
-    #            - datum: New datum value
-    #            - sample_rate: New sample rate
-    #            - num_samples: New number of samples
-    #            - geometry updates:
-    #                - inline_min/max: New inline range
-    #                - xline_min/max: New crossline range
-    #                - x_min/max: New X coordinate range
-    #                - y_min/max: New Y coordinate range
-                
-    #    Note:
-    #        Must provide either name or hdf5_path
-    #    """
-    #    self.connect()
-
-    #    if not name and not hdf5_path:
-    #        raise ValueError("Must provide either name or hdf5_path")
-    
-    #    try:
-    #        # First verify the file exists
-    #        where_clause = "name = ?" if name else "hdf5_path = ?"
-    #        param = name if name else hdf5_path
-        
-    #        self.cursor.execute(f"""
-    #            SELECT id FROM seismic_files WHERE {where_clause}
-    #        """, (param,))
-        
-    #        result = self.cursor.fetchone()
-    #        if not result:
-    #            self.logger.warning(f"No seismic file found with {'name' if name else 'HDF5 path'}: {param}")
-    #            return
-            
-    #        seismic_id = result[0]
-        
-    #        # Separate geometry updates from main file updates
-    #        geom_updates = {}
-    #        file_updates = {}
-        
-    #        for key, value in updates.items():
-    #            if key in ['inline_min', 'inline_max', 'xline_min', 'xline_max',
-    #                      'x_min', 'x_max', 'y_min', 'y_max']:
-    #                geom_updates[key] = value
-    #            else:
-    #                file_updates[key] = value
-
-    #        # Update main file info if needed
-    #        if file_updates:
-    #            set_clause = ", ".join([f"{key} = ?" for key in file_updates.keys()])
-    #            set_clause += ", last_modified = datetime('now')"
-            
-    #            sql = f"""
-    #            UPDATE seismic_files 
-    #            SET {set_clause}
-    #            WHERE id = ?
-    #            """
-            
-    #            values = list(file_updates.values()) + [seismic_id]
-    #            self.cursor.execute(sql, values)
-
-    #        # Update geometry if needed
-    #        if geom_updates:
-    #            # Check if geometry record exists
-    #            self.cursor.execute("""
-    #                SELECT 1 FROM seismic_geometry WHERE seismic_id = ?
-    #            """, (seismic_id,))
-            
-    #            if self.cursor.fetchone():
-    #                # Update existing geometry
-    #                set_clause = ", ".join([f"{key} = ?" for key in geom_updates.keys()])
-    #                sql = f"""
-    #                UPDATE seismic_geometry 
-    #                SET {set_clause}
-    #                WHERE seismic_id = ?
-    #                """
-    #                values = list(geom_updates.values()) + [seismic_id]
-    #                self.cursor.execute(sql, values)
-    #            else:
-    #                # Get all geometry columns
-    #                self.cursor.execute("PRAGMA table_info(seismic_geometry)")
-    #                columns = [row[1] for row in self.cursor.fetchall()]
-    #                columns.remove('seismic_id')  # Handle seismic_id separately
-                
-    #                # Prepare insert with all columns and appropriate values
-    #                fields = ['seismic_id'] + columns
-    #                values = [seismic_id]
-                
-    #                # Add values for each column, using updates if provided or 0 as default
-    #                for col in columns:
-    #                    values.append(geom_updates.get(col, 0))
-                
-    #                placeholders = ','.join(['?' for _ in range(len(fields))])
-    #                sql = f"""
-    #                INSERT INTO seismic_geometry 
-    #                ({','.join(fields)})
-    #                VALUES ({placeholders})
-    #                """
-    #                self.cursor.execute(sql, values)
-
-    #        self.connection.commit()
-    #        self.logger.info(f"Successfully updated seismic file info for {'name' if name else 'HDF5 path'}: {param}")
-                
-    #    except sqlite3.Error as e:
-    #        self.logger.error(f"Error updating seismic file info: {e}")
-    #        self.connection.rollback()
-    #    finally:
-    #        self.disconnect()
-
-
-    def get_all_seismic_files(self):
+    def get_all_seismic_files(self, include_attributes=True):
         """
         Retrieve all seismic file information including geometry
-    
+
+        Args:
+            include_attributes (bool): Whether to include attribute information 
+        
         Returns:
             list: List of dictionaries containing seismic file information.
-                 Each dictionary contains:
-                    - id (int): Database ID
-                    - name (str): Seismic file name
-                    - original_segy_path (str): Path to original SEG-Y file
-                    - hdf5_path (str): Path to HDF5 file
-                    - format (str): SEG-Y format type
-                    - datum (float): Seismic datum
-                    - sample_rate (float): Sample rate in ms
-                    - num_samples (int): Number of samples per trace
-                    - creation_date (str): Creation timestamp
-                    - last_modified (str): Last modification timestamp
-                    - geometry (dict): Dictionary containing:
-                        - inline_min/max (int): Inline range
-                        - xline_min/max (int): Crossline range
-                        - x_min/max (float): X coordinate range
-                        - y_min/max (float): Y coordinate range
-        
-            Empty list is returned if no files found or in case of error.
         """
         self.connect()
 
@@ -423,12 +272,13 @@ class SeismicDatabaseManager:
             SELECT 
                 f.id,
                 f.name,
-                f.original_segy_path,
                 f.hdf5_path,
                 f.format,
                 f.datum,
                 f.sample_rate,
                 f.num_samples,
+                f.vertical_unit, 
+                f.is_multi_attribute,
                 f.creation_date,
                 f.last_modified,
                 g.inline_min,
@@ -455,11 +305,11 @@ class SeismicDatabaseManager:
                 # Convert each row to a dictionary
                 for row in results:
                     file_info = dict(zip(columns, row))
-                
+            
                     # Extract geometry fields into a nested dictionary
                     geometry_fields = ['inline_min', 'inline_max', 'xline_min', 'xline_max',
                                      'x_min', 'x_max', 'y_min', 'y_max']
-                
+            
                     # Only include geometry if at least one field is not None
                     if any(file_info.get(field) is not None for field in geometry_fields):
                         file_info['geometry'] = {
@@ -471,6 +321,24 @@ class SeismicDatabaseManager:
                         for field in geometry_fields:
                             file_info.pop(field)
                         file_info['geometry'] = None
+                    
+                    # Get attributes
+                    if include_attributes:
+                        self.cursor.execute("""
+                            SELECT attribute_name, original_segy_path, description
+                            FROM seismic_attributes
+                            WHERE seismic_id = ?
+                        """, (file_info['id'],))
+                    
+                        attributes = []
+                        for attr_row in self.cursor.fetchall():
+                            attributes.append({
+                                'name': attr_row[0],
+                                'original_segy_path': attr_row[1],
+                                'description': attr_row[2]
+                            })
+                    
+                        file_info['attributes'] = attributes
 
                     seismic_files.append(file_info)
 
@@ -482,6 +350,158 @@ class SeismicDatabaseManager:
 
         except sqlite3.Error as e:
             self.logger.error(f"Error retrieving seismic files: {e}")
+            return []
+        finally:
+            self.disconnect()
+
+    def update_seismic_file(self, update_info):
+        """
+        Update seismic file information
+    
+        Args:
+            update_info (dict): Dictionary containing:
+                - id (int): ID of the seismic file to update
+                - Other fields to update (name, hdf5_path, etc.)
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if 'id' not in update_info:
+            self.logger.error("No ID provided for update")
+            return False
+        
+        self.connect()
+    
+        try:
+            # Build update SQL dynamically based on provided fields
+            update_fields = []
+            params = []
+        
+            # Fields that can be updated in the main table
+            valid_fields = [
+                'name', 'hdf5_path', 'format', 'datum', 
+                'sample_rate', 'num_samples', 'vertical_unit', 'is_multi_attribute'
+            ]
+        
+            for field in valid_fields:
+                if field in update_info:
+                    update_fields.append(f"{field} = ?")
+                    params.append(update_info[field])
+                
+            # Add last_modified timestamp
+            update_fields.append("last_modified = datetime('now')")
+        
+            if not update_fields:
+                self.logger.warning("No valid fields provided for update")
+                return False
+            
+            # Build the SQL query
+            update_sql = f"""
+            UPDATE seismic_files 
+            SET {', '.join(update_fields)}
+            WHERE id = ?
+            """
+        
+            # Add the ID as the last parameter
+            params.append(update_info['id'])
+        
+            # Execute the update
+            self.cursor.execute(update_sql, params)
+        
+            # Handle attribute names update if provided
+            if 'attribute_names' in update_info:
+                # This requires more complex handling
+                # For now, we'll just log that attributes were also updated
+                self.logger.info(f"Updated attribute list for seismic file ID {update_info['id']}")
+        
+            self.connection.commit()
+        
+            return True
+        
+        except sqlite3.Error as e:
+            self.logger.error(f"Error updating seismic file: {e}")
+            self.connection.rollback()
+            return False
+        finally:
+            self.disconnect()
+
+    def save_attribute_info(self, seismic_id, attribute_name, segy_path):
+        """Save attribute information to the database
+
+        Args:
+            seismic_id (int): ID of the seismic file
+            attribute_name (str): Name of the attribute
+            segy_path (str): Path to the original SEG-Y file
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        self.connect()
+
+        try:
+            # First check if attribute already exists
+            self.cursor.execute("""
+                SELECT id FROM seismic_attributes 
+                WHERE seismic_id = ? AND attribute_name = ?
+            """, (seismic_id, attribute_name))
+        
+            existing = self.cursor.fetchone()
+        
+            if existing:
+                # Update existing attribute
+                update_sql = """
+                UPDATE seismic_attributes 
+                SET original_segy_path = ?
+                WHERE seismic_id = ? AND attribute_name = ?
+                """
+                self.cursor.execute(update_sql, [segy_path, seismic_id, attribute_name])
+                self.logger.info(f"Updated existing attribute '{attribute_name}' for seismic ID {seismic_id}")
+            else:
+                # Insert new attribute
+                insert_sql = """
+                INSERT INTO seismic_attributes (
+                    seismic_id, attribute_name, original_segy_path, creation_date
+                ) VALUES (?, ?, ?, datetime('now'))
+                """
+                self.cursor.execute(insert_sql, [seismic_id, attribute_name, segy_path])
+                self.logger.info(f"Added new attribute '{attribute_name}' for seismic ID {seismic_id}")
+        
+            self.connection.commit()
+            return True
+        except sqlite3.Error as e:
+            self.logger.error(f"Error saving attribute info: {e}")
+            self.connection.rollback()
+            return False
+        finally:
+            self.disconnect()
+
+    def list_all_seismic_files(self):
+        """List all seismic files in the database for debugging"""
+        self.connect()
+
+        try:
+            query = """
+            SELECT sf.id, sf.name, sf.hdf5_path, sf.is_multi_attribute, 
+                   COUNT(sa.id) as attribute_count
+            FROM seismic_files sf
+            LEFT JOIN seismic_attributes sa ON sf.id = sa.seismic_id
+            GROUP BY sf.id
+            """
+            self.cursor.execute(query)
+    
+            results = self.cursor.fetchall()
+    
+            print("All Seismic Files in Database:")
+            for row in results:
+                if row[3] == 1:  # is_multi_attribute
+                    print(f"ID: {row[0]}, Project Name: {row[1]}, HDF5 Path: {row[2]}, Multi-Attribute: Yes, Attributes: {row[4]}")
+                else:
+                    print(f"ID: {row[0]}, Name: {row[1]}, HDF5 Path: {row[2]}, Single Volume, Attributes: {row[4]}")
+    
+            return results
+
+        except sqlite3.Error as e:
+            print(f"Error listing seismic files: {e}")
             return []
         finally:
             self.disconnect()

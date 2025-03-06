@@ -148,6 +148,10 @@ class StyledDropdown(StyledBaseWidget):
         return self.combo.itemData(index)
 
 
+    def currentTextChanged(self):
+        """Get the currentTextChanged signal from the combo box."""
+        return self.combo.currentTextChanged
+
 
 
         
