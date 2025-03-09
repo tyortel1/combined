@@ -7,25 +7,42 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt, Signal
 from functools import partial
+from DatabaseManagers.GridDatabaseManager import GridDatabaseManager 
 
 class ColorEditor(QDialog):
     color_changed = Signal(pd.DataFrame)
 
-    def __init__(self, grid_color_df, parent=None):
+    def __init__(self, db_path, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Color Editor")
-        self.grid_color_df = grid_color_df.copy()
+        self.db_path = db_path
+        
+        # Read grid colors from database
+        grid_db_manager = GridDatabaseManager(self.db_path)
+        depth_grids = grid_db_manager.get_all_grids(grid_type='Depth')
+        
+        # Convert database results to DataFrame
+        self.grid_color_df = pd.DataFrame(depth_grids)
+        
+        # Convert color_hex to RGB
+        self.grid_color_df['Color (RGB)'] = self.grid_color_df['color_hex'].apply(self.hex_to_rgb)
+        
         self.initUI()
+
+    def hex_to_rgb(self, hex_color):
+        """Convert hex color to RGB tuple"""
+        # Remove '#' if present
+        hex_color = hex_color.lstrip('#')
+        # Convert hex to RGB
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
     def initUI(self):
         layout = QVBoxLayout()
         self.color_labels = {}
 
         for index, row in self.grid_color_df.iterrows():
-            if row['Type'] != 'Depth':
-                continue
             color = QColor(*row['Color (RGB)'])
-            label = QLabel(f"Grid {row['Grid']}")
+            label = QLabel(f"Grid {row['name']}")
             label.setStyleSheet(f"background-color: rgb{tuple(row['Color (RGB)']):}; color: white; padding: 5px;")
             button = QPushButton("Change Color")
             button.clicked.connect(partial(self.open_color_dialog, index))
@@ -51,9 +68,18 @@ class ColorEditor(QDialog):
 
     def update_color(self, index, color):
         rgb = (color.red(), color.green(), color.blue())
+        grid_name = self.grid_color_df.loc[index, 'name']
+        color_hex = f'#{color.red():02x}{color.green():02x}{color.blue():02x}'
+        
+        # Update color in DataFrame
         self.grid_color_df.at[index, 'Color (RGB)'] = rgb
         self.color_labels[index].setStyleSheet(f"background-color: rgb{rgb}; color: white; padding: 5px;")
-        print(f"Changed color for Grid {self.grid_color_df.loc[index, 'Grid']} to rgb{rgb}")
+        
+        # Update color in database
+        grid_db_manager = GridDatabaseManager(self.db_path)
+        grid_db_manager.update_grid_color(grid_name=grid_name, color_hex=color_hex)
+        
+        print(f"Changed color for Grid {grid_name} to rgb{rgb}")
 
     def accept(self):
         self.color_changed.emit(self.grid_color_df)

@@ -8,6 +8,7 @@ import pickle
 import numpy as np
 from DatabaseManager import DatabaseManager
 from PySide6.QtWidgets import QTableWidgetItem, QMessageBox
+from DatabaseManagers.GridDatabaseManager import GridDatabaseManager
 
 class ProjectLoader:
     def __init__(self, parent):
@@ -120,45 +121,6 @@ class ProjectLoader:
                 # Apply the loaded column filters as needed, possibly refreshing UI elements or data
      
 
-            # Load selected grid and zone
-            grid_selected = data_loaded.get('selected_grid', 'Select Grids')
-            selected_zone = data_loaded.get('selected_zone', 'Select Zones')
-
-
-
-            # Check if 'Grid' column exists and DataFrame is not empty before constructing KDTree
-            if not self.parent.depth_grid_data_df.empty and 'Grid' in self.parent.depth_grid_data_df.columns:
-                self.parent.kd_tree_depth_grids = {
-                    grid: KDTree(self.parent.depth_grid_data_df[self.parent.depth_grid_data_df['Grid'] == grid][['X', 'Y']].values) 
-                    for grid in self.parent.depth_grid_data_df['Grid'].unique()
-                }
-                print("KD-Trees for depth grids constructed.")
-            else:
-                print("Depth grid data is empty or 'Grid' column not found.")
-
-            if not self.parent.attribute_grid_data_df.empty and 'Grid' in self.parent.attribute_grid_data_df.columns:
-                self.parent.kd_tree_att_grids = {
-                    grid: KDTree(self.parent.attribute_grid_data_df[self.parent.attribute_grid_data_df['Grid'] == grid][['X', 'Y']].values) 
-                    for grid in self.parent.attribute_grid_data_df['Grid'].unique()
-                }
-                print("KD-Trees for attribute grids constructed.")
-            else:
-                print("Attribute grid data is empty or 'Grid' column not found.")
-
-            if self.parent.depth_grid_data_df is not None and self.parent.kd_tree_depth_grids is not None:
-                self.parent.depth_grid_data_dict = {
-                    grid: self.parent.depth_grid_data_df[self.parent.depth_grid_data_df['Grid'] == grid]['Z'].values
-                    for grid in self.parent.kd_tree_depth_grids
-                }
-
-            # Check if 'attribute_grid_data_df' and 'kd_tree_att_grids' are not None
-            if self.parent.attribute_grid_data_df is not None and self.parent.kd_tree_att_grids is not None:
-                self.parent.attribute_grid_data_dict = {
-                    grid: self.parent.attribute_grid_data_df[self.parent.attribute_grid_data_df['Grid'] == grid]['Z'].values
-                    for grid in self.parent.kd_tree_att_grids
-                }
-
-
             
 
             db_file_path = file_name.replace('.json', '.db')
@@ -166,7 +128,7 @@ class ProjectLoader:
           
             # Populate dropdowns
             self.parent.populate_well_zone_dropdown()
-            self.parent.populate_grid_dropdown(grid_selected)
+            self.parent.populate_grid_dropdown()
             self.parent.populate_zone_dropdown()
 
 
@@ -207,6 +169,7 @@ class ProjectLoader:
             try:
 
                 self.parent.db_manager = DatabaseManager(db_file_path)
+                
                 self.parent.db_manager.connect()
                 self.parent.db_path = db_file_path 
                 print(f"Database loaded successfully from: {db_file_path}")
@@ -218,6 +181,9 @@ class ProjectLoader:
                 self.scneario_id = 1
                 self.parent.model_data = self.parent.db_manager.retrieve_model_data_by_scenario(self.scenario_id)
 
+                self.load_grid_data_from_db()
+
+
             except Exception as e:
                 QMessageBox.critical(
                     self.parent,
@@ -227,6 +193,84 @@ class ProjectLoader:
                 )
         else:
             QMessageBox.warning(self.parent, "Database Not Found", "No corresponding database file found at: {db_file_path}", QMessageBox.Ok)
+
+
+    def load_grid_data_from_db(self):
+        """Load grid data from database and HDF5 files"""
+        try:
+            # Create a GridDatabaseManager instance
+            grid_db_manager = GridDatabaseManager(self.parent.db_path)
+        
+            # Get depth grid info and KDTrees
+            self.parent.grid_info_df = grid_db_manager.get_grid_info_dataframe(grid_type='Depth')
+        
+            if not self.parent.grid_info_df.empty:
+                print(f"Loaded {len(self.parent.grid_info_df)} grids from database")
+            
+                # Load depth grids
+                self.parent.kd_tree_depth_grids = {}
+                self.parent.depth_grid_data_dict = {}
+            
+                for _, grid_row in self.parent.grid_info_df.iterrows():
+                    grid_name = grid_row['Grid']
+                
+                    # Get grid info from database
+                    grid_info = grid_db_manager.get_grid_by_name(grid_name)
+                
+                    if grid_info and grid_info['hdf5_location'] and os.path.exists(grid_info['hdf5_location']):
+                        try:
+                            import h5py
+                        
+                            with h5py.File(grid_info['hdf5_location'], 'r') as f:
+                                # Load KDTree data from depth_kdtrees group
+                                if 'depth_kdtrees' in f and grid_name in f['depth_kdtrees']:
+                                    kdtree_data = f['depth_kdtrees'][grid_name][:]
+                                    self.parent.kd_tree_depth_grids[grid_name] = KDTree(kdtree_data)
+                                    print(f"Loaded KDTree for grid: {grid_name}")
+                                
+                                # Load z-values from depth_grids group
+                                if 'depth_grids' in f and grid_name in f['depth_grids']:
+                                    grid_data = f['depth_grids'][grid_name][:]
+                                    self.parent.depth_grid_data_dict[grid_name] = grid_data[:, 2]  # Z values are in 3rd column
+                                    print(f"Loaded Z values for grid: {grid_name}")
+                        except Exception as e:
+                            print(f"Error loading grid data for {grid_name}: {e}")
+            
+                # Load attribute grids if needed
+                self.parent.kd_tree_att_grids = {}
+                self.parent.attribute_grid_data_dict = {}
+            
+                attribute_grids = grid_db_manager.get_all_grids(grid_type='Attribute')
+                if attribute_grids:
+                    for grid in attribute_grids:
+                        grid_name = grid['name']
+                        hdf5_location = grid['hdf5_location']
+                    
+                        if hdf5_location and os.path.exists(hdf5_location):
+                            try:
+                                with h5py.File(hdf5_location, 'r') as f:
+                                    if 'attribute_kdtrees' in f and grid_name in f['attribute_kdtrees']:
+                                        kdtree_data = f['attribute_kdtrees'][grid_name][:]
+                                        self.parent.kd_tree_att_grids[grid_name] = KDTree(kdtree_data)
+                                    
+                                    if 'attribute_grids' in f and grid_name in f['attribute_grids']:
+                                        grid_data = f['attribute_grids'][grid_name][:]
+                                        self.parent.attribute_grid_data_dict[grid_name] = grid_data[:, 2]
+                            except Exception as e:
+                                print(f"Error loading attribute grid data for {grid_name}: {e}")
+            
+                return True
+            else:
+                print("No grid information found in database")
+                return False
+            
+        except Exception as e:
+            print(f"Error loading grid data from database: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+
 
 
 

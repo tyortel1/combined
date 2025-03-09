@@ -8,12 +8,13 @@ print("1")
 import numpy as np
 import atexit
 import os
+import h5py
 
 from scipy.spatial import KDTree
 print("1")
 from PySide6.QtWidgets import QGraphicsView, QApplication, QMainWindow, QMessageBox, QDialog
-from PySide6.QtGui import QIcon, QColor, QPainter,  QBrush, QPixmap, QLinearGradient
-from PySide6.QtCore import Qt, QPointF, QCoreApplication
+from PySide6.QtGui import QIcon, QColor, QPainter,  QBrush, QPixmap, QLinearGradient, QSurfaceFormat
+from PySide6.QtCore import Qt, QPointF, QCoreApplication, QTimer
 print("2.5")
 from ZoneViewer import ZoneViewerDialog
 from SwPropertiesEdit import SWPropertiesEdit
@@ -39,6 +40,7 @@ from DeclineCurveAnalysis import DeclineCurveAnalysis
 from Main import MainWindow
 from EurNpv import EurNpv
 from LaunchCombinedCashflow import LaunchCombinedCashflow
+from DatabaseManagers.GridDatabaseManager import GridDatabaseManager
 print("4")
 
 
@@ -421,25 +423,26 @@ class Map(QMainWindow, Ui_MainWindow):
             self.scenarioDropdown.blockSignals(False)
 
     def populate_grid_dropdown(self, selected_grid=None):
-        # Ensure grid_info_df is populated
-        if self.grid_info_df.empty:
-            return
-
+        # Retrieve grid names from the database
+        grid_db_manager = GridDatabaseManager(self.db_path)
+        all_grids = grid_db_manager.get_all_grids()
+    
+        # Extract grid names and sort them
+        grid_names = sorted([grid['name'] for grid in all_grids])
+    
         # Block signals while populating the dropdown
         self.gridDropdown.combo.blockSignals(True)
-
+    
         # Clear the dropdown and add the default item
         self.gridDropdown.combo.clear()
         self.gridDropdown.combo.addItem("Select Grid")
-
-        # Get grid names from the grid_info_df, sort them alphabetically, and add them to the dropdown
-        grid_names = sorted(self.grid_info_df['Grid'].tolist())
-       
+    
+        # Add grid names to the dropdown
         self.gridDropdown.combo.addItems(grid_names)
-
+    
         # Unblock signals after populating the dropdown
         self.gridDropdown.combo.blockSignals(False)
-
+    
         # If a selected_grid is provided, set it as the current text
         if selected_grid and selected_grid in grid_names:
             self.gridDropdown.combo.setCurrentText(selected_grid)
@@ -562,49 +565,95 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
     def grid_selected(self, index):
-        if index == 0:  # "Select Grid" is selected
-            self.drawingArea.clearGrid()
-            return
+        print(f"Grid selected - Index: {index}")
+        print(f"Current grid dropdown text: {self.gridDropdown.currentText()}")
     
-        self.selected_grid = self.gridDropdown.currentText()
-    
-        # Get the selected color palette from StyledColorBar
-        selected_palette_name = self.grid_colorbar.currentText()
-        self.selected_color_palette = self.grid_colorbar.selected_color_palette
-    
-        if self.selected_grid in self.depth_grid_data_df['Grid'].unique():
-            selected_grid_df = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == self.selected_grid]
-        else:
-            selected_grid_df = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == self.selected_grid]
-    
-        # Extract grid information from grid_info_df
-        grid_info = self.grid_info_df[self.grid_info_df['Grid'] == self.selected_grid].iloc[0]
-        min_x = grid_info['min_x']
-        max_x = grid_info['max_x']
-        min_y = grid_info['min_y']
-        max_y = grid_info['max_y']
-        min_z = grid_info['min_z']
-        max_z = grid_info['max_z']
-        bin_size_x = grid_info['bin_size_x']
-        bin_size_y = grid_info['bin_size_y']
-    
-        # Extract X, Y, and Z values from the selected grid DataFrame
-        x_values = selected_grid_df['X'].values
-        y_values = selected_grid_df['Y'].values
-        z_values = selected_grid_df['Z'].values
-    
-        # Use StyledColorBar's `map_value_to_color()`
-        grid_points_with_values = [
-            (QPointF(x, y), self.grid_colorbar.map_value_to_color(z, min_z, max_z, self.selected_color_palette))
-            for x, y, z in zip(x_values, y_values, z_values)
-        ]
-    
-        # Update the drawing area with the new grid points and grid info
-        self.drawingArea.setGridPoints(grid_points_with_values, min_x, max_x, min_y, max_y, min_z, max_z, bin_size_x, bin_size_y)
-    
-        # Ensure color bar is updated with the current min and max Z values
-        self.grid_colorbar.display_color_range(min_z, max_z)
+        try:
+            # Handle "Select Grid" option
+            if index == 0:
+                self.drawingArea.clearGrid()
+                return
 
+            # Get selected grid name
+            self.selected_grid = self.gridDropdown.currentText()
+            print(f"Selected grid: {self.selected_grid}")
+
+            # Get color palette
+            self.selected_color_palette = self.grid_colorbar.selected_color_palette
+            print(f"Selected color palette: {self.selected_color_palette}")
+
+            # Retrieve grid information from database
+            grid_db_manager = GridDatabaseManager(self.db_path)
+            grid_info = grid_db_manager.get_grid_by_name(self.selected_grid)
+            print(f"Grid info: {grid_info}")
+
+            # Validate grid information
+            if not grid_info or not grid_info['hdf5_location']:
+                print("No grid info or HDF5 location")
+                raise ValueError(f"No data found for grid: {self.selected_grid}")
+
+            # Read data from HDF5 file
+            with h5py.File(grid_info['hdf5_location'], 'r') as hdf:
+                # Determine grid group
+                group_name = 'depth_grids' if grid_info['type'] == 'Depth' else 'attribute_grids'
+                print(f"Group name: {group_name}")
+                print(f"Available groups: {list(hdf.keys())}")
+                print(f"Available grids in {group_name}: {list(hdf[group_name].keys())}")
+
+                # Validate grid exists in HDF5 file
+                if self.selected_grid not in hdf[group_name]:
+                    print(f"Grid {self.selected_grid} not found in group")
+                    raise KeyError(f"Grid {self.selected_grid} not found in HDF5 file")
+
+                # Read grid data
+                grid_dataset = hdf[group_name][self.selected_grid][:]
+                print(f"Grid dataset shape: {grid_dataset.shape}")
+
+            # Convert to DataFrame
+            selected_grid_df = pd.DataFrame(grid_dataset, columns=['X', 'Y', 'Z'])
+            print(f"DataFrame shape: {selected_grid_df.shape}")
+
+            # Validate data
+            if selected_grid_df.empty:
+                print("DataFrame is empty")
+                raise ValueError(f"No data found for grid: {self.selected_grid}")
+
+            # Extract metadata
+            metadata_keys = [
+                'min_x', 'max_x', 'min_y', 'max_y', 'min_z', 'max_z', 
+                'bin_size_x', 'bin_size_y'
+            ]
+            metadata = {key: grid_info[key] for key in metadata_keys}
+            print(f"Metadata: {metadata}")
+
+            # Prepare grid points with colors
+            grid_points_with_values = [
+                (QPointF(x, y), self.grid_colorbar.map_value_to_color(z, metadata['min_z'], metadata['max_z'], self.selected_color_palette))
+                for x, y, z in zip(selected_grid_df['X'], selected_grid_df['Y'], selected_grid_df['Z'])
+            ]
+            print(f"Number of grid points: {len(grid_points_with_values)}")
+
+            # Update drawing area
+            self.drawingArea.setGridPoints(
+                grid_points_with_values, 
+                metadata['min_x'], metadata['max_x'], 
+                metadata['min_y'], metadata['max_y'], 
+                metadata['min_z'], metadata['max_z'], 
+                metadata['bin_size_x'], metadata['bin_size_y']
+            )
+
+            # Update color bar
+            self.grid_colorbar.display_color_range(metadata['min_z'], metadata['max_z'])
+
+        except FileNotFoundError:
+            print("HDF5 file not found")
+            self.show_error_message("Error", f"HDF5 file not found")
+        except (ValueError, KeyError) as e:
+            print(f"Value or Key Error: {e}")
+            self.show_error_message("Error", str(e))
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            self.show_error_message("Error", f"Unexpected error: {str(e)}")
 
     def grid_color_selected(self):
         # Get the selected color bar from the dropdown
@@ -630,6 +679,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """Handles the selection of a zone from the dropdown."""
 
         self.selected_zone = self.zoneDropdown.currentText().replace(" ", "_")
+        print(self.selected_zone)
 
 
         if not self.selected_zone or self.selected_zone.strip() == "Select_Zone":
@@ -647,6 +697,8 @@ class Map(QMainWindow, Ui_MainWindow):
             try:
                 if self.cached_zone_name != self.selected_zone:
                     self.cached_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
+                    print(self.cached_zone_df)
+
                     self.cached_zone_name = self.selected_zone
                 else:
                     print(f"Using cached data for zone: {self.selected_zone}")
@@ -681,7 +733,9 @@ class Map(QMainWindow, Ui_MainWindow):
         if self.selected_zone and self.selected_zone_attribute:
             if self.selected_zone_attribute == "Grid_Name":
                 # If the selected attribute is "Grid Name", apply the grid name colors
+                self.zone_colorbar.setEnabled(False)
                 self.apply_grid_name_colors()
+
                 self.drawingArea.setScaledData(self.well_data)
 
 
@@ -693,6 +747,7 @@ class Map(QMainWindow, Ui_MainWindow):
                 # Update the drawing area with the blackened data
                 self.drawingArea.setScaledData(self.well_data)
             else:
+                self.zone_colorbar.setEnabled(True)
                 # Process zone attribute data for other attributes
                 self.preprocess_zone_attribute_data()
                 # Update the drawing area with the processed data
@@ -702,6 +757,7 @@ class Map(QMainWindow, Ui_MainWindow):
         """Simplified method to apply grid name colors directly when Zone Name equals Grid Name."""
         # Filter the DataFrame for the selected zone
         zone_df = self.cached_zone_df
+        print(zone_df)
     
 
         if zone_df.empty:
@@ -720,11 +776,16 @@ class Map(QMainWindow, Ui_MainWindow):
 
             # Retrieve the color for the grid from grid_info_df
             grid_color = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name, 'Color (RGB)'].values
+
+            # Modify this part in the first loop
             if grid_color.size == 0:
                 qcolor = QColor(Qt.black)  # Default color if not found
+                print(f"  Using default black color for grid '{grid_name}'")
             else:
                 rgb_values = grid_color[0]  # Extract the RGB list
+                #print(f"  RGB values for {grid_name}: {rgb_values}")
                 qcolor = QColor(*rgb_values)
+                #print(f"  Created QColor: R:{qcolor.red()}, G:{qcolor.green()}, B:{qcolor.blue()}")
 
             # If the UWI is not already in the color map, add it
             if UWI not in UWI_color_map:
@@ -732,7 +793,11 @@ class Map(QMainWindow, Ui_MainWindow):
 
             # Add the top depth, base depth, and color as a tuple
             UWI_color_map[UWI].append(( top_depth, base_depth, qcolor))
-  
+            print("\nUWI_color_map contents:")
+            for UWI, depth_list in UWI_color_map.items():
+                print(f"UWI {UWI} has {len(depth_list)} entries:")
+                for top, base, color in depth_list:
+                    print(f"  Range: {top} to {base}, Color: R:{color.red()},G:{color.green()},B:{color.blue()}")
 
         for _, zone in zone_df.iterrows():
             UWI = zone['UWI']
@@ -769,19 +834,28 @@ class Map(QMainWindow, Ui_MainWindow):
 
             if UWI in UWI_color_map:
                 depth_color_list = UWI_color_map[UWI]
-               
+                print(f"UWI {UWI} has {len(depth_color_list)} depth ranges")
+        
+                # Debug: Print the depth ranges
+                for top, base, color in depth_color_list:
+                    print(f"  Range: {top} to {base}, Color: R:{color.red()},G:{color.green()},B:{color.blue()}")
 
                 # Iterate through the measured depths and assign colors
                 for md in mds:
                     assigned_color = QColor(Qt.black)  # Default color
+                    match_found = False
 
                     # Iterate over the depth_color_list in the given order
                     for top_depth, base_depth, color in depth_color_list:
                         # Ensure both UWI and depth range match
                         if top_depth <= md < base_depth:
                             assigned_color = color
-                       
+                            match_found = True
+                            
                             break  # Exit once the first matching color is found
+            
+                    if not match_found:
+                        print(f"  MD {md} didn't match any range, using black")
 
                     well_data['md_colors'].append(assigned_color)
             
@@ -790,9 +864,7 @@ class Map(QMainWindow, Ui_MainWindow):
         
         self.selected_zone_attribute_colorbar = self.zone_colorbar.currentText()
 
-    
-        palettes_dir = os.path.join(os.path.dirname(__file__), 'Palettes')
-        file_path = os.path.join(palettes_dir, self.selected_zone_attribute_colorbar)
+
 
         try:
             self.preprocess_zone_attribute_data()
@@ -820,12 +892,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
         # Load the selected color palette
         color_bar_name = self.zone_colorbar.currentText()
-
-        try:
-            color_palette = self.zone_colorbar.load_color_palette(color_bar_name)
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not load color palette: {e}")
-            return
+        color_palette = self.zone_colorbar.selected_color_palette 
 
         # Determine min and max values for the selected zone attribute
         min_value = zone_df[self.selected_zone_attribute].min()
@@ -843,7 +910,7 @@ class Map(QMainWindow, Ui_MainWindow):
             if UWI not in self.well_data or pd.isna(attribute_value):
                 continue
 
-            color = self.map_value_to_color(attribute_value, min_value, max_value, color_palette)
+            color = self.zone_colorbar.map_value_to_color(attribute_value, min_value, max_value, color_palette)
 
             if UWI not in UWI_color_map:
                 UWI_color_map[UWI] = []
@@ -903,35 +970,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
 
-    def zone_attribute_color_selected(self):
-        """Handles the selection of a new color bar for zone attributes."""
-        self.selected_zone_attribute_colorbar = self.zone_colorbar.currentText()
-    
-        try:
-            # Load the color palette using StyledColorBar method
-            color_palette = self.zone_colorbar.load_color_palette(self.selected_zone_attribute_colorbar)
-        
-            # Preprocess data and apply the selected color palette
-            self.preprocess_zone_attribute_data()
-        
-            # Pass the updated well_data only
-            self.drawingArea.setScaledData(self.well_data)
-    
-        except FileNotFoundError:
-            QMessageBox.warning(self, "Error", f"The palette file was not found.")
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"An error occurred while updating colors: {e}")
 
-
-
-
-    #def get_color_for_md(self, UWI, md):
-    #    """Get color for a specific UWI and MD from well_data."""
-    #    if UWI not in self.well_data or 'md_colors' not in self.well_data[UWI]:
-    #        return QColor(Qt.black)  # Default color if UWI does not exist or has no MD color mappings
-
-    #    # Return the color associated with the specific MD
-    #    return self.well_data[UWI]['md_colors'].get(md, QColor(Qt.black))  # Return black if no color exists for MD
 
     
     def draw_grid_on_map(self, grid_df):
@@ -1518,52 +1557,54 @@ class Map(QMainWindow, Ui_MainWindow):
         """Open the Map Properties Dialog and apply changes on 'Apply'."""
         from PropertiesMap import MapPropertiesDialog
         dialog = MapPropertiesDialog(self)
-
+    
         # Debugging before opening dialog
         print(f"📌 Before Dialog Open: show_ticks={self.drawingArea.show_ticks}, drainage_visible={self.drawingArea.drainage_visible}, drainage_size={self.drawingArea.drainage_size}")
-
+    
         # Set values in the dialog
         dialog.UWICheckbox.setChecked(self.drawingArea.show_UWIs)
         dialog.ticksCheckbox.setChecked(self.drawingArea.show_ticks)
         dialog.gradientCheckbox.setChecked(self.drawingArea.drainage_visible)  # Should match drawingArea
         dialog.gradientSizeSpinBox.setValue(self.drawingArea.drainage_size)
-
-
         dialog.UWIWidthSlider.setValue(self.drawingArea.UWI_width)
         dialog.opacitySlider.setValue(int(self.drawingArea.UWI_opacity * 100))
+    
+        # Set a wider range for the line width slider
+        dialog.lineWidthSlider.setMinimum(1)
+        dialog.lineWidthSlider.setMaximum(500)  # Increased maximum
         dialog.lineWidthSlider.setValue(self.drawingArea.line_width)
+    
         dialog.lineOpacitySlider.setValue(int(self.drawingArea.line_opacity * 100))
-
-
-
+    
+        # Set attribute box size
+        dialog.attributeBoxSizeSlider.setValue(self.drawingArea.attribute_box_size)
+    
         if dialog.exec():  # User clicked "Apply"
-       
-
             # Store values in `DrawingArea`
             self.drawingArea.show_UWIs = dialog.UWICheckbox.isChecked()
             self.drawingArea.show_ticks = dialog.ticksCheckbox.isChecked()
-            self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()  # ⬅️ This is flipping to `False`!
+            self.drawingArea.drainage_visible = dialog.gradientCheckbox.isChecked()
             self.drawingArea.drainage_size = dialog.gradientSizeSpinBox.value()
-
             self.drawingArea.toggleTextItemsVisibility(self.drawingArea.show_UWIs)
             self.drawingArea.toggleticksVisibility(self.drawingArea.show_ticks)
             self.drawingArea.togglegradientVisibility(self.drawingArea.drainage_visible)
-
             self.drawingArea.UWI_width = dialog.UWIWidthSlider.value()
             self.drawingArea.updateUWIWidth(self.drawingArea.UWI_width)
-
             self.drawingArea.UWI_opacity = dialog.opacitySlider.value() / 100.0
             self.drawingArea.setUWIOpacity(self.drawingArea.UWI_opacity)
-
             self.drawingArea.line_width = dialog.lineWidthSlider.value()
             self.drawingArea.updateLineWidth(self.drawingArea.line_width)
-
             self.drawingArea.line_opacity = dialog.lineOpacitySlider.value() / 100.0
             self.drawingArea.updateLineOpacity(self.drawingArea.line_opacity)
-
+        
+            # Update attribute box size
+            self.drawingArea.attribute_box_size = dialog.attributeBoxSizeSlider.value()
+            self.drawingArea.updateAttributeBoxSize(self.drawingArea.attribute_box_size)
+        
             # Force Redraw
             self.drawingArea.scene.update()
             self.drawingArea.viewport().update()
+
 
 
 
@@ -1780,6 +1821,9 @@ class Map(QMainWindow, Ui_MainWindow):
 
                 self.seismic_db = SeismicDatabaseManager(self.db_path)
                 self.seismic_db.create_tables()
+                self.grid_db = GridDatabaseManager(self.db_path)
+                self.grid_db.create_grid_tables()
+
                 
                 # Additional database initialization if needed
                 # For example, creating tables or setting up initial data
@@ -1796,7 +1840,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
     def dataloadgrids(self):
         from DataLoadGrid import DataLoadGridDialog
-        dialog = DataLoadGridDialog(self.import_options_df)
+        dialog = DataLoadGridDialog(self.import_options_df, db_path=self.db_path)
         if dialog.exec() == QDialog.Accepted:
         
        
@@ -1836,14 +1880,7 @@ class Map(QMainWindow, Ui_MainWindow):
 
 
             self.set_interactive_elements_enabled(True)
-            if hasattr(self, 'project_file_name') and self.project_file_name:
-                # Use the ProjectSaver class to save specific parts of the project data
-                self.project_saver = ProjectSaver(self.project_file_name)
-                self.project_saver.save_depth_grid_data(self.depth_grid_data_df)
-                self.project_saver.save_attribute_grid_data(self.attribute_grid_data_df)
-                self.project_saver.save_import_options(self.import_options_df)
-                self.project_saver.save_depth_grid_colors(self.depth_grid_color_df)
-                self.project_saver.save_grid_info(self.grid_info_df)
+
                 
 
 
@@ -2148,9 +2185,10 @@ class Map(QMainWindow, Ui_MainWindow):
             closest_UWI = self.find_closest_UWI(QPointF(position))
             if closest_UWI:
                 print(closest_UWI)
-                self.plot_data(closest_UWI)
                 self.drawingArea.updateHoveredUWI(closest_UWI)  
                 self.drawingArea.update()
+                self.plot_data(closest_UWI)
+
         else:
 
             self.drawing = False
@@ -2440,41 +2478,67 @@ class Map(QMainWindow, Ui_MainWindow):
             self.project_saver.save_zone_criteria_df(self.zone_criteria_df)
 
     def plot_data(self, UWI=None):
+        # Clear any existing plot window first
+        if hasattr(self, 'plot_window') and self.plot_window:
+            try:
+                self.plot_window.close()
+                self.plot_window.deleteLater()
+            except Exception as e:
+                print(f"Error closing existing plot window: {e}")
+            self.plot_window = None
+    
         if not self.directional_surveys_df.empty and not self.depth_grid_data_df.empty:
             try:
-                if UWI:
-                    current_UWI = UWI
-                else:
-                    current_UWI = self.well_list[0]
-            
+                # Select UWI
+                current_UWI = UWI if UWI else self.well_list[0]
                 if current_UWI not in self.well_list:
                     raise ValueError(f"UWI {current_UWI} not found in well list.")
             
-                seismic_db_manager = SeismicDatabaseManager(self.db_path)
+                # Initialize seismic database manager
+                try:
+                    self.seismic_db_manager = SeismicDatabaseManager(self.db_path)
+                except Exception as db_error:
+                    print(f"Error initializing seismic database manager: {db_error}")
+                    raise
             
-                navigator = Plot(
-                    self.well_list, 
-                    self.directional_surveys_df, 
-                    self.depth_grid_data_df, 
-                    self.grid_info_df, 
-                    self.kd_tree_depth_grids, 
-                    current_UWI, 
-                    self.depth_grid_data_dict,
-                    self.db_manager,
-                    seismic_db_manager,
-                    
-                    parent=self
-                )
-            
-                self.open_windows.append(navigator)
-                navigator.show()
-                navigator.closed.connect(lambda: self.open_windows.remove(navigator))
-            
+                # Create plot instance
+                try:
+                    self.plot_window = Plot(
+                        self.well_list,
+                        self.directional_surveys_df,
+                        self.depth_grid_data_df,
+                        self.grid_info_df,
+                        self.kd_tree_depth_grids,
+                        current_UWI,
+                        self.depth_grid_data_dict,
+                        self.db_manager,
+                        self.seismic_db_manager,
+                        parent=self
+                    )
+                
+                    # Connect signals BEFORE showing the window
+                    self.plot_window.closed.connect(self.clear_plot_window)
+                
+                    # Use a timer to ensure the window is fully initialized before showing
+                    QTimer.singleShot(100, self.plot_window.show)
+                
+                except Exception as plot_error:
+                    print(f"Error creating Plot instance: {plot_error}")
+                    import traceback
+                    traceback.print_exc()
+                    raise
+                
             except Exception as e:
                 print(f"Error initializing Plot: {e}")
+                import traceback
+                traceback.print_exc()
                 self.show_info_message("Error", f"Failed to initialize plot navigator: {e}")
         else:
             self.show_info_message("Info", "No grid well data available to plot.")
+
+    def clear_plot_window(self):
+        self.plot_window = None
+        self.seismic_db_manager = None
 
     def plot_gun_barrel(self):
         from GunBarrel import PlotGB
@@ -2533,16 +2597,21 @@ class Map(QMainWindow, Ui_MainWindow):
             )
 
     def open_color_editor(self):
+        print(self.grid_info_df)
         if self.project_saver is None:
             raise ValueError("Project saver is not initialized. Ensure the project file is set.")
         from ColorEdit import ColorEditor
-        editor = ColorEditor(self.grid_info_df, self)
+
+        editor = ColorEditor(self.db_path)
         editor.color_changed.connect(self.update_grid_info_df)
+        print(self.update_grid_info_df)
         editor.exec()  # Display the color editor dialog
 
-    def update_grid_info_df(self, updated_grid_info_df):
-        self.grid_info_df = updated_grid_info_df
-        self.project_saver.save_grid_info(self.grid_info_df)
+    def update_grid_info_df(self, updated_color_df):
+        # Use the database manager to get a fresh DataFrame
+        grid_db_manager = GridDatabaseManager(self.db_path)
+        self.grid_info_df = grid_db_manager.get_grid_info_dataframe(grid_type='Depth')
+    
         self.refresh_open_windows()
 
 

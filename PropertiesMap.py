@@ -54,9 +54,18 @@ class MapPropertiesDialog(QDialog):
         # Line Width slider
         self.lineWidthSlider = QSlider(Qt.Horizontal)
         self.lineWidthSlider.setMinimum(1)
-        self.lineWidthSlider.setMaximum(200)
+        self.lineWidthSlider.setMaximum(1000)
         layout.addWidget(QLabel("Line Width:"))
         layout.addWidget(self.lineWidthSlider)
+
+
+        self.attributeBoxSizeSlider = QSlider(Qt.Horizontal)
+        self.attributeBoxSizeSlider.setMinimum(5)
+        self.attributeBoxSizeSlider.setMaximum(1000)  # Wide range
+        self.attributeBoxSizeSlider.setTickPosition(QSlider.TicksBelow)
+        self.attributeBoxSizeSlider.setTickInterval(50)
+        layout.addWidget(QLabel("Well Attribute Box Size:"))
+        layout.addWidget(self.attributeBoxSizeSlider)
 
         # Line Opacity slider
         self.lineOpacitySlider = QSlider(Qt.Horizontal)

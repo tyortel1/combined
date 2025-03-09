@@ -117,6 +117,7 @@ class DrawingArea(QGraphicsView):
         self.show_ticks = True  # Default ON
         self.drainage_visible = True
         self.drainage_size = 400  # Default 400
+        self.attribute_box_size = 200 
         self.UWI_width = 25
         self.UWI_opacity = 0.5
         self.line_width = 25
@@ -279,20 +280,24 @@ class DrawingArea(QGraphicsView):
                 if self.show_UWIs:
                     self.add_text_item(UWI, points[0])
 
-            # Handle well attribute values if provided
-            if well_attribute_values and UWI in well_attribute_values:
-                color = well_attribute_values[UWI]['color']
-                box_position = points[0] + QPointF(0, 20)
-
-                if UWI in self.well_attribute_boxes:
-                    self.well_attribute_boxes[UWI].setPos(box_position)
-                    self.well_attribute_boxes[UWI].update_color(color)
-                else:
-                    well_attribute_box = WellAttributeBox(UWI, box_position, color, size=20)
-                    self.scene.addItem(well_attribute_box)
-                    self.well_attribute_boxes[UWI] = well_attribute_box
-
-                new_items.append(self.well_attribute_boxes[UWI])
+            ## Handle well attribute values if provided
+            #if well_attribute_values and UWI in well_attribute_values:
+            #    color = well_attribute_values[UWI]['color']
+            #    box_position = points[0] + QPointF(0, 20)
+    
+            #    print(f"Creating/updating attribute box for UWI: {UWI}")
+            #    print(f"Current attribute_box_size: {self.attribute_box_size}")
+    
+            #    if UWI in self.well_attribute_boxes:
+            #        print(f"Box exists for UWI: {UWI}, updating position and color")
+            #        self.well_attribute_boxes[UWI].setPos(box_position)
+            #        self.well_attribute_boxes[UWI].update_color(color)
+            #    else:
+            #        print(f"Creating new box for UWI: {UWI} with size: {self.attribute_box_size}")
+            #        well_attribute_box = WellAttributeBox(UWI, box_position, color, size=self.attribute_box_size)
+            #        print(f"Checking if box is properly tagged: {well_attribute_box.data(0) == 'wellattributebox'}")
+            #        self.scene.addItem(well_attribute_box)
+            #        self.well_attribute_boxes[UWI] = well_attribute_box
 
         # Add new items to the scene
         for item in new_items:
@@ -420,18 +425,90 @@ class DrawingArea(QGraphicsView):
 
 
     def add_well_attribute_boxes(self, well_attribute_values):
-     
         """
         Adds well attribute boxes to the map based on the provided well_attribute_values list.
         """
+        print(f"Adding {len(well_attribute_values)} attribute boxes with size: {self.attribute_box_size}")
+    
+        # Clear existing boxes first
+        self.clearWellAttributeBoxes()
+    
+        # Use attribute_box_size
+        size = self.attribute_box_size
+    
         for point, color in well_attribute_values:
-            circle_item = QGraphicsEllipseItem(point.x() - 100, point.y() - 100, 200, 200) # Adjust size as needed
-            circle_item.setBrush(QBrush(color))
-            circle_item.setPen(QPen(Qt.NoPen))  # No border
-            circle_item.setZValue(10)  # Ensure it appears above other items
-            circle_item.setData(0, 'well_attribute_box')  # Tag for easy removal later
-            self.scene.addItem(circle_item)
+            try:
+                # Create the circle item with proper positioning
+                circle_item = QGraphicsEllipseItem(
+                    point.x() - size/2,
+                    point.y() - size/2,
+                    size,
+                    size
+                )
+                circle_item.setBrush(QBrush(color))
+                circle_item.setPen(QPen(Qt.NoPen))
+                circle_item.setZValue(10)
+                circle_item.setData(0, 'well_attribute_box')
+                self.scene.addItem(circle_item)
+                print(f"Added attribute box at ({point.x()}, {point.y()}) with size {size}")
+            except Exception as e:
+                print(f"Error adding well attribute box: {e}")
 
+    def updateAttributeBoxSize(self, size):
+        """Update size of all well attribute boxes"""
+        print(f"updateAttributeBoxSize called with size={size}")
+    
+        # Update the class property
+        old_size = self.attribute_box_size
+        self.attribute_box_size = size
+        print(f"Updating attribute box size from {old_size} to {size}")
+    
+        # Get all well attribute boxes
+        attribute_boxes = [item for item in self.scene.items() if item.data(0) == 'well_attribute_box']
+        print(f"Found {len(attribute_boxes)} attribute boxes to update")
+    
+        # Track success/failure
+        updated_count = 0
+        failed_count = 0
+    
+        # Update each box
+        for item in attribute_boxes:
+            try:
+                # Get the center of the current item - IMPORTANT FIX HERE
+                rect = item.rect()
+                pos = item.pos()
+            
+                # Print position information for debugging
+                print(f"Box at position: ({pos.x()}, {pos.y()}), rect: {rect}")
+            
+                # Calculate absolute center
+                absolute_center_x = pos.x() + rect.x() + rect.width()/2
+                absolute_center_y = pos.y() + rect.y() + rect.height()/2
+            
+                color = item.brush().color()
+            
+                # Create new box with new coordinates
+                new_item = QGraphicsEllipseItem(0, 0, size, size)
+                new_item.setBrush(QBrush(color))
+                new_item.setPen(QPen(Qt.NoPen))
+                new_item.setZValue(10)
+                new_item.setData(0, 'well_attribute_box')
+            
+                # Set position to place the center of the ellipse at the original center
+                new_item.setPos(absolute_center_x - size/2, absolute_center_y - size/2)
+            
+                # Add the new item before removing the old one
+                self.scene.addItem(new_item)
+                self.scene.removeItem(item)
+                updated_count += 1
+            except Exception as e:
+                print(f"Error updating attribute box: {e}")
+                failed_count += 1
+    
+        print(f"Updated {updated_count} boxes, {failed_count} failed")
+        self.scene.update()
+        self.viewport().update()
+        print("Finished updateAttributeBoxSize")
 
     def clearWellAttributeBoxes(self):
         """
@@ -489,7 +566,7 @@ class DrawingArea(QGraphicsView):
             )
             rect_item.setBrush(QBrush(color))
             rect_item.setPen(QPen(Qt.NoPen))
-            rect_item.setData(0, 'gridpoint')
+            rect_item.setData(0, 'gridGroup')
             rect_item.setZValue(-10)
             self.gridGroup.addToGroup(rect_item)
 
@@ -676,23 +753,47 @@ class DrawingArea(QGraphicsView):
         self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def mousePressEvent(self, event):
-        scene_pos = self.mapToScene(event.pos())
-        x = scene_pos.x()
-        y = scene_pos.y()
-
-        if event.button() == Qt.LeftButton:
-            self.leftClicked.emit(scene_pos)
-            print(f"Left Button Clicked at: ({x}, {y})")
-        elif event.button() == Qt.RightButton:
-            self.rightClicked.emit(scene_pos)
-            print(f"Right Button Clicked at: ({x}, {y})")
-
-        super().mousePressEvent(event)
+        try:
+            scene_pos = self.mapToScene(event.pos())
+            x = scene_pos.x()
+            y = scene_pos.y()
+        
+            if event.button() == Qt.LeftButton:
+                # Safely emit the signal
+                try:
+                    self.leftClicked.emit(scene_pos)
+                    print(f"Left Button Clicked at: ({x}, {y})")
+                except Exception as e:
+                    print(f"Error emitting leftClicked signal: {e}")
+        
+            elif event.button() == Qt.RightButton:
+                # Safely emit the signal
+                try:
+                    print(f"Right Button Clicked at: ({x}, {y})")
+                    self.rightClicked.emit(scene_pos)
+                except Exception as e:
+                    print(f"Error emitting rightClicked signal: {e}")
+        
+            # Call the parent implementation in a try-except block
+            try:
+                super().mousePressEvent(event)
+            except Exception as e:
+                print(f"Error in super().mousePressEvent: {e}")
+                event.accept()  # Make sure the event is handled
+            
+        except Exception as e:
+            print(f"Critical error in mousePressEvent: {e}")
+            import traceback
+            traceback.print_exc()
+            event.accept()  # Ensure event doesn't propagate further
 
     def clearGrid(self):
+        # Remove grid points if they exist
         if hasattr(self, 'gridGroup') and self.gridGroup is not None:
-            self.scene.removeItem(self.gridGroup)
+            self.scene().removeItem(self.gridGroup)
             self.gridGroup = None
+    
+        # Clear the list of grid points
         self.gridPoints = []
   
 
@@ -724,27 +825,6 @@ class DrawingArea(QGraphicsView):
     def set_processed_data(self, processed_data):
         self.processed_data = processed_data
         self.update_colored_segments()
-
-    #def update_colored_segments(self):
-    #    for item in self.scene.items():
-    #        if isinstance(item, QGraphicsPathItem) and item.data(0) == 'colored_segment':
-    #            self.scene.removeItem(item)
-
-    #    for UWI, points in self.processed_data.items():
-    #        if len(points) > 1:
-    #            for i in range(len(points) - 1):
-    #                segment_path = QPainterPath()
-    #                segment_path.moveTo(QPointF(points[i]['x'], points[i]['y']))
-    #                segment_path.lineTo(QPointF(points[i + 1]['x'], points[i + 1]['y']))
-
-    #                path_item = QGraphicsPathItem(segment_path)
-    #                pen = QPen(points[i]['color'])
-    #                pen.setWidth(self.line_width)
-    #                path_item.setPen(pen)
-    #                path_item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
-    #                path_item.setData(0, 'colored_segment')
-    #                path_item.setZValue(4)
-    #                self.scene.addItem(path_item)
 
 
     def toggleTextItemsVisibility(self, visible):
@@ -844,6 +924,8 @@ class DrawingArea(QGraphicsView):
         print(f"🎯 After toggleticksVisibility: show_ticks={self.show_ticks}")
         self.scene.update()
         self.viewport().update()
+
+
 
 
 

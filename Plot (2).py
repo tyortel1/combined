@@ -10,8 +10,6 @@ from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import numpy as np
-import json
-
 
 
 
@@ -25,7 +23,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QSpacerItem, QSizePolicy, QHBoxLayout,
     QGraphicsDropShadowEffect, QPushButton, QSlider, QDialog, QLabel,
-    QFrame, QMessageBox, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,QWidget, QStackedWidget, QGraphicsItemGroup
+    QFrame, QMessageBox, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsBlurEffect, QGraphicsItemGroup
 )
 
 # Custom Styled UI Components
@@ -92,12 +90,11 @@ class SeismicGraphicsView(QGraphicsView):
 
 
 
-    def update_seismic_data(self, seismic_data, seismic_distances, time_axis, units):
+    def update_seismic_data(self, seismic_data, seismic_distances, time_axis):
         """
         Update seismic data visualization using fully vectorized NumPy operations.
         Uses a simple linear interpolation approach for performance.
         """
-        seismic_units = units
         try:
             import numpy as np
         
@@ -115,13 +112,7 @@ class SeismicGraphicsView(QGraphicsView):
             # Compute width and height
             min_x, max_x = min(seismic_distances), max(seismic_distances)
             width = int(max_x - min_x) + 1
-            # Convert depth values
-            if seismic_units == "Feet":
-                time_axis = np.array(time_axis) * 0.3048
-    
-
-
-            height = len(time_axis)  # Use converted depth
+            height = len(time_axis)
         
             # Create the target x coordinate grid (one for each pixel column)
             pixel_x_coords = np.arange(width)
@@ -564,7 +555,6 @@ class Plot(QDialog):
         self.seismic_bounding_box = None
         self.current_hdf5_path =None
         self.intersecting_files = []
-        self.seismic_units = None
 
 
 
@@ -600,22 +590,14 @@ class Plot(QDialog):
 
 
 
-        
+
         self.init_ui()
-        self.load_display_settings()
-
-
 
 
 
     def closeEvent(self, event):
-        try:
-            self.save_display_settings()  # No filename - will use default in db directory
-            self.closed.emit()
-            event.accept()
-        except Exception as e:
-            print(f"Error saving settings on close: {e}")
-            event.accept()
+        self.closed.emit()
+        event.accept()
 
     def init_ui(self):
         labels = [
@@ -649,55 +631,36 @@ class Plot(QDialog):
 
 
 
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)  # Consistent outer margins
+        # Create main layout first
+        main_layout = QHBoxLayout(self)  # Parent to self immediately
 
-        # Control layout setup
+        # Control Layout setup
         control_layout = QVBoxLayout()
-        control_layout.setContentsMargins(0, 0, 0, 0)
-        control_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-
-        # Well section
-        wellFrame, wellLayout = self.create_section("Well Navigation", fixed_height=150)
+    
+        # Create and populate frames
+        wellFrame, wellLayout = self.create_section("Well Navigation", fixed_height=90)
         self.setup_well_section(wellFrame, wellLayout)
-        control_layout.addWidget(wellFrame, 0, Qt.AlignHCenter)  # Center align explicitly
-
-        # Create stacked widget with proper alignment
-        self.content_stack = QStackedWidget()
-        self.content_stack.setContentsMargins(0, 0, 0, 0)
-        control_layout.addWidget(self.content_stack, 0, Qt.AlignHCenter)  # Center align explicitly
-
-        # Create seismic content panel
-        seismic_panel = QWidget()
-        seismic_layout = QVBoxLayout(seismic_panel)
-        seismic_layout.setContentsMargins(0, 0, 0, 0)
-        seismic_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+    
         seismicFrame, seismicLayout = self.create_section("Seismic Display", fixed_height=270)
         self.setup_seismic_section(seismicFrame, seismicLayout)
-        seismic_layout.addWidget(seismicFrame, 0, Qt.AlignHCenter)  # Center align explicitly
-        seismic_layout.addStretch()
-
-        # Create zones content panel
-        zones_panel = QWidget()
-        zones_layout = QVBoxLayout(zones_panel)
-        zones_layout.setContentsMargins(0, 0, 0, 0)
-        zones_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        zoneFrame, zoneLayout = self.create_section("Zone and Attribute", fixed_height=270)
+    
+        zoneFrame, zoneLayout = self.create_section("Zone and Attribute", fixed_height=170)
         self.setup_zone_section(zoneFrame, zoneLayout)
-        zones_layout.addWidget(zoneFrame, 0, Qt.AlignHCenter)  # Center align explicitly
-        zones_layout.addStretch()
     
-        # Add panels to stacked widget
-        self.content_stack.addWidget(seismic_panel)
-        self.content_stack.addWidget(zones_panel)
+        tickFrame, tickLayout = self.create_section("Tick Settings", fixed_height=150)  # Increased height for transparency
+        self.setup_tick_section(tickFrame, tickLayout)
     
-        # Connect display selector
-        self.display_selector.combo.currentIndexChanged.connect(self.content_stack.setCurrentIndex)
-    
+        # Add frames to control layout
+        control_layout.addWidget(wellFrame)
+        control_layout.addWidget(seismicFrame)
+        control_layout.addWidget(zoneFrame)
+        control_layout.addWidget(tickFrame)
+        control_layout.addStretch()
+
         # Plot Layout setup
         plot_layout = QVBoxLayout()
         plot_layout.addWidget(self.plot_widget)
-    
+
         # Add layouts to main layout
         main_layout.addLayout(control_layout, stretch=1)
         main_layout.addLayout(plot_layout, stretch=7)
@@ -756,19 +719,19 @@ class Plot(QDialog):
 
 
     def setup_well_section(self, frame, layout):
-        # Create well selector dropdown
+            # Well Selector setup
         self.well_selector = self.create_dropdown("Well")
         self.well_selector.addItems(self.UWI_list)
         current_index = self.UWI_list.index(self.current_UWI)
         self.well_selector.setCurrentIndex(current_index)
     
-        # Add well selector to main layout
-        layout.addWidget(self.well_selector)
+        # Navigation buttons setup
+        button_layout = QHBoxLayout()
     
-        # Create buttons with icons
         self.prev_button = QPushButton()
         self.next_button = QPushButton()
     
+        # Set up icons
         prev_icon = QIcon(os.path.join(os.path.dirname(__file__), 'Icons', 'arrow_left.ico'))
         next_icon = QIcon(os.path.join(os.path.dirname(__file__), 'Icons', 'arrow_right.ico'))
     
@@ -778,51 +741,29 @@ class Plot(QDialog):
         self.prev_button.setFixedSize(40, 40)
         self.next_button.setFixedSize(40, 40)
     
-        # Create a horizontal layout with proper alignment
-        button_layout = QHBoxLayout()
+        # Add to button layout with spacers
+        spacer_20 = QSpacerItem(0, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacer_40 = QSpacerItem(0, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
     
-        # Add left padding to align with dropdown start position
-        # Add a spacer that matches the width of the label
-        button_layout.addSpacing(StyledDropdown.label_width)
-    
-        # Now add the left button, stretch, and right button
+        button_layout.addItem(spacer_20)
         button_layout.addWidget(self.prev_button)
-        button_layout.addStretch(1)
+        button_layout.addItem(spacer_40)
         button_layout.addWidget(self.next_button)
+        button_layout.addStretch()
     
-        # Add button layout below well selector
+        # Add to well layout
+        layout.addWidget(self.well_selector)
         layout.addLayout(button_layout)
-    
-        # Create display selector and add it below the buttons
-        self.display_selector = self.create_dropdown("Display")
-        self.display_selector.addItems(["Seismic", "Zones"])
-        layout.addWidget(self.display_selector)
 
     def setup_zone_section(self, frame, layout):
-        # Create the zone selector, attribute selector, and color bar
         self.zone_selector = self.create_dropdown("Zone")
         self.zone_attribute_selector = self.create_dropdown("Attribute")
         self.color_colorbar = self.create_colorbar()
     
-        # Add tick size and transparency controls
-        self.tick_size_slider = self.create_slider("Tick Size", slider_type='single')
-        self.tick_size_slider.setRange(5, 50)
-        self.tick_size_slider.setValue(20)
-        self.tick_size_slider.slider.setTickPosition(QSlider.TicksBelow)
-        self.tick_size_slider.slider.setTickInterval(4)
-    
-        self.transparency_slider = self.create_slider("Transparency", slider_type='single')
-        self.transparency_slider.setRange(0, 100)
-        self.transparency_slider.setValue(100)
-    
-        # Add all widgets to layout
         layout.addWidget(self.zone_selector)
         layout.addWidget(self.zone_attribute_selector)
         layout.addWidget(self.color_colorbar)
-        layout.addWidget(self.tick_size_slider)
-        layout.addWidget(self.transparency_slider)
-    
-        # Disable attribute selector initially
+        
         self.zone_attribute_selector.combo.setEnabled(False)
 
 
@@ -915,6 +856,7 @@ class Plot(QDialog):
         # Colorbar for seismic
         self.seismic_colorbar = self.create_colorbar()
         layout.addWidget(self.seismic_colorbar)
+
 
         # Display Range section
         display_range_layout = QHBoxLayout()
@@ -1089,7 +1031,32 @@ class Plot(QDialog):
             traceback.print_exc()
             self.plot_current_well()
 
+    def setup_tick_section(self, frame, layout):
+        # Existing tick size controls
+        tick_slider_layout = QHBoxLayout()
+    
+        # Tick Size slider
+        self.tick_size_slider = self.create_slider("Tick Size", slider_type='single')
+        self.tick_size_slider.setRange(5, 50)
+        self.tick_size_slider.setValue(20)
 
+        # Add tick position and interval if needed
+        self.tick_size_slider.slider.setTickPosition(QSlider.TicksBelow)
+        self.tick_size_slider.slider.setTickInterval(4)
+
+        tick_slider_layout.addWidget(self.tick_size_slider)
+
+        layout.addLayout(tick_slider_layout)
+
+        # Transparency slider section
+        transparency_layout = QHBoxLayout()
+
+        self.transparency_slider = self.create_slider("Transparency", slider_type='single')
+        self.transparency_slider.setRange(0, 100)
+        self.transparency_slider.setValue(100)
+
+        transparency_layout.addWidget(self.transparency_slider)
+        layout.addLayout(transparency_layout)
 
 
     def setup_connections(self):
@@ -1588,7 +1555,6 @@ class Plot(QDialog):
         
             # Get file info by name
             file_info = self.seismic_db_manager.get_seismic_file_info(name=selected_display_name)
-            self.seismic_units = file_info.get('vertical_unit', 'Meters') 
             print(f"File info: {file_info}")
         
             if not file_info:
@@ -1634,11 +1600,11 @@ class Plot(QDialog):
             if self.plot_widget.scene_obj.items():
                 self.plot_widget.scene_obj.clear()
 
-            # ✅ Step 1: Load Well Data - This is the minimum required
+            # ✅ Step 1: Load Well Data
             self.current_well_data = self.directional_surveys_df[
                 self.directional_surveys_df['UWI'] == self.current_UWI
             ].reset_index(drop=True)
-            print(f"Loading well data for UWI: {self.current_UWI}")
+            print(self.current_well_data)
 
             if self.current_well_data.empty:
                 print(f"⚠ No well data found for UWI: {self.current_UWI}")
@@ -1649,265 +1615,220 @@ class Plot(QDialog):
             self.tvd_values = self.current_well_data['TVD'].tolist()
             self.combined_distances = np.array(self.current_well_data['Cumulative Distance'])
 
-            # Always plot well path as the minimum viable display
+            # ✅ Step 2: Verify HDF5 Path
+            if not self.current_hdf5_path or not os.path.exists(self.current_hdf5_path):
+                print("❌ ERROR: HDF5 file does not exist or is invalid!")
+                return
+            self.selected_attribute = self.seismic_attribute_selector.combo.currentText()
+            # ✅ Step 3: Open HDF5 File and Check Contents
+            # ✅ Step 3: Open HDF5 File and Check Contents
+            with h5py.File(self.current_hdf5_path, 'r') as f:
+                # Check if 'attributes' group exists
+                if 'attributes' not in f:
+                    print("❌ ERROR: 'attributes' group not found in HDF5 file!")
+                    return
+
+                # Get all available attributes
+                all_attributes = list(f['attributes'].keys())
+    
+                # Get the selected attribute from the dropdown
+                self.selected_attribute = self.seismic_attribute_selector.combo.currentText()
+
+                # Verify the selected attribute exists
+                if self.selected_attribute not in f['attributes']:
+                    print(f"❌ ERROR: Attribute '{self.selected_attribute}' not found in HDF5 file!")
+                    return
+
+                # Ensure well_attribute_traces is initialized
+                if not hasattr(self, 'well_attribute_traces'):
+                    self.well_attribute_traces = {}
+    
+                if self.current_UWI not in self.well_attribute_traces:
+                    self.well_attribute_traces[self.current_UWI] = {}
+
+                # Load geometry datasets once
+                time_axis = f['geometry']['time_axis'][:]
+                x_coords = f['geometry']['x_coords'][:]
+                y_coords = f['geometry']['y_coords'][:]
+
+                # Create KDTree once
+                if 'kdtree' in f['geometry']:
+                    kdtree_data = f['geometry']['kdtree']['data'][:]
+                    leafsize = f['geometry']['kdtree'].attrs.get('leafsize', 16)
+                    seismic_kdtree = KDTree(kdtree_data, leafsize=leafsize)
+                else:
+                    # Fallback to creating a new KDTree if not found
+                    seismic_coords = np.column_stack((x_coords, y_coords))
+                    seismic_kdtree = KDTree(seismic_coords)
+
+                # Iterate through all attributes and store traces
+                for attribute in all_attributes:
+                    # Get the attribute group
+                    attribute_group = f['attributes'][attribute]
+        
+                    # Load trace data
+                    trace_data = attribute_group['trace_data'][:]
+
+                    distances, indices = seismic_kdtree.query(well_coords)
+
+                    # Print inline, crossline, and distance for each well point
+                    if 'inlines' in f['geometry'] and 'crosslines' in f['geometry']:
+                        inline_numbers = f['geometry']['inlines'][:]
+                        crossline_numbers = f['geometry']['crosslines'][:]
+    
+                    if attribute == all_attributes[0]:
+                        for i, (idx, dist) in enumerate(zip(indices, distances)):
+                            print(f"Well point {i}: MD position {self.current_well_data['MD'].iloc[i]:.2f}, "
+                                  f"Cumulative distance {self.combined_distances[i]:.2f}, "
+                                  f"Nearest trace at inline {inline_numbers[idx]}, crossline {crossline_numbers[idx]}, "
+                                  f"distance: {dist:.2f}")
+
+
+                    # Ensure indices are valid
+                    max_index = trace_data.shape[0] - 1
+                    indices = np.clip(indices, 0, max_index)
+
+                    # Read Seismic Traces
+                    seismic_trace_amplitudes = []
+                    for idx in indices:
+                        try:
+                            trace = trace_data[idx, :]
+                            seismic_trace_amplitudes.append(trace)
+                        except Exception as e:
+                            print(f"❌ ERROR: Failed to load trace for attribute {attribute}, index {idx}: {e}")
+
+                    # Convert to numpy array
+                    seismic_trace_amplitudes = np.array(seismic_trace_amplitudes)
+
+                    # Store traces for this attribute
+                    self.well_attribute_traces[self.current_UWI][attribute] = seismic_trace_amplitudes
+
+                # Proceed with plotting the selected attribute
+                # Use the stored traces for the selected attribute
+                seismic_trace_amplitudes = self.well_attribute_traces[self.current_UWI][self.selected_attribute]
+
+
+                trace_inline_numbers = inline_numbers[indices]
+                trace_crossline_numbers = crossline_numbers[indices]
+
+                # Create seismic section and print info about which trace goes where
+                seismic_section = np.zeros((len(time_axis), len(self.combined_distances)))
+                print("\nChecking which trace is assigned to each cumulative distance:")
+                for i in range(len(self.combined_distances)):
+                    seismic_section[:, i] = seismic_trace_amplitudes[i]
+    
+                    # Print every 10th point or points around where traces should change
+                    if i % 10 == 0 or (i > 40 and i < 60) or (i > 150 and i < 170):
+                        print(f"Cumulative distance {self.combined_distances[i]:.2f}: Using trace from inline {trace_inline_numbers[i]}, crossline {trace_crossline_numbers[i]}")
+        
+                        # Optional: Check if adjacent traces are identical
+                        if i > 0:
+                            traces_equal = np.array_equal(seismic_trace_amplitudes[i], seismic_trace_amplitudes[i-1])
+                            print(f"  Trace at position {i} same as previous trace? {traces_equal}")
+
+                # Save raw data for later reference
+                self.raw_seismic_section = seismic_section
+                self.raw_time_axis = time_axis
+                self.raw_distance_axis = self.combined_distances
+                print(self.raw_distance_axis)
+
+
+                prev_trace = None
+                for i, (inline, crossline) in enumerate(zip(trace_inline_numbers, trace_crossline_numbers)):
+                    current_trace = (inline, crossline)
+                    if prev_trace is not None and current_trace != prev_trace:
+                        # Add a vertical line at this position
+                        line = self.plot_widget.scene_obj.addLine(
+                            self.combined_distances[i], min(time_axis),
+                            self.combined_distances[i], max(time_axis),
+                            QPen(Qt.red, 2)
+                        )
+                        line.setZValue(3)  # Above everything else
+                    prev_trace = current_trace
+
+
+
+                # ✅ Step 9: Pass the raw data directly to the plot widget
+                # The plotting widget will handle interpolation during rendering
+                self.plot_widget.update_seismic_data(
+                    self.raw_seismic_section,  # Original traces (time × distance)
+                    self.raw_distance_axis,    # Actual measured distances along wellbore
+                    self.raw_time_axis         # Time axis
+                )
+
+                # Store data for timing lines
+                self.plot_widget.seismic_time_axis = self.raw_time_axis
+                self.plot_widget.raw_distance_axis = self.combined_distances
+
+                # Update timing lines
+                self.plot_widget.updateTimingLines()
+
+            # ✅ Step 14: Process Grid Intersections
+            print("🔍 Processing grid intersections...")
+            grid_values = {}
+            sorted_grids = sorted(self.kd_tree_depth_grids.keys())
+
+            for grid_name in sorted_grids:
+                kdtree = self.kd_tree_depth_grids[grid_name]
+                grid_values[grid_name] = []
+
+                for x2, y2 in well_coords:
+                    if kdtree.data.size > 0:
+                        _, indices = kdtree.query((x2, y2))
+                        if indices < len(self.depth_grid_data_dict[grid_name]):
+                            grid_values[grid_name].append(self.depth_grid_data_dict[grid_name][indices])
+
+            # ✅ Step 15: Plot Grids and Fills
+            for i, grid_name in enumerate(sorted_grids):
+                try:
+                    grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name]
+                    if grid_row.empty:
+                        continue
+
+                    current_color = grid_row['Color (RGB)'].values[0]
+                    current_points = list(zip(self.combined_distances, grid_values[grid_name]))
+
+                    # Draw grid line
+                    self.plot_widget.add_grid_line(current_points, current_color)
+
+                    # Add fill between this grid and the next
+                    if i < len(sorted_grids) - 1:
+                        next_grid_name = sorted_grids[i + 1]
+                        next_points = list(zip(self.combined_distances, grid_values[next_grid_name]))
+
+                        path = QPainterPath()
+                        path.moveTo(current_points[0][0], current_points[0][1])
+
+                        for point in current_points:
+                            path.lineTo(point[0], point[1])
+
+                        for point in reversed(next_points):
+                            path.lineTo(point[0], point[1])
+
+                        path.lineTo(current_points[0][0], current_points[0][1])
+
+                        # Apply transparency to the fill
+                        color = QColor(*current_color)
+                        color.setAlpha(76)  # 30% opacity
+                        fill_item = self.plot_widget.scene_obj.addPath(
+                            path, QPen(Qt.NoPen), QBrush(color)
+                        )
+                        fill_item.setZValue(0)
+
+                except Exception as e:
+                    print(f"❌ Error processing grid {grid_name}: {e}")
+
+            # ✅ Step 16: Plot Well Path Last
             path_points = list(zip(self.combined_distances, self.tvd_values))
             self.plot_widget.update_well_path(path_points)
-            print(f"Well path plotted with {len(path_points)} points")
 
-            # ✅ Step 2: Try to plot seismic data if available
-            has_seismic = False
-            if hasattr(self, 'current_hdf5_path') and self.current_hdf5_path and os.path.exists(self.current_hdf5_path):
-                print(f"Processing seismic data from: {self.current_hdf5_path}")
-                try:
-                    self.selected_attribute = self.seismic_attribute_selector.combo.currentText()
-                    # Open HDF5 file and process seismic data
-                    with h5py.File(self.current_hdf5_path, 'r') as f:
-                        # Check if 'attributes' group exists
-                        if 'attributes' not in f:
-                            print("⚠️ 'attributes' group not found in HDF5 file!")
-                        elif self.selected_attribute not in f['attributes']:
-                            print(f"⚠️ Attribute '{self.selected_attribute}' not found in HDF5 file!")
-                        else:
-                            # Get all available attributes
-                            all_attributes = list(f['attributes'].keys())
-                        
-                            # Ensure well_attribute_traces is initialized
-                            if not hasattr(self, 'well_attribute_traces'):
-                                self.well_attribute_traces = {}
-            
-                            if self.current_UWI not in self.well_attribute_traces:
-                                self.well_attribute_traces[self.current_UWI] = {}
-
-                            # Load geometry datasets once
-                            if 'geometry' in f:
-                                time_axis = f['geometry']['time_axis'][:]
-                                if 'x_coords' in f['geometry'] and 'y_coords' in f['geometry']:
-                                    x_coords = f['geometry']['x_coords'][:]
-                                    y_coords = f['geometry']['y_coords'][:]
-                                
-                                    # Create KDTree or use existing one
-                                    if 'kdtree' in f['geometry']:
-                                        kdtree_data = f['geometry']['kdtree']['data'][:]
-                                        leafsize = f['geometry']['kdtree'].attrs.get('leafsize', 16)
-                                        seismic_kdtree = KDTree(kdtree_data, leafsize=leafsize)
-                                    else:
-                                        # Fallback to creating a new KDTree if not found
-                                        seismic_coords = np.column_stack((x_coords, y_coords))
-                                        seismic_kdtree = KDTree(seismic_coords)
-
-                                    # Iterate through all attributes and store traces
-                                    for attribute in all_attributes:
-                                        # Get the attribute group
-                                        attribute_group = f['attributes'][attribute]
-                        
-                                        # Load trace data
-                                        trace_data = attribute_group['trace_data'][:]
-
-                                        distances, indices = seismic_kdtree.query(well_coords)
-
-                                        # Print inline, crossline, and distance for each well point
-                                        if 'inlines' in f['geometry'] and 'crosslines' in f['geometry']:
-                                            inline_numbers = f['geometry']['inlines'][:]
-                                            crossline_numbers = f['geometry']['crosslines'][:]
-                    
-                                        if attribute == all_attributes[0]:
-                                            for i, (idx, dist) in enumerate(zip(indices, distances)):
-                                                if i % 20 == 0:  # Print only every 20th point to reduce output
-                                                    print(f"Well point {i}: MD position {self.current_well_data['MD'].iloc[i]:.2f}, "
-                                                        f"Cumulative distance {self.combined_distances[i]:.2f}, "
-                                                        f"Nearest trace at distance: {dist:.2f}")
-
-                                        # Ensure indices are valid
-                                        max_index = trace_data.shape[0] - 1
-                                        indices = np.clip(indices, 0, max_index)
-
-                                        # Read Seismic Traces
-                                        seismic_trace_amplitudes = []
-                                        for idx in indices:
-                                            try:
-                                                trace = trace_data[idx, :]
-                                                seismic_trace_amplitudes.append(trace)
-                                            except Exception as e:
-                                                print(f"❌ ERROR: Failed to load trace for attribute {attribute}, index {idx}: {e}")
-                                                # Provide a fallback trace with zeros
-                                                seismic_trace_amplitudes.append(np.zeros_like(trace_data[0, :]))
-
-                                        # Convert to numpy array
-                                        seismic_trace_amplitudes = np.array(seismic_trace_amplitudes)
-
-                                        # Store traces for this attribute
-                                        self.well_attribute_traces[self.current_UWI][attribute] = seismic_trace_amplitudes
-
-                                    # Proceed with plotting the selected attribute
-                                    # Use the stored traces for the selected attribute
-                                    seismic_trace_amplitudes = self.well_attribute_traces[self.current_UWI][self.selected_attribute]
-
-                                    # Create seismic section
-                                    seismic_section = np.zeros((len(time_axis), len(self.combined_distances)))
-                                    for i in range(len(self.combined_distances)):
-                                        seismic_section[:, i] = seismic_trace_amplitudes[i]
-                        
-                                    # Save raw data for later reference
-                                    self.raw_seismic_section = seismic_section
-                                    self.raw_time_axis = time_axis
-                                    self.raw_distance_axis = self.combined_distances
-
-                                    # Add vertical lines where traces change if using inline/crossline visualization
-                                    if 'inlines' in f['geometry'] and 'crosslines' in f['geometry']:
-                                        trace_inline_numbers = inline_numbers[indices]
-                                        trace_crossline_numbers = crossline_numbers[indices]
-                                    
-                                        prev_trace = None
-                                        for i, (inline, crossline) in enumerate(zip(trace_inline_numbers, trace_crossline_numbers)):
-                                            current_trace = (inline, crossline)
-                                            if prev_trace is not None and current_trace != prev_trace:
-                                                # Add a vertical line at this position
-                                                line = self.plot_widget.scene_obj.addLine(
-                                                    self.combined_distances[i], min(time_axis),
-                                                    self.combined_distances[i], max(time_axis),
-                                                    QPen(Qt.red, 2)
-                                                )
-                                                line.setZValue(3)  # Above everything else
-                                            prev_trace = current_trace
-
-                                    # Pass the raw data directly to the plot widget
-                                    self.plot_widget.update_seismic_data(
-                                        self.raw_seismic_section,  # Original traces (time × distance)
-                                        self.raw_distance_axis,    # Actual measured distances along wellbore
-                                        self.raw_time_axis,        # Time axis
-                                        self.seismic_units         # Unit type
-                                    )
-
-                                    # Store data for timing lines
-                                    self.plot_widget.seismic_time_axis = self.raw_time_axis
-                                    self.plot_widget.raw_distance_axis = self.combined_distances
-
-                                    # Update timing lines
-                                    self.plot_widget.updateTimingLines()
-                                
-                                    has_seismic = True
-                                    print(f"✅ Seismic data plotted successfully: {self.selected_attribute}")
-                                else:
-                                    print("⚠️ Required geometry coordinates not found in HDF5 file!")
-                            else:
-                                print("⚠️ Required geometry group not found in HDF5 file!")
-                except Exception as e:
-                    print(f"❌ ERROR processing seismic data: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print("⚠️ No valid HDF5 file available, skipping seismic display")
-
-            # ✅ Step 3: Process Grid Intersections if available
-            has_grids = False
-            if hasattr(self, 'kd_tree_depth_grids') and self.kd_tree_depth_grids and hasattr(self, 'grid_info_df') and not self.grid_info_df.empty:
-                print("🔍 Processing grid intersections...")
-                try:
-                    grid_values = {}
-                    sorted_grids = sorted(self.kd_tree_depth_grids.keys())
-
-                    for grid_name in sorted_grids:
-                        kdtree = self.kd_tree_depth_grids[grid_name]
-                    
-                        # Skip if KDTree is invalid or has no data
-                        if not hasattr(kdtree, 'data') or kdtree.data.size == 0:
-                            print(f"⚠️ Skipping grid {grid_name} - KDTree has no data")
-                            continue
-                        
-                        grid_values[grid_name] = []
-
-                        for x2, y2 in well_coords:
-                            if kdtree.data.size > 0:
-                                _, indices = kdtree.query((x2, y2))
-                                if grid_name in self.depth_grid_data_dict and indices < len(self.depth_grid_data_dict[grid_name]):
-                                    grid_values[grid_name].append(self.depth_grid_data_dict[grid_name][indices])
-                                else:
-                                    # Add a placeholder value if we can't find a valid grid value
-                                    grid_values[grid_name].append(self.tvd_values[0])  # Use first TVD as fallback
-
-                    # Skip grid plotting if no valid grid data was found
-                    if not any(grid_values.values()):
-                        print("⚠️ No valid grid intersections found")
-                    else:
-                        has_grids = True
-                        # Plot Grids and Fills
-                        for i, grid_name in enumerate(sorted_grids):
-                            try:
-                                if grid_name not in grid_values or not grid_values[grid_name]:
-                                    continue
-                                
-                                grid_row = self.grid_info_df.loc[self.grid_info_df['Grid'] == grid_name]
-                                if grid_row.empty:
-                                    continue
-
-                                current_color = grid_row['Color (RGB)'].values[0]
-                                current_points = list(zip(self.combined_distances, grid_values[grid_name]))
-
-                                # Draw grid line
-                                self.plot_widget.add_grid_line(current_points, current_color)
-
-                                # Add fill between this grid and the next
-                                if i < len(sorted_grids) - 1:
-                                    next_grid_name = sorted_grids[i + 1]
-                                
-                                    # Skip if next grid has no values
-                                    if next_grid_name not in grid_values or not grid_values[next_grid_name]:
-                                        continue
-                                    
-                                    next_points = list(zip(self.combined_distances, grid_values[next_grid_name]))
-
-                                    path = QPainterPath()
-                                    path.moveTo(current_points[0][0], current_points[0][1])
-
-                                    for point in current_points:
-                                        path.lineTo(point[0], point[1])
-
-                                    for point in reversed(next_points):
-                                        path.lineTo(point[0], point[1])
-
-                                    path.lineTo(current_points[0][0], current_points[0][1])
-
-                                    # Apply transparency to the fill
-                                    color = QColor(*current_color)
-                                    color.setAlpha(76)  # 30% opacity
-                                    fill_item = self.plot_widget.scene_obj.addPath(
-                                        path, QPen(Qt.NoPen), QBrush(color)
-                                    )
-                                    fill_item.setZValue(0)
-
-                            except Exception as e:
-                                print(f"❌ Error processing grid {grid_name}: {e}")
-                    
-                        print(f"✅ {len(sorted_grids)} grid lines plotted")
-                except Exception as e:
-                    print(f"❌ ERROR processing grid data: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print("⚠️ No grid data available, skipping grid display")
-
-            # ✅ Step 4: Update zone ticks if a zone is selected
-            if self.selected_zone and self.selected_zone != "Select_Zone":
-                try:
-                    self.update_zone_ticks()
-                    print(f"✅ Zone ticks updated for {self.selected_zone}")
-                except Exception as e:
-                    print(f"❌ ERROR updating zone ticks: {e}")
-
-            # Final status report
-            components = []
-            if has_seismic: components.append("seismic")
-            if has_grids: components.append("grids")
-        
-            if components:
-                print(f"✅ Well plotting complete with {' and '.join(components)}!")
-            else:
-                print("✅ Well path plotted (without seismic or grid data)")
+            print("✅ Well plotting complete!")
 
         except Exception as e:
             print(f"❌ CRITICAL ERROR: {e}")
             import traceback
             traceback.print_exc()
+
 
     def update_tick_size_value_label(self, value):
         """Update tick size without reloading the entire plot"""
@@ -2156,176 +2077,7 @@ class Plot(QDialog):
         """Display an error message box."""
         QMessageBox.critical(self, "Error", message)
 
-    def load_display_settings(self, filename=None):
-        """Load display settings from a JSON file in the database directory"""
-        if filename is None:
-            # Get the database directory from the db_manager
-            db_dir = os.path.dirname(self.seismic_db_manager.db_path)
-            filename = os.path.join(db_dir, "plot.json")
 
-        if not os.path.exists(filename):
-            print(f"Settings file {filename} not found")
-            return False
-    
-        try:
-            with open(filename, 'r') as f:
-                settings = json.load(f)
-        
-            print(f"Loading settings from {filename}")
-        
-            # Block signals during settings loading
-            self.blockAllSignals(True)
-        
-            # Apply well settings if UWI exists in the list
-            if "current_uwi" in settings and settings["current_uwi"] in self.UWI_list:
-                index = self.UWI_list.index(settings["current_uwi"])
-                self.current_UWI = settings["current_uwi"]
-                self.current_index = index
-                self.well_selector.combo.setCurrentIndex(index)
-        
-            # Set display mode
-            if "display_mode" in settings:
-                mode_index = self.display_selector.combo.findText(settings["display_mode"])
-                if mode_index >= 0:
-                    self.display_selector.combo.setCurrentIndex(mode_index)
-                    self.content_stack.setCurrentIndex(mode_index)
-            
-            # Apply seismic settings
-            if "seismic_volume" in settings:
-                vol_index = self.seismic_selector.combo.findText(settings["seismic_volume"])
-                if vol_index >= 0:
-                    self.seismic_selector.combo.setCurrentIndex(vol_index)
-                    # Manually trigger the seismic attribute population
-                    self.populate_seismic_attributes(settings["seismic_volume"])
-            
-            if "seismic_attribute" in settings and hasattr(self.seismic_attribute_selector, 'combo'):
-                attr_index = self.seismic_attribute_selector.combo.findText(settings["seismic_attribute"])
-                if attr_index >= 0:
-                    self.seismic_attribute_selector.combo.setCurrentIndex(attr_index)
-                    self.selected_attribute = settings["seismic_attribute"]
-            
-            if "seismic_colorbar" in settings and hasattr(self.seismic_colorbar, 'colorbar_dropdown'):
-                color_index = self.seismic_colorbar.colorbar_dropdown.combo.findText(settings["seismic_colorbar"])
-                if color_index >= 0:
-                    self.seismic_colorbar.colorbar_dropdown.combo.setCurrentIndex(color_index)
-                    self.seismic_colorbar.color_selected()
-            
-            if "seismic_range" in settings and hasattr(self, 'seismic_range_slider'):
-                self.seismic_range_slider.setValue(settings["seismic_range"])
-        
-            if "heat_value" in settings and hasattr(self, 'heat_slider'):
-                self.heat_slider.setValue(settings["heat_value"])
-        
-            # Apply zone settings
-            if "selected_zone" in settings:
-                zone_index = self.zone_selector.combo.findText(settings["selected_zone"])
-                if zone_index >= 0:
-                    self.zone_selector.combo.setCurrentIndex(zone_index)
-                    self.selected_zone = settings["selected_zone"].replace(" ", "_")
-                    # Manually fetch the zone data
-                    if self.selected_zone != "Select_Zone":
-                        try:
-                            self.selected_zone_df = self.db_manager.fetch_table_data(self.selected_zone)
-                            self.populate_zone_attribute()
-                        except Exception as e:
-                            print(f"Error fetching zone data: {str(e)}")
-                            self.selected_zone_df = None
-            
-            if "zone_attribute" in settings and hasattr(self.zone_attribute_selector, 'combo'):
-                attr_index = self.zone_attribute_selector.combo.findText(settings["zone_attribute"])
-                if attr_index >= 0:
-                    self.zone_attribute_selector.combo.setCurrentIndex(attr_index)
-            
-            if "zone_colorbar" in settings and hasattr(self.color_colorbar, 'colorbar_dropdown'):
-                color_index = self.color_colorbar.colorbar_dropdown.combo.findText(settings["zone_colorbar"])
-                if color_index >= 0:
-                    self.color_colorbar.colorbar_dropdown.combo.setCurrentIndex(color_index)
-                    self.color_colorbar.color_selected()
-            
-            if "tick_size" in settings and hasattr(self, 'tick_size_slider'):
-                self.tick_size_slider.setValue(settings["tick_size"])
-                self.tick_size_value = settings["tick_size"]
-        
-            if "transparency" in settings and hasattr(self, 'transparency_slider'):
-                self.transparency_slider.setValue(settings["transparency"])
-        
-            # Unblock signals
-            self.blockAllSignals(False)
-        
-            # Now plot with the loaded settings
-            self.plot_current_well()
-        
-            # Update zone ticks if needed
-            if self.selected_zone and self.selected_zone != "Select_Zone":
-                self.update_zone_ticks()
-            
-            print(f"Display settings loaded from {filename}")
-            return True
-    
-        except Exception as e:
-            print(f"Error loading settings: {e}")
-            import traceback
-            traceback.print_exc()
-            return False
-
-    def blockAllSignals(self, block):
-        """Block or unblock signals for all interactive UI elements"""
-        widgets = [
-            self.well_selector.combo,
-            self.zone_selector.combo, 
-            self.zone_attribute_selector.combo,
-            self.display_selector.combo,
-            self.seismic_selector.combo,
-            self.seismic_attribute_selector.combo,
-            self.seismic_colorbar.colorbar_dropdown.combo,
-            self.color_colorbar.colorbar_dropdown.combo,
-            self.tick_size_slider.slider,
-            self.transparency_slider.slider,
-            self.seismic_range_slider.slider,
-            self.heat_slider.slider
-        ]
-    
-        for widget in widgets:
-            if widget:  # Check if widget exists
-                widget.blockSignals(block)
-
-    def save_display_settings(self, filename=None):
-        """Save current display settings to a JSON file in the database directory"""
-        if filename is None:
-            # Get the database directory from the db_manager
-            db_dir = os.path.dirname(self.seismic_db_manager.db_path)
-            filename = os.path.join(db_dir, "plot.json")
-
-        settings = {
-            # Well settings
-            "current_uwi": self.current_UWI,
-    
-            # Display mode
-            "display_mode": self.display_selector.combo.currentText(),
-    
-            # Seismic settings
-            "seismic_volume": self.seismic_selector.combo.currentText(),
-            "seismic_attribute": self.seismic_attribute_selector.combo.currentText(),
-            "seismic_colorbar": self.seismic_colorbar.colorbar_dropdown.combo.currentText(),
-            "seismic_range": self.seismic_range_slider.value() if hasattr(self.seismic_range_slider, 'value') else [0, 1],
-            "heat_value": self.heat_slider.value() if hasattr(self.heat_slider, 'value') else 50,
-    
-            # Zone settings
-            "selected_zone": self.zone_selector.combo.currentText(),
-            "zone_attribute": self.zone_attribute_selector.combo.currentText(),
-            "zone_colorbar": self.color_colorbar.colorbar_dropdown.combo.currentText(),
-            "tick_size": self.tick_size_slider.value() if hasattr(self.tick_size_slider, 'value') else 20,
-            "transparency": self.transparency_slider.value() if hasattr(self.transparency_slider, 'value') else 100
-        }
-
-        try:
-            with open(filename, 'w') as f:
-                json.dump(settings, f, indent=4)
-            print(f"Display settings saved to {filename}")
-        except Exception as e:
-            print(f"Error saving settings: {e}")
-            import traceback
-            traceback.print_exc()
 
 
 if __name__ == '__main__':

@@ -45,15 +45,6 @@ class ProjectSaver:
             self.project_data['directional_surveys'] = directional_surveys_df.to_dict(orient='list')
         self.submit_save_task()
 
-    def save_depth_grid_data(self, depth_grid_data_df):
-        with self.lock:
-            self.project_data['depth_grid_data'] = depth_grid_data_df.to_dict(orient='list')
-        self.submit_save_task()
-
-    def save_attribute_grid_data(self, attribute_grid_data_df):
-        with self.lock:
-            self.project_data['attribute_grid_data'] = attribute_grid_data_df.to_dict(orient='list')
-        self.submit_save_task()
 
     def save_import_options(self, import_options_df):
         with self.lock:
@@ -65,15 +56,6 @@ class ProjectSaver:
             self.project_data['selected_UWIs'] = selected_UWIs
         self.submit_save_task()
 
-    def save_depth_grid_colors(self, depth_grid_color_df):
-        with self.lock:
-            self.project_data['depth_grid_colors'] = depth_grid_color_df.to_dict(orient='list')
-        self.submit_save_task()
-
-    def save_grid_info(self, grid_info_df):
-        with self.lock:
-            self.project_data['grid_info'] = grid_info_df.to_dict(orient='list')
-        self.submit_save_task()
 
     def save_well_list(self, well_list):
         with self.lock:

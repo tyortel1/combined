@@ -210,6 +210,7 @@ class PlotGB(QDialog):
             num_samples = 200  # Number of points to sample along the line
             sampled_line_coords = self.sample_points_along_line(line_coords, num_samples)
 
+            valid_grids = [grid for grid in self.kd_tree_depth_grids.keys() if grid in set(self.grid_info_df['Grid']) & set(self.depth_grid_data_df['Grid'])]
             gun_barrel_data = []
             combined_distance = 0
 
@@ -241,11 +242,22 @@ class PlotGB(QDialog):
                     combined_distance = 0  # First point has distance 0
 
                 # Prepare the entry data
-                entry = [x, y, combined_distance] + [closest_z_values[grid] for grid in self.kd_tree_depth_grids]
+                entry = [x, y, combined_distance] + [closest_z_values[grid] for grid in valid_grids]
+
                 gun_barrel_data.append(entry)
-            valid_grids = [grid for grid in self.kd_tree_depth_grids.keys() if grid in set(self.grid_info_df['Grid']) & set(self.depth_grid_data_df['Grid'])]
+            
             # Define column names
             columns = ['x', 'y', 'combined_distance'] + valid_grids
+
+                        # Add this right after calculating valid_grids
+            print(f"Valid grids: {valid_grids}")
+            print(f"Number of valid grids: {len(valid_grids)}")
+            print(f"All kd_tree_depth_grids keys: {list(self.kd_tree_depth_grids.keys())}")
+            print(f"Number of kd_tree_depth_grids: {len(self.kd_tree_depth_grids)}")
+            print(f"Grid columns in depth_grid_data_df: {self.depth_grid_data_df['Grid'].unique().tolist()}")
+            print(f"Number of grids in depth_grid_data_df: {len(self.depth_grid_data_df['Grid'].unique())}")
+            print(f"Grid columns in grid_info_df: {self.grid_info_df['Grid'].unique().tolist()}")
+            print(f"Number of grids in grid_info_df: {len(self.grid_info_df['Grid'].unique())}")
 
             # Create DataFrame with defined columns
             df = pd.DataFrame(gun_barrel_data, columns=columns)

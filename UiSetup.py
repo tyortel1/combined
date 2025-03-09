@@ -262,11 +262,9 @@ class Ui_MainWindow:
         MainWindow.properties_menu.addAction(MainWindow.well_properties_action)
 
         # Zone related actions
-        MainWindow.zone_viewer_action = QAction("Zone Viewer", MainWindow)  # Renamed from Zone Properties
+        MainWindow.zone_viewer_action = QAction("Zone Properties", MainWindow)  # Renamed from Zone Properties
         MainWindow.properties_menu.addAction(MainWindow.zone_viewer_action)
 
-        MainWindow.zone_properties_action = QAction("Zone Properties", MainWindow)  # New action
-        MainWindow.properties_menu.addAction(MainWindow.zone_properties_action)
 
         # Map Properties
         MainWindow.map_properties_action = QAction("Map Properties", MainWindow)

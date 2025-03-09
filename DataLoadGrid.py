@@ -1,6 +1,10 @@
-import sys
+﻿import sys
 import SeisWare
+import os
 import pandas as pd
+import h5py
+import sqlite3
+from datetime import datetime
 from PySide6.QtWidgets import QApplication, QDialog, QLabel, QComboBox,QWidget, QSizePolicy, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QAbstractItemView, QSizePolicy, QSpacerItem, QMessageBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QColor
@@ -10,11 +14,11 @@ from PySide6.QtWidgets import QProgressDialog
 from StyledTwoListSelector import TwoListSelector
 from StyledDropdown import StyledDropdown
 from StyledButton import StyledButton
-
+from DatabaseManagers.GridDatabaseManager import GridDatabaseManager
 
 
 class DataLoadGridDialog(QDialog):
-    def __init__(self, import_options_df=None, parent=None):
+    def __init__(self, import_options_df=None, db_path=None, parent=None):
         super(DataLoadGridDialog, self).__init__(parent)
         self.setWindowTitle("Load Grids")
         self.setGeometry(100, 100, 800, 600)
@@ -25,6 +29,7 @@ class DataLoadGridDialog(QDialog):
         self.attribute_grid_data_df = pd.DataFrame()
         self.kd_tree_depth_grids = None
         self.kd_tree_att_grids = None
+        self.db_path = db_path
         if self.import_options_df is not None:
             self.set_import_parameters(self.import_options_df)
 
@@ -294,7 +299,15 @@ class DataLoadGridDialog(QDialog):
             self.store_depth_grid_data()
             self.store_attribute_grid_data()
             self.zone_color()
-            self.get_grid_names_and_store_info()
+            if not self.db_path:
+                # Fallback to a default path if no path was provided
+                self.db_path = os.path.join('path', 'to', 'default', 'database', 'grids.db')
+        
+            # Create a unique HDF5 filename based on current timestamp
+            hdf5_filename = f"grids_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h5"
+            hdf5_path = os.path.join(os.path.dirname(self.db_path), hdf5_filename)
+        
+            self.get_grid_names_and_store_info(self.db_path, hdf5_path)
 
             self.accept()
 
@@ -307,6 +320,9 @@ class DataLoadGridDialog(QDialog):
         conversion_factor = 0.3048
         is_feet_selected = self.grid_unit_dropdown.currentText() == "Feet"
 
+        # Print selected grids for verification
+        print(f"Selected depth grids: {self.selected_depth_grids}")
+
         # Check if there are any selected depth grids
         if not self.selected_depth_grids:
             print("No depth grid data found.")
@@ -316,11 +332,12 @@ class DataLoadGridDialog(QDialog):
 
         # Process each selected depth grid
         for grid_name in self.selected_depth_grids:
+            print(f"Processing grid: {grid_name}")
             # Find the corresponding grid object
             selected_grid_object = next((grid for grid, name in self.grid_objects_with_names if name == grid_name), None)
-        
+    
             if not selected_grid_object:
-                print(f"Grid object not found for {grid_name}")
+                print(f"❌ Grid object not found for {grid_name}")
                 continue
 
             try:
@@ -329,11 +346,19 @@ class DataLoadGridDialog(QDialog):
                 grid_values = SeisWare.GridValues()
                 selected_grid_object.Values(grid_values)
                 grid_values_list = list(grid_values.Data())
+            
+                print(f"Grid {grid_name} has {len(grid_values_list)} values")
+                if len(grid_values_list) > 0:
+                    valid_count = sum(1 for v in grid_values_list if -1000000 <= v <= 1000000)
+                    print(f"Grid {grid_name} has {valid_count} valid values out of {len(grid_values_list)}")
 
                 # Get grid definition for coordinates
                 grid_def = selected_grid_object.Definition()
                 x_range = grid_def.RangeX()
                 y_range = grid_def.RangeY()
+            
+                # Track points added for this grid
+                points_added = 0
 
                 # Process grid data
                 for i in range(grid_values.Height()):
@@ -354,24 +379,30 @@ class DataLoadGridDialog(QDialog):
                                 'Y': y_coord,
                                 'Z': z_value
                             })
+                            points_added += 1
+
+                print(f"Added {points_added} points for grid {grid_name}")
 
             except RuntimeError as err:
-                print(f"Failed to process grid {grid_name}: {str(err)}")
+                print(f"❌ Failed to process grid {grid_name}: {str(err)}")
                 continue
 
         # Create DataFrame if we have data
         if self.depth_grid_data:
             self.depth_grid_data_df = pd.DataFrame(self.depth_grid_data)
-            print(f"Created depth grid DataFrame with columns: {self.depth_grid_data_df.columns.tolist()}")
-            print(f"First row of depth data: {self.depth_grid_data_df.iloc[0].to_dict()}")
-        
+            print(f"Created depth grid DataFrame with {len(self.depth_grid_data_df)} rows")
+            print(f"Grid names in DataFrame: {self.depth_grid_data_df['Grid'].unique().tolist()}")
+    
             # Create KD trees for each grid
             self.kd_tree_depth_grids = {}
             for grid in self.depth_grid_data_df['Grid'].unique():
                 grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid]
                 if not grid_data.empty:
+                    print(f"Creating KDTree for {grid} with {len(grid_data)} points")
                     self.kd_tree_depth_grids[grid] = KDTree(grid_data[['X', 'Y']].values)
-                    print(f"Created KD tree for grid: {grid}")
+                    print(f"✅ Created KD tree for grid: {grid}")
+                else:
+                    print(f"❌ No data for grid {grid}, skipping KDTree creation")
         else:
             print("No depth grid data to process")
             self.depth_grid_data_df = pd.DataFrame(columns=['Grid', 'X', 'Y', 'Z'])
@@ -477,70 +508,148 @@ class DataLoadGridDialog(QDialog):
 
  
 
-    def get_grid_names_and_store_info(self, output_file='grid_info.csv'):
+    def get_grid_names_and_store_info(self, db_path, hdf5_path):
         # Combine grid names from both depth and attribute grids
         depth_grid_names = self.depth_grid_data_df['Grid'].unique().tolist() if not self.depth_grid_data_df.empty else []
         attribute_grid_names = self.attribute_grid_data_df['Grid'].unique().tolist() if not self.attribute_grid_data_df.empty else []
         self.grid_names = depth_grid_names + attribute_grid_names
 
-        grid_info_list = []
+        # Ensure directories exist
+        os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(hdf5_path)), exist_ok=True)
 
-        # Calculate bin size, min, max values, and add color for each grid
-        for grid_name in self.grid_names:
-            if grid_name in depth_grid_names:
-                grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid_name]
-                grid_type = "Depth"
-            else:
-                grid_data = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid_name]
-                grid_type = "Attribute"
+        # Create database connection
+        grid_db_manager = GridDatabaseManager(db_path)
 
-            if grid_data.empty:
-                continue
+        # Open HDF5 file
+        with h5py.File(hdf5_path, 'w') as hdf:
+            # Create groups for depth and attribute grids
+            depth_group = hdf.create_group('depth_grids')
+            attribute_group = hdf.create_group('attribute_grids')
 
-            min_x = grid_data['X'].min()
-            max_x = grid_data['X'].max()
-            min_y = grid_data['Y'].min()
-            max_y = grid_data['Y'].max()
-            min_z = grid_data['Z'].min()
-            max_z = grid_data['Z'].max()
+            # Create groups for KD trees
+            depth_kdtrees_group = hdf.create_group('depth_kdtrees')
+            attribute_kdtrees_group = hdf.create_group('attribute_kdtrees')
 
-            # Calculate bin size (assuming uniform spacing)
-            unique_x = sorted(grid_data['X'].unique())
-            unique_y = sorted(grid_data['Y'].unique())
+            grid_info_list = []
 
-            if len(unique_x) > 1:
-                bin_size_x = unique_x[1] - unique_x[0]
-            else:
-                bin_size_x = None
+            # Process each grid
+            for grid_name in self.grid_names:
+                try:
+                    # Determine if it's a depth or attribute grid
+                    if grid_name in depth_grid_names:
+                        grid_data = self.depth_grid_data_df[self.depth_grid_data_df['Grid'] == grid_name]
+                        grid_type = "Depth"
+                        hdf_parent_group = depth_group
+                        kdtree_group = depth_kdtrees_group
+                    
+                        # Check if KD tree exists for this grid
+                        if grid_name not in self.kd_tree_depth_grids:
+                            print(f"Warning: No KD tree found for depth grid {grid_name}")
+                            continue
+                    
+                        kd_tree = self.kd_tree_depth_grids[grid_name]
+                    else:
+                        grid_data = self.attribute_grid_data_df[self.attribute_grid_data_df['Grid'] == grid_name]
+                        grid_type = "Attribute"
+                        hdf_parent_group = attribute_group
+                        kdtree_group = attribute_kdtrees_group
+                    
+                        # Check if KD tree exists for this grid
+                        if grid_name not in self.kd_tree_att_grids:
+                            print(f"Warning: No KD tree found for attribute grid {grid_name}")
+                            continue
+                    
+                        kd_tree = self.kd_tree_att_grids[grid_name]
 
-            if len(unique_y) > 1:
-                bin_size_y = unique_y[1] - unique_y[0]
-            else:
-                bin_size_y = None
+                    if grid_data.empty:
+                        print(f"Skipping empty grid: {grid_name}")
+                        continue
 
-            # Get the color for the grid if available, otherwise set a default color
-            color_row = self.depth_grid_color_df[self.depth_grid_color_df['Depth Grid Name'] == grid_name]
-            if not color_row.empty:
-                color_rgb = color_row['Color (RGB)'].values[0]
-            else:
-                color_rgb = (255, 255, 255)  # Default color (white) if not found
+                    # Ensure numeric data types
+                    grid_data = grid_data.astype({
+                        'X': 'float64', 
+                        'Y': 'float64', 
+                        'Z': 'float64'
+                    })
 
-            grid_info_list.append({
-                'Grid': grid_name,
-                'Type': grid_type,
-                'min_x': min_x,
-                'max_x': max_x,
-                'min_y': min_y,
-                'max_y': max_y,
-                'min_z': min_z,
-                'max_z': max_z,
-                'bin_size_x': bin_size_x,
-                'bin_size_y': bin_size_y,
-                'Color (RGB)': color_rgb
-            })
+                    # Calculate grid metadata
+                    min_x = grid_data['X'].min()
+                    max_x = grid_data['X'].max()
+                    min_y = grid_data['Y'].min()
+                    max_y = grid_data['Y'].max()
+                    min_z = grid_data['Z'].min()
+                    max_z = grid_data['Z'].max()
 
-        # Convert the grid info list to a DataFrame and write to a CSV file
-        self.grid_info_df = pd.DataFrame(grid_info_list)
+                    # Calculate bin size (assuming uniform spacing)
+                    unique_x = sorted(grid_data['X'].unique())
+                    unique_y = sorted(grid_data['Y'].unique())
+
+                    bin_size_x = unique_x[1] - unique_x[0] if len(unique_x) > 1 else None
+                    bin_size_y = unique_y[1] - unique_y[0] if len(unique_y) > 1 else None
+
+                    # Get color for the grid
+                    color_row = self.depth_grid_color_df[self.depth_grid_color_df['Depth Grid Name'] == grid_name]
+                    color_rgb = color_row['Color (RGB)'].values[0] if not color_row.empty else (255, 255, 255)
+                    color_hex = color_row['Color (Hex)'].values[0] if not color_row.empty else '#FFFFFF'
+
+                    # Prepare grid metadata for database
+                    grid_metadata = {
+                        'min_x': min_x,
+                        'max_x': max_x,
+                        'min_y': min_y,
+                        'max_y': max_y,
+                        'min_z': min_z,
+                        'max_z': max_z,
+                        'bin_size_x': bin_size_x,
+                        'bin_size_y': bin_size_y
+                    }
+
+                    # Add grid to database
+                    grid_id = grid_db_manager.add_grid(
+                        name=grid_name, 
+                        grid_type=grid_type, 
+                        unit=self.grid_unit_dropdown.currentText(),
+                        color_hex=color_hex,
+                        grid_info=grid_metadata,
+                        hdf5_location=os.path.abspath(hdf5_path)
+                    )
+
+                    # Store grid data in HDF5
+                    grid_dataset = hdf_parent_group.create_dataset(
+                        grid_name, 
+                        data=grid_data[['X', 'Y', 'Z']].to_numpy(), 
+                        compression='gzip'
+                    )
+
+                    # Store KD tree points
+                    grid_points = grid_data[['X', 'Y']].values
+                    kdtree_dataset = kdtree_group.create_dataset(
+                        grid_name, 
+                        data=grid_points,
+                        compression='gzip'
+                    )
+
+                    # Store metadata in HDF5 dataset attributes
+                    for key, value in grid_metadata.items():
+                        grid_dataset.attrs[key] = value
+                    grid_dataset.attrs['color_rgb'] = color_rgb
+                    grid_dataset.attrs['type'] = grid_type
+
+                    # Track grid info for potential further use
+                    grid_info_list.append({
+                        'Grid': grid_name,
+                        'Type': grid_type,
+                        **grid_metadata,
+                        'Color (RGB)': color_rgb
+                    })
+
+                except Exception as e:
+                    print(f"Error processing grid {grid_name}: {e}")
+                    continue
+
+            # Convert the grid info list to a DataFrame
+            self.grid_info_df = pd.DataFrame(grid_info_list)
 
         return self.grid_info_df
 
